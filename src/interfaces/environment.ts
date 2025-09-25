@@ -1,0 +1,181 @@
+import { SecureBuffer, SecureString } from '@digitaldefiance/ecies-lib';
+import { Timezone } from '@digitaldefiance/i18n-lib';
+import { Types } from 'mongoose';
+import { BackupCode } from '../backup-code';
+import { IMongoEnvironment } from './environment-mongo';
+
+export interface IEnvironment {
+  /**
+   * Whether to use a memory database for local development (eg with MongoMemoryServer)
+   * If set, this will create a new in-memory database instance on application start with the given database name
+   */
+  devDatabase?: string;
+  /**
+   * Whether to print certain console debug messages
+   */
+  debug: boolean;
+  /**
+   * Whether to enable super verbose debug messags
+   */
+  detailedDebug: boolean;
+  /**
+   * The host name of the server
+   */
+  host: string;
+  /**
+   * The port the server is running on
+   */
+  port: number;
+  /**
+   * The base path of the server
+   */
+  basePath: string;
+  /**
+   * The URL of the server
+   */
+  serverUrl: string;
+  /**
+   * The secret used to sign JWTs
+   */
+  jwtSecret: string;
+  /**
+   * The email address to send notifications from
+   */
+  emailSender: string;
+  /**
+   * API distribution directory
+   */
+  apiDistDir: string;
+  /**
+   * react dist dir
+   */
+  reactDistDir: string;
+  /**
+   * The directory and root filename to store HTTPS development certificates
+   */
+  httpsDevCertRoot?: string;
+  /**
+   * The port to use for HTTPS development certificates
+   */
+  httpsDevPort: number;
+  /**
+   * Disable email sending
+   */
+  disableEmailSend: boolean;
+  /**
+   * MongoDB configuration
+   */
+  mongo: IMongoEnvironment;
+  /**
+   * Mnemonic for the admin user
+   */
+  adminMnemonic?: SecureString;
+  /**
+   * The ID of the admin user
+   */
+  adminId?: Types.ObjectId;
+  /**
+   * The creation date of the admin user
+   */
+  adminCreatedAt?: Date;
+  /**
+   * The password of the admin user
+   */
+  adminPassword?: SecureString;
+  /**
+   * The ID of the admin user role object
+   */
+  adminRoleId?: Types.ObjectId;
+  /**
+   * The ID of the admin user's user role object
+   */
+  adminUserRoleId?: Types.ObjectId;
+  /**
+   * Backup codes for the admin user
+   */
+  adminBackupCodes?: BackupCode[];
+  /**
+   * Mnemonic for the member user
+   */
+  memberMnemonic?: SecureString;
+  /**
+   * The ID of the member user
+   */
+  memberId?: Types.ObjectId;
+  /**
+   * The creation date of the member user
+   */
+  memberCreatedAt?: Date;
+  /**
+   * The password of the member user
+   */
+  memberPassword?: SecureString;
+  /**
+   * The ID of the member user role object
+   */
+  memberRoleId?: Types.ObjectId;
+  /**
+   * The ID of the member user's user role object
+   */
+  memberUserRoleId?: Types.ObjectId;
+  /**
+   * Backup codes for the member user
+   */
+  memberBackupCodes?: BackupCode[];
+  /**
+   * Mnemonic for the system user
+   */
+  systemMnemonic?: SecureString;
+  /**
+   * The ID of the system user
+   */
+  systemId?: Types.ObjectId;
+  /**
+   * The creation date of the system user
+   */
+  systemCreatedAt?: Date;
+  /**
+   * The public key of the system user
+   */
+  systemPublicKeyHex?: string;
+  /**
+   * The password of the system user
+   */
+  systemPassword?: SecureString;
+  /**
+   * The ID of the system user role object
+   */
+  systemRoleId?: Types.ObjectId;
+  /**
+   * The ID of the system user's user role object
+   */
+  systemUserRoleId?: Types.ObjectId;
+  /**
+   * Backup codes for the system user
+   */
+  systemBackupCodes?: BackupCode[];
+  /**
+   * HMAC secret for mnemonic encryption
+   */
+  mnemonicHmacSecret: SecureBuffer;
+  /**
+   * Encryption key for mnemonics
+   */
+  mnemonicEncryptionKey: SecureBuffer;
+  /**
+   * The timezone for the server
+   */
+  timezone: Timezone;
+  /**
+   * The default language for the admin interface/CLI
+   */
+  adminLanguage: string;
+  /**
+   * The number of PBKDF2 iterations for key wrapping
+   */
+  pbkdf2Iterations: number;
+  /**
+   * Whether this is a production environment
+   */
+  production: boolean;
+}
