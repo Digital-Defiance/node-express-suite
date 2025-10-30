@@ -663,6 +663,10 @@ For issues and questions:
 
 ## ChangeLog
 
+### Version 1.0.3
+
+- Update ecies libs
+
 ### Version 1.0.0 (Current)
 
 - Initial release with complete Express.js framework
