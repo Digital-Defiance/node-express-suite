@@ -663,6 +663,10 @@ For issues and questions:
 
 ## ChangeLog
 
+### Version 1.0.4
+
+- Update suite-core
+
 ### Version 1.0.3
 
 - Update ecies libs
