@@ -1,6 +1,6 @@
 {
   "name": "@digitaldefiance/node-express-suite",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Generic express application and routing library with decorator support",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

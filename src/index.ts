@@ -17,6 +17,7 @@ export * from './model-registry';
 export * from './models';
 export * from './registry';
 export * from './routers';
+export * from './schemas';
 export * from './services';
 export * from './types';
 export * from './utils';

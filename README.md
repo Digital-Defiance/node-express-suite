@@ -663,6 +663,10 @@ For issues and questions:
 
 ## ChangeLog
 
+### Version 1.0.5
+
+- Export schemas
+
 ### Version 1.0.4
 
 - Update suite-core
