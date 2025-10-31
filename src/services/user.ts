@@ -27,6 +27,7 @@ import {
   EmailTokenSentTooRecentlyError,
   EmailTokenType,
   EmailTokenUsedOrInvalidError,
+  EmailVerifiedError,
   getSuiteCoreTranslation,
   IBackupCode,
   InvalidChallengeResponseError,
@@ -1466,7 +1467,9 @@ export class UserService<
     emailToken: string,
     session?: ClientSession,
   ): Promise<void> {
-    return await this.withTransaction<void>(
+    let alreadyVerified = false;
+    
+    await this.withTransaction<void>(
       async (sess: ClientSession | undefined) => {
         const EmailTokenModel =
           ModelRegistry.instance.getTypedModel<IEmailTokenDocument>(
@@ -1498,6 +1501,15 @@ export class UserService<
 
         if (!user || user.deletedAt) {
           throw new UserNotFoundError();
+        }
+
+        if (user.emailVerified) {
+          // Delete the token and mark to throw error after transaction commits
+          await EmailTokenModel.deleteOne({ _id: token._id }).session(
+            sess ?? null,
+          );
+          alreadyVerified = true;
+          return;
         }
 
         // set user email to token email and mark as verified
@@ -1533,6 +1545,10 @@ export class UserService<
         timeoutMs: this.application.environment.mongo.transactionTimeout * 5,
       },
     );
+    
+    if (alreadyVerified) {
+      throw new EmailVerifiedError(409);
+    }
   }
 
   /**

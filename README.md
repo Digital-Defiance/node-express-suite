@@ -663,6 +663,11 @@ For issues and questions:
 
 ## ChangeLog
 
+### Version 1.0.9
+
+- Update suite-core-lib to include new error classes
+- improve role/user services
+
 ### Version 1.0.8
 
 - Export missing role schema

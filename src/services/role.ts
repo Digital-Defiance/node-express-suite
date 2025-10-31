@@ -10,6 +10,7 @@ import {
   ITokenRole,
   ITokenRoleDTO,
   IUserRoleBase,
+  LastAdminError,
   Role,
 } from '@digitaldefiance/suite-core-lib';
 import { ClientSession, Document, Types } from 'mongoose';
@@ -104,7 +105,7 @@ export class RoleService<
     const RoleModel = ModelRegistry.instance.get<
       IRoleBase<Types.ObjectId, Date, Role>,
       IBaseDocument<IRoleBase<Types.ObjectId, Date, Role>>
-    >('Role').model;
+    >(BaseModelName.Role).model;
     const role = await RoleModel.findOne({ name: roleName }, undefined, {
       session,
     }).select('_id');
@@ -127,7 +128,7 @@ export class RoleService<
     const RoleModel = ModelRegistry.instance.get<
       IRoleBase<Types.ObjectId, Date, Role>,
       IBaseDocument<IRoleBase<Types.ObjectId, Date, Role>>
-    >('Role').model;
+    >(BaseModelName.Role).model;
     const role = new RoleModel(roleData);
     const savedRole = await role.save(session ? { session } : {});
     return savedRole;
@@ -150,7 +151,7 @@ export class RoleService<
     const UserRoleModel = ModelRegistry.instance.get<
       IUserRoleBase<Types.ObjectId, Date>,
       IUserRoleDocument
-    >('UserRole').model;
+    >(BaseModelName.UserRole).model;
 
     // Check if the user-role relationship already exists (and is not deleted)
     const existingUserRole = await UserRoleModel.findOne({
@@ -181,6 +182,7 @@ export class RoleService<
    * @param userId - The user id
    * @param deletedBy - The user removing the relationship
    * @param session Optional mongoose session
+   * @throws LastAdminError if attempting to remove the last admin
    */
   public async removeUserFromRole(
     roleId: Types.ObjectId,
@@ -188,10 +190,26 @@ export class RoleService<
     deletedBy: Types.ObjectId,
     session?: ClientSession,
   ): Promise<void> {
+    const RoleModel = ModelRegistry.instance.get<
+      IRoleBase<Types.ObjectId, Date, Role>,
+      IRoleDocument
+    >(BaseModelName.Role).model;
     const UserRoleModel = ModelRegistry.instance.get<
       IUserRoleBase<Types.ObjectId, Date>,
       IUserRoleDocument
     >(BaseModelName.UserRole).model;
+
+    const role = await RoleModel.findById(roleId).session(session ?? null);
+    if (role?.admin) {
+      const adminCount = await UserRoleModel.countDocuments({
+        roleId,
+        deletedAt: { $exists: false },
+      }).session(session ?? null);
+      if (adminCount <= 1) {
+        throw new LastAdminError();
+      }
+    }
+
     await UserRoleModel.findOneAndUpdate(
       { userId, roleId, deletedAt: { $exists: false } },
       { deletedAt: new Date(), deletedBy },
@@ -239,11 +257,11 @@ export class RoleService<
     const UserRoleModel = ModelRegistry.instance.get<
       IUserRoleBase<Types.ObjectId, Date>,
       IUserRoleDocument
-    >('UserRole').model;
+    >(BaseModelName.UserRole).model;
     const RoleModel = ModelRegistry.instance.get<
       IRoleBase<Types.ObjectId, Date, Role>,
       IBaseDocument<IRoleBase<Types.ObjectId, Date, Role>>
-    >('Role').model;
+    >(BaseModelName.Role).model;
     if (!UserRoleModel || !RoleModel) throw new Error('Model not registered');
 
     // Return full documents
@@ -346,17 +364,14 @@ export class RoleService<
     return false;
   }
 
-  public async isSuiteCore(
+  public async isSystemUser(
     userDoc: IUserDocument,
     session?: ClientSession,
     providedRoles?: Array<IRoleDocument>,
   ): Promise<boolean> {
     const roles =
       providedRoles ?? (await this.getUserRoles(userDoc._id, session));
-    if (roles.filter((r) => r.system).length > 0) {
-      return true;
-    }
-    return false;
+    return roles.some((r) => r.system);
   }
 
   public async getMemberType(
@@ -366,7 +381,7 @@ export class RoleService<
   ): Promise<MemberType> {
     const roles =
       providedRoles ?? (await this.getUserRoles(userDoc._id, session));
-    if (await this.isSuiteCore(userDoc, session, roles)) {
+    if (await this.isSystemUser(userDoc, session, roles)) {
       return MemberType.System;
     } else if (await this.isUserAdmin(userDoc, session, roles)) {
       return MemberType.Admin;

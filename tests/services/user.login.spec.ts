@@ -1,6 +1,7 @@
 // ModelRegistry pattern: use string model names
 import { createApplicationMock } from '../__tests__/helpers/application.mock';
 import { ModelRegistry } from '../../src/model-registry';
+import { Model, Document } from 'mongoose';
 
 beforeAll(() => {
   // This will be overridden by makeService, just set up a default
@@ -20,6 +21,7 @@ import { SystemUserService } from '../../src/services/system-user';
 import { UserService } from '../../src/services/user';
 import { MemberType, SecureString, SecureBuffer } from '@digitaldefiance/ecies-lib';
 import { AccountStatus, InvalidCredentialsError, AccountLockedError } from '@digitaldefiance/suite-core-lib';
+import { BaseModelName } from '../../src/enumerations/base-model-name';
 
 
 function makeService(
@@ -62,34 +64,55 @@ function makeService(
     return { model, schema: {} as any } as any;
   });
 
+  const getModelFn = <T extends Document>(modelName: BaseModelName) => {
+    switch (modelName) {
+      case BaseModelName.User:
+        return userModel as unknown as Model<T>;
+      case BaseModelName.UserRole:
+        return userRoleModel as unknown as Model<T>;
+      case BaseModelName.Role:
+        return roleModel as unknown as Model<T>;
+      default:
+        return {
+          find: jest.fn().mockReturnThis(),
+          findOne: jest.fn().mockReturnValue({
+            session: jest.fn().mockResolvedValue(null),
+          }),
+          populate: jest.fn().mockReturnThis(),
+          lean: jest.fn().mockReturnThis(),
+          session: jest.fn().mockReturnThis(),
+          exec: jest.fn().mockResolvedValue(null),
+        } as unknown as Model<T>;
+    }
+  };
+
   const application = createApplicationMock(
     {
-      getModel: (modelName: string) => {
-        switch (modelName) {
-          case 'User':
-            return userModel;
-          case 'UserRole':
-            return userRoleModel;
-          case 'Role':
-            return roleModel;
-          default:
-            return {
-              find: jest.fn().mockReturnThis(),
-              findOne: jest.fn().mockReturnValue({
-                session: jest.fn().mockResolvedValue(null),
-              }),
-              populate: jest.fn().mockReturnThis(),
-              lean: jest.fn().mockReturnThis(),
-              session: jest.fn().mockReturnThis(),
-              exec: jest.fn().mockResolvedValue(null),
-            };
-        }
-      },
+      getModel: getModelFn,
     },
     {
       mnemonicHmacSecret: new SecureBuffer(Buffer.alloc(32, 1)),
       mnemonicEncryptionKey: new SecureBuffer(Buffer.alloc(32, 2)),
-      mongo: { uri: 'mongodb://localhost:27017', transactionTimeout: 60000 },
+      mongo: {
+        uri: 'mongodb://localhost:27017',
+        dbName: 'test',
+        maxPoolSize: 10,
+        minPoolSize: 2,
+        maxIdleTimeMS: 30000,
+        serverSelectionTimeoutMS: 5000,
+        socketTimeoutMS: 30000,
+        retryWrites: true,
+        retryReads: true,
+        readConcern: 'majority',
+        writeConcern: { w: 'majority', j: true },
+        setParameterSupported: false,
+        transactionLifetimeLimitSecondsSupported: false,
+        maxTransactionLockRequestTimeoutMillisSupported: false,
+        transactionTimeout: 60000,
+        transactionLockRequestTimeout: 5000,
+        useTransactions: false,
+        transactionRetryBaseDelay: 100,
+      },
     },
   );
   const roleService = new RoleService(application);
