@@ -663,6 +663,10 @@ For issues and questions:
 
 ## ChangeLog
 
+### Version 1.0.7
+
+- Export missing enumeration
+
 ### Version 1.0.6
 
 - Export enumerations
