@@ -663,6 +663,10 @@ For issues and questions:
 
 ## ChangeLog
 
+### Version 1.0.8
+
+- Export missing role schema
+
 ### Version 1.0.7
 
 - Export missing enumeration
