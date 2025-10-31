@@ -7,6 +7,7 @@ export * from './decorators';
 export * from './defaults';
 export * from './documents';
 export * from './environment';
+export * from './enumerations';
 export * from './error-factory';
 export * from './errors';
 export * from './get-language';
