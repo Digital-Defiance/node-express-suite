@@ -663,6 +663,11 @@ For issues and questions:
 
 ## ChangeLog
 
+### Version 1.0.11
+
+- Update libs
+- Add test
+
 ### Version 1.0.10
 
 - Export api router
