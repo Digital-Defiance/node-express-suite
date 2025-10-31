@@ -663,6 +663,10 @@ For issues and questions:
 
 ## ChangeLog
 
+### Version 1.0.10
+
+- Export api router
+
 ### Version 1.0.9
 
 - Update suite-core-lib to include new error classes
