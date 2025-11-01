@@ -663,6 +663,10 @@ For issues and questions:
 
 ## ChangeLog
 
+### Version 1.0.16
+
+- Update suite-core
+
 ### Version 1.0.15
 
 - Update suite-core

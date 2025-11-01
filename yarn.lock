@@ -430,7 +430,7 @@ __metadata:
     "@digitaldefiance/ecies-lib": "npm:1.1.20"
     "@digitaldefiance/i18n-lib": "npm:1.3.9"
     "@digitaldefiance/node-ecies-lib": "npm:1.1.18"
-    "@digitaldefiance/suite-core-lib": "npm:1.1.34"
+    "@digitaldefiance/suite-core-lib": "npm:1.1.35"
     "@types/jest": "npm:^29.0.0"
     "@typescript-eslint/eslint-plugin": "npm:^8.31.1"
     "@typescript-eslint/parser": "npm:^8.31.1"
@@ -453,14 +453,14 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@digitaldefiance/suite-core-lib@npm:1.1.34":
-  version: 1.1.34
-  resolution: "@digitaldefiance/suite-core-lib@npm:1.1.34"
+"@digitaldefiance/suite-core-lib@npm:1.1.35":
+  version: 1.1.35
+  resolution: "@digitaldefiance/suite-core-lib@npm:1.1.35"
   dependencies:
     "@digitaldefiance/ecies-lib": "npm:1.1.20"
     "@digitaldefiance/i18n-lib": "npm:1.3.9"
     "@digitaldefiance/node-ecies-lib": "npm:1.1.18"
-  checksum: 10c0/00e08104ac5f33edc0ac6150b69cefc34e980c64c61ac0793947d85515747b1611aacafb90707d49ff3887c0f1fce86d0ab12d493ebaa11139bd36ec1e4b9b04
+  checksum: 10c0/c97b2d513af8c243035619724a2c87c67dfeecf003d0e9e9b49ecc9282194a0e3d505c40fea270b167f6c0183db1982deace8c8cd0b87f4ef955f226149f053e
   languageName: node
   linkType: hard
 
