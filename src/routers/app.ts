@@ -19,6 +19,10 @@ import { basename, join, resolve, sep } from 'path';
 import { IApplication } from '../interfaces/application';
 import { debugLog, handleError, sendApiMessageResponse } from '../utils';
 import { BaseRouter } from './base';
+import { Types } from 'mongoose';
+import { IBaseDocument } from '../documents';
+import { Environment } from '../environment';
+import { IConstants } from '../interfaces';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function keepEJS() {
@@ -29,7 +33,7 @@ function keepEJS() {
  * Application router
  * Sets up the API and static file serving
  */
-export class AppRouter<TApplication extends IApplication = IApplication> {
+export class AppRouter<TApplication extends IApplication<any, Types.ObjectId, IBaseDocument<any, Types.ObjectId>, Environment, IConstants> = IApplication<any, Types.ObjectId, IBaseDocument<any, Types.ObjectId>, Environment, IConstants>> {
   private readonly viewsPath: string;
   private readonly indexPath: string;
   private readonly assetsDir: string;

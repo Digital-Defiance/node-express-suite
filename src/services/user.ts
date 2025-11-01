@@ -57,7 +57,7 @@ import { IEmailTokenDocument } from '../documents/email-token';
 import { IMnemonicDocument } from '../documents/mnemonic';
 import { IUserDocument } from '../documents/user';
 import { InvalidNewPasswordError } from '../errors';
-
+import { IConstants } from '../interfaces/constants';
 import { BackupCode } from '../backup-code';
 import { BaseModelName } from '../enumerations/base-model-name';
 import { MongooseValidationError } from '../errors/mongoose-validation';
@@ -75,17 +75,23 @@ import { MnemonicService } from './mnemonic';
 import { RequestUserService } from './request-user';
 import { RoleService } from './role';
 import { SystemUserService } from './system-user';
+import { IBaseDocument } from '../documents';
+import { Environment } from '../environment';
 
 type ProjectionObject = Record<string, 0 | 1 | -1 | boolean>;
 
 export class UserService<
-  I,
+  T,
+  I extends Types.ObjectId | string,
   D extends Date,
   S extends string,
   A extends string,
+  TEnvironment extends Environment = Environment,
+  TConstants extends IConstants = IConstants,
+  TBaseDocument extends IBaseDocument<T, I> = IBaseDocument<T, I>,
   TUser extends IUserBase<I, D, S, A> = IUserBase<I, D, S, A>,
   TTokenRole extends ITokenRole<I, D> = ITokenRole<I, D>,
-  TApplication extends IApplication = IApplication,
+  TApplication extends IApplication<T, I, TBaseDocument, TEnvironment, TConstants> = IApplication<T, I, TBaseDocument, TEnvironment, TConstants>,
 > extends BaseService {
   protected readonly roleService: RoleService<I, D, TTokenRole>;
   protected readonly eciesService: ECIESService;
@@ -102,7 +108,7 @@ export class UserService<
   protected readonly disableEmailSend: boolean;
 
   constructor(
-    application: IApplication,
+    application: IApplication<T, I, TBaseDocument, TEnvironment, TConstants>,
     roleService: RoleService<I, D, TTokenRole>,
     emailService: IEmailService,
     keyWrappingService: KeyWrappingService,

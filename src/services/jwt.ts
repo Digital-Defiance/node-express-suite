@@ -21,6 +21,9 @@ import { IApplication } from '../interfaces/application';
 import { IJwtSignResponse } from '../interfaces/jwt-sign-response';
 import { BaseService } from './base';
 import { RoleService } from './role';
+import { IConstants } from '../interfaces';
+import { Environment } from '../environment';
+import { IBaseDocument } from '../documents';
 
 const verifyAsync = promisify<
   string,
@@ -34,7 +37,7 @@ export class JwtService<
   D extends Date = Date,
   TTokenRole extends ITokenRole<I, D> = ITokenRole<I, D>,
   TTokenUser extends ITokenUser = ITokenUser,
-  TApplication extends IApplication = IApplication,
+  TApplication extends IApplication<any, Types.ObjectId, IBaseDocument<any, Types.ObjectId>, Environment, IConstants> = IApplication<any, Types.ObjectId, IBaseDocument<any, Types.ObjectId>, Environment, IConstants>,
 > extends BaseService {
   private readonly roleService: RoleService<I, D, TTokenRole>;
 

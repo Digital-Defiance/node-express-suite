@@ -17,6 +17,9 @@ import { JwtService } from '../services/jwt';
 import { RequestUserService } from '../services/request-user';
 import { RoleService } from '../services/role';
 import { withTransaction } from '../utils';
+import { IBaseDocument } from '../documents';
+import { Environment } from '../environment';
+import { IConstants } from '../interfaces';
 
 /**
  * Find the auth token in the headers
@@ -47,7 +50,7 @@ export async function authenticateToken<
   D extends Date = Date,
   TTokenRole extends ITokenRole<I, D> = ITokenRole<I, D>,
   TTokenUser extends ITokenUser = ITokenUser,
-  TApplication extends IApplication = IApplication,
+  TApplication extends IApplication<any, Types.ObjectId, IBaseDocument<any, Types.ObjectId>, Environment, IConstants> = IApplication<any, Types.ObjectId, IBaseDocument<any, Types.ObjectId>, Environment, IConstants>,
 >(
   application: TApplication,
   req: Request,

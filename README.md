@@ -666,6 +666,7 @@ For issues and questions:
 ### Version 1.0.21
 
 - Update suite-core
+- Update IApplication/Application so that IEnvironment is more extensible
 
 ### Version 1.0.20
 

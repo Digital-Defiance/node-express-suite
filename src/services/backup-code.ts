@@ -17,7 +17,7 @@ import { timingSafeEqual } from 'crypto';
 import { ClientSession, Types } from 'mongoose';
 import { BackupCode } from '../backup-code';
 import { Constants as AppConstants } from '../constants';
-import { IUserDocument } from '../documents';
+import { IBaseDocument, IUserDocument } from '../documents';
 import { InvalidBackupCodeVersionError } from '../errors/invalid-backup-code-version';
 import { IApplication } from '../interfaces/application';
 import { BaseService } from './base';
@@ -25,6 +25,8 @@ import { KeyWrappingService } from './index';
 import { RoleService } from './role';
 import { SymmetricService } from './symmetric';
 import { SystemUserService } from './system-user';
+import { Environment } from '../environment';
+import { IConstants } from '../interfaces';
 
 /**
  * Service handling generation, storage, validation, consumption, and recovery using backup codes.
@@ -40,7 +42,7 @@ export class BackupCodeService<
   I = Types.ObjectId,
   D extends Date = Date,
   TTokenRole extends ITokenRole<I, D> = ITokenRole<I, D>,
-  TApplication extends IApplication = IApplication,
+  TApplication extends IApplication<any, Types.ObjectId, IBaseDocument<any, Types.ObjectId>, Environment, IConstants> = IApplication<any, Types.ObjectId, IBaseDocument<any, Types.ObjectId>, Environment, IConstants>,
 > extends BaseService {
   private readonly eciesService: ECIESService;
   private systemUser?: BackendMember;

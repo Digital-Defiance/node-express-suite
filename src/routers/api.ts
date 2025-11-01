@@ -15,19 +15,26 @@ import { KeyWrappingService } from '../services/key-wrapping';
 import { RoleService } from '../services/role';
 import { UserService } from '../services/user';
 import { BaseRouter } from './base';
+import { Types } from 'mongoose';
+import { IBaseDocument } from '../documents';
+import { Environment } from '../environment';
+import { IConstants } from '../interfaces';
 
 /**
  * Router for the API
  */
 export class ApiRouter<
-  I,
+  I extends Types.ObjectId | string,
   D extends Date,
   S extends string,
   A extends string,
   TUser extends IUserBase<I, D, S, A> = IUserBase<I, D, S, A>,
   TTokenRole extends ITokenRole<I, D> = ITokenRole<I, D>,
+  TBaseDocument extends IBaseDocument<any, Types.ObjectId> = IBaseDocument<any, Types.ObjectId>,
   TTokenUser extends ITokenUser = ITokenUser,
-  TApplication extends IApplication = IApplication,
+  TConstants extends IConstants = IConstants,
+  TEnvironment extends Environment = Environment,
+  TApplication extends IApplication<any, Types.ObjectId, TBaseDocument, TEnvironment, TConstants> = IApplication<any, Types.ObjectId, TBaseDocument, TEnvironment, TConstants>,
 > extends BaseRouter<TApplication> {
   private readonly userController: UserController<
     I,
@@ -48,10 +55,14 @@ export class ApiRouter<
   >;
   private readonly emailService: IEmailService;
   private readonly userService: UserService<
+    any,
     I,
     D,
     S,
     A,
+    TEnvironment,
+    TConstants,
+    TBaseDocument,
     TUser,
     TTokenRole,
     TApplication
@@ -100,10 +111,14 @@ export class ApiRouter<
     );
 
     this.userService = new UserService<
+      any,
       I,
       D,
       S,
       A,
+      TEnvironment,
+      TConstants,
+      TBaseDocument,
       TUser,
       TTokenRole,
       TApplication

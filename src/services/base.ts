@@ -1,12 +1,15 @@
-import { ClientSession } from 'mongoose';
+import { ClientSession, Types } from 'mongoose';
 import { IApplication } from '../interfaces/application';
 import { TransactionCallback } from '../types';
 import {
   TransactionOptions,
   withTransaction as utilsWithTransaction,
 } from '../utils';
+import { IBaseDocument } from '../documents';
+import { Environment } from '../environment';
+import { IConstants } from '../interfaces';
 
-export class BaseService<TApplication extends IApplication = IApplication> {
+export class BaseService<TApplication extends IApplication<any, Types.ObjectId, IBaseDocument<any, Types.ObjectId>, Environment, IConstants> = IApplication<any, Types.ObjectId, IBaseDocument<any, Types.ObjectId>, Environment, IConstants>> {
   protected readonly application: TApplication;
 
   constructor(application: TApplication) {

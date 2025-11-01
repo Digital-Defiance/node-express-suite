@@ -40,6 +40,8 @@ import { MnemonicService } from './mnemonic';
 import { RoleService } from './role';
 import { SystemUserService } from './system-user';
 import { CoreLanguageCode } from '@digitaldefiance/i18n-lib';
+import { Environment } from '../environment';
+import { IConstants } from '../interfaces';
 
 export abstract class DatabaseInitializationService {
   // Static initialization state management
@@ -216,7 +218,7 @@ export abstract class DatabaseInitializationService {
     return connection.db.dropDatabase();
   }
 
-  public static getInitOptions(application: IApplication): {
+  public static getInitOptions(application: IApplication<any, Types.ObjectId, IBaseDocument<any, Types.ObjectId>, Environment, IConstants>): {
     adminId?: Types.ObjectId;
     adminMnemonic?: SecureString;
     adminPassword?: SecureString;
@@ -339,7 +341,7 @@ export abstract class DatabaseInitializationService {
    * @returns The result of the initialization
    */
   public static async initUserDbWithServices(
-    application: IApplication,
+    application: IApplication<any, Types.ObjectId, IBaseDocument<any, Types.ObjectId>, Environment, IConstants>,
     keyWrappingService: KeyWrappingService,
     mnemonicService: MnemonicService,
     eciesService: ECIESService,
@@ -1413,7 +1415,7 @@ export abstract class DatabaseInitializationService {
    * @returns The result of the initialization
    */
   public static async initUserDb(
-    application: IApplication,
+    application: IApplication<any, Types.ObjectId, IBaseDocument<any, Types.ObjectId>, Environment, IConstants>,
   ): Promise<IFailableResult<IServerInitResult>> {
     const mnemonicModel = ModelRegistry.instance.getTypedModel<
       IBaseDocument<IMnemonicBase<Types.ObjectId>>

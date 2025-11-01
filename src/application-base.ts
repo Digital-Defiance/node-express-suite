@@ -8,7 +8,7 @@ import {
   TranslatableSuiteError,
 } from '@digitaldefiance/suite-core-lib';
 import { MongoMemoryReplSet } from 'mongodb-memory-server';
-import mongoose, { Model } from 'mongoose';
+import mongoose, { Model, Types } from 'mongoose';
 import { join } from 'path';
 import { IBaseDocument } from './documents/base';
 import { Environment } from './environment';
@@ -27,7 +27,7 @@ export class BaseApplication<
   TModelDocs extends Record<string, IBaseDocument<any>>,
   TInitResults,
   TConstants extends IConstants = IConstants,
-> implements IApplication
+> implements IApplication<any, Types.ObjectId, IBaseDocument<any, Types.ObjectId>, Environment, IConstants>
 {
   /**
    * Application environment

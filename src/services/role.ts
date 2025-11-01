@@ -23,6 +23,8 @@ import { IRoleBackendObject } from '../interfaces/backend-objects/role';
 import { ModelRegistry } from '../model-registry';
 import { omit } from '../utils';
 import { BaseService } from './base';
+import { Environment } from '../environment';
+import { IConstants } from '../interfaces';
 
 /**
  * Service for managing roles
@@ -36,7 +38,7 @@ export class RoleService<
    * Constructor for the role service
    * @param application The application object
    */
-  constructor(application: IApplication) {
+  constructor(application: IApplication<any, Types.ObjectId, IBaseDocument<any, Types.ObjectId>, Environment, IConstants>,) {
     super(application);
   }
 

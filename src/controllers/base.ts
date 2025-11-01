@@ -54,6 +54,9 @@ import {
   TransactionOptions,
   withTransaction as utilsWithTransaction,
 } from '../utils';
+import { IBaseDocument } from '../documents';
+import { Environment } from '../environment';
+import { IConstants } from '../interfaces';
 
 export abstract class BaseController<
   T extends ApiResponse,
@@ -63,7 +66,7 @@ export abstract class BaseController<
   public readonly router: Router;
   private activeRequest: Request | null = null;
   private activeResponse: Response | null = null;
-  public readonly application: IApplication;
+  public readonly application: IApplication<any, Types.ObjectId, IBaseDocument<any, Types.ObjectId>, Environment, IConstants>;
   protected routeDefinitions: RouteConfig<H, TLanguage>[] = [];
   protected readonly pluginEngine: PluginI18nEngine<TLanguage> =
     PluginI18nEngine.getInstance<TLanguage>();
@@ -71,7 +74,7 @@ export abstract class BaseController<
   // Allowlist of registered validation functions to prevent code injection
   private static validationRegistry = new WeakSet<Function>();
 
-  public constructor(application: IApplication) {
+  public constructor(application: IApplication<any, Types.ObjectId, IBaseDocument<any, Types.ObjectId>, Environment, IConstants>) {
     this.application = application;
     this.router = Router();
     this.handlers = {} as H;

@@ -10,7 +10,7 @@ import {
   SuiteCoreStringKey,
 } from '@digitaldefiance/suite-core-lib';
 import { NextFunction, Request, Response } from 'express';
-import { ClientSession } from 'mongoose';
+import { ClientSession, Types } from 'mongoose';
 import { IUserDocument } from '../documents/user';
 import { BaseModelName } from '../enumerations';
 import { InvalidPasswordError } from '../errors';
@@ -21,6 +21,9 @@ import { KeyWrappingService } from '../services/key-wrapping';
 import { RoleService } from '../services/role';
 import { UserService } from '../services/user';
 import { withTransaction } from '../utils';
+import { IBaseDocument } from '../documents';
+import { Environment } from '../environment';
+import { IConstants } from '../interfaces';
 
 /**
  * Middleware to authenticate crypto operations requiring private key access
@@ -29,7 +32,7 @@ import { withTransaction } from '../utils';
 export async function authenticateCrypto<
   TAccountStatus extends string = AccountStatus,
 >(
-  application: IApplication,
+  application: IApplication<any, Types.ObjectId, IBaseDocument<any, Types.ObjectId>, Environment, IConstants>,
   req: Request,
   res: Response,
   next: NextFunction,

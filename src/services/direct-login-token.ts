@@ -9,9 +9,12 @@ import { BaseModelName } from '../enumerations/base-model-name';
 import { IApplication } from '../interfaces/application';
 import { ModelRegistry } from '../model-registry';
 import { withTransaction } from '../utils';
+import { IBaseDocument } from '../documents';
+import { Environment } from '../environment';
+import { IConstants } from '../interfaces';
 export abstract class DirectLoginTokenService {
   public static async useToken(
-    app: IApplication,
+    app: IApplication<any, Types.ObjectId, IBaseDocument<any, Types.ObjectId>, Environment, IConstants>,
     userId: Types.ObjectId,
     token: string,
     session?: ClientSession,

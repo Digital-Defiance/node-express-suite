@@ -41,6 +41,7 @@ import {
   IApiMnemonicResponse,
   IApiRegistrationResponse,
   IApiRequestUserResponse,
+  IConstants,
 } from '../interfaces';
 import { IApiBackupCodesResponse } from '../interfaces/api-responses/backup-codes-response';
 import { IApplication } from '../interfaces/application';
@@ -54,6 +55,8 @@ import { SystemUserService } from '../services/system-user';
 import { UserService } from '../services/user';
 import { ApiErrorResponse } from '../types';
 import { requireValidatedFieldsAsync, withTransaction } from '../utils';
+import { IBaseDocument } from '../documents';
+import { Environment } from '../environment';
 
 const isString = (v: unknown): v is string => typeof v === 'string';
 
@@ -80,21 +83,25 @@ const DirectLoginChallengeSchema = z.object({
 
 @Controller()
 export class UserController<
-  I = Types.ObjectId,
+  I extends Types.ObjectId | string = Types.ObjectId,
   D extends Date = Date,
   S extends string = string,
   A extends string = string,
   TUser extends IUserBase<I, D, S, A> = IUserBase<I, D, S, A>,
   TTokenRole extends ITokenRole<I, D> = ITokenRole<I, D>,
   TTokenUser extends ITokenUser = ITokenUser,
-  TApplication extends IApplication = IApplication,
+  TApplication extends IApplication<any, Types.ObjectId, IBaseDocument<any, Types.ObjectId>, Environment, IConstants> = IApplication<any, Types.ObjectId, IBaseDocument<any, Types.ObjectId>, Environment, IConstants>,
   TLanguage extends CoreLanguageCode = CoreLanguageCode,
 > extends DecoratorBaseController<TLanguage> {
   protected readonly userService: UserService<
+    any,
     I,
     D,
     S,
     A,
+    any,
+    any,
+    any,
     TUser,
     TTokenRole,
     TApplication
@@ -117,9 +124,9 @@ export class UserController<
   protected readonly systemUser: BackendMember;
 
   constructor(
-    application: IApplication,
+    application: IApplication<any, Types.ObjectId, IBaseDocument<any, Types.ObjectId>, Environment, IConstants>,
     jwtService: JwtService<I, D, TTokenRole, TTokenUser, TApplication>,
-    userService: UserService<I, D, S, A, TUser, TTokenRole, TApplication>,
+    userService: UserService<any, I, D, S, A, any, any, any, TUser, TTokenRole, TApplication>,
     backupCodeService: BackupCodeService<I, D, TTokenRole, TApplication>,
     roleService: RoleService<I, D, TTokenRole>,
     eciesService: ECIESService,
