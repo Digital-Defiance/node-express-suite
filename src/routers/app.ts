@@ -1,6 +1,6 @@
 import {
   CoreI18nComponentId,
-  TranslatableGenericError,
+  PluginTranslatableGenericError,
 } from '@digitaldefiance/i18n-lib';
 import {
   getSuiteCoreTranslation,
@@ -114,14 +114,14 @@ export class AppRouter<TApplication extends IApplication = IApplication> {
     if (
       basename(this.apiRouter.application.environment.reactDistDir) !== 'dist')
    {
-      throw new TranslatableGenericError<SuiteCoreStringKey, string>(
+      throw new PluginTranslatableGenericError<SuiteCoreStringKey, string>(
         CoreI18nComponentId,
         SuiteCoreStringKey.Error_AppDoesNotAppearToBeRunningWithinDistTemplate,
         { dir: this.apiRouter.application.environment.reactDistDir },
       );
     }
     if (!existsSync(this.indexPath)) {
-      throw new TranslatableGenericError<SuiteCoreStringKey, string>(
+      throw new PluginTranslatableGenericError<SuiteCoreStringKey, string>(
         CoreI18nComponentId,
         SuiteCoreStringKey.Error_IndexFileNotFoundTemplate,
         { path: this.indexPath },

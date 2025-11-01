@@ -1,10 +1,10 @@
 /// <reference path="../types.d.ts" />
-import { HandleableError } from '@digitaldefiance/ecies-lib';
 import {
   GlobalActiveContext,
   IActiveContext,
   PluginI18nEngine,
-  TranslatableGenericError,
+  PluginTranslatableGenericError,
+  HandleableError,
 } from '@digitaldefiance/i18n-lib';
 import {
   AccountStatus,
@@ -348,13 +348,13 @@ export abstract class BaseController<
 
   public get user(): IRequestUserDTO {
     if (!this.activeRequest) {
-      throw new TranslatableGenericError<SuiteCoreStringKey, string>(
+      throw new PluginTranslatableGenericError<SuiteCoreStringKey, string>(
         SuiteCoreComponentId,
         SuiteCoreStringKey.Common_NoActiveRequest,
       );
     }
     if (!this.activeRequest.user) {
-      throw new TranslatableGenericError<SuiteCoreStringKey, string>(
+      throw new PluginTranslatableGenericError<SuiteCoreStringKey, string>(
         SuiteCoreComponentId,
         SuiteCoreStringKey.Common_NoUserOnRequest,
       );
@@ -364,7 +364,7 @@ export abstract class BaseController<
 
   public get validatedBody(): Record<string, any> {
     if (!this.activeRequest) {
-      throw new TranslatableGenericError<SuiteCoreStringKey, string>(
+      throw new PluginTranslatableGenericError<SuiteCoreStringKey, string>(
         SuiteCoreComponentId,
         SuiteCoreStringKey.Common_NoActiveRequest,
       );
@@ -377,7 +377,7 @@ export abstract class BaseController<
 
   public get req(): Request {
     if (!this.activeRequest) {
-      throw new TranslatableGenericError<SuiteCoreStringKey, string>(
+      throw new PluginTranslatableGenericError<SuiteCoreStringKey, string>(
         SuiteCoreComponentId,
         SuiteCoreStringKey.Common_NoActiveRequest,
       );
@@ -387,7 +387,7 @@ export abstract class BaseController<
 
   public get res(): Response {
     if (!this.activeResponse) {
-      throw new TranslatableGenericError<SuiteCoreStringKey, string>(
+      throw new PluginTranslatableGenericError<SuiteCoreStringKey, string>(
         SuiteCoreComponentId,
         SuiteCoreStringKey.Common_NoActiveResponse,
       );

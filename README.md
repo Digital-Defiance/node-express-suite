@@ -663,6 +663,10 @@ For issues and questions:
 
 ## ChangeLog
 
+### Version 1.0.14
+
+- Use typed/handleable from i18n
+
 ### Version 1.0.13
 
 - Update libs

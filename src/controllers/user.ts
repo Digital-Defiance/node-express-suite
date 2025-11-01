@@ -3,11 +3,10 @@
 import {
   ECIES,
   EmailString,
-  HandleableError,
   SecureString,
   UINT64_SIZE,
 } from '@digitaldefiance/ecies-lib';
-import { isValidTimezone, LanguageCodes } from '@digitaldefiance/i18n-lib';
+import { isValidTimezone, LanguageCodes, HandleableError } from '@digitaldefiance/i18n-lib';
 import {
   Member as BackendMember,
   ECIESService,

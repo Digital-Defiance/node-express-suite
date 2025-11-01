@@ -82,7 +82,7 @@ export async function requireValidatedFieldsAsync<
   callback: (data: z.output<T>) => Promise<TResult>,
 ): Promise<TResult> {
   if (req.validatedBody === undefined) {
-    throw createMissingValidatedDataError();
+    throw new MissingValidatedDataError();
   }
 
   try {
@@ -115,11 +115,11 @@ export async function requireOneOfValidatedFieldsAsync<T = void>(
   callback: () => Promise<T>,
 ): Promise<T> {
   if (req.validatedBody === undefined) {
-    throw createMissingValidatedDataError();
+    throw new MissingValidatedDataError();
   }
   const validatedBody = req.validatedBody;
   if (!fields.some((field) => validatedBody?.[field] !== undefined)) {
-    throw createMissingValidatedDataError(fields);
+    throw new MissingValidatedDataError(fields);
   }
   return await callback();
 }
@@ -137,12 +137,12 @@ export function requireValidatedFieldsOrThrow<T = void>(
   callback: () => T,
 ): T {
   if (req.validatedBody === undefined) {
-    throw createMissingValidatedDataError();
+    throw new MissingValidatedDataError();
   }
   const validatedBody = req.validatedBody;
   fields.forEach((field) => {
     if (validatedBody[field] === undefined) {
-      throw createMissingValidatedDataError(field);
+      throw new MissingValidatedDataError(field);
     }
   });
   return callback();
@@ -727,7 +727,7 @@ export function decodeLengthEncodedData(buffer: Buffer): {
   };
 }
 
-import { HandleableError } from '@digitaldefiance/ecies-lib';
+import { HandleableError } from '@digitaldefiance/i18n-lib';
 import {
   getSuiteCoreI18nEngine,
   SuiteCoreComponentId,
@@ -737,7 +737,7 @@ import {
 import moment from 'moment-timezone';
 import { BackupCode } from './backup-code';
 import { LengthEncodingType } from './enumerations/length-encoding-type';
-import { createMissingValidatedDataError } from './error-factory';
+import { MissingValidatedDataError } from './errors';
 
 export function isValidTimezone(timezone: string): boolean {
   return moment.tz.zone(timezone) !== null;
