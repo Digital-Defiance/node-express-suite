@@ -663,6 +663,10 @@ For issues and questions:
 
 ## ChangeLog
 
+### Version 1.0.20
+
+- Update libs
+
 ### Version 1.0.19
 
 - Pull in i18n registration updates up through suite-core-lib
