@@ -1,3 +1,4 @@
+import { CoreLanguageCode } from '@digitaldefiance/i18n-lib';
 import { RequestHandler } from 'express';
 import { ValidationChain } from 'express-validator';
 import 'reflect-metadata';
@@ -8,7 +9,7 @@ export const CONTROLLER_METADATA = Symbol('controller');
 export const ROUTES_METADATA = Symbol('routes');
 
 // Route decorator options
-export interface RouteOptions<TLanguage extends string = string> {
+export interface RouteOptions<TLanguage extends CoreLanguageCode = CoreLanguageCode> {
   validation?: ValidationChain[] | ((lang: TLanguage) => ValidationChain[]);
   schema?: z.ZodSchema;
   middleware?: RequestHandler[];
@@ -18,7 +19,7 @@ export interface RouteOptions<TLanguage extends string = string> {
 }
 
 // Route metadata structure
-export interface RouteMetadata<TLanguage extends string = string> {
+export interface RouteMetadata<TLanguage extends CoreLanguageCode = CoreLanguageCode> {
   method: 'get' | 'post' | 'put' | 'delete' | 'patch';
   path: string;
   handlerName: string;
@@ -34,45 +35,45 @@ export function Controller(basePath: string = '') {
 }
 
 // HTTP method decorators
-export function Get(path: string, options: RouteOptions = {}) {
+export function Get<TLanguage extends CoreLanguageCode = CoreLanguageCode>(path: string, options: RouteOptions<TLanguage> = {}) {
   return createRouteDecorator('get', path, options);
 }
 
-export function Post(path: string, options: RouteOptions = {}) {
+export function Post<TLanguage extends CoreLanguageCode = CoreLanguageCode>(path: string, options: RouteOptions<TLanguage> = {}) {
   return createRouteDecorator('post', path, options);
 }
 
-export function Put(path: string, options: RouteOptions = {}) {
+export function Put<TLanguage extends CoreLanguageCode = CoreLanguageCode>(path: string, options: RouteOptions<TLanguage> = {}) {
   return createRouteDecorator('put', path, options);
 }
 
-export function Delete(path: string, options: RouteOptions = {}) {
+export function Delete<TLanguage extends CoreLanguageCode = CoreLanguageCode>(path: string, options: RouteOptions<TLanguage> = {}) {
   return createRouteDecorator('delete', path, options);
 }
 
-export function Patch(path: string, options: RouteOptions = {}) {
+export function Patch<TLanguage extends CoreLanguageCode = CoreLanguageCode>(path: string, options: RouteOptions<TLanguage> = {}) {
   return createRouteDecorator('patch', path, options);
 }
 
 // Helper to create route decorators
-function createRouteDecorator(
+function createRouteDecorator<TLanguage extends CoreLanguageCode = CoreLanguageCode>(
   method: 'get' | 'post' | 'put' | 'delete' | 'patch',
   path: string,
-  options: RouteOptions,
+  options: RouteOptions<TLanguage>,
 ) {
   return function (
     target: any,
     propertyKey: string,
     descriptor: PropertyDescriptor,
   ) {
-    const existingRoutes: RouteMetadata[] =
+    const existingRoutes: RouteMetadata<CoreLanguageCode>[] =
       Reflect.getMetadata(ROUTES_METADATA, target.constructor) || [];
 
-    const route: RouteMetadata = {
+    const route: RouteMetadata<CoreLanguageCode> = {
       method,
       path,
       handlerName: propertyKey,
-      options,
+      options: options as RouteOptions<CoreLanguageCode>,
     };
 
     existingRoutes.push(route);
@@ -94,8 +95,8 @@ export function Auth(cryptoAuth: boolean = false) {
   };
 }
 
-export function Validate(
-  validation: ValidationChain[] | ((lang: string) => ValidationChain[]),
+export function Validate<TLanguage extends CoreLanguageCode = CoreLanguageCode>(
+  validation: ValidationChain[] | ((lang: TLanguage) => ValidationChain[]),
 ) {
   return function (
     target: any,

@@ -39,6 +39,7 @@ import { BackupCodeService } from './backup-code';
 import { MnemonicService } from './mnemonic';
 import { RoleService } from './role';
 import { SystemUserService } from './system-user';
+import { CoreLanguageCode } from '@digitaldefiance/i18n-lib';
 
 export abstract class DatabaseInitializationService {
   // Static initialization state management
@@ -49,7 +50,7 @@ export abstract class DatabaseInitializationService {
   protected static initializationLock = new Map<string, boolean>();
   protected static defaultI18nTFunc: (
     str: string,
-    language?: string,
+    language?: CoreLanguageCode,
     ...otherVars: Record<string, string | number>[]
   ) => string = getSuiteCoreI18nEngine().t;
 

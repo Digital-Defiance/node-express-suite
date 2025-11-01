@@ -6,7 +6,7 @@ import {
   SecureString,
   UINT64_SIZE,
 } from '@digitaldefiance/ecies-lib';
-import { isValidTimezone, LanguageCodes, HandleableError } from '@digitaldefiance/i18n-lib';
+import { isValidTimezone, LanguageCodes, HandleableError, CoreLanguageCode } from '@digitaldefiance/i18n-lib';
 import {
   Member as BackendMember,
   ECIESService,
@@ -88,7 +88,7 @@ export class UserController<
   TTokenRole extends ITokenRole<I, D> = ITokenRole<I, D>,
   TTokenUser extends ITokenUser = ITokenUser,
   TApplication extends IApplication = IApplication,
-  TLanguage extends string = string,
+  TLanguage extends CoreLanguageCode = CoreLanguageCode,
 > extends DecoratorBaseController<TLanguage> {
   protected readonly userService: UserService<
     I,
@@ -213,7 +213,7 @@ export class UserController<
 
   @Post('/register', {
     schema: RegisterSchema,
-    validation: (validationLanguage: string) => [
+    validation: (validationLanguage: TLanguage) => [
       body('username')
         .matches(AppConstants.UsernameRegex)
         .withMessage(
@@ -321,7 +321,7 @@ export class UserController<
   }
 
   @Post('/account-verification', {
-    validation: (validationLanguage: string) => [
+    validation: (validationLanguage: TLanguage) => [
       body('token')
         .not()
         .isEmpty()
@@ -372,7 +372,7 @@ export class UserController<
 
   @Post('/language', {
     auth: true,
-    validation: (validationLanguage: string) => [
+    validation: (validationLanguage: TLanguage) => [
       body('language')
         .isString()
         .withMessage(
@@ -465,7 +465,7 @@ export class UserController<
   @Post('/backup-codes', {
     auth: true,
     cryptoAuth: true,
-    validation: (validationLanguage: string) => [
+    validation: (validationLanguage: TLanguage) => [
       body().custom((value, { req }) => {
         if (!req.body?.password && !req.body?.mnemonic) {
           throw new MnemonicOrPasswordRequiredError();
@@ -537,7 +537,7 @@ export class UserController<
   @Post('/recover-mnemonic', {
     auth: true,
     cryptoAuth: true,
-    validation: (validationLanguage: string) => [
+    validation: (validationLanguage: TLanguage) => [
       body('password')
         .isString()
         .withMessage(
@@ -614,7 +614,7 @@ export class UserController<
 
   @Post('/change-password', {
     auth: true,
-    validation: (validationLanguage: string) => [
+    validation: (validationLanguage: TLanguage) => [
       body('currentPassword')
         .notEmpty()
         .withMessage(
@@ -711,7 +711,7 @@ export class UserController<
 
   @Post('/direct-challenge', {
     schema: DirectLoginChallengeSchema,
-    validation: (validationLanguage: string) => [
+    validation: (validationLanguage: TLanguage) => [
       body('challenge')
         .not()
         .isEmpty()
@@ -815,7 +815,7 @@ export class UserController<
   }
 
   @Post('/request-email-login', {
-    validation: (validationLanguage: string) => [
+    validation: (validationLanguage: TLanguage) => [
       body().custom((value, { req }) => {
         if (!req.body.username && !req.body.email) {
           throw new UsernameOrEmailRequiredError();
@@ -884,7 +884,7 @@ export class UserController<
 
   @Post('/email-challenge', {
     schema: EmailLoginChallengeSchema,
-    validation: (validationLanguage: string) => [
+    validation: (validationLanguage: TLanguage) => [
       body('token')
         .not()
         .isEmpty()
@@ -982,7 +982,7 @@ export class UserController<
   }
 
   @Post('/resend-verification', {
-    validation: (validationLanguage: string) => [
+    validation: (validationLanguage: TLanguage) => [
       body().custom((value, { req }) => {
         if (!req.body.username && !req.body.email) {
           throw new UsernameOrEmailRequiredError();
@@ -1057,7 +1057,7 @@ export class UserController<
   }
 
   @Post('/backup-code', {
-    validation: (validationLanguage: string) => [
+    validation: (validationLanguage: TLanguage) => [
       body('email').optional().isEmail(),
       body('username')
         .optional()
@@ -1191,7 +1191,7 @@ export class UserController<
   }
 
   @Post('/forgot-password', {
-    validation: (validationLanguage: string) => [
+    validation: (validationLanguage: TLanguage) => [
       body('email')
         .isEmail()
         .withMessage(
@@ -1294,7 +1294,7 @@ export class UserController<
   }
 
   @Post('/reset-password', {
-    validation: (validationLanguage: string) => [
+    validation: (validationLanguage: TLanguage) => [
       body('token')
         .not()
         .isEmpty()

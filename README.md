@@ -663,6 +663,14 @@ For issues and questions:
 
 ## ChangeLog
 
+### Version 1.0.19
+
+- Pull in i18n registration updates up through suite-core-lib
+
+### Version 1.0.18
+
+- Update suite-core
+
 ### Version 1.0.17
 
 - Update ecies/i18n/suite-core

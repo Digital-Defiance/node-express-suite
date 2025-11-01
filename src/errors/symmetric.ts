@@ -1,4 +1,4 @@
-import { PluginTypedError } from '@digitaldefiance/i18n-lib';
+import { CoreLanguageCode, PluginTypedError } from '@digitaldefiance/i18n-lib';
 import {
   getSuiteCoreI18nEngine,
   SuiteCoreComponentId,
@@ -12,11 +12,11 @@ import { SymmetricService } from '../services/symmetric';
 export class SymmetricError extends PluginTypedError<
   typeof SymmetricErrorType,
   SuiteCoreStringKey,
-  string
+  CoreLanguageCode
 > {
   constructor(
     type: SymmetricErrorType,
-    language?: string,
+    language?: CoreLanguageCode,
     constants: IConstants = Constants,
   ) {
     const engine = getSuiteCoreI18nEngine();

@@ -1,4 +1,4 @@
-import { HandleableError } from '@digitaldefiance/i18n-lib';
+import { CoreLanguageCode, HandleableError } from '@digitaldefiance/i18n-lib';
 import {
   getSuiteCoreI18nEngine,
   SuiteCoreComponentId,
@@ -14,7 +14,7 @@ export class MongooseValidationError extends HandleableError {
     validationErrors: {
       [path: string]: Error.CastError | Error.ValidatorError;
     },
-    language?: string,
+    language?: CoreLanguageCode,
   ) {
     const coreEngine = getSuiteCoreI18nEngine();
     super(

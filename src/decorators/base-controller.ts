@@ -4,9 +4,10 @@ import { IApplication } from '../interfaces/application';
 import { ApiResponse } from '../types';
 import { ROUTES_METADATA, RouteMetadata } from './controller';
 import { zodToExpressValidator } from './zod-validation';
+import { CoreLanguageCode } from '@digitaldefiance/i18n-lib';
 
 export abstract class DecoratorBaseController<
-  TLanguage extends string = string,
+  TLanguage extends CoreLanguageCode = CoreLanguageCode,
 > extends BaseController<ApiResponse, Record<string, any>, TLanguage> {
   constructor(application: IApplication) {
     super(application);
