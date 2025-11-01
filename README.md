@@ -663,6 +663,11 @@ For issues and questions:
 
 ## ChangeLog
 
+### Version 1.0.22
+
+- Update libs
+- Upgrade various things to pluginI18nengine
+
 ### Version 1.0.21
 
 - Update suite-core

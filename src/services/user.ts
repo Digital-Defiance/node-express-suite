@@ -2,6 +2,7 @@ import {
   Constants as EciesConstants,
   EciesStringKey,
   EmailString,
+  getEciesI18nEngine,
   IECIESConfig,
   InvalidEmailError,
   InvalidEmailErrorType,
@@ -10,7 +11,6 @@ import {
   SecureString,
   SignatureString,
 } from '@digitaldefiance/ecies-lib';
-import { I18nEngine } from '@digitaldefiance/i18n-lib';
 import {
   Member as BackendMember,
   ECIESService,
@@ -520,8 +520,7 @@ export class UserService<
 
     if (!userDoc || userDoc.deletedAt) {
       if (email) {
-        const engine =
-          I18nEngine.getInstance<I18nEngine<EciesStringKey, any, any, any>>();
+        const engine = getEciesI18nEngine();
         throw new InvalidEmailError(InvalidEmailErrorType.Missing, engine);
       }
       throw new InvalidUsernameError();
@@ -1137,8 +1136,7 @@ export class UserService<
 
     const userDoc = await this.findUser(email, username, session);
     if (!userDoc && email) {
-      const engine =
-        I18nEngine.getInstance<I18nEngine<EciesStringKey, any, any, any>>();
+      const engine = getEciesI18nEngine();
       throw new InvalidEmailError(InvalidEmailErrorType.Missing, engine);
     } else if (!userDoc) {
       throw new InvalidUsernameError();
