@@ -663,6 +663,10 @@ For issues and questions:
 
 ## ChangeLog
 
+### Version 1.3.15
+
+- Homogenize versions
+
 ### Version 1.0.26
 
 - Update libs
