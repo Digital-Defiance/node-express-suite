@@ -663,6 +663,10 @@ For issues and questions:
 
 ## ChangeLog
 
+### Version 1.3.18
+
+- Make application factory pattern for api router
+
 ### Version 1.3.17
 
 - Upgrade i18n with aliases for t() fn

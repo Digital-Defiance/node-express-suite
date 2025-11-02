@@ -48,7 +48,8 @@ export class Application<
   public readonly expressApp: ExpressApplication;
   private server: ServerWithOptionalClose | null = null;
   private readonly _cspConfig: ICSPConfig;
-  private readonly _apiRouter: BaseRouter;
+  private readonly _apiRouterFactory: (app: this) => BaseRouter;
+  private _apiRouter?: BaseRouter;
 
   public override get environment(): TEnvironment {
     return super.environment as TEnvironment;
@@ -56,7 +57,7 @@ export class Application<
 
   constructor(
     environment: TEnvironment,
-    apiRouter: BaseRouter,
+    apiRouterFactory: (app: Application<T, I, TInitResults, TModelDocs, TBaseDocument, TEnvironment, TConstants>) => BaseRouter,
     schemaMapFactory: (
       connection: mongoose.Connection,
     ) => SchemaMap<TModelDocs>,
@@ -85,7 +86,7 @@ export class Application<
       initResultHashFunction,
       constants,
     );
-    this._apiRouter = apiRouter;
+    this._apiRouterFactory = apiRouterFactory;
     this.expressApp = express();
     this.server = null;
     this._cspConfig = cspConfig;
@@ -95,6 +96,7 @@ export class Application<
     const engine = getSuiteCoreI18nEngine();
     await super.start(mongoUri, true);
     try {
+      this._apiRouter = this._apiRouterFactory(this);
       Middlewares.init(
         this.expressApp,
         this._cspConfig.corsWhitelist,
