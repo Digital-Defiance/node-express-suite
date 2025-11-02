@@ -1,5 +1,5 @@
-import { SecureString } from '@digitaldefiance/ecies-lib';
-import { Member as BackendMember } from '@digitaldefiance/node-ecies-lib';
+import type { SecureString } from '@digitaldefiance/ecies-lib';
+import type { Member as BackendMember } from '@digitaldefiance/node-ecies-lib';
 
 declare global {
   var __MEMBER_CACHE__:

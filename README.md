@@ -663,6 +663,10 @@ For issues and questions:
 
 ## ChangeLog
 
+### Version 1.0.25
+
+- Properly export db-init-cache
+
 ### Version 1.0.24
 
 - Re-release with js
