@@ -6,7 +6,7 @@ import {
   SecureBuffer,
   SecureString,
 } from '@digitaldefiance/ecies-lib';
-import { CoreLanguageCode } from '@digitaldefiance/i18n-lib';
+import { CoreLanguageCode, PluginTranslatableGenericError, PluginTranslatableHandleableGenericError } from '@digitaldefiance/i18n-lib';
 import {
   Member as BackendMember,
   ECIESService,
@@ -19,6 +19,7 @@ import {
   SuiteCoreComponentId,
   SuiteCoreStringKey,
   TranslatableSuiteError,
+  TranslatableSuiteHandleableError,
 } from '@digitaldefiance/suite-core-lib';
 import { crc32 } from 'crc';
 import { createHash, randomBytes } from 'crypto';
@@ -140,7 +141,7 @@ export abstract class DatabaseInitializationService {
       const publicKeyWithPrefix = Buffer.concat([
         Buffer.from([ECIES.PUBLIC_KEY_MAGIC]),
         wallet.getPublicKey(),
-      ]);
+      ]) as Buffer;
 
       const user: BackendMember = new BackendMember(
         eciesService,
@@ -1046,6 +1047,20 @@ export abstract class DatabaseInitializationService {
         },
       };
     } catch (error) {
+      // Check if it's a translatable error and display cleanly
+      if (
+        error instanceof PluginTranslatableGenericError ||
+        error instanceof PluginTranslatableHandleableGenericError ||
+        error instanceof TranslatableSuiteError || 
+        error instanceof TranslatableSuiteHandleableError
+      ) {
+        return {
+          success: false,
+          message: error.message,
+          error: error,
+        };
+      }
+      
       return {
         success: false,
         message: getSuiteCoreI18nEngine().translate(

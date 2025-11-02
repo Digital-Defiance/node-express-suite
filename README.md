@@ -663,6 +663,11 @@ For issues and questions:
 
 ## ChangeLog
 
+### Version 1.3.17
+
+- Upgrade i18n with aliases for t() fn
+- Handle database initialization errors
+
 ### Version 1.3.16
 
 - Fix StringName strings
