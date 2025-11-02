@@ -236,7 +236,7 @@ export class BaseApplication<
       debug,
       'log',
       engine.t(
-        '[ {{StringName.Common_Connected}} ] {{StringName.Common_MongoDB}}',
+        '[ {{SuiteCoreStringKey.Common_Connected}} ] {{SuiteCoreStringKey.Common_MongoDB}}',
       ),
     );
 
@@ -244,7 +244,7 @@ export class BaseApplication<
       debug,
       'log',
       engine.t(
-        '[ {{StringName.Common_Loading}} ] {{StringName.Common_Schemas}}',
+        '[ {{SuiteCoreStringKey.Common_Loading}} ] {{SuiteCoreStringKey.Common_Schemas}}',
       ),
     );
     this._schemaMap = this._schemaMapFactory(this.db.connection);
@@ -266,7 +266,7 @@ export class BaseApplication<
         (schema) => {
           console.log(
             engine.t(
-              `[ {{StringName.Common_Loaded}} ] {{StringName.Common_Schema}} '${schema.modelName.replace(
+              `[ {{SuiteCoreStringKey.Common_Loaded}} ] {{SuiteCoreStringKey.Common_Schema}} '${schema.modelName.replace(
                 /[\r\n]/g,
                 '',
               )}'`,

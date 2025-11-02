@@ -13,7 +13,6 @@ import {
 } from '@digitaldefiance/node-ecies-lib';
 import {
   AccountStatus,
-  Constants as AppConstants,
   getSuiteCoreI18nEngine,
   IFailableResult,
   IMnemonicBase,
@@ -213,7 +212,7 @@ export abstract class DatabaseInitializationService {
     debugLog(
       true,
       'warn',
-      this.defaultI18nTFunc('{{StringName.Admin_DroppingDatabase}}'),
+      this.defaultI18nTFunc('{{SuiteCoreStringKey.Admin_DroppingDatabase}}'),
     );
     return connection.db.dropDatabase();
   }
@@ -386,18 +385,18 @@ export abstract class DatabaseInitializationService {
       UserModel.find({
         username: {
           $in: [
-            AppConstants.SystemUser,
-            AppConstants.AdministratorUser,
-            AppConstants.MemberUser,
+            application.constants.SystemUser,
+            application.constants.AdministratorUser,
+            application.constants.MemberUser,
           ],
         },
       }).lean(),
       RoleModel.find({
         name: {
           $in: [
-            AppConstants.AdministratorRole,
-            AppConstants.MemberRole,
-            AppConstants.SystemRole,
+            application.constants.AdministratorRole,
+            application.constants.MemberRole,
+            application.constants.SystemRole,
           ],
         },
       }).lean(),
@@ -406,13 +405,13 @@ export abstract class DatabaseInitializationService {
     if (existingUsers.length > 0 || existingRoles.length > 0) {
       // Database is already initialized, return the existing data
       const existingAdminUser = existingUsers.find(
-        (u) => u.username === AppConstants.AdministratorUser,
+        (u) => u.username === application.constants.AdministratorUser,
       );
       const existingMemberUser = existingUsers.find(
-        (u) => u.username === AppConstants.MemberUser,
+        (u) => u.username === application.constants.MemberUser,
       );
       const existingSystemUser = existingUsers.find(
-        (u) => u.username === AppConstants.SystemUser,
+        (u) => u.username === application.constants.SystemUser,
       );
 
       if (existingAdminUser && existingMemberUser && existingSystemUser) {
@@ -434,9 +433,9 @@ export abstract class DatabaseInitializationService {
           memberUserRole,
           systemUserRole,
         ] = await Promise.all([
-          RoleModel.findOne({ name: AppConstants.AdministratorRole }),
-          RoleModel.findOne({ name: AppConstants.MemberRole }),
-          RoleModel.findOne({ name: AppConstants.SystemRole }),
+          RoleModel.findOne({ name: application.constants.AdministratorRole }),
+          RoleModel.findOne({ name: application.constants.MemberRole }),
+          RoleModel.findOne({ name: application.constants.SystemRole }),
           UserRoleModel.findOne({ userId: adminUserDoc._id }),
           UserRoleModel.findOne({ userId: memberUserDoc._id }),
           UserRoleModel.findOne({ userId: systemUserDoc._id }),
@@ -551,14 +550,14 @@ export abstract class DatabaseInitializationService {
         async (sess) => {
           // Check if admin role already exists
           let adminRole = await RoleModel.findOne({
-            name: AppConstants.AdministratorRole,
+            name: application.constants.AdministratorRole,
           }).session(sess ?? null);
           if (!adminRole) {
             const adminRoleDocs = await RoleModel.create(
               [
                 {
                   _id: adminRoleId,
-                  name: AppConstants.AdministratorRole,
+                  name: application.constants.AdministratorRole,
                   admin: true,
                   member: true,
                   system: false,
@@ -575,7 +574,7 @@ export abstract class DatabaseInitializationService {
               throw new TranslatableSuiteError(
                 SuiteCoreStringKey.Error_FailedToCreateRoleTemplate,
                 {
-                  NAME: AppConstants.AdministratorRole,
+                  NAME: application.constants.AdministratorRole,
                 },
               );
             }
@@ -584,14 +583,14 @@ export abstract class DatabaseInitializationService {
 
           // Check if member role already exists
           let memberRole = await RoleModel.findOne({
-            name: AppConstants.MemberRole,
+            name: application.constants.MemberRole,
           }).session(sess ?? null);
           if (!memberRole) {
             const memberRoleDocs = await RoleModel.create(
               [
                 {
                   _id: memberRoleId,
-                  name: AppConstants.MemberRole,
+                  name: application.constants.MemberRole,
                   admin: false,
                   member: true,
                   child: false,
@@ -620,14 +619,14 @@ export abstract class DatabaseInitializationService {
 
           // Check if system role already exists
           let systemRole = await RoleModel.findOne({
-            name: AppConstants.SystemRole,
+            name: application.constants.SystemRole,
           }).session(sess ?? null);
           if (!systemRole) {
             const systemRoleDocs = await RoleModel.create(
               [
                 {
                   _id: systemRoleId,
-                  name: AppConstants.SystemRole,
+                  name: application.constants.SystemRole,
                   admin: true,
                   member: true,
                   system: true,
@@ -649,8 +648,8 @@ export abstract class DatabaseInitializationService {
           }
 
           const systemUser = DatabaseInitializationService.cacheOrNew(
-            AppConstants.SystemUser,
-            new EmailString(AppConstants.SystemEmail),
+            application.constants.SystemUser,
+            new EmailString(application.constants.SystemEmail),
             options.systemMnemonic!,
             MemberType.System,
             eciesService,
@@ -701,8 +700,8 @@ export abstract class DatabaseInitializationService {
             [
               {
                 _id: systemUserId,
-                username: AppConstants.SystemUser,
-                email: AppConstants.SystemEmail,
+                username: application.constants.SystemUser,
+                email: application.constants.SystemEmail,
                 publicKey: systemUser.member.publicKey.toString('hex'),
                 duressPasswords: [],
                 mnemonicRecovery: systemEncryptedMnemonic,
@@ -760,8 +759,8 @@ export abstract class DatabaseInitializationService {
           }
 
           const adminUser = DatabaseInitializationService.cacheOrNew(
-            AppConstants.AdministratorUser,
-            new EmailString(AppConstants.AdministratorEmail),
+            application.constants.AdministratorUser,
+            new EmailString(application.constants.AdministratorEmail),
             options.adminMnemonic,
             MemberType.User,
             eciesService,
@@ -809,8 +808,8 @@ export abstract class DatabaseInitializationService {
             [
               {
                 _id: adminUserId,
-                username: AppConstants.AdministratorUser,
-                email: AppConstants.AdministratorEmail,
+                username: application.constants.AdministratorUser,
+                email: application.constants.AdministratorEmail,
                 publicKey: adminUser.member.publicKey.toString('hex'),
                 duressPasswords: [],
                 mnemonicRecovery: adminEncryptedMnemonic,
@@ -871,8 +870,8 @@ export abstract class DatabaseInitializationService {
           }
 
           const memberUser = DatabaseInitializationService.cacheOrNew(
-            AppConstants.MemberUser,
-            new EmailString(AppConstants.MemberEmail),
+            application.constants.MemberUser,
+            new EmailString(application.constants.MemberEmail),
             options.memberMnemonic,
             MemberType.User,
             eciesService,
@@ -922,8 +921,8 @@ export abstract class DatabaseInitializationService {
             [
               {
                 _id: memberUserId,
-                username: AppConstants.MemberUser,
-                email: AppConstants.MemberEmail,
+                username: application.constants.MemberUser,
+                email: application.constants.MemberEmail,
                 publicKey: memberUser.member.publicKey.toString('hex'),
                 mnemonicId: memberMnemonicDoc._id,
                 mnemonicRecovery: encryptedMemberMnemonic,
@@ -1071,14 +1070,14 @@ export abstract class DatabaseInitializationService {
       true,
       'log',
       this.defaultI18nTFunc(
-        '\n=== {{StringName.Admin_AccountCredentials}} ===',
+        '\n=== {{SuiteCoreStringKey.Admin_AccountCredentials}} ===',
       ),
     );
     debugLog(
       true,
       'log',
       this.defaultI18nTFunc(
-        '{{StringName.Common_System}} {{StringName.Common_ID}}: {id}',
+        '{{SuiteCoreStringKey.Common_System}} {{SuiteCoreStringKey.Common_ID}}: {id}',
         undefined,
         {
           id: result.systemUser._id.toHexString(),
@@ -1089,7 +1088,7 @@ export abstract class DatabaseInitializationService {
       true,
       'log',
       this.defaultI18nTFunc(
-        '{{StringName.Common_System}} {{StringName.Common_Role}}: {roleName}',
+        '{{SuiteCoreStringKey.Common_System}} {{SuiteCoreStringKey.Common_Role}}: {roleName}',
         undefined,
         {
           roleName: result.systemRole.name,
@@ -1100,7 +1099,7 @@ export abstract class DatabaseInitializationService {
       true,
       'log',
       this.defaultI18nTFunc(
-        '{{StringName.Common_System}} {{StringName.Common_Role}} {{StringName.Common_ID}}: {roleId}',
+        '{{SuiteCoreStringKey.Common_System}} {{SuiteCoreStringKey.Common_Role}} {{SuiteCoreStringKey.Common_ID}}: {roleId}',
         undefined,
         {
           roleId: result.systemRole._id.toString(),
@@ -1111,7 +1110,7 @@ export abstract class DatabaseInitializationService {
       true,
       'log',
       this.defaultI18nTFunc(
-        '{{StringName.Common_System}} {{StringName.Common_User}} {{StringName.Common_Role}} {{StringName.Common_ID}}: {userRoleId}',
+        '{{SuiteCoreStringKey.Common_System}} {{SuiteCoreStringKey.Common_User}} {{SuiteCoreStringKey.Common_Role}} {{SuiteCoreStringKey.Common_ID}}: {userRoleId}',
         undefined,
         {
           userRoleId: result.systemUserRole._id.toString(),
@@ -1122,7 +1121,7 @@ export abstract class DatabaseInitializationService {
       true,
       'log',
       this.defaultI18nTFunc(
-        '{{StringName.Common_System}} {{StringName.Common_Username}}: {username}',
+        '{{SuiteCoreStringKey.Common_System}} {{SuiteCoreStringKey.Common_Username}}: {username}',
         undefined,
         {
           username: result.systemUsername,
@@ -1133,7 +1132,7 @@ export abstract class DatabaseInitializationService {
       true,
       'log',
       this.defaultI18nTFunc(
-        '{{StringName.Common_System}} {{StringName.Common_Email}}: {email}',
+        '{{SuiteCoreStringKey.Common_System}} {{SuiteCoreStringKey.Common_Email}}: {email}',
         undefined,
         {
           email: result.systemEmail,
@@ -1144,7 +1143,7 @@ export abstract class DatabaseInitializationService {
       true,
       'log',
       this.defaultI18nTFunc(
-        '{{StringName.Common_System}} {{StringName.Common_Password}}: {password}',
+        '{{SuiteCoreStringKey.Common_System}} {{SuiteCoreStringKey.Common_Password}}: {password}',
         undefined,
         {
           password: result.systemPassword,
@@ -1155,7 +1154,7 @@ export abstract class DatabaseInitializationService {
       true,
       'log',
       this.defaultI18nTFunc(
-        '{{StringName.Common_System}} {{StringName.Common_Mnemonic}}: {mnemonic}',
+        '{{SuiteCoreStringKey.Common_System}} {{SuiteCoreStringKey.Common_Mnemonic}}: {mnemonic}',
         undefined,
         {
           mnemonic: result.systemMnemonic,
@@ -1166,7 +1165,7 @@ export abstract class DatabaseInitializationService {
       true,
       'log',
       this.defaultI18nTFunc(
-        '{{StringName.Common_System}} {{StringName.Common_PublicKey}}: {publicKey}',
+        '{{SuiteCoreStringKey.Common_System}} {{SuiteCoreStringKey.Common_PublicKey}}: {publicKey}',
         undefined,
         {
           publicKey: result.systemUser.publicKey,
@@ -1177,7 +1176,7 @@ export abstract class DatabaseInitializationService {
       true,
       'log',
       `${this.defaultI18nTFunc(
-        '{{StringName.Common_System}} {{StringName.Common_BackupCodes}}',
+        '{{SuiteCoreStringKey.Common_System}} {{SuiteCoreStringKey.Common_BackupCodes}}',
       )}: ${result.systemBackupCodes.join(', ')}`,
     );
     debugLog(true, 'log', '');
@@ -1185,7 +1184,7 @@ export abstract class DatabaseInitializationService {
       true,
       'log',
       this.defaultI18nTFunc(
-        '{{StringName.Common_Admin}} {{StringName.Common_ID}}: {id}',
+        '{{SuiteCoreStringKey.Common_Admin}} {{SuiteCoreStringKey.Common_ID}}: {id}',
         undefined,
         {
           id: result.adminUser._id.toHexString(),
@@ -1196,7 +1195,7 @@ export abstract class DatabaseInitializationService {
       true,
       'log',
       this.defaultI18nTFunc(
-        '{{StringName.Common_Admin}} {{StringName.Common_Role}}: {roleName}',
+        '{{SuiteCoreStringKey.Common_Admin}} {{SuiteCoreStringKey.Common_Role}}: {roleName}',
         undefined,
         {
           roleName: result.adminRole.name,
@@ -1207,7 +1206,7 @@ export abstract class DatabaseInitializationService {
       true,
       'log',
       this.defaultI18nTFunc(
-        '{{StringName.Common_Admin}} {{StringName.Common_Role}} {{StringName.Common_ID}}: {roleId}',
+        '{{SuiteCoreStringKey.Common_Admin}} {{SuiteCoreStringKey.Common_Role}} {{SuiteCoreStringKey.Common_ID}}: {roleId}',
         undefined,
         {
           roleId: result.adminRole._id.toString(),
@@ -1218,7 +1217,7 @@ export abstract class DatabaseInitializationService {
       true,
       'log',
       this.defaultI18nTFunc(
-        '{{StringName.Common_Admin}} {{StringName.Common_User}} {{StringName.Common_Role}} {{StringName.Common_ID}}: {userRoleId}',
+        '{{SuiteCoreStringKey.Common_Admin}} {{SuiteCoreStringKey.Common_User}} {{SuiteCoreStringKey.Common_Role}} {{SuiteCoreStringKey.Common_ID}}: {userRoleId}',
         undefined,
         {
           userRoleId: result.adminUserRole._id.toString(),
@@ -1229,7 +1228,7 @@ export abstract class DatabaseInitializationService {
       true,
       'log',
       this.defaultI18nTFunc(
-        '{{StringName.Common_Admin}} {{StringName.Common_Username}}: {username}',
+        '{{SuiteCoreStringKey.Common_Admin}} {{SuiteCoreStringKey.Common_Username}}: {username}',
         undefined,
         {
           username: result.adminUsername,
@@ -1240,7 +1239,7 @@ export abstract class DatabaseInitializationService {
       true,
       'log',
       this.defaultI18nTFunc(
-        '{{StringName.Common_Admin}} {{StringName.Common_Email}}: {email}',
+        '{{SuiteCoreStringKey.Common_Admin}} {{SuiteCoreStringKey.Common_Email}}: {email}',
         undefined,
         {
           email: result.adminEmail,
@@ -1251,7 +1250,7 @@ export abstract class DatabaseInitializationService {
       true,
       'log',
       this.defaultI18nTFunc(
-        '{{StringName.Common_Admin}} {{StringName.Common_Password}}: {password}',
+        '{{SuiteCoreStringKey.Common_Admin}} {{SuiteCoreStringKey.Common_Password}}: {password}',
         undefined,
         {
           password: result.adminPassword,
@@ -1262,7 +1261,7 @@ export abstract class DatabaseInitializationService {
       true,
       'log',
       this.defaultI18nTFunc(
-        '{{StringName.Common_Admin}} {{StringName.Common_Mnemonic}}: {mnemonic}',
+        '{{SuiteCoreStringKey.Common_Admin}} {{SuiteCoreStringKey.Common_Mnemonic}}: {mnemonic}',
         undefined,
         {
           mnemonic: result.adminMnemonic,
@@ -1273,7 +1272,7 @@ export abstract class DatabaseInitializationService {
       true,
       'log',
       this.defaultI18nTFunc(
-        '{{StringName.Common_Admin}} {{StringName.Common_PublicKey}}: {publicKey}',
+        '{{SuiteCoreStringKey.Common_Admin}} {{SuiteCoreStringKey.Common_PublicKey}}: {publicKey}',
         undefined,
         {
           publicKey: result.adminUser.publicKey,
@@ -1284,7 +1283,7 @@ export abstract class DatabaseInitializationService {
       true,
       'log',
       `${this.defaultI18nTFunc(
-        '{{StringName.Common_Admin}} {{StringName.Common_BackupCodes}}',
+        '{{SuiteCoreStringKey.Common_Admin}} {{SuiteCoreStringKey.Common_BackupCodes}}',
       )}: ${result.adminBackupCodes.join(', ')}`,
     );
     debugLog(true, 'log', '');
@@ -1292,7 +1291,7 @@ export abstract class DatabaseInitializationService {
       true,
       'log',
       this.defaultI18nTFunc(
-        '{{StringName.Common_Member}} {{StringName.Common_ID}}: {id}',
+        '{{SuiteCoreStringKey.Common_Member}} {{SuiteCoreStringKey.Common_ID}}: {id}',
         undefined,
         {
           id: result.memberUser._id.toHexString(),
@@ -1303,7 +1302,7 @@ export abstract class DatabaseInitializationService {
       true,
       'log',
       this.defaultI18nTFunc(
-        '{{StringName.Common_Member}} {{StringName.Common_Role}}: {roleName}',
+        '{{SuiteCoreStringKey.Common_Member}} {{SuiteCoreStringKey.Common_Role}}: {roleName}',
         undefined,
         {
           roleName: result.memberRole.name,
@@ -1314,7 +1313,7 @@ export abstract class DatabaseInitializationService {
       true,
       'log',
       this.defaultI18nTFunc(
-        '{{StringName.Common_Member}} {{StringName.Common_Role}} {{StringName.Common_ID}}: {roleId}',
+        '{{SuiteCoreStringKey.Common_Member}} {{SuiteCoreStringKey.Common_Role}} {{SuiteCoreStringKey.Common_ID}}: {roleId}',
         undefined,
         {
           roleId: result.memberRole._id.toString(),
@@ -1325,7 +1324,7 @@ export abstract class DatabaseInitializationService {
       true,
       'log',
       this.defaultI18nTFunc(
-        '{{StringName.Common_Member}} {{StringName.Common_User}} {{StringName.Common_Role}} {{StringName.Common_ID}}: {userRoleId}',
+        '{{SuiteCoreStringKey.Common_Member}} {{SuiteCoreStringKey.Common_User}} {{SuiteCoreStringKey.Common_Role}} {{SuiteCoreStringKey.Common_ID}}: {userRoleId}',
         undefined,
         {
           userRoleId: result.memberUserRole._id.toString(),
@@ -1336,7 +1335,7 @@ export abstract class DatabaseInitializationService {
       true,
       'log',
       this.defaultI18nTFunc(
-        '{{StringName.Common_Member}} {{StringName.Common_Username}}: {username}',
+        '{{SuiteCoreStringKey.Common_Member}} {{SuiteCoreStringKey.Common_Username}}: {username}',
         undefined,
         {
           username: result.memberUsername,
@@ -1347,7 +1346,7 @@ export abstract class DatabaseInitializationService {
       true,
       'log',
       this.defaultI18nTFunc(
-        '{{StringName.Common_Member}} {{StringName.Common_Email}}: {email}',
+        '{{SuiteCoreStringKey.Common_Member}} {{SuiteCoreStringKey.Common_Email}}: {email}',
         undefined,
         {
           email: result.memberEmail,
@@ -1358,7 +1357,7 @@ export abstract class DatabaseInitializationService {
       true,
       'log',
       this.defaultI18nTFunc(
-        '{{StringName.Common_Member}} {{StringName.Common_Password}}: {password}',
+        '{{SuiteCoreStringKey.Common_Member}} {{SuiteCoreStringKey.Common_Password}}: {password}',
         undefined,
         {
           password: result.memberPassword,
@@ -1369,7 +1368,7 @@ export abstract class DatabaseInitializationService {
       true,
       'log',
       this.defaultI18nTFunc(
-        '{{StringName.Common_Member}} {{StringName.Common_Mnemonic}}: {mnemonic}',
+        '{{SuiteCoreStringKey.Common_Member}} {{SuiteCoreStringKey.Common_Mnemonic}}: {mnemonic}',
         undefined,
         {
           mnemonic: result.memberMnemonic,
@@ -1380,7 +1379,7 @@ export abstract class DatabaseInitializationService {
       true,
       'log',
       this.defaultI18nTFunc(
-        '{{StringName.Common_Member}} {{StringName.Common_PublicKey}}: {publicKey}',
+        '{{SuiteCoreStringKey.Common_Member}} {{SuiteCoreStringKey.Common_PublicKey}}: {publicKey}',
         undefined,
         {
           publicKey: result.memberUser.publicKey,
@@ -1391,13 +1390,13 @@ export abstract class DatabaseInitializationService {
       true,
       'log',
       `${this.defaultI18nTFunc(
-        '{{StringName.Common_Member}} {{StringName.Common_BackupCodes}}',
+        '{{SuiteCoreStringKey.Common_Member}} {{SuiteCoreStringKey.Common_BackupCodes}}',
       )}: ${result.memberBackupCodes.join(', ')}`,
     );
     debugLog(
       true,
       'log',
-      this.defaultI18nTFunc('\n=== {{StringName.Admin_EndCredentials}} ==='),
+      this.defaultI18nTFunc('\n=== {{SuiteCoreStringKey.Admin_EndCredentials}} ==='),
     );
   }
 

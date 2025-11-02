@@ -663,6 +663,11 @@ For issues and questions:
 
 ## ChangeLog
 
+### Version 1.3.16
+
+- Fix StringName strings
+- Fix constatnts during database initialization
+
 ### Version 1.3.15
 
 - Homogenize versions
