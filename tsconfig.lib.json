@@ -1,0 +1,47 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../../dist/out-tsc/packages/digitaldefiance-node-express-suite",
+    "rootDir": "./src",
+    "target": "es2022",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "lib": [
+      "es2022",
+      "dom",
+      "dom.iterable"
+    ],
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "emitDeclarationOnly": false,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
+  },
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "**/*.spec.ts",
+    "**/*.test.ts",
+    "tests/**/*"
+  ],
+  "references": [
+    {
+      "path": "../digitaldefiance-i18n-lib"
+    },
+    {
+      "path": "../digitaldefiance-ecies-lib"
+    },
+    {
+      "path": "../digitaldefiance-node-ecies-lib"
+    },
+    {
+      "path": "../digitaldefiance-suite-core-lib"
+    }
+  ]
+}

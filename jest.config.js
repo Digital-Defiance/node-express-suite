@@ -1,3 +1,6 @@
+const { pathsToModuleNameMapper } = require('ts-jest');
+const { compilerOptions } = require('../../tsconfig.base.json');
+
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
@@ -6,10 +9,18 @@ module.exports = {
   collectCoverageFrom: ['src/**/*.ts'],
   moduleFileExtensions: ['js', 'ts'],
   transform: {
-    '^.+\.(ts|js)$': 'ts-jest',
+    '^.+.[tj]s$': [
+      'ts-jest',
+      {
+        tsconfig: '<rootDir>/tsconfig.spec.json',
+      },
+    ],
   },
   transformIgnorePatterns: [
-    'node_modules/(?!([^/]*/)*((@scure|@noble|@ethereumjs)))'
+    'node_modules/(?!([^/]*/)*((@faker-js|@scure|@noble|@ethereumjs)))',
   ],
   modulePathIgnorePatterns: ['<rootDir>/tests/__mocks__'],
+  moduleNameMapper: pathsToModuleNameMapper(compilerOptions.paths, {
+    prefix: '<rootDir>/../../',
+  }),
 };

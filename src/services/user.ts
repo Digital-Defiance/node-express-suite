@@ -1,6 +1,5 @@
 import {
   Constants as EciesConstants,
-  EciesStringKey,
   EmailString,
   getEciesI18nEngine,
   IECIESConfig,
@@ -53,17 +52,19 @@ import { randomBytes } from 'crypto';
 import { ObjectId } from 'mongodb';
 import { ClientSession, Document, ProjectionType, Types } from 'mongoose';
 import validator from 'validator';
+import { BackupCode } from '../backup-code';
+import { IBaseDocument } from '../documents';
 import { IEmailTokenDocument } from '../documents/email-token';
 import { IMnemonicDocument } from '../documents/mnemonic';
 import { IUserDocument } from '../documents/user';
-import { InvalidNewPasswordError } from '../errors';
-import { IConstants } from '../interfaces/constants';
-import { BackupCode } from '../backup-code';
 import { BaseModelName } from '../enumerations/base-model-name';
+import { Environment } from '../environment';
+import { InvalidNewPasswordError } from '../errors';
 import { MongooseValidationError } from '../errors/mongoose-validation';
 import { ICreateUserBasics } from '../interfaces';
 import { IApplication } from '../interfaces/application';
 import { IUserBackendObject } from '../interfaces/backend-objects/user';
+import { IConstants } from '../interfaces/constants';
 import { IEmailService } from '../interfaces/email-service';
 import { ModelRegistry } from '../model-registry';
 import { debugLog } from '../utils';
@@ -75,8 +76,6 @@ import { MnemonicService } from './mnemonic';
 import { RequestUserService } from './request-user';
 import { RoleService } from './role';
 import { SystemUserService } from './system-user';
-import { IBaseDocument } from '../documents';
-import { Environment } from '../environment';
 
 type ProjectionObject = Record<string, 0 | 1 | -1 | boolean>;
 
@@ -91,7 +90,13 @@ export class UserService<
   TBaseDocument extends IBaseDocument<T, I> = IBaseDocument<T, I>,
   TUser extends IUserBase<I, D, S, A> = IUserBase<I, D, S, A>,
   TTokenRole extends ITokenRole<I, D> = ITokenRole<I, D>,
-  TApplication extends IApplication<T, I, TBaseDocument, TEnvironment, TConstants> = IApplication<T, I, TBaseDocument, TEnvironment, TConstants>,
+  TApplication extends IApplication<
+    T,
+    I,
+    TBaseDocument,
+    TEnvironment,
+    TConstants
+  > = IApplication<T, I, TBaseDocument, TEnvironment, TConstants>,
 > extends BaseService {
   protected readonly roleService: RoleService<I, D, TTokenRole>;
   protected readonly eciesService: ECIESService;
@@ -1121,7 +1126,6 @@ export class UserService<
       throw new InvalidChallengeResponseError();
     }
     // disassemble the challengeResponse into time, nonce, signature
-    //
     const time = challengeBuffer.subarray(0, 8); // 16 hex characters
     const nonce = challengeBuffer.subarray(8, 40); // 64 hex characters
     const signature = challengeBuffer.subarray(40); // 65 * 2 hex characters
@@ -1192,7 +1196,7 @@ export class UserService<
           .select(
             '_id username email accountStatus deletedAt mnemonicId publicKey passwordWrappedPrivateKey',
           );
-    const userDoc = await userQuery.lean().session(session ?? null);
+    const userDoc = await userQuery.session(session ?? null);
 
     if (!userDoc || userDoc.deletedAt) {
       throw new InvalidCredentialsError();
@@ -1300,7 +1304,7 @@ export class UserService<
           .select(
             '_id username email accountStatus deletedAt mnemonicId publicKey passwordWrappedPrivateKey',
           );
-    const userDoc = await userQuery.lean().session(session ?? null);
+    const userDoc = await userQuery.session(session ?? null);
 
     if (!userDoc || userDoc.deletedAt) {
       throw new InvalidCredentialsError();
@@ -1472,7 +1476,7 @@ export class UserService<
     session?: ClientSession,
   ): Promise<void> {
     let alreadyVerified = false;
-    
+
     await this.withTransaction<void>(
       async (sess: ClientSession | undefined) => {
         const EmailTokenModel =
@@ -1549,7 +1553,7 @@ export class UserService<
         timeoutMs: this.application.environment.mongo.transactionTimeout * 5,
       },
     );
-    
+
     if (alreadyVerified) {
       throw new EmailVerifiedError(409);
     }

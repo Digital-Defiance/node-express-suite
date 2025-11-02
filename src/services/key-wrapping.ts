@@ -223,7 +223,7 @@ export class KeyWrappingService {
     // Derive a short cache key; avoid storing raw password by hashing
     const pwdKey = createHash('sha256')
       .update(password, 'utf8')
-      .digest('base64url')
+      .digest('hex')
       .slice(0, 24);
     const cacheKey = `${wrappedKey.salt}:${wrappedKey.iterations}:${pwdKey}`;
     let p = KeyWrappingService.inFlightUnwraps.get(cacheKey);

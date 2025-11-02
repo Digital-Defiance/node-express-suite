@@ -6,6 +6,7 @@ import {
   SecureBuffer,
   SecureString,
 } from '@digitaldefiance/ecies-lib';
+import { CoreLanguageCode } from '@digitaldefiance/i18n-lib';
 import {
   Member as BackendMember,
   ECIESService,
@@ -20,16 +21,18 @@ import {
   SuiteCoreStringKey,
   TranslatableSuiteError,
 } from '@digitaldefiance/suite-core-lib';
+import { crc32 } from 'crc';
 import { createHash, randomBytes } from 'crypto';
 import { ObjectId as MongoObjectId } from 'mongodb';
 import { Connection, Types } from 'mongoose';
-import { crc32 } from 'zlib';
 import { BackupCode } from '../backup-code';
 import { IBaseDocument } from '../documents/base';
 import { IRoleDocument } from '../documents/role';
 import { IUserDocument } from '../documents/user';
 import { IUserRoleDocument } from '../documents/user-role';
 import { BaseModelName } from '../enumerations/base-model-name';
+import { Environment } from '../environment';
+import { IConstants } from '../interfaces';
 import { IApplication } from '../interfaces/application';
 import { IServerInitResult } from '../interfaces/server-init-result';
 import { ModelRegistry } from '../model-registry';
@@ -39,9 +42,6 @@ import { BackupCodeService } from './backup-code';
 import { MnemonicService } from './mnemonic';
 import { RoleService } from './role';
 import { SystemUserService } from './system-user';
-import { CoreLanguageCode } from '@digitaldefiance/i18n-lib';
-import { Environment } from '../environment';
-import { IConstants } from '../interfaces';
 
 export abstract class DatabaseInitializationService {
   // Static initialization state management
@@ -218,7 +218,15 @@ export abstract class DatabaseInitializationService {
     return connection.db.dropDatabase();
   }
 
-  public static getInitOptions(application: IApplication<any, Types.ObjectId, IBaseDocument<any, Types.ObjectId>, Environment, IConstants>): {
+  public static getInitOptions(
+    application: IApplication<
+      any,
+      Types.ObjectId,
+      IBaseDocument<any, Types.ObjectId>,
+      Environment,
+      IConstants
+    >,
+  ): {
     adminId?: Types.ObjectId;
     adminMnemonic?: SecureString;
     adminPassword?: SecureString;
@@ -341,7 +349,13 @@ export abstract class DatabaseInitializationService {
    * @returns The result of the initialization
    */
   public static async initUserDbWithServices(
-    application: IApplication<any, Types.ObjectId, IBaseDocument<any, Types.ObjectId>, Environment, IConstants>,
+    application: IApplication<
+      any,
+      Types.ObjectId,
+      IBaseDocument<any, Types.ObjectId>,
+      Environment,
+      IConstants
+    >,
     keyWrappingService: KeyWrappingService,
     mnemonicService: MnemonicService,
     eciesService: ECIESService,
@@ -402,6 +416,10 @@ export abstract class DatabaseInitializationService {
       );
 
       if (existingAdminUser && existingMemberUser && existingSystemUser) {
+        const adminUserDoc = UserModel.hydrate(existingAdminUser);
+        const memberUserDoc = UserModel.hydrate(existingMemberUser);
+        const systemUserDoc = UserModel.hydrate(existingSystemUser);
+
         // Try to construct a minimal result from existing data
         // Note: This is a fallback case and some data may not be available
         const UserRoleModel =
@@ -419,9 +437,9 @@ export abstract class DatabaseInitializationService {
           RoleModel.findOne({ name: AppConstants.AdministratorRole }),
           RoleModel.findOne({ name: AppConstants.MemberRole }),
           RoleModel.findOne({ name: AppConstants.SystemRole }),
-          UserRoleModel.findOne({ userId: existingAdminUser._id }),
-          UserRoleModel.findOne({ userId: existingMemberUser._id }),
-          UserRoleModel.findOne({ userId: existingSystemUser._id }),
+          UserRoleModel.findOne({ userId: adminUserDoc._id }),
+          UserRoleModel.findOne({ userId: memberUserDoc._id }),
+          UserRoleModel.findOne({ userId: systemUserDoc._id }),
         ]);
 
         if (
@@ -437,27 +455,27 @@ export abstract class DatabaseInitializationService {
             data: {
               adminRole,
               adminUserRole,
-              adminUser: existingAdminUser,
-              adminUsername: existingAdminUser.username,
-              adminEmail: existingAdminUser.email,
+              adminUser: adminUserDoc,
+              adminUsername: adminUserDoc.username,
+              adminEmail: adminUserDoc.email,
               adminMnemonic: '', // Not available in fallback
               adminPassword: '', // Not available in fallback
               adminBackupCodes: [], // Not available in fallback
               adminMember: {} as BackendMember, // Not available in fallback
               memberRole,
               memberUserRole,
-              memberUser: existingMemberUser,
-              memberUsername: existingMemberUser.username,
-              memberEmail: existingMemberUser.email,
+              memberUser: memberUserDoc,
+              memberUsername: memberUserDoc.username,
+              memberEmail: memberUserDoc.email,
               memberMnemonic: '', // Not available in fallback
               memberPassword: '', // Not available in fallback
               memberBackupCodes: [], // Not available in fallback
               memberMember: {} as BackendMember, // Not available in fallback
               systemRole,
               systemUserRole,
-              systemUser: existingSystemUser,
-              systemUsername: existingSystemUser.username,
-              systemEmail: existingSystemUser.email,
+              systemUser: systemUserDoc,
+              systemUsername: systemUserDoc.username,
+              systemEmail: systemUserDoc.email,
               systemMnemonic: '', // Not available in fallback
               systemPassword: '', // Not available in fallback
               systemBackupCodes: [], // Not available in fallback
@@ -494,7 +512,7 @@ export abstract class DatabaseInitializationService {
 
     // Add a small random delay in test environments to reduce collision probability
     if (isTestEnvironment) {
-      const delay = randomBytes(1)[0] % 50 + 10; // 10-60ms random delay (reduced)
+      const delay = (randomBytes(1)[0] % 50) + 10; // 10-60ms random delay (reduced)
       await new Promise((resolve) => setTimeout(resolve, delay));
     }
 
@@ -1415,7 +1433,13 @@ export abstract class DatabaseInitializationService {
    * @returns The result of the initialization
    */
   public static async initUserDb(
-    application: IApplication<any, Types.ObjectId, IBaseDocument<any, Types.ObjectId>, Environment, IConstants>,
+    application: IApplication<
+      any,
+      Types.ObjectId,
+      IBaseDocument<any, Types.ObjectId>,
+      Environment,
+      IConstants
+    >,
   ): Promise<IFailableResult<IServerInitResult>> {
     const mnemonicModel = ModelRegistry.instance.getTypedModel<
       IBaseDocument<IMnemonicBase<Types.ObjectId>>

@@ -1,3 +1,5 @@
+import 'reflect-metadata';
+
 export * from './application';
 export * from './application-base';
 export * from './backup-code';
@@ -6,8 +8,8 @@ export * from './controllers';
 export * from './decorators';
 export * from './defaults';
 export * from './documents';
-export * from './environment';
 export * from './enumerations';
+export * from './environment';
 export * from './errors';
 export * from './get-language';
 export * from './get-timezone';

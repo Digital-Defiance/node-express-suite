@@ -3,6 +3,7 @@ import {
   ChecksumString,
 } from '@digitaldefiance/node-ecies-lib';
 import { createHash } from 'crypto';
+import { promises as fs } from 'fs';
 import { CHECKSUM } from '../constants';
 import { IChecksumConfig } from '../interfaces/checksum-config';
 
@@ -124,8 +125,7 @@ export class ChecksumService {
     // Import fs using a static import that's available at module load time
     // This solves the dynamic import/require issues
     try {
-      const { readFile: fsReadFile } = await import('fs/promises');
-      return await fsReadFile(filePath);
+      return await fs.readFile(filePath);
     } catch {
       throw new Error(`Failed to read file at path: ${filePath}`);
     }

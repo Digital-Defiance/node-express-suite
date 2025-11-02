@@ -1,11 +1,13 @@
+import { SecureBuffer } from '@digitaldefiance/ecies-lib';
 import express from 'express';
 import request from 'supertest';
-import { createApplicationMock } from '../__tests__/helpers/application.mock';
-import { SystemUserService } from '../../src/services/system-user';
-import { ApiRouter } from '../../src/routers/api';
-import { emailServiceRegistry } from '../../src/registry';
 import { IEmailService } from '../../src/interfaces/email-service';
+import { IMongoEnvironment } from '../../src/interfaces/environment-mongo';
 import { ModelRegistry } from '../../src/model-registry';
+import { emailServiceRegistry } from '../../src/registry';
+import { ApiRouter } from '../../src/routers/api';
+import { SystemUserService } from '../../src/services/system-user';
+import { createApplicationMock } from '../__tests__/helpers/application.mock';
 
 // Mock SystemUserService to avoid needing real system user setup
 jest.mock('../../src/services/system-user');
@@ -29,7 +31,9 @@ describe('ApiRouter', () => {
         session: jest.fn().mockResolvedValue(null),
       }),
     };
-    jest.spyOn(ModelRegistry.instance, 'getTypedModel').mockReturnValue(mockModel as any);
+    jest
+      .spyOn(ModelRegistry.instance, 'getTypedModel')
+      .mockReturnValue(mockModel as any);
 
     const app = express();
     app.use(express.json());
@@ -44,12 +48,11 @@ describe('ApiRouter', () => {
       },
       {
         // Provide required HMAC secret expected by services
-        mnemonicHmacSecret: {
-          length: 32,
-          value: Buffer.alloc(32),
-          dispose: () => {},
-        } as unknown,
-        mongo: { uri: 'mongodb://localhost:27017', transactionTimeout: 60000 },
+        mnemonicHmacSecret: new SecureBuffer(Buffer.alloc(32)),
+        mongo: {
+          uri: 'mongodb://localhost:27017',
+          transactionTimeout: 60000,
+        } as IMongoEnvironment,
       },
     );
     const apiRouter = new ApiRouter(application);

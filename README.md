@@ -663,6 +663,10 @@ For issues and questions:
 
 ## ChangeLog
 
+### Version 1.0.23
+
+- Upgrade to es2022/nx monorepo
+
 ### Version 1.0.22
 
 - Update libs

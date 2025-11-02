@@ -16,11 +16,11 @@ import { readFileSync } from 'fs';
 import { Server } from 'http';
 import { createServer } from 'https';
 import mongoose, { Types } from 'mongoose';
-import { resolve, normalize, isAbsolute } from 'path';
+import { isAbsolute, normalize, resolve } from 'path';
 import { BaseApplication } from './application-base';
 import { IBaseDocument } from './documents/base';
 import { Environment } from './environment';
-import { IApplication, ICSPConfig, IEnvironment, IFailableResult } from './interfaces';
+import { IApplication, ICSPConfig, IFailableResult } from './interfaces';
 import { IConstants } from './interfaces/constants';
 import { Middlewares } from './middlewares';
 import { AppRouter } from './routers/app';
@@ -31,11 +31,22 @@ import { debugLog, handleError, sendApiMessageResponse } from './utils';
 /**
  * Application class
  */
-export class Application<T, I extends Types.ObjectId | string, TInitResults, TModelDocs extends Record<string, IBaseDocument<any>>, TBaseDocument extends IBaseDocument<T, I> = IBaseDocument<T, I>, TEnvironment extends Environment = Environment,
-  TConstants extends IConstants = IConstants,
-> extends BaseApplication<TModelDocs, TInitResults, TConstants> implements IApplication<T, I, TBaseDocument, TEnvironment, TConstants> {
+type ServerWithOptionalClose = Server & { closeAllConnections?: () => void };
+
+export class Application<
+    T,
+    I extends Types.ObjectId | string,
+    TInitResults,
+    TModelDocs extends Record<string, IBaseDocument<any>>,
+    TBaseDocument extends IBaseDocument<T, I> = IBaseDocument<T, I>,
+    TEnvironment extends Environment = Environment,
+    TConstants extends IConstants = IConstants,
+  >
+  extends BaseApplication<TModelDocs, TInitResults, TConstants>
+  implements IApplication<T, I, TBaseDocument, TEnvironment, TConstants>
+{
   public readonly expressApp: ExpressApplication;
-  private server: Server | null = null;
+  private server: ServerWithOptionalClose | null = null;
   private readonly _cspConfig: ICSPConfig;
   private readonly _apiRouter: BaseRouter;
 
@@ -133,7 +144,7 @@ export class Application<T, I extends Types.ObjectId | string, TInitResults, TMo
               );
               resolve();
             },
-          );
+          ) as ServerWithOptionalClose;
         }),
       );
 
@@ -141,12 +152,16 @@ export class Application<T, I extends Types.ObjectId | string, TInitResults, TMo
         try {
           const certRoot = normalize(this.environment.httpsDevCertRoot);
           if (!isAbsolute(certRoot) || certRoot.includes('..')) {
-            throw new TranslatableSuiteError(SuiteCoreStringKey.Error_InvalidCertificatePathMustBeAbsolute);
+            throw new TranslatableSuiteError(
+              SuiteCoreStringKey.Error_InvalidCertificatePathMustBeAbsolute,
+            );
           }
           const certPath = normalize(resolve(certRoot + '.pem'));
           const keyPath = normalize(resolve(certRoot + '-key.pem'));
           if (certPath.includes('..') || keyPath.includes('..')) {
-            throw new TranslatableSuiteError(SuiteCoreStringKey.Error_InvalidCertificatePathAfterResolution);
+            throw new TranslatableSuiteError(
+              SuiteCoreStringKey.Error_InvalidCertificatePathAfterResolution,
+            );
           }
           const options = {
             // amazonq-ignore-next-line fixed above

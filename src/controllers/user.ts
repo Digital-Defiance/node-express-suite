@@ -6,7 +6,12 @@ import {
   SecureString,
   UINT64_SIZE,
 } from '@digitaldefiance/ecies-lib';
-import { isValidTimezone, LanguageCodes, HandleableError, CoreLanguageCode } from '@digitaldefiance/i18n-lib';
+import {
+  CoreLanguageCode,
+  HandleableError,
+  isValidTimezone,
+  LanguageCodes,
+} from '@digitaldefiance/i18n-lib';
 import {
   Member as BackendMember,
   ECIESService,
@@ -23,15 +28,17 @@ import {
   SuiteCoreStringKey,
   UsernameOrEmailRequiredError,
 } from '@digitaldefiance/suite-core-lib';
-import { NextFunction, Request, Response } from 'express';
+import type { NextFunction, Request, Response } from 'express';
 import { body } from 'express-validator';
 import { Types } from 'mongoose';
 import { z } from 'zod';
 import { BackupCode } from '../backup-code';
 import { DecoratorBaseController } from '../decorators/base-controller';
 import { Controller, Get, Post } from '../decorators/controller';
+import { IBaseDocument } from '../documents';
 import { IUserDocument } from '../documents/user';
 import { BaseModelName } from '../enumerations/base-model-name';
+import { Environment } from '../environment';
 import { MnemonicOrPasswordRequiredError } from '../errors/mnemonic-or-password-required';
 import {
   IApiChallengeResponse,
@@ -44,7 +51,7 @@ import {
   IConstants,
 } from '../interfaces';
 import { IApiBackupCodesResponse } from '../interfaces/api-responses/backup-codes-response';
-import { IApplication } from '../interfaces/application';
+import type { IApplication } from '../interfaces/application';
 import { IStatusCodeResponse } from '../interfaces/status-code-response';
 import { findAuthToken } from '../middlewares/authenticate-token';
 import { BackupCodeService } from '../services/backup-code';
@@ -55,8 +62,6 @@ import { SystemUserService } from '../services/system-user';
 import { UserService } from '../services/user';
 import { ApiErrorResponse } from '../types';
 import { requireValidatedFieldsAsync, withTransaction } from '../utils';
-import { IBaseDocument } from '../documents';
-import { Environment } from '../environment';
 
 const isString = (v: unknown): v is string => typeof v === 'string';
 
@@ -90,7 +95,19 @@ export class UserController<
   TUser extends IUserBase<I, D, S, A> = IUserBase<I, D, S, A>,
   TTokenRole extends ITokenRole<I, D> = ITokenRole<I, D>,
   TTokenUser extends ITokenUser = ITokenUser,
-  TApplication extends IApplication<any, Types.ObjectId, IBaseDocument<any, Types.ObjectId>, Environment, IConstants> = IApplication<any, Types.ObjectId, IBaseDocument<any, Types.ObjectId>, Environment, IConstants>,
+  TApplication extends IApplication<
+    any,
+    Types.ObjectId,
+    IBaseDocument<any, Types.ObjectId>,
+    Environment,
+    IConstants
+  > = IApplication<
+    any,
+    Types.ObjectId,
+    IBaseDocument<any, Types.ObjectId>,
+    Environment,
+    IConstants
+  >,
   TLanguage extends CoreLanguageCode = CoreLanguageCode,
 > extends DecoratorBaseController<TLanguage> {
   protected readonly userService: UserService<
@@ -124,9 +141,27 @@ export class UserController<
   protected readonly systemUser: BackendMember;
 
   constructor(
-    application: IApplication<any, Types.ObjectId, IBaseDocument<any, Types.ObjectId>, Environment, IConstants>,
+    application: IApplication<
+      any,
+      Types.ObjectId,
+      IBaseDocument<any, Types.ObjectId>,
+      Environment,
+      IConstants
+    >,
     jwtService: JwtService<I, D, TTokenRole, TTokenUser, TApplication>,
-    userService: UserService<any, I, D, S, A, any, any, any, TUser, TTokenRole, TApplication>,
+    userService: UserService<
+      any,
+      I,
+      D,
+      S,
+      A,
+      any,
+      any,
+      any,
+      TUser,
+      TTokenRole,
+      TApplication
+    >,
     backupCodeService: BackupCodeService<I, D, TTokenRole, TApplication>,
     roleService: RoleService<I, D, TTokenRole>,
     eciesService: ECIESService,
