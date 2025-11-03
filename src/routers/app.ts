@@ -13,6 +13,7 @@ import {
   static as expressStatic,
   Request,
   Response,
+  NextFunction,
 } from 'express';
 import { existsSync, readdirSync } from 'fs';
 import { Types } from 'mongoose';
@@ -133,6 +134,121 @@ export class AppRouter<
     }
   }
 
+  // Allow subclasses to register additional catch-all handlers before rendering the index page.
+  protected getBaseViewLocals(
+    req: Request,
+    res: Response,
+  ): Record<string, unknown> {
+    const SiteName = this.application.constants.Site;
+    const SiteTagline = this.application.constants.SiteTagline;
+    const SiteDescription = this.application.constants.SiteDescription;
+    const hostname = req.hostname;
+    const server =
+      (req.socket.localPort === 443 && req.protocol === 'https') ||
+      (req.socket.localPort === 80 && req.protocol === 'http')
+        ? `${req.protocol}://${hostname}`
+        : `${req.protocol}://${hostname}:${req.socket.localPort}`;
+
+    return {
+      cspNonce: res.locals['cspNonce'],
+      title: SiteName,
+      tagline: SiteTagline,
+      description: SiteDescription,
+      server,
+      siteUrl: this.apiRouter.application.environment.serverUrl,
+      baseHref: this.apiRouter.application.environment.basePath,
+      hostname,
+      siteTitle: SiteName,
+    };
+  }
+
+  protected renderTemplate(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+    template: string,
+    locals: Record<string, unknown>,
+  ): void {
+    if (!/^[\w/-]+$/.test(template)) {
+      next(new Error('Invalid template name requested'));
+      return;
+    }
+
+    const sanitizedUrl = (req.url || '').replace(/[\r\n]/g, ' ');
+    debugLog(
+      this.apiRouter.application.environment.debug,
+      'log',
+      `Rendering view "${template}" for ${sanitizedUrl}`,
+    );
+
+    res.render(template, locals, (err, html) => {
+      if (err) {
+        const errMsg =
+          err && typeof err === 'object' && 'message' in err
+            ? String(err.message).replace(/[\r\n]/g, ' ')
+            : 'Unknown error';
+        console.error('Error rendering: ' + errMsg);
+        const normalizedError =
+          err instanceof Error ? err : new Error(errMsg);
+        if (!res.headersSent) {
+          res.status(500).send('An error occurred');
+        }
+        next(normalizedError);
+        return;
+      }
+
+      if (!html) {
+        next(new Error(`Rendered template "${template}" returned empty HTML`));
+        return;
+      }
+
+      debugLog(
+        this.apiRouter.application.environment.debug,
+        'log',
+        `Rendered view "${template}" for ${sanitizedUrl}`,
+      );
+
+      res.send(html);
+    });
+  }
+
+  protected createViewRenderer(
+    template: string,
+    localsFactory?: (req: Request, res: Response) => Record<string, unknown>,
+  ): (req: Request, res: Response, next: NextFunction) => void {
+    return (req, res, next) => {
+      const baseLocals = this.getBaseViewLocals(req, res);
+      const extraLocals = localsFactory ? localsFactory(req, res) : {};
+      this.renderTemplate(req, res, next, template, {
+        ...baseLocals,
+        ...extraLocals,
+      });
+    };
+  }
+
+  /**
+   * Override to register additional routes (e.g. other EJS pages) before the index catch-all.
+   */
+  protected registerAdditionalRenderHooks(app: Application): void {
+    void app;
+  }
+
+  public renderIndex(req: Request, res: Response, next: NextFunction): void {
+    if (req.url.endsWith('.js')) {
+      res.type('application/javascript');
+    }
+
+    const jsFile = this.getAssetFilename(this.assetsDir, /^index-.*\.js$/);
+    const cssFile = this.getAssetFilename(this.assetsDir, /^index-.*\.css$/);
+    const locals = {
+      ...this.getBaseViewLocals(req, res),
+      jsFile: jsFile ? `assets/${jsFile}` : undefined,
+      cssFile: cssFile ? `assets/${cssFile}` : undefined,
+    };
+
+    this.renderTemplate(req, res, next, 'index', locals);
+  }
+
   /**
    * Initialize the application router
    * @param app Express application
@@ -227,55 +343,10 @@ export class AppRouter<
     // app.get('*', (req, res) => {
     //   res.sendFile(path.join(__dirname,'..', '..', '..', 'myapp-react', 'index.html'));
     // });
-    app.use((req: Request, res: Response) => {
-      const cspNonce = res.locals['cspNonce'];
-      if (req.url.endsWith('.js')) {
-        res.type('application/javascript');
-      }
+    this.registerAdditionalRenderHooks(app);
 
-      const SiteName = this.application.constants.Site;
-      const SiteTagline = this.application.constants.SiteTagline;
-      const SiteDescription = this.application.constants.SiteDescription;
-      const hostname = req.hostname;
-      const jsFile = this.getAssetFilename(this.assetsDir, /^index-.*\.js$/);
-      const cssFile = this.getAssetFilename(this.assetsDir, /^index-.*\.css$/);
-      const server =
-        (req.socket.localPort === 443 && req.protocol === 'https') ||
-        (req.socket.localPort === 80 && req.protocol === 'http')
-          ? `${req.protocol}://${hostname}`
-          : `${req.protocol}://${hostname}:${req.socket.localPort}`;
-
-      res.render(
-        'index',
-        {
-          cspNonce,
-          title: SiteName,
-          tagline: SiteTagline,
-          description: SiteDescription,
-          server: server,
-          siteUrl: this.apiRouter.application.environment.serverUrl,
-          baseHref: this.apiRouter.application.environment.basePath,
-          hostname: hostname,
-          siteTitle: SiteName,
-          jsFile: jsFile ? `assets/${jsFile}` : undefined,
-          cssFile: cssFile ? `assets/${cssFile}` : undefined,
-        },
-        (err, html) => {
-          // Render 'index.ejs'
-          if (err) {
-            const errMsg =
-              err && typeof err === 'object' && 'message' in err
-                ? String(err.message).replace(/[\r\n]/g, ' ')
-                : 'Unknown error';
-            console.error('Error rendering: ' + errMsg);
-            if (!res.headersSent) {
-              res.status(500).send('An error occurred'); // Send a generic error message or render a separate error view
-            }
-            return;
-          }
-          res.send(html);
-        },
-      );
+    app.use((req: Request, res: Response, next: NextFunction) => {
+      this.renderIndex(req, res, next);
     });
   }
 }
