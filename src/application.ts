@@ -41,6 +41,7 @@ export class Application<
     TBaseDocument extends IBaseDocument<T, I> = IBaseDocument<T, I>,
     TEnvironment extends Environment = Environment,
     TConstants extends IConstants = IConstants,
+    TAppRouter extends AppRouter = AppRouter,
   >
   extends BaseApplication<TModelDocs, TInitResults, TConstants>
   implements IApplication<T, I, TBaseDocument, TEnvironment, TConstants>
@@ -48,7 +49,8 @@ export class Application<
   public readonly expressApp: ExpressApplication;
   private server: ServerWithOptionalClose | null = null;
   private readonly _cspConfig: ICSPConfig;
-  private readonly _apiRouterFactory: (app: this) => BaseRouter;
+  private readonly _apiRouterFactory: (app: IApplication<T, I, TBaseDocument, TEnvironment, TConstants>) => BaseRouter;
+  private readonly _appRouterFactory: (apiRouter: BaseRouter) => TAppRouter;
   private _apiRouter?: BaseRouter;
 
   public override get environment(): TEnvironment {
@@ -58,15 +60,7 @@ export class Application<
   constructor(
     environment: TEnvironment,
     apiRouterFactory: (
-      app: Application<
-        T,
-        I,
-        TInitResults,
-        TModelDocs,
-        TBaseDocument,
-        TEnvironment,
-        TConstants
-      >,
+      app: IApplication<T, I, TBaseDocument, TEnvironment, TConstants>,
     ) => BaseRouter,
     schemaMapFactory: (
       connection: mongoose.Connection,
@@ -88,6 +82,7 @@ export class Application<
       },
     },
     constants: TConstants = Constants as TConstants,
+    appRouterFactory: (apiRouter: BaseRouter) => TAppRouter = (apiRouter) => new AppRouter(apiRouter) as TAppRouter,
   ) {
     super(
       environment,
@@ -97,6 +92,7 @@ export class Application<
       constants,
     );
     this._apiRouterFactory = apiRouterFactory;
+    this._appRouterFactory = appRouterFactory;
     this.expressApp = express();
     this.server = null;
     this._cspConfig = cspConfig;
@@ -112,7 +108,7 @@ export class Application<
         this._cspConfig.corsWhitelist,
         this._cspConfig.csp,
       );
-      const appRouter = new AppRouter(this._apiRouter);
+      const appRouter = this._appRouterFactory(this._apiRouter);
 
       appRouter.init(this.expressApp);
       this.expressApp.use(

@@ -663,6 +663,10 @@ For issues and questions:
 
 ## ChangeLog
 
+### Version 1.3.24
+
+- AppRouter factory to make AppRouter extensible as well
+
 ### Version 1.3.23
 
 - Make vars protected
