@@ -32,6 +32,11 @@ export abstract class DecoratorBaseController<
     this.routeDefinitions = routes.map((route) => {
       let validation = route.options.validation;
 
+      // Bind validation function to preserve 'this' context
+      if (typeof validation === 'function') {
+        validation = validation.bind(this) as typeof validation;
+      }
+
       // Convert Zod schema to validation if present
       if (route.options.schema && !validation) {
         const schemaValidation = zodToExpressValidator<TLanguage>(
