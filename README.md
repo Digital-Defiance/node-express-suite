@@ -663,6 +663,10 @@ For issues and questions:
 
 ## ChangeLog
 
+### Version 1.3.21
+
+- Minor fix on dist dir detection
+
 ### Version 1.3.20
 
 - Version bump

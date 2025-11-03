@@ -139,9 +139,11 @@ export class AppRouter<
    * @param debugRoutes Whether to log routes
    */
   public init(app: Application) {
-    if (
-      basename(this.apiRouter.application.environment.reactDistDir) !== 'dist'
-    ) {
+    const reactDistHasDistSegment = this.reactDistDir
+      .split(sep)
+      .filter((segment) => segment.length > 0)
+      .some((segment) => segment.toLowerCase() === 'dist');
+    if (!reactDistHasDistSegment) {
       throw new PluginTranslatableGenericError<SuiteCoreStringKey, string>(
         CoreI18nComponentId,
         SuiteCoreStringKey.Error_AppDoesNotAppearToBeRunningWithinDistTemplate,
