@@ -663,6 +663,10 @@ For issues and questions:
 
 ## ChangeLog
 
+### Version 1.3.27
+
+- Upgrade i18n, ecies, suite-core
+
 ### Version 1.3.26
 
 - Refactor middlewares further
