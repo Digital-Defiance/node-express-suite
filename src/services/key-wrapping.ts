@@ -1,6 +1,7 @@
 import { SecureBuffer, SecureString } from '@digitaldefiance/ecies-lib';
 import {
-  Constants as ApiConstants,
+  Constants,
+  IConstants,
   Pbkdf2Service,
 } from '@digitaldefiance/node-ecies-lib';
 import {
@@ -9,11 +10,10 @@ import {
   createHash,
   randomBytes,
 } from 'crypto';
-import { Constants as AppConstants } from '../constants';
 import { InvalidNewPasswordError, InvalidPasswordError } from '../errors';
 
-function createPbkdf2Service(): Pbkdf2Service {
-  return Pbkdf2Service.fromConstants(ApiConstants);
+function createPbkdf2Service(constants: IConstants): Pbkdf2Service {
+  return Pbkdf2Service.fromConstants(constants);
 }
 
 export interface WrappedKey {
@@ -41,14 +41,17 @@ export class KeyWrappingService {
   /**
    * Generates a new master key and wraps it with the user's password
    */
-  public wrapNewMasterKey(password: SecureString): {
+  public wrapNewMasterKey(
+    password: SecureString,
+    constants: IConstants = Constants,
+  ): {
     masterKey: SecureBuffer;
     wrappedKey: WrappedKey;
   } {
     const masterKey = new SecureBuffer(
-      randomBytes(ApiConstants.WRAPPED_KEY.MASTER_KEY_SIZE),
+      randomBytes(constants.WRAPPED_KEY.MASTER_KEY_SIZE),
     );
-    const wrappedKey = this.wrapMasterKey(masterKey, password);
+    const wrappedKey = this.wrapMasterKey(masterKey, password, constants);
     return { masterKey, wrappedKey };
   }
 
@@ -58,27 +61,28 @@ export class KeyWrappingService {
   public wrapMasterKey(
     masterKey: SecureBuffer,
     password: SecureString,
+    constants: IConstants = Constants,
   ): WrappedKey {
-    if (AppConstants.PasswordRegex.test(password.value ?? '') === false) {
+    if (constants.PasswordRegex.test(password.value ?? '') === false) {
       throw new InvalidNewPasswordError();
     }
-    const salt = randomBytes(ApiConstants.WRAPPED_KEY.SALT_SIZE);
-    const iterations = ApiConstants.WRAPPED_KEY.MIN_ITERATIONS;
-    const pbkdf2Service = createPbkdf2Service();
+    const salt = randomBytes(constants.WRAPPED_KEY.SALT_SIZE);
+    const iterations = constants.WRAPPED_KEY.MIN_ITERATIONS;
+    const pbkdf2Service = createPbkdf2Service(constants);
 
     // Derive key from password using centralized PBKDF2 service
     const derivedKey = pbkdf2Service.deriveKeyFromPassword(
       Buffer.from(password.valueAsUint8Array),
       salt,
       iterations,
-      ApiConstants.WRAPPED_KEY.SALT_SIZE,
+      constants.WRAPPED_KEY.SALT_SIZE,
       32, // AES-256 key size
       'sha256', // Keep existing algorithm for compatibility
     );
     const passwordKeySecure = new SecureBuffer(derivedKey.hash);
 
     // Encrypt master key
-    const iv = randomBytes(ApiConstants.WRAPPED_KEY.IV_SIZE);
+    const iv = randomBytes(constants.WRAPPED_KEY.IV_SIZE);
     const cipher = createCipheriv('aes-256-gcm', passwordKeySecure.value, iv);
 
     const encrypted = Buffer.concat([
@@ -105,12 +109,13 @@ export class KeyWrappingService {
   public unwrapMasterKey(
     wrappedKey: WrappedKey,
     password: SecureString,
+    constants: IConstants = Constants,
   ): SecureBuffer {
     const salt = Buffer.from(wrappedKey.salt, 'hex');
     const iv = Buffer.from(wrappedKey.iv, 'hex');
     const authTag = Buffer.from(wrappedKey.authTag, 'hex');
     const encrypted = Buffer.from(wrappedKey.encryptedMasterKey, 'hex');
-    const pbkdf2Service = createPbkdf2Service();
+    const pbkdf2Service = createPbkdf2Service(constants);
 
     // Derive the same key from password using centralized PBKDF2 service
     const derivedKey = pbkdf2Service.deriveKeyFromPassword(
@@ -151,6 +156,7 @@ export class KeyWrappingService {
   public async unwrapMasterKeyAsync(
     wrappedKey: WrappedKey,
     password: SecureString | string,
+    constants: IConstants = Constants,
   ): Promise<SecureBuffer> {
     const __perfEnabled = process.env['PERF_LOGS'] === '1';
     const _t0 = __perfEnabled ? Date.now() : 0;
@@ -166,7 +172,7 @@ export class KeyWrappingService {
       typeof password === 'string'
         ? Buffer.from(password, 'utf8')
         : Buffer.from(password.valueAsUint8Array);
-    const pbkdf2Service = createPbkdf2Service();
+    const pbkdf2Service = createPbkdf2Service(constants);
 
     // Use centralized PBKDF2 service for async key derivation
     const derivedKey = await pbkdf2Service.deriveKeyFromPasswordAsync(
@@ -219,6 +225,7 @@ export class KeyWrappingService {
   public async unwrapMasterKeyAsyncDedup(
     wrappedKey: WrappedKey,
     password: string,
+    constants: IConstants = Constants,
   ): Promise<SecureBuffer> {
     // Derive a short cache key; avoid storing raw password by hashing
     const pwdKey = createHash('sha256')
@@ -230,7 +237,11 @@ export class KeyWrappingService {
     if (!p) {
       // Compute once, extract raw bytes, dispose the shared SecureBuffer, and cache the bytes
       p = (async () => {
-        const mk = await this.unwrapMasterKeyAsync(wrappedKey, password);
+        const mk = await this.unwrapMasterKeyAsync(
+          wrappedKey,
+          password,
+          constants,
+        );
         try {
           const copy = Buffer.from(mk.value);
           const b64 = copy.toString('base64');
@@ -261,13 +272,14 @@ export class KeyWrappingService {
     wrappedKey: WrappedKey,
     oldPassword: SecureString,
     newPassword: SecureString,
+    constants: IConstants = Constants,
   ): WrappedKey {
     // Unwrap with old password
-    const masterKey = this.unwrapMasterKey(wrappedKey, oldPassword);
+    const masterKey = this.unwrapMasterKey(wrappedKey, oldPassword, constants);
 
     try {
       // Re-wrap with new password
-      return this.wrapMasterKey(masterKey, newPassword);
+      return this.wrapMasterKey(masterKey, newPassword, constants);
     } catch (error: unknown) {
       throw error;
     } finally {
@@ -281,27 +293,28 @@ export class KeyWrappingService {
   public wrapSecret(
     secret: SecureBuffer,
     password: SecureString,
+    constants: IConstants = Constants,
   ): PasswordWrappedSecret {
-    if (AppConstants.PasswordRegex.test(password.value ?? '') === false) {
+    if (constants.PasswordRegex.test(password.value ?? '') === false) {
       throw new InvalidNewPasswordError();
     }
-    const salt = randomBytes(ApiConstants.WRAPPED_KEY.SALT_SIZE);
-    const iterations = ApiConstants.WRAPPED_KEY.MIN_ITERATIONS;
-    const pbkdf2Service = createPbkdf2Service();
+    const salt = randomBytes(constants.WRAPPED_KEY.SALT_SIZE);
+    const iterations = constants.WRAPPED_KEY.MIN_ITERATIONS;
+    const pbkdf2Service = createPbkdf2Service(constants);
 
     // Derive key from password using centralized PBKDF2 service
     const derivedKey = pbkdf2Service.deriveKeyFromPassword(
       Buffer.from(password.valueAsUint8Array),
       salt,
       iterations,
-      ApiConstants.WRAPPED_KEY.SALT_SIZE,
+      constants.WRAPPED_KEY.SALT_SIZE,
       32, // AES-256 key size
       'sha256', // Keep existing algorithm for compatibility
     );
     const passwordKeySecure = new SecureBuffer(derivedKey.hash);
 
     try {
-      const iv = randomBytes(ApiConstants.WRAPPED_KEY.IV_SIZE);
+      const iv = randomBytes(constants.WRAPPED_KEY.IV_SIZE);
       const cipher = createCipheriv('aes-256-gcm', passwordKeySecure.value, iv);
       const encrypted = Buffer.concat([
         cipher.update(secret.value),
@@ -326,12 +339,13 @@ export class KeyWrappingService {
   public unwrapSecret(
     wrapped: PasswordWrappedSecret,
     password: SecureString,
+    constants: IConstants = Constants,
   ): SecureBuffer {
     const salt = Buffer.from(wrapped.salt, 'hex');
     const iv = Buffer.from(wrapped.iv, 'hex');
     const authTag = Buffer.from(wrapped.authTag, 'hex');
     const encrypted = Buffer.from(wrapped.ciphertext, 'hex');
-    const pbkdf2Service = createPbkdf2Service();
+    const pbkdf2Service = createPbkdf2Service(constants);
 
     // Derive key from password using centralized PBKDF2 service
     const derivedKey = pbkdf2Service.deriveKeyFromPassword(
@@ -368,6 +382,7 @@ export class KeyWrappingService {
   public async unwrapSecretAsync(
     wrapped: PasswordWrappedSecret,
     password: SecureString | string,
+    constants: IConstants = Constants,
   ): Promise<SecureBuffer> {
     const salt = Buffer.from(wrapped.salt, 'hex');
     const iv = Buffer.from(wrapped.iv, 'hex');
@@ -396,7 +411,7 @@ export class KeyWrappingService {
         'Failed to create password buffer - password may be invalid',
       );
     }
-    const pbkdf2Service = createPbkdf2Service();
+    const pbkdf2Service = createPbkdf2Service(constants);
 
     // Use centralized PBKDF2 service for async key derivation
     const derivedKey = await pbkdf2Service.deriveKeyFromPasswordAsync(

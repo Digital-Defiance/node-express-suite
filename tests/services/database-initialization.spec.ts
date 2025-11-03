@@ -1,28 +1,38 @@
+import {
+  EmailString,
+  MemberType,
+  SecureBuffer,
+  SecureString,
+} from '@digitaldefiance/ecies-lib';
+import {
+  Member as BackendMember,
+  ECIESService,
+} from '@digitaldefiance/node-ecies-lib';
+import {
+  SuiteCoreStringKey,
+  TranslatableSuiteError,
+} from '@digitaldefiance/suite-core-lib';
+import { ObjectId as MongoObjectId } from 'mongodb';
 import { Connection, Types } from 'mongoose';
-import { Member as BackendMember } from '@digitaldefiance/node-ecies-lib';
 import { BackupCode } from '../../src/backup-code';
+import { LocalhostConstants as AppConstants } from '../../src/constants';
 import {
   IMnemonicDocument,
   IRoleDocument,
   IUserDocument,
   IUserRoleDocument,
 } from '../../src/documents';
+import { BaseModelName } from '../../src/enumerations/base-model-name';
 import { IApplication } from '../../src/interfaces/application';
 import { IServerInitResult } from '../../src/interfaces/server-init-result';
+import { ModelRegistry } from '../../src/model-registry';
+import { BackupCodeService } from '../../src/services/backup-code';
 import { DatabaseInitializationService } from '../../src/services/database-initialization';
-import { ECIESService } from '@digitaldefiance/node-ecies-lib';
 import { KeyWrappingService } from '../../src/services/key-wrapping';
 import { MnemonicService } from '../../src/services/mnemonic';
 import { RoleService } from '../../src/services/role';
-import { BackupCodeService } from '../../src/services/backup-code';
-import { ObjectId as MongoObjectId } from 'mongodb';
-import { EmailString, MemberType, SecureBuffer, SecureString } from '@digitaldefiance/ecies-lib';
-import { BaseModelName } from '../../src/enumerations/base-model-name';
-import { Constants as AppConstants } from '../../src/constants';
-import { SuiteCoreStringKey, TranslatableSuiteError } from '@digitaldefiance/suite-core-lib';
-import { ModelRegistry } from '../../src/model-registry';
 
-// Mock dependencies  
+// Mock dependencies
 jest.mock('../../src/utils');
 jest.mock('@digitaldefiance/node-ecies-lib');
 jest.mock('../../src/services/key-wrapping');
@@ -45,27 +55,55 @@ describe('DatabaseInitializationService', () => {
   let mockBackupCodeService: jest.Mocked<BackupCodeService>;
   let mockWallet: any;
   let mockBackendMember: jest.Mocked<BackendMember>;
+  let originalDefaultTFunc:
+    | (typeof DatabaseInitializationService)['defaultI18nTFunc']
+    | undefined;
 
   beforeEach(() => {
+    if (!originalDefaultTFunc) {
+      originalDefaultTFunc = DatabaseInitializationService['defaultI18nTFunc'];
+    }
+    DatabaseInitializationService['defaultI18nTFunc'] = (
+      template: string,
+      _language?: unknown,
+      ...variables: Record<string, string | number>[]
+    ): string => {
+      return variables.reduce((acc, replacements) => {
+        return Object.entries(replacements).reduce(
+          (current, [token, value]) => {
+            return current.split(`{${token}}`).join(String(value));
+          },
+          acc,
+        );
+      }, template);
+    };
     // Mock console.warn to suppress i18n warnings in tests
     jest.spyOn(console, 'warn').mockImplementation(() => {});
-    
+
     // Mock ModelRegistry before defining models
-    jest.spyOn(ModelRegistry.instance, 'getTypedModel').mockImplementation((name: string) => {
-      if (name === BaseModelName.User) return mockUserModel as any;
-      if (name === BaseModelName.Role) return mockRoleModel as any;
-      if (name === BaseModelName.UserRole) return mockUserRoleModel as any;
-      if (name === BaseModelName.Mnemonic) return mockMnemonicModel as any;
-      throw new Error(`Unknown model: ${name}`);
-    });
-    jest.spyOn(ModelRegistry.instance, 'get').mockImplementation((name: string) => {
-      if (name === BaseModelName.User) return { model: mockUserModel, schema: {} as any } as any;
-      if (name === BaseModelName.Role) return { model: mockRoleModel, schema: {} as any } as any;
-      if (name === BaseModelName.UserRole) return { model: mockUserRoleModel, schema: {} as any } as any;
-      if (name === BaseModelName.Mnemonic) return { model: mockMnemonicModel, schema: {} as any } as any;
-      throw new Error(`Unknown model: ${name}`);
-    });
-    
+    jest
+      .spyOn(ModelRegistry.instance, 'getTypedModel')
+      .mockImplementation((name: string) => {
+        if (name === BaseModelName.User) return mockUserModel as any;
+        if (name === BaseModelName.Role) return mockRoleModel as any;
+        if (name === BaseModelName.UserRole) return mockUserRoleModel as any;
+        if (name === BaseModelName.Mnemonic) return mockMnemonicModel as any;
+        throw new Error(`Unknown model: ${name}`);
+      });
+    jest
+      .spyOn(ModelRegistry.instance, 'get')
+      .mockImplementation((name: string) => {
+        if (name === BaseModelName.User)
+          return { model: mockUserModel, schema: {} as any } as any;
+        if (name === BaseModelName.Role)
+          return { model: mockRoleModel, schema: {} as any } as any;
+        if (name === BaseModelName.UserRole)
+          return { model: mockUserRoleModel, schema: {} as any } as any;
+        if (name === BaseModelName.Mnemonic)
+          return { model: mockMnemonicModel, schema: {} as any } as any;
+        throw new Error(`Unknown model: ${name}`);
+      });
+
     // Clear global cache before each test
     if (global.__MEMBER_CACHE__) {
       global.__MEMBER_CACHE__.clear();
@@ -73,13 +111,21 @@ describe('DatabaseInitializationService', () => {
 
     // Mock wallet
     mockWallet = {
-      getPrivateKey: jest.fn().mockReturnValue(Buffer.from('private-key-32-bytes-test-data-here', 'utf-8')),
-      getPublicKey: jest.fn().mockReturnValue(Buffer.from('public-key-data-here', 'utf-8')),
+      getPrivateKey: jest
+        .fn()
+        .mockReturnValue(
+          Buffer.from('private-key-32-bytes-test-data-here', 'utf-8'),
+        ),
+      getPublicKey: jest
+        .fn()
+        .mockReturnValue(Buffer.from('public-key-data-here', 'utf-8')),
     };
 
     // Mock ECIES service
     mockECIESService = {
-      generateNewMnemonic: jest.fn().mockReturnValue(new SecureString('test mnemonic phrase here')),
+      generateNewMnemonic: jest
+        .fn()
+        .mockReturnValue(new SecureString('test mnemonic phrase here')),
       walletAndSeedFromMnemonic: jest.fn().mockReturnValue({
         wallet: mockWallet,
         seed: Buffer.from('seed-data', 'utf-8'),
@@ -90,7 +136,9 @@ describe('DatabaseInitializationService', () => {
     mockBackendMember = {
       publicKey: Buffer.from([0x04, ...Array(64).fill(0)]),
       privateKey: new SecureBuffer(Buffer.from('private-key-data', 'utf-8')),
-      encryptData: jest.fn().mockReturnValue(Buffer.from('encrypted-data', 'utf-8')),
+      encryptData: jest
+        .fn()
+        .mockReturnValue(Buffer.from('encrypted-data', 'utf-8')),
     } as any;
 
     // Mock models
@@ -136,11 +184,15 @@ describe('DatabaseInitializationService', () => {
     } as any;
 
     mockBackupCodeService = {
-      generateBackupCodes: jest.fn().mockReturnValue([
-        new SecureString('backup-code-1'),
-        new SecureString('backup-code-2'),
-      ]),
-      encryptBackupCodes: jest.fn().mockResolvedValue(['encrypted-backup-1', 'encrypted-backup-2']),
+      generateBackupCodes: jest
+        .fn()
+        .mockReturnValue([
+          new SecureString('backup-code-1'),
+          new SecureString('backup-code-2'),
+        ]),
+      encryptBackupCodes: jest
+        .fn()
+        .mockResolvedValue(['encrypted-backup-1', 'encrypted-backup-2']),
     } as any;
 
     // Mock connection
@@ -181,6 +233,7 @@ describe('DatabaseInitializationService', () => {
       db: {
         connection: mockConnection,
       },
+      constants: AppConstants,
       getModel: jest.fn((name: string) => {
         switch (name) {
           case BaseModelName.User:
@@ -198,19 +251,35 @@ describe('DatabaseInitializationService', () => {
     } as any;
 
     // Mock constructors
-    (ECIESService as jest.MockedClass<typeof ECIESService>).mockImplementation(() => mockECIESService);
-    (KeyWrappingService as jest.MockedClass<typeof KeyWrappingService>).mockImplementation(() => mockKeyWrappingService);
-    (MnemonicService as jest.MockedClass<typeof MnemonicService>).mockImplementation(() => mockMnemonicService);
-    (RoleService as jest.MockedClass<typeof RoleService>).mockImplementation(() => mockRoleService);
-    (BackupCodeService as jest.MockedClass<typeof BackupCodeService>).mockImplementation(() => mockBackupCodeService);
-    (BackendMember as jest.MockedClass<typeof BackendMember>).mockImplementation(() => mockBackendMember);
+    (ECIESService as jest.MockedClass<typeof ECIESService>).mockImplementation(
+      () => mockECIESService,
+    );
+    (
+      KeyWrappingService as jest.MockedClass<typeof KeyWrappingService>
+    ).mockImplementation(() => mockKeyWrappingService);
+    (
+      MnemonicService as jest.MockedClass<typeof MnemonicService>
+    ).mockImplementation(() => mockMnemonicService);
+    (RoleService as jest.MockedClass<typeof RoleService>).mockImplementation(
+      () => mockRoleService,
+    );
+    (
+      BackupCodeService as jest.MockedClass<typeof BackupCodeService>
+    ).mockImplementation(() => mockBackupCodeService);
+    (
+      BackendMember as jest.MockedClass<typeof BackendMember>
+    ).mockImplementation(() => mockBackendMember);
 
     // Mock BackupCode static methods
-    (BackupCode.generateBackupCodes as jest.Mock) = jest.fn().mockReturnValue([
-      new SecureString('backup-code-1'),
-      new SecureString('backup-code-2'),
-    ]);
-    (BackupCode.encryptBackupCodes as jest.Mock) = jest.fn().mockResolvedValue(['encrypted-backup-1', 'encrypted-backup-2']);
+    (BackupCode.generateBackupCodes as jest.Mock) = jest
+      .fn()
+      .mockReturnValue([
+        new SecureString('backup-code-1'),
+        new SecureString('backup-code-2'),
+      ]);
+    (BackupCode.encryptBackupCodes as jest.Mock) = jest
+      .fn()
+      .mockResolvedValue(['encrypted-backup-1', 'encrypted-backup-2']);
 
     // Mock withTransaction and debugLog utilities
     const utils = require('../../src/utils');
@@ -219,37 +288,72 @@ describe('DatabaseInitializationService', () => {
         console.log(...args);
       }
     });
-    (utils.withTransaction as jest.Mock).mockImplementation(async (connection, useTransactions, options, callback) => {
-      // Create mock result that looks like what the actual callback returns
-      const mockResult = {
-        systemUser: { member: mockBackendMember, mnemonic: new SecureString('system-mnemonic') },
-        systemRole: { _id: new Types.ObjectId(), name: 'System' },
-        systemDoc: { _id: new Types.ObjectId(), username: 'system', email: 'system@example.com' },
-        systemUserRoleDoc: { _id: new Types.ObjectId() },
-        systemPassword: new SecureString('system-password'),
-        systemMnemonic: 'system-mnemonic',
-        systemBackupCodes: [{ value: 'system-backup-1' }, { value: 'system-backup-2' }],
-        adminUser: { member: mockBackendMember, mnemonic: new SecureString('admin-mnemonic') },
-        adminRole: { _id: new Types.ObjectId(), name: 'Administrator' },
-        adminDoc: { _id: new Types.ObjectId(), username: 'admin', email: 'admin@example.com' },
-        adminUserRoleDoc: { _id: new Types.ObjectId() },
-        adminPassword: new SecureString('admin-password'),
-        adminMnemonic: 'admin-mnemonic',
-        adminBackupCodes: [{ value: 'admin-backup-1' }, { value: 'admin-backup-2' }],
-        adminMember: mockBackendMember,
-        memberUser: { member: mockBackendMember, mnemonic: new SecureString('member-mnemonic') },
-        memberRole: { _id: new Types.ObjectId(), name: 'Member' },
-        memberDoc: { _id: new Types.ObjectId(), username: 'member', email: 'member@example.com' },
-        memberUserRoleDoc: { _id: new Types.ObjectId() },
-        memberPassword: new SecureString('member-password'),
-        memberMnemonic: 'member-mnemonic',
-        memberBackupCodes: [{ value: 'member-backup-1' }, { value: 'member-backup-2' }],
-      };
-      return mockResult;
-    });
+    (utils.withTransaction as jest.Mock).mockImplementation(
+      async (connection, useTransactions, options, callback) => {
+        // Create mock result that looks like what the actual callback returns
+        const mockResult = {
+          systemUser: {
+            member: mockBackendMember,
+            mnemonic: new SecureString('system-mnemonic'),
+          },
+          systemRole: { _id: new Types.ObjectId(), name: 'System' },
+          systemDoc: {
+            _id: new Types.ObjectId(),
+            username: 'system',
+            email: 'system@example.com',
+          },
+          systemUserRoleDoc: { _id: new Types.ObjectId() },
+          systemPassword: new SecureString('system-password'),
+          systemMnemonic: 'system-mnemonic',
+          systemBackupCodes: [
+            { value: 'system-backup-1' },
+            { value: 'system-backup-2' },
+          ],
+          adminUser: {
+            member: mockBackendMember,
+            mnemonic: new SecureString('admin-mnemonic'),
+          },
+          adminRole: { _id: new Types.ObjectId(), name: 'Administrator' },
+          adminDoc: {
+            _id: new Types.ObjectId(),
+            username: 'admin',
+            email: 'admin@example.com',
+          },
+          adminUserRoleDoc: { _id: new Types.ObjectId() },
+          adminPassword: new SecureString('admin-password'),
+          adminMnemonic: 'admin-mnemonic',
+          adminBackupCodes: [
+            { value: 'admin-backup-1' },
+            { value: 'admin-backup-2' },
+          ],
+          adminMember: mockBackendMember,
+          memberUser: {
+            member: mockBackendMember,
+            mnemonic: new SecureString('member-mnemonic'),
+          },
+          memberRole: { _id: new Types.ObjectId(), name: 'Member' },
+          memberDoc: {
+            _id: new Types.ObjectId(),
+            username: 'member',
+            email: 'member@example.com',
+          },
+          memberUserRoleDoc: { _id: new Types.ObjectId() },
+          memberPassword: new SecureString('member-password'),
+          memberMnemonic: 'member-mnemonic',
+          memberBackupCodes: [
+            { value: 'member-backup-1' },
+            { value: 'member-backup-2' },
+          ],
+        };
+        return mockResult;
+      },
+    );
   });
 
   afterEach(() => {
+    if (originalDefaultTFunc) {
+      DatabaseInitializationService['defaultI18nTFunc'] = originalDefaultTFunc;
+    }
     jest.clearAllMocks();
     jest.restoreAllMocks();
     // Clean up global cache
@@ -273,14 +377,20 @@ describe('DatabaseInitializationService', () => {
   describe('mnemonicOrNew', () => {
     it('should return existing mnemonic when provided and has value', () => {
       const existingMnemonic = new SecureString('existing mnemonic');
-      const result = DatabaseInitializationService.mnemonicOrNew(existingMnemonic, mockECIESService);
+      const result = DatabaseInitializationService.mnemonicOrNew(
+        existingMnemonic,
+        mockECIESService,
+      );
 
       expect(result).toBe(existingMnemonic);
       expect(mockECIESService.generateNewMnemonic).not.toHaveBeenCalled();
     });
 
     it('should generate new mnemonic when existing is undefined', () => {
-      const result = DatabaseInitializationService.mnemonicOrNew(undefined, mockECIESService);
+      const result = DatabaseInitializationService.mnemonicOrNew(
+        undefined,
+        mockECIESService,
+      );
 
       expect(result.value).toEqual('test mnemonic phrase here');
       expect(mockECIESService.generateNewMnemonic).toHaveBeenCalledTimes(1);
@@ -291,7 +401,10 @@ describe('DatabaseInitializationService', () => {
       // Mock hasValue to return false without disposing
       jest.spyOn(emptyMnemonic, 'hasValue', 'get').mockReturnValue(false);
 
-      const result = DatabaseInitializationService.mnemonicOrNew(emptyMnemonic, mockECIESService);
+      const result = DatabaseInitializationService.mnemonicOrNew(
+        emptyMnemonic,
+        mockECIESService,
+      );
 
       expect(result.value).toEqual('test mnemonic phrase here');
       expect(mockECIESService.generateNewMnemonic).toHaveBeenCalledTimes(1);
@@ -305,8 +418,18 @@ describe('DatabaseInitializationService', () => {
       const mnemonic = new SecureString('test mnemonic');
       const id = new Types.ObjectId();
 
-      const key1 = DatabaseInitializationService.cacheKey(username, email, mnemonic, id);
-      const key2 = DatabaseInitializationService.cacheKey(username, email, mnemonic, id);
+      const key1 = DatabaseInitializationService.cacheKey(
+        username,
+        email,
+        mnemonic,
+        id,
+      );
+      const key2 = DatabaseInitializationService.cacheKey(
+        username,
+        email,
+        mnemonic,
+        id,
+      );
 
       expect(key1).toBe(key2);
       expect(typeof key1).toBe('string');
@@ -320,8 +443,18 @@ describe('DatabaseInitializationService', () => {
       const mnemonic = new SecureString('test mnemonic');
       const id = new Types.ObjectId();
 
-      const key1 = DatabaseInitializationService.cacheKey(username1, email, mnemonic, id);
-      const key2 = DatabaseInitializationService.cacheKey(username2, email, mnemonic, id);
+      const key1 = DatabaseInitializationService.cacheKey(
+        username1,
+        email,
+        mnemonic,
+        id,
+      );
+      const key2 = DatabaseInitializationService.cacheKey(
+        username2,
+        email,
+        mnemonic,
+        id,
+      );
 
       expect(key1).not.toBe(key2);
     });
@@ -381,12 +514,14 @@ describe('DatabaseInitializationService', () => {
         mnemonic,
         memberType,
         mockECIESService,
-        memberId
+        memberId,
       );
 
       expect(result.member).toBe(mockBackendMember);
       expect(result.mnemonic).toBe(mnemonic);
-      expect(mockECIESService.walletAndSeedFromMnemonic).toHaveBeenCalledWith(mnemonic);
+      expect(mockECIESService.walletAndSeedFromMnemonic).toHaveBeenCalledWith(
+        mnemonic,
+      );
       expect(BackendMember).toHaveBeenCalledWith(
         mockECIESService,
         memberType,
@@ -398,7 +533,7 @@ describe('DatabaseInitializationService', () => {
         memberId,
         undefined,
         undefined,
-        undefined
+        undefined,
       );
     });
 
@@ -416,7 +551,7 @@ describe('DatabaseInitializationService', () => {
         mnemonic,
         memberType,
         mockECIESService,
-        memberId
+        memberId,
       );
 
       // Second call should return cached
@@ -426,11 +561,13 @@ describe('DatabaseInitializationService', () => {
         mnemonic,
         memberType,
         mockECIESService,
-        memberId
+        memberId,
       );
 
       expect(result1).toStrictEqual(result2);
-      expect(mockECIESService.walletAndSeedFromMnemonic).toHaveBeenCalledTimes(1); // Only called once
+      expect(mockECIESService.walletAndSeedFromMnemonic).toHaveBeenCalledTimes(
+        1,
+      ); // Only called once
     });
 
     it('should generate new mnemonic when undefined is provided', () => {
@@ -443,7 +580,7 @@ describe('DatabaseInitializationService', () => {
         email,
         undefined, // No mnemonic provided
         memberType,
-        mockECIESService
+        mockECIESService,
       );
 
       expect(mockECIESService.generateNewMnemonic).toHaveBeenCalled();
@@ -463,7 +600,7 @@ describe('DatabaseInitializationService', () => {
         MemberType.Admin,
         mockECIESService,
         undefined,
-        createdBy
+        createdBy,
       );
 
       expect(BackendMember).toHaveBeenCalledWith(
@@ -477,14 +614,15 @@ describe('DatabaseInitializationService', () => {
         expect.any(MongoObjectId),
         undefined,
         undefined,
-        createdBy
+        createdBy,
       );
     });
   });
 
   describe('dropDatabase', () => {
     it('should drop database when connection has db', async () => {
-      const result = await DatabaseInitializationService.dropDatabase(mockConnection);
+      const result =
+        await DatabaseInitializationService.dropDatabase(mockConnection);
 
       expect(result).toBe(true);
       expect(mockConnection.db!.dropDatabase).toHaveBeenCalled();
@@ -493,7 +631,8 @@ describe('DatabaseInitializationService', () => {
     it('should return false when connection has no db', async () => {
       const connectionWithoutDb = { db: null } as unknown as Connection;
 
-      const result = await DatabaseInitializationService.dropDatabase(connectionWithoutDb);
+      const result =
+        await DatabaseInitializationService.dropDatabase(connectionWithoutDb);
 
       expect(result).toBe(false);
     });
@@ -505,9 +644,11 @@ describe('DatabaseInitializationService', () => {
       const adminMnemonic = new SecureString('admin-mnemonic');
       const adminPassword = new SecureString('admin-password');
 
-    (mockApplication.environment as any).adminId = adminId;
-    (mockApplication.environment as any).adminMnemonic = adminMnemonic;
-    (mockApplication.environment as any).adminPassword = adminPassword;      const options = DatabaseInitializationService.getInitOptions(mockApplication);
+      (mockApplication.environment as any).adminId = adminId;
+      (mockApplication.environment as any).adminMnemonic = adminMnemonic;
+      (mockApplication.environment as any).adminPassword = adminPassword;
+      const options =
+        DatabaseInitializationService.getInitOptions(mockApplication);
 
       expect(options.adminId).toBe(adminId);
       expect(options.adminMnemonic).toBe(adminMnemonic);
@@ -515,7 +656,8 @@ describe('DatabaseInitializationService', () => {
     });
 
     it('should return undefined for missing environment values', () => {
-      const options = DatabaseInitializationService.getInitOptions(mockApplication);
+      const options =
+        DatabaseInitializationService.getInitOptions(mockApplication);
 
       expect(options.adminId).toBeUndefined();
       expect(options.adminMnemonic).toBeUndefined();
@@ -529,7 +671,8 @@ describe('DatabaseInitializationService', () => {
       jest.spyOn(emptyMnemonic, 'hasValue', 'get').mockReturnValue(false);
       (mockApplication.environment as any).adminMnemonic = emptyMnemonic;
 
-      const options = DatabaseInitializationService.getInitOptions(mockApplication);
+      const options =
+        DatabaseInitializationService.getInitOptions(mockApplication);
 
       expect(options.adminMnemonic).toBeUndefined();
     });
@@ -540,7 +683,10 @@ describe('DatabaseInitializationService', () => {
 
     beforeEach(() => {
       mockServerInitResult = {
-        adminUser: { _id: new Types.ObjectId(), publicKey: 'admin-public-key' } as IUserDocument,
+        adminUser: {
+          _id: new Types.ObjectId(),
+          publicKey: 'admin-public-key',
+        } as IUserDocument,
         adminRole: { _id: new Types.ObjectId() } as IRoleDocument,
         adminUserRole: { _id: new Types.ObjectId() } as IUserRoleDocument,
         adminUsername: 'admin',
@@ -549,7 +695,10 @@ describe('DatabaseInitializationService', () => {
         adminPassword: 'admin-password',
         adminBackupCodes: ['code1', 'code2'],
         adminMember: {} as BackendMember,
-        memberUser: { _id: new Types.ObjectId(), publicKey: 'member-public-key' } as IUserDocument,
+        memberUser: {
+          _id: new Types.ObjectId(),
+          publicKey: 'member-public-key',
+        } as IUserDocument,
         memberRole: { _id: new Types.ObjectId() } as IRoleDocument,
         memberUserRole: { _id: new Types.ObjectId() } as IUserRoleDocument,
         memberUsername: 'member',
@@ -558,7 +707,10 @@ describe('DatabaseInitializationService', () => {
         memberPassword: 'member-password',
         memberBackupCodes: ['code3', 'code4'],
         memberMember: {} as BackendMember,
-        systemUser: { _id: new Types.ObjectId(), publicKey: 'system-public-key' } as IUserDocument,
+        systemUser: {
+          _id: new Types.ObjectId(),
+          publicKey: 'system-public-key',
+        } as IUserDocument,
         systemRole: { _id: new Types.ObjectId() } as IRoleDocument,
         systemUserRole: { _id: new Types.ObjectId() } as IUserRoleDocument,
         systemUsername: 'system',
@@ -571,8 +723,14 @@ describe('DatabaseInitializationService', () => {
     });
 
     it('should generate consistent hash for same input', () => {
-      const hash1 = DatabaseInitializationService.serverInitResultHash(mockServerInitResult);
-      const hash2 = DatabaseInitializationService.serverInitResultHash(mockServerInitResult);
+      const hash1 =
+        DatabaseInitializationService.serverInitResultHash(
+          mockServerInitResult,
+        );
+      const hash2 =
+        DatabaseInitializationService.serverInitResultHash(
+          mockServerInitResult,
+        );
 
       expect(hash1).toBe(hash2);
       expect(typeof hash1).toBe('string');
@@ -580,11 +738,17 @@ describe('DatabaseInitializationService', () => {
     });
 
     it('should generate different hash for different input', () => {
-      const hash1 = DatabaseInitializationService.serverInitResultHash(mockServerInitResult);
+      const hash1 =
+        DatabaseInitializationService.serverInitResultHash(
+          mockServerInitResult,
+        );
 
       // Modify the result
       mockServerInitResult.adminUsername = 'different-admin';
-      const hash2 = DatabaseInitializationService.serverInitResultHash(mockServerInitResult);
+      const hash2 =
+        DatabaseInitializationService.serverInitResultHash(
+          mockServerInitResult,
+        );
 
       expect(hash1).not.toBe(hash2);
     });
@@ -596,8 +760,14 @@ describe('DatabaseInitializationService', () => {
 
     beforeEach(() => {
       mockServerInitResult = {
-        adminUser: { _id: new Types.ObjectId(), publicKey: 'admin-public-key' } as IUserDocument,
-        adminRole: { _id: new Types.ObjectId(), name: 'Administrator' } as unknown as IRoleDocument,
+        adminUser: {
+          _id: new Types.ObjectId(),
+          publicKey: 'admin-public-key',
+        } as IUserDocument,
+        adminRole: {
+          _id: new Types.ObjectId(),
+          name: 'Administrator',
+        } as unknown as IRoleDocument,
         adminUserRole: { _id: new Types.ObjectId() } as IUserRoleDocument,
         adminUsername: 'admin',
         adminEmail: 'admin@example.com',
@@ -605,8 +775,14 @@ describe('DatabaseInitializationService', () => {
         adminPassword: 'admin-password',
         adminBackupCodes: ['code1', 'code2'],
         adminMember: {} as BackendMember,
-        memberUser: { _id: new Types.ObjectId(), publicKey: 'member-public-key' } as IUserDocument,
-        memberRole: { _id: new Types.ObjectId(), name: 'Member' } as IRoleDocument,
+        memberUser: {
+          _id: new Types.ObjectId(),
+          publicKey: 'member-public-key',
+        } as IUserDocument,
+        memberRole: {
+          _id: new Types.ObjectId(),
+          name: 'Member',
+        } as IRoleDocument,
         memberUserRole: { _id: new Types.ObjectId() } as IUserRoleDocument,
         memberUsername: 'member',
         memberEmail: 'member@example.com',
@@ -614,8 +790,14 @@ describe('DatabaseInitializationService', () => {
         memberPassword: 'member-password',
         memberBackupCodes: ['code3', 'code4'],
         memberMember: {} as BackendMember,
-        systemUser: { _id: new Types.ObjectId(), publicKey: 'system-public-key' } as IUserDocument,
-        systemRole: { _id: new Types.ObjectId(), name: 'System' } as IRoleDocument,
+        systemUser: {
+          _id: new Types.ObjectId(),
+          publicKey: 'system-public-key',
+        } as IUserDocument,
+        systemRole: {
+          _id: new Types.ObjectId(),
+          name: 'System',
+        } as IRoleDocument,
         systemUserRole: { _id: new Types.ObjectId() } as IUserRoleDocument,
         systemUsername: 'system',
         systemEmail: 'system@example.com',
@@ -634,35 +816,53 @@ describe('DatabaseInitializationService', () => {
     });
 
     it('should print all user credentials and information', () => {
-      DatabaseInitializationService.printServerInitResults(mockServerInitResult);
+      DatabaseInitializationService.printServerInitResults(
+        mockServerInitResult,
+      );
 
       // Should have printed information for all three users (system, admin, member)
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Admin_AccountCredentials'));
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Common_System'));
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Common_Admin'));
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Common_Member'));
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Admin_EndCredentials'));
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Admin_AccountCredentials'),
+      );
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Common_System'),
+      );
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Common_Admin'),
+      );
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Common_Member'),
+      );
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Admin_EndCredentials'),
+      );
     });
 
     it('should print user IDs, usernames, emails, passwords, mnemonics, and backup codes', () => {
-      DatabaseInitializationService.printServerInitResults(mockServerInitResult);
+      DatabaseInitializationService.printServerInitResults(
+        mockServerInitResult,
+      );
 
       // Check that console.log was called with strings containing the actual values
-      const logCalls = consoleSpy.mock.calls.map(call => call[0]);
+      const logCalls = consoleSpy.mock.calls.map((call) => call[0]);
       const allLogs = logCalls.join(' ');
-      
-      expect(allLogs).toContain(mockServerInitResult.adminUser._id.toHexString());
+
+      expect(allLogs).toContain(
+        mockServerInitResult.adminUser._id.toHexString(),
+      );
       expect(allLogs).toContain(mockServerInitResult.adminUsername);
       expect(allLogs).toContain(mockServerInitResult.adminEmail);
     });
 
     it('should print public keys for all users', () => {
-      DatabaseInitializationService.printServerInitResults(mockServerInitResult);
+      DatabaseInitializationService.printServerInitResults(
+        mockServerInitResult,
+      );
 
       // Check that console.log was called with strings containing the public keys
-      const logCalls = consoleSpy.mock.calls.map(call => call[0]);
+      const logCalls = consoleSpy.mock.calls.map((call) => call[0]);
       const allLogs = logCalls.join(' ');
-      
+
       expect(allLogs).toContain('admin-public-key');
       expect(allLogs).toContain('member-public-key');
       expect(allLogs).toContain('system-public-key');
@@ -678,7 +878,10 @@ describe('DatabaseInitializationService', () => {
       originalEnv = { ...process.env };
 
       mockServerInitResult = {
-        adminUser: { _id: new Types.ObjectId(), publicKey: 'admin-public-key' } as IUserDocument,
+        adminUser: {
+          _id: new Types.ObjectId(),
+          publicKey: 'admin-public-key',
+        } as IUserDocument,
         adminRole: { _id: new Types.ObjectId() } as IRoleDocument,
         adminUserRole: { _id: new Types.ObjectId() } as IUserRoleDocument,
         adminUsername: 'admin',
@@ -687,7 +890,10 @@ describe('DatabaseInitializationService', () => {
         adminPassword: 'admin-password',
         adminBackupCodes: ['code1', 'code2'],
         adminMember: {} as BackendMember,
-        memberUser: { _id: new Types.ObjectId(), publicKey: 'member-public-key' } as IUserDocument,
+        memberUser: {
+          _id: new Types.ObjectId(),
+          publicKey: 'member-public-key',
+        } as IUserDocument,
         memberRole: { _id: new Types.ObjectId() } as IRoleDocument,
         memberUserRole: { _id: new Types.ObjectId() } as IUserRoleDocument,
         memberUsername: 'member',
@@ -696,7 +902,10 @@ describe('DatabaseInitializationService', () => {
         memberPassword: 'member-password',
         memberBackupCodes: ['code3', 'code4'],
         memberMember: {} as BackendMember,
-        systemUser: { _id: new Types.ObjectId(), publicKey: 'system-public-key' } as IUserDocument,
+        systemUser: {
+          _id: new Types.ObjectId(),
+          publicKey: 'system-public-key',
+        } as IUserDocument,
         systemRole: { _id: new Types.ObjectId() } as IRoleDocument,
         systemUserRole: { _id: new Types.ObjectId() } as IUserRoleDocument,
         systemUsername: 'system',
@@ -716,34 +925,70 @@ describe('DatabaseInitializationService', () => {
     it('should set all admin environment variables', () => {
       DatabaseInitializationService.setEnvFromInitResults(mockServerInitResult);
 
-      expect(process.env['ADMIN_ID']).toBe(mockServerInitResult.adminUser._id.toHexString());
-      expect(process.env['ADMIN_PUBLIC_KEY']).toBe(mockServerInitResult.adminUser.publicKey);
-      expect(process.env['ADMIN_MNEMONIC']).toBe(mockServerInitResult.adminMnemonic);
-      expect(process.env['ADMIN_PASSWORD']).toBe(mockServerInitResult.adminPassword);
-      expect(process.env['ADMIN_ROLE_ID']).toBe(mockServerInitResult.adminRole._id.toHexString());
-      expect(process.env['ADMIN_USER_ROLE_ID']).toBe(mockServerInitResult.adminUserRole._id.toHexString());
+      expect(process.env['ADMIN_ID']).toBe(
+        mockServerInitResult.adminUser._id.toHexString(),
+      );
+      expect(process.env['ADMIN_PUBLIC_KEY']).toBe(
+        mockServerInitResult.adminUser.publicKey,
+      );
+      expect(process.env['ADMIN_MNEMONIC']).toBe(
+        mockServerInitResult.adminMnemonic,
+      );
+      expect(process.env['ADMIN_PASSWORD']).toBe(
+        mockServerInitResult.adminPassword,
+      );
+      expect(process.env['ADMIN_ROLE_ID']).toBe(
+        mockServerInitResult.adminRole._id.toHexString(),
+      );
+      expect(process.env['ADMIN_USER_ROLE_ID']).toBe(
+        mockServerInitResult.adminUserRole._id.toHexString(),
+      );
     });
 
     it('should set all member environment variables', () => {
       DatabaseInitializationService.setEnvFromInitResults(mockServerInitResult);
 
-      expect(process.env['MEMBER_ID']).toBe(mockServerInitResult.memberUser._id.toHexString());
-      expect(process.env['MEMBER_PUBLIC_KEY']).toBe(mockServerInitResult.memberUser.publicKey);
-      expect(process.env['MEMBER_MNEMONIC']).toBe(mockServerInitResult.memberMnemonic);
-      expect(process.env['MEMBER_PASSWORD']).toBe(mockServerInitResult.memberPassword);
-      expect(process.env['MEMBER_ROLE_ID']).toBe(mockServerInitResult.memberRole._id.toHexString());
-      expect(process.env['MEMBER_USER_ROLE_ID']).toBe(mockServerInitResult.memberUserRole._id.toHexString());
+      expect(process.env['MEMBER_ID']).toBe(
+        mockServerInitResult.memberUser._id.toHexString(),
+      );
+      expect(process.env['MEMBER_PUBLIC_KEY']).toBe(
+        mockServerInitResult.memberUser.publicKey,
+      );
+      expect(process.env['MEMBER_MNEMONIC']).toBe(
+        mockServerInitResult.memberMnemonic,
+      );
+      expect(process.env['MEMBER_PASSWORD']).toBe(
+        mockServerInitResult.memberPassword,
+      );
+      expect(process.env['MEMBER_ROLE_ID']).toBe(
+        mockServerInitResult.memberRole._id.toHexString(),
+      );
+      expect(process.env['MEMBER_USER_ROLE_ID']).toBe(
+        mockServerInitResult.memberUserRole._id.toHexString(),
+      );
     });
 
     it('should set all system environment variables', () => {
       DatabaseInitializationService.setEnvFromInitResults(mockServerInitResult);
 
-      expect(process.env['SYSTEM_ID']).toBe(mockServerInitResult.systemUser._id.toHexString());
-      expect(process.env['SYSTEM_PUBLIC_KEY']).toBe(mockServerInitResult.systemUser.publicKey);
-      expect(process.env['SYSTEM_MNEMONIC']).toBe(mockServerInitResult.systemMnemonic);
-      expect(process.env['SYSTEM_PASSWORD']).toBe(mockServerInitResult.systemPassword);
-      expect(process.env['SYSTEM_ROLE_ID']).toBe(mockServerInitResult.systemRole._id.toHexString());
-      expect(process.env['SYSTEM_USER_ROLE_ID']).toBe(mockServerInitResult.systemUserRole._id.toHexString());
+      expect(process.env['SYSTEM_ID']).toBe(
+        mockServerInitResult.systemUser._id.toHexString(),
+      );
+      expect(process.env['SYSTEM_PUBLIC_KEY']).toBe(
+        mockServerInitResult.systemUser.publicKey,
+      );
+      expect(process.env['SYSTEM_MNEMONIC']).toBe(
+        mockServerInitResult.systemMnemonic,
+      );
+      expect(process.env['SYSTEM_PASSWORD']).toBe(
+        mockServerInitResult.systemPassword,
+      );
+      expect(process.env['SYSTEM_ROLE_ID']).toBe(
+        mockServerInitResult.systemRole._id.toHexString(),
+      );
+      expect(process.env['SYSTEM_USER_ROLE_ID']).toBe(
+        mockServerInitResult.systemUserRole._id.toHexString(),
+      );
     });
 
     it('should overwrite existing environment variables', () => {
@@ -753,9 +998,13 @@ describe('DatabaseInitializationService', () => {
 
       DatabaseInitializationService.setEnvFromInitResults(mockServerInitResult);
 
-      expect(process.env['ADMIN_ID']).toBe(mockServerInitResult.adminUser._id.toHexString());
+      expect(process.env['ADMIN_ID']).toBe(
+        mockServerInitResult.adminUser._id.toHexString(),
+      );
       expect(process.env['ADMIN_ID']).not.toBe('old-admin-id');
-      expect(process.env['MEMBER_PASSWORD']).toBe(mockServerInitResult.memberPassword);
+      expect(process.env['MEMBER_PASSWORD']).toBe(
+        mockServerInitResult.memberPassword,
+      );
       expect(process.env['MEMBER_PASSWORD']).not.toBe('old-member-password');
     });
   });
@@ -772,9 +1021,18 @@ describe('DatabaseInitializationService', () => {
 
     it('should initialize database successfully with default users and roles', async () => {
       // Mock successful role creation
-      const adminRole = { _id: new Types.ObjectId(), name: AppConstants.AdministratorRole };
-      const memberRole = { _id: new Types.ObjectId(), name: AppConstants.MemberRole };
-      const systemRole = { _id: new Types.ObjectId(), name: AppConstants.SystemRole };
+      const adminRole = {
+        _id: new Types.ObjectId(),
+        name: AppConstants.AdministratorRole,
+      };
+      const memberRole = {
+        _id: new Types.ObjectId(),
+        name: AppConstants.MemberRole,
+      };
+      const systemRole = {
+        _id: new Types.ObjectId(),
+        name: AppConstants.SystemRole,
+      };
 
       mockRoleModel.create
         .mockResolvedValueOnce([adminRole])
@@ -858,11 +1116,13 @@ describe('DatabaseInitializationService', () => {
 
     it('should handle role creation failure', async () => {
       const { withTransaction } = require('../../src/utils');
-      (withTransaction as jest.Mock).mockImplementation(async (connection, useTransactions, options, callback) => {
-        // Mock role creation failure
-        mockRoleModel.create.mockResolvedValue([]); // Empty array means failure
-        return callback(null);
-      });
+      (withTransaction as jest.Mock).mockImplementation(
+        async (connection, useTransactions, options, callback) => {
+          // Mock role creation failure
+          mockRoleModel.create.mockResolvedValue([]); // Empty array means failure
+          return callback(null);
+        },
+      );
 
       const result = await callInitUserDbWithServices();
 
@@ -872,22 +1132,33 @@ describe('DatabaseInitializationService', () => {
 
     it('should handle user creation failure', async () => {
       const { withTransaction } = require('../../src/utils');
-      (withTransaction as jest.Mock).mockImplementation(async (connection, useTransactions, options, callback) => {
-        // Mock successful role creation
-        const adminRole = { _id: new Types.ObjectId(), name: AppConstants.AdministratorRole };
-        const memberRole = { _id: new Types.ObjectId(), name: AppConstants.MemberRole };
-        const systemRole = { _id: new Types.ObjectId(), name: AppConstants.SystemRole };
+      (withTransaction as jest.Mock).mockImplementation(
+        async (connection, useTransactions, options, callback) => {
+          // Mock successful role creation
+          const adminRole = {
+            _id: new Types.ObjectId(),
+            name: AppConstants.AdministratorRole,
+          };
+          const memberRole = {
+            _id: new Types.ObjectId(),
+            name: AppConstants.MemberRole,
+          };
+          const systemRole = {
+            _id: new Types.ObjectId(),
+            name: AppConstants.SystemRole,
+          };
 
-        mockRoleModel.create
-          .mockResolvedValueOnce([adminRole])
-          .mockResolvedValueOnce([memberRole])
-          .mockResolvedValueOnce([systemRole]);
+          mockRoleModel.create
+            .mockResolvedValueOnce([adminRole])
+            .mockResolvedValueOnce([memberRole])
+            .mockResolvedValueOnce([systemRole]);
 
-        // Mock user creation failure
-        mockUserModel.create.mockResolvedValue([]); // Empty array means failure
+          // Mock user creation failure
+          mockUserModel.create.mockResolvedValue([]); // Empty array means failure
 
-        return callback(null);
-      });
+          return callback(null);
+        },
+      );
 
       const result = await callInitUserDbWithServices();
 
@@ -897,18 +1168,36 @@ describe('DatabaseInitializationService', () => {
 
     it('should generate backup codes when not provided in environment', async () => {
       // Mock successful initialization without backup codes in environment
-      const adminRole = { _id: new Types.ObjectId(), name: AppConstants.AdministratorRole };
-      const memberRole = { _id: new Types.ObjectId(), name: AppConstants.MemberRole };
-      const systemRole = { _id: new Types.ObjectId(), name: AppConstants.SystemRole };
+      const adminRole = {
+        _id: new Types.ObjectId(),
+        name: AppConstants.AdministratorRole,
+      };
+      const memberRole = {
+        _id: new Types.ObjectId(),
+        name: AppConstants.MemberRole,
+      };
+      const systemRole = {
+        _id: new Types.ObjectId(),
+        name: AppConstants.SystemRole,
+      };
 
       mockRoleModel.create
         .mockResolvedValueOnce([adminRole])
         .mockResolvedValueOnce([memberRole])
         .mockResolvedValueOnce([systemRole]);
 
-      const systemUser = { _id: new Types.ObjectId(), username: AppConstants.SystemUser };
-      const adminUser = { _id: new Types.ObjectId(), username: AppConstants.AdministratorUser };
-      const memberUser = { _id: new Types.ObjectId(), username: AppConstants.MemberUser };
+      const systemUser = {
+        _id: new Types.ObjectId(),
+        username: AppConstants.SystemUser,
+      };
+      const adminUser = {
+        _id: new Types.ObjectId(),
+        username: AppConstants.AdministratorUser,
+      };
+      const memberUser = {
+        _id: new Types.ObjectId(),
+        username: AppConstants.MemberUser,
+      };
 
       mockUserModel.create
         .mockResolvedValueOnce([systemUser])
@@ -942,7 +1231,7 @@ describe('DatabaseInitializationService', () => {
 
     it('should handle invalid ObjectId inputs gracefully', () => {
       const invalidId = 'invalid-object-id';
-      
+
       // This would typically be caught by MongoDB validation
       expect(() => {
         new Types.ObjectId(invalidId);
@@ -959,7 +1248,7 @@ describe('DatabaseInitializationService', () => {
         email,
         mnemonic,
         MemberType.User,
-        mockECIESService
+        mockECIESService,
       );
 
       expect(result.member).toBeDefined();
@@ -971,8 +1260,10 @@ describe('DatabaseInitializationService', () => {
 
     it('should handle TranslatableError properly', async () => {
       const { withTransaction } = require('../../src/utils');
-      const customError = new TranslatableSuiteError(SuiteCoreStringKey.Admin_DatabaseAlreadyInitialized);
-      
+      const customError = new TranslatableSuiteError(
+        SuiteCoreStringKey.Admin_DatabaseAlreadyInitialized,
+      );
+
       (withTransaction as jest.Mock).mockRejectedValue(customError);
 
       const result = await callInitUserDbWithServices();
@@ -985,7 +1276,8 @@ describe('DatabaseInitializationService', () => {
       const connectionError = new Error('Database connection failed');
       (mockConnection as any).db = null;
 
-      const dropResult = await DatabaseInitializationService.dropDatabase(mockConnection);
+      const dropResult =
+        await DatabaseInitializationService.dropDatabase(mockConnection);
       expect(dropResult).toBe(false);
     });
 
@@ -1001,7 +1293,7 @@ describe('DatabaseInitializationService', () => {
 
     it('should handle empty backup codes array', () => {
       (BackupCode.generateBackupCodes as jest.Mock).mockReturnValue([]);
-      
+
       const username = 'testuser';
       const email = new EmailString('test@example.com');
       const mnemonic = new SecureString('test mnemonic');
@@ -1011,7 +1303,7 @@ describe('DatabaseInitializationService', () => {
         email,
         mnemonic,
         MemberType.User,
-        mockECIESService
+        mockECIESService,
       );
 
       expect(result).toBeDefined();
@@ -1029,7 +1321,7 @@ describe('DatabaseInitializationService', () => {
     it('should handle secure string disposal correctly', () => {
       const secureString = new SecureString('test-value');
       expect(secureString.hasValue).toBe(true);
-      
+
       // Test disposal without accessing hasValue after disposal
       secureString.dispose();
       // We can't test hasValue after disposal as it throws an error

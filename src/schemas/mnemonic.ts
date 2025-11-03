@@ -3,7 +3,7 @@ import {
   SuiteCoreStringKey,
 } from '@digitaldefiance/suite-core-lib';
 import { Schema } from 'mongoose';
-import { Constants as AppConstants } from '../constants';
+import { LocalhostConstants as AppConstants } from '../constants';
 import { IMnemonicDocument } from '../documents/mnemonic';
 import { IConstants } from '../interfaces/constants';
 
@@ -11,8 +11,8 @@ import { IConstants } from '../interfaces/constants';
  * Create a mnemonic schema with custom or default constants
  */
 export function createMnemonicSchema<T extends IConstants = IConstants>(
-  constants: T = AppConstants as T,
   validationMessage?: () => string,
+  constants: T = AppConstants as T,
 ): Schema<IMnemonicDocument> {
   return new Schema<IMnemonicDocument>({
     hmac: {

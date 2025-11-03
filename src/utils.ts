@@ -592,9 +592,7 @@ export function handleError(
       '[handleError]',
       'type=' + errorType.replace(/[\r\n]/g, ''),
       'status=' + String(handleableError.statusCode).replace(/[\r\n]/g, ''),
-      'message=' +
-        (handleableError.message || '')
-          .replace(/[\r\n]/g, ''),
+      'message=' + (handleableError.message || '').replace(/[\r\n]/g, ''),
     );
   }
 
@@ -612,7 +610,10 @@ export function handleError(
 export function locatePEMRoot(devRootDir: string): string | undefined {
   try {
     const normalizedDir = resolve(devRootDir);
-    if (normalizedDir.includes('..') || !normalizedDir.startsWith(resolve('.'))) {
+    if (
+      normalizedDir.includes('..') ||
+      !normalizedDir.startsWith(resolve('.'))
+    ) {
       return undefined;
     }
     const files = readdirSync(normalizedDir);

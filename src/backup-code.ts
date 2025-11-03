@@ -11,7 +11,7 @@ import {
 } from '@digitaldefiance/suite-core-lib';
 import * as argon2 from 'argon2';
 import { createHmac, randomBytes, timingSafeEqual } from 'crypto';
-import { Constants } from './constants';
+import { LocalhostConstants } from './constants';
 import { InvalidBackupCodeVersionError } from './errors/invalid-backup-code-version';
 import { IConstants } from './interfaces';
 import { SymmetricService } from './services/symmetric';
@@ -48,7 +48,7 @@ export class BackupCode extends BackupCodeString {
    * Note: If generation alphabet/length is controlled elsewhere, prefer that path.
    */
   public static override generateBackupCodes(
-    constants: IConstants = Constants,
+    constants: IConstants = LocalhostConstants,
   ): Array<BackupCode> {
     const codes: Array<BackupCode> = [];
     for (let i = 0; i < constants.BACKUP_CODES.Count; i++) {
@@ -104,7 +104,7 @@ export class BackupCode extends BackupCodeString {
   public static async getBackupKeyV1(
     checksumSaltHex: string,
     normalizedCode: string,
-    constants: IConstants = Constants,
+    constants: IConstants = LocalhostConstants,
   ): Promise<Buffer> {
     if (!constants.BACKUP_CODES.NormalizedHexRegex.test(normalizedCode)) {
       throw new InvalidBackupCodeError();
@@ -145,7 +145,7 @@ export class BackupCode extends BackupCodeString {
   public async encrypt(
     backupUser: BackendMember,
     systemUser: BackendMember,
-    constants: IConstants = Constants,
+    constants: IConstants = LocalhostConstants,
   ): Promise<IBackupCode> {
     if (!backupUser.hasPrivateKey) {
       throw new PrivateKeyRequiredError();
@@ -169,6 +169,7 @@ export class BackupCode extends BackupCodeString {
     const encryptionKey = await BackupCode.getBackupKeyV1(
       checksumSalt.toString('hex'),
       normalized,
+      constants,
     );
 
     try {
@@ -227,7 +228,7 @@ export class BackupCode extends BackupCodeString {
   public static validateBackupCodeV1(
     encryptedBackupCodes: Array<IBackupCode>,
     backupCode: string,
-    constants: IConstants = Constants,
+    constants: IConstants = LocalhostConstants,
   ): boolean {
     const normalizedCode = BackupCodeString.normalizeCode(backupCode);
     if (!constants.BACKUP_CODES.NormalizedHexRegex.test(normalizedCode)) {
@@ -263,7 +264,7 @@ export class BackupCode extends BackupCodeString {
   public static validateBackupCode(
     encryptedBackupCodes: Array<IBackupCode>,
     backupCode: string,
-    constants: IConstants = Constants,
+    constants: IConstants = LocalhostConstants,
   ): boolean {
     const normalizedCode = BackupCodeString.normalizeCode(backupCode);
     if (!constants.BACKUP_CODES.NormalizedHexRegex.test(normalizedCode)) {
@@ -290,7 +291,7 @@ export class BackupCode extends BackupCodeString {
   public static detectBackupCodeVersion(
     encryptedBackupCodes: Array<IBackupCode>,
     backupCode: string,
-    constants: IConstants = Constants,
+    constants: IConstants = LocalhostConstants,
   ): string {
     const normalizedCode = BackupCodeString.normalizeCode(backupCode);
     if (!constants.BACKUP_CODES.NormalizedHexRegex.test(normalizedCode)) {

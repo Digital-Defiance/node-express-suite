@@ -57,7 +57,17 @@ export class Application<
 
   constructor(
     environment: TEnvironment,
-    apiRouterFactory: (app: Application<T, I, TInitResults, TModelDocs, TBaseDocument, TEnvironment, TConstants>) => BaseRouter,
+    apiRouterFactory: (
+      app: Application<
+        T,
+        I,
+        TInitResults,
+        TModelDocs,
+        TBaseDocument,
+        TEnvironment,
+        TConstants
+      >,
+    ) => BaseRouter,
     schemaMapFactory: (
       connection: mongoose.Connection,
     ) => SchemaMap<TModelDocs>,

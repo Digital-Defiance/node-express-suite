@@ -172,7 +172,10 @@ export class UserController<
     this.backupCodeService = backupCodeService;
     this.roleService = roleService;
     this.eciesService = eciesService;
-    this.systemUser = SystemUserService.getSystemUser(application.environment);
+    this.systemUser = SystemUserService.getSystemUser(
+      application.environment,
+      application.constants,
+    );
   }
 
   @Get('/verify', { auth: true })

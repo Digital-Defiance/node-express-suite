@@ -1,13 +1,16 @@
+import { SecureBuffer, SecureString } from '@digitaldefiance/ecies-lib';
+import {
+  getSuiteCoreTranslation,
+  SuiteCoreStringKey,
+} from '@digitaldefiance/suite-core-lib';
 import { randomBytes } from 'crypto';
 import { MongoMemoryServer } from 'mongodb-memory-server';
-import { Connection, Model, connect } from 'mongoose';
+import { connect, Connection, Model } from 'mongoose';
+import { LocalhostConstants } from '../../src/constants';
 import { IMnemonicDocument } from '../../src/documents/mnemonic';
-import { MnemonicSchema } from '../../src/schemas/mnemonic';
-import { KeyWrappingService } from '../../src/services/key-wrapping';
-import { MnemonicService } from '../../src/services/mnemonic';
-import { SecureBuffer, SecureString } from '@digitaldefiance/ecies-lib';
 import { BaseModelName } from '../../src/enumerations/base-model-name';
-import { getSuiteCoreTranslation, SuiteCoreStringKey } from '@digitaldefiance/suite-core-lib';
+import { MnemonicSchema } from '../../src/schemas/mnemonic';
+import { MnemonicService } from '../../src/services/mnemonic';
 
 // https://docs.rs/bip39/latest/src/bip39/lib.rs.html
 
@@ -120,11 +123,10 @@ describe('MnemonicService', () => {
   describe('MnemonicService validation', () => {
     it('should validate mnemonic format correctly', () => {
       const hmacSecret = new SecureBuffer(randomBytes(32));
-      const keyWrappingService: KeyWrappingService = new KeyWrappingService();
       const service = new MnemonicService(
         MnemonicModelInstance,
         hmacSecret,
-        keyWrappingService,
+        LocalhostConstants,
       );
 
       try {
@@ -142,11 +144,10 @@ describe('MnemonicService', () => {
 
     it('should generate HMAC correctly', () => {
       const hmacSecret = new SecureBuffer(randomBytes(32));
-      const keyWrappingService: KeyWrappingService = new KeyWrappingService();
       const service = new MnemonicService(
         MnemonicModelInstance,
         hmacSecret,
-        keyWrappingService,
+        LocalhostConstants,
       );
 
       try {
@@ -169,11 +170,10 @@ describe('MnemonicService', () => {
   describe('addMnemonic and mnemonicExists (MongoDB tests)', () => {
     it('should add a new, valid mnemonic to the database', async () => {
       const hmacSecret = new SecureBuffer(randomBytes(32));
-      const keyWrappingService: KeyWrappingService = new KeyWrappingService();
       const service = new MnemonicService(
         MnemonicModelInstance,
         hmacSecret,
-        keyWrappingService,
+        LocalhostConstants,
       );
 
       try {
@@ -192,18 +192,17 @@ describe('MnemonicService', () => {
       const hmacBytes = randomBytes(32);
 
       const hmacSecret1 = new SecureBuffer(hmacBytes);
-      const keyWrappingService: KeyWrappingService = new KeyWrappingService();
       const service1 = new MnemonicService(
         MnemonicModelInstance,
         hmacSecret1,
-        keyWrappingService,
+        LocalhostConstants,
       );
 
       const hmacSecret2 = new SecureBuffer(hmacBytes);
       const service2 = new MnemonicService(
         MnemonicModelInstance,
         hmacSecret2,
-        keyWrappingService,
+        LocalhostConstants,
       );
 
       try {
@@ -225,11 +224,10 @@ describe('MnemonicService', () => {
 
     it('should throw an error if the mnemonic format is invalid', async () => {
       const hmacSecret = new SecureBuffer(randomBytes(32));
-      const keyWrappingService: KeyWrappingService = new KeyWrappingService();
       const service = new MnemonicService(
         MnemonicModelInstance,
         hmacSecret,
-        keyWrappingService,
+        LocalhostConstants,
       );
       const invalidMnemonic = new SecureString('this is not a valid mnemonic');
 
@@ -246,11 +244,10 @@ describe('MnemonicService', () => {
 
     it('should correctly check if a mnemonic exists', async () => {
       const hmacSecret = new SecureBuffer(randomBytes(32));
-      const keyWrappingService: KeyWrappingService = new KeyWrappingService();
       const service = new MnemonicService(
         MnemonicModelInstance,
         hmacSecret,
-        keyWrappingService,
+        LocalhostConstants,
       );
 
       try {
@@ -271,11 +268,10 @@ describe('MnemonicService', () => {
   describe('addMnemonicWithPassword (MongoDB tests)', () => {
     it('should add a new mnemonic with password-based key wrapping', async () => {
       const hmacSecret = new SecureBuffer(randomBytes(32));
-      const keyWrappingService: KeyWrappingService = new KeyWrappingService();
       const service = new MnemonicService(
         MnemonicModelInstance,
         hmacSecret,
-        keyWrappingService,
+        LocalhostConstants,
       );
       const password = new SecureString('Testpassword123!');
 
@@ -302,18 +298,17 @@ describe('MnemonicService', () => {
       const password = new SecureString('Testpassword123!');
 
       const hmacSecret1 = new SecureBuffer(hmacBytes);
-      const keyWrappingService: KeyWrappingService = new KeyWrappingService();
       const service1 = new MnemonicService(
         MnemonicModelInstance,
         hmacSecret1,
-        keyWrappingService,
+        LocalhostConstants,
       );
 
       const hmacSecret2 = new SecureBuffer(hmacBytes);
       const service2 = new MnemonicService(
         MnemonicModelInstance,
         hmacSecret2,
-        keyWrappingService,
+        LocalhostConstants,
       );
 
       try {

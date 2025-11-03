@@ -1,3 +1,4 @@
+import { IChecksumConsts } from '@digitaldefiance/ecies-lib';
 import {
   ChecksumBuffer,
   ChecksumString,
@@ -9,13 +10,18 @@ import { IChecksumConfig } from '../interfaces/checksum-config';
 
 export class ChecksumService {
   private readonly config: IChecksumConfig;
+  protected readonly constants: IChecksumConsts;
 
-  constructor(config?: Partial<IChecksumConfig>) {
+  constructor(
+    config?: Partial<IChecksumConfig>,
+    constants: IChecksumConsts = CHECKSUM,
+  ) {
     this.config = {
-      algorithm: CHECKSUM.ALGORITHM,
-      encoding: CHECKSUM.ENCODING,
+      algorithm: constants.ALGORITHM,
+      encoding: constants.ENCODING,
       ...config,
     };
+    this.constants = constants;
   }
 
   /**
@@ -25,7 +31,7 @@ export class ChecksumService {
    */
   public calculateChecksum(data: Buffer): ChecksumBuffer {
     const hash = createHash(this.config.algorithm);
-    hash.update(data);
+    hash.update(new Uint8Array(data));
     const digest = hash.digest();
     return Buffer.from(digest) as ChecksumBuffer;
   }
@@ -38,7 +44,7 @@ export class ChecksumService {
   public calculateChecksumForBuffers(buffers: Buffer[]): ChecksumBuffer {
     const hash = createHash(this.config.algorithm);
     for (const buffer of buffers) {
-      hash.update(buffer);
+      hash.update(new Uint8Array(buffer));
     }
     const digest = hash.digest();
     return Buffer.from(digest) as ChecksumBuffer;
@@ -64,12 +70,12 @@ export class ChecksumService {
     checksum2: ChecksumBuffer,
   ): boolean {
     if (
-      checksum1.length !== CHECKSUM.SHA3_BUFFER_LENGTH ||
-      checksum2.length !== CHECKSUM.SHA3_BUFFER_LENGTH
+      checksum1.length !== this.constants.SHA3_BUFFER_LENGTH ||
+      checksum2.length !== this.constants.SHA3_BUFFER_LENGTH
     ) {
       return false;
     }
-    return checksum1.equals(checksum2);
+    return checksum1.equals(new Uint8Array(checksum2));
   }
 
   /**
@@ -78,7 +84,7 @@ export class ChecksumService {
    * @returns The checksum as a hex string
    */
   public checksumToHexString(checksum: ChecksumBuffer): ChecksumString {
-    return checksum.toString(CHECKSUM.ENCODING) as ChecksumString;
+    return checksum.toString(this.constants.ENCODING) as ChecksumString;
   }
 
   /**
@@ -87,10 +93,10 @@ export class ChecksumService {
    * @returns The checksum as a Buffer
    */
   public hexStringToChecksum(hexString: string): ChecksumBuffer {
-    if (hexString.length !== CHECKSUM.SHA3_BUFFER_LENGTH * 2) {
+    if (hexString.length !== this.constants.SHA3_BUFFER_LENGTH * 2) {
       throw new Error('Invalid checksum hex string length');
     }
-    return Buffer.from(hexString, CHECKSUM.ENCODING) as ChecksumBuffer;
+    return Buffer.from(hexString, this.constants.ENCODING) as ChecksumBuffer;
   }
 
   /**
@@ -99,7 +105,7 @@ export class ChecksumService {
    * @returns True if the checksum is valid, false otherwise
    */
   public validateChecksum(checksum: ChecksumBuffer): boolean {
-    return checksum.length === CHECKSUM.SHA3_BUFFER_LENGTH;
+    return checksum.length === this.constants.SHA3_BUFFER_LENGTH;
   }
 
   /**
@@ -144,11 +150,11 @@ export class ChecksumService {
       stream.on('data', (chunk) => {
         // Ensure chunk is a Buffer before updating hash
         if (Buffer.isBuffer(chunk)) {
-          hash.update(chunk);
+          hash.update(new Uint8Array(chunk));
         } else if (typeof chunk === 'number') {
-          hash.update(Buffer.from([chunk]));
+          hash.update(new Uint8Array(Buffer.from([chunk])));
         } else {
-          hash.update(Buffer.from(chunk));
+          hash.update(new Uint8Array(Buffer.from(chunk)));
         }
       });
       stream.on('end', () => {

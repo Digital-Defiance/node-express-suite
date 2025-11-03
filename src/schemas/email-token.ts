@@ -7,6 +7,7 @@ import { Schema } from 'mongoose';
 import validator from 'validator';
 import { IEmailTokenDocument } from '../documents/email-token';
 import { BaseModelName } from '../enumerations';
+import { IConstants } from '../interfaces';
 
 /**
  * Configuration options for creating an email token schema
@@ -14,6 +15,7 @@ import { BaseModelName } from '../enumerations';
 export interface EmailTokenSchemaOptions<
   TTokenType extends string = EmailTokenType,
   TModelName extends string = BaseModelName,
+  TConstants extends IConstants = IConstants,
 > {
   /** Token type enum values to use */
   tokenTypeEnum?: TTokenType[];
@@ -25,6 +27,7 @@ export interface EmailTokenSchemaOptions<
   emailValidator?: (v: string) => boolean;
   /** Custom validation error message function */
   validationMessage?: (props: { value: string }) => string;
+  constants?: TConstants;
 }
 
 /**
@@ -33,8 +36,10 @@ export interface EmailTokenSchemaOptions<
 export function createEmailTokenSchema<
   TTokenType extends string = EmailTokenType,
   TModelName extends string = BaseModelName,
+  TConstants extends IConstants = IConstants,
 >(
   options: EmailTokenSchemaOptions<TTokenType, TModelName> = {},
+  constants?: TConstants,
 ): Schema<IEmailTokenDocument> {
   const {
     tokenTypeEnum = Object.values(EmailTokenType) as TTokenType[],

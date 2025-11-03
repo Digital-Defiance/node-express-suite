@@ -1,10 +1,10 @@
 /// <reference path="../types.d.ts" />
 import {
   GlobalActiveContext,
+  HandleableError,
   IActiveContext,
   PluginI18nEngine,
   PluginTranslatableGenericError,
-  HandleableError,
 } from '@digitaldefiance/i18n-lib';
 import {
   AccountStatus,
@@ -30,10 +30,13 @@ import {
   validationResult,
 } from 'express-validator';
 import { ClientSession, Types } from 'mongoose';
+import { IBaseDocument } from '../documents';
 import { IUserDocument } from '../documents/user';
 import { BaseModelName } from '../enumerations/base-model-name';
+import { Environment } from '../environment';
 import { ExpressValidationError } from '../errors/express-validation';
 import { MissingValidatedDataError } from '../errors/missing-validated-data';
+import { IConstants } from '../interfaces';
 import { IApplication } from '../interfaces/application';
 import { authenticateCrypto } from '../middlewares/authenticate-crypto';
 import { authenticateToken } from '../middlewares/authenticate-token';
@@ -54,9 +57,6 @@ import {
   TransactionOptions,
   withTransaction as utilsWithTransaction,
 } from '../utils';
-import { IBaseDocument } from '../documents';
-import { Environment } from '../environment';
-import { IConstants } from '../interfaces';
 
 export abstract class BaseController<
   T extends ApiResponse,
@@ -66,7 +66,13 @@ export abstract class BaseController<
   public readonly router: Router;
   private activeRequest: Request | null = null;
   private activeResponse: Response | null = null;
-  public readonly application: IApplication<any, Types.ObjectId, IBaseDocument<any, Types.ObjectId>, Environment, IConstants>;
+  public readonly application: IApplication<
+    any,
+    Types.ObjectId,
+    IBaseDocument<any, Types.ObjectId>,
+    Environment,
+    IConstants
+  >;
   protected routeDefinitions: RouteConfig<H, TLanguage>[] = [];
   protected readonly pluginEngine: PluginI18nEngine<TLanguage> =
     PluginI18nEngine.getInstance<TLanguage>();
@@ -74,7 +80,15 @@ export abstract class BaseController<
   // Allowlist of registered validation functions to prevent code injection
   private static validationRegistry = new WeakSet<Function>();
 
-  public constructor(application: IApplication<any, Types.ObjectId, IBaseDocument<any, Types.ObjectId>, Environment, IConstants>) {
+  public constructor(
+    application: IApplication<
+      any,
+      Types.ObjectId,
+      IBaseDocument<any, Types.ObjectId>,
+      Environment,
+      IConstants
+    >,
+  ) {
     this.application = application;
     this.router = Router();
     this.handlers = {} as H;
@@ -89,7 +103,7 @@ export abstract class BaseController<
    */
   protected registerValidationFunctions(): void {
     // Register validation functions from route definitions
-    this.routeDefinitions.forEach(route => {
+    this.routeDefinitions.forEach((route) => {
       if (typeof route.validation === 'function') {
         BaseController.validationRegistry.add(route.validation);
       }
@@ -165,9 +179,11 @@ export abstract class BaseController<
   ): RequestHandler {
     // Verify the validation function is in the allowlist
     if (!BaseController.validationRegistry.has(validationFn)) {
-      throw new TranslatableSuiteError(SuiteCoreStringKey.Error_ValidationFunctionNotRegisteredInAllowlist);
+      throw new TranslatableSuiteError(
+        SuiteCoreStringKey.Error_ValidationFunctionNotRegisteredInAllowlist,
+      );
     }
-    
+
     return async (req: Request, res: Response, next: NextFunction) => {
       try {
         const validationArray = validationFn(

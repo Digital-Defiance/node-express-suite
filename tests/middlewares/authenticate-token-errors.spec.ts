@@ -1,7 +1,7 @@
 import express from 'express';
 import request from 'supertest';
-import { createApplicationMock } from '../__tests__/helpers/application.mock';
 import { TokenExpiredError } from '../../src/errors/token-expired';
+import { createApplicationMock } from '../__tests__/helpers/application.mock';
 
 // Mock JwtService to control verifyToken behavior
 jest.mock('../../src/services/jwt', () => {
@@ -11,7 +11,8 @@ jest.mock('../../src/services/jwt', () => {
       verifyToken: jest.fn((token: string) => {
         // Use constant-time comparison to prevent timing attacks
         const expiredToken = 'expired';
-        const isExpired = token.length === expiredToken.length && 
+        const isExpired =
+          token.length === expiredToken.length &&
           crypto.timingSafeEqual(Buffer.from(token), Buffer.from(expiredToken));
         if (isExpired) {
           throw new TokenExpiredError();
@@ -31,7 +32,7 @@ function makeApp() {
   app.use(express.json());
   const application = createApplicationMock(
     {
-      getModel: () => ({} as unknown),
+      getModel: () => ({}) as unknown,
     },
     { mongo: { uri: 'mongodb://localhost:27017', transactionTimeout: 60000 } },
   );

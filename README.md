@@ -663,6 +663,15 @@ For issues and questions:
 
 ## ChangeLog
 
+### Version 1.3.20
+
+- Version bump
+- Wired the express-suite package to the shared constant stack: default exports now expose LocalhostConstants, and every service/schema/controller pulls constants from the application instance instead of hard-coding them.
+- Propagated the richer constant set (keyring, wrapped-key, PBKDF2 profiles, encryption metadata) into createExpressRuntimeConfiguration, the checksum/FEC services, and type definitions so downstream apps share ECIES/node defaults.
+- Updated system-user, backup-code, JWT, mnemonic, key-wrapping, and user flows to accept injected constants, including rewrapping logic and password/KDF validation paths.
+- Tightened controller/router/service generics and typings, clarified validation guard rails, and swapped several equality checks to operate on Uint8Array for safer crypto comparisons.
+- Refreshed mocks/tests to consume LocalhostConstants, fixed registry helpers, and expanded tsconfig.spec to compile the runtime sources so the new injections are covered.
+
 ### Version 1.3.18
 
 - Make application factory pattern for api router

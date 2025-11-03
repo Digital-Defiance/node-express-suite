@@ -1,7 +1,7 @@
 import { Readable } from 'stream';
 import { CHECKSUM } from '../../src/constants';
-import { ChecksumBuffer } from '../../src/types';
 import { ChecksumService } from '../../src/services/checksum';
+import { ChecksumBuffer } from '../../src/types';
 
 describe('ChecksumService', () => {
   let checksumService: ChecksumService;
@@ -143,25 +143,21 @@ describe('ChecksumService', () => {
     it('should generate the same checksum for the same data using Stream', async () => {
       const stream1 = bufferToStream(testData);
       const stream2 = bufferToStream(testData);
-      const checksum = await checksumService.calculateChecksumForStream(
-        stream1,
-      );
+      const checksum =
+        await checksumService.calculateChecksumForStream(stream1);
       expect(checksum.length).toBe(CHECKSUM.SHA3_BUFFER_LENGTH);
-      const checksum2 = await checksumService.calculateChecksumForStream(
-        stream2,
-      );
+      const checksum2 =
+        await checksumService.calculateChecksumForStream(stream2);
       expect(checksumService.compareChecksums(checksum, checksum2)).toBe(true);
     });
 
     it('should generate different checksums for different data using Stream', async () => {
       const stream1 = bufferToStream(testData);
       const stream2 = bufferToStream(differentData);
-      const checksum1 = await checksumService.calculateChecksumForStream(
-        stream1,
-      );
-      const checksum2 = await checksumService.calculateChecksumForStream(
-        stream2,
-      );
+      const checksum1 =
+        await checksumService.calculateChecksumForStream(stream1);
+      const checksum2 =
+        await checksumService.calculateChecksumForStream(stream2);
       expect(checksum1.equals(checksum2)).toBe(false);
     });
 
@@ -182,9 +178,8 @@ describe('ChecksumService', () => {
       const bufferChecksum = await checksumService.calculateChecksumForStream(
         bufferToStream(emptyBuffer),
       );
-      const streamChecksum = await checksumService.calculateChecksumForStream(
-        emptyStream,
-      );
+      const streamChecksum =
+        await checksumService.calculateChecksumForStream(emptyStream);
 
       expect(bufferChecksum.length).toBe(CHECKSUM.SHA3_BUFFER_LENGTH);
       expect(bufferChecksum.equals(streamChecksum)).toBe(true);

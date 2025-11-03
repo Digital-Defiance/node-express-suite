@@ -9,11 +9,10 @@ import {
   ECIESService,
 } from '@digitaldefiance/node-ecies-lib';
 import {
-  Constants,
-  IConstants,
   SuiteCoreStringKey,
   TranslatableSuiteError,
 } from '@digitaldefiance/suite-core-lib';
+import { IConstants } from '../interfaces/constants';
 import { Environment } from '../environment';
 
 /**
@@ -21,7 +20,6 @@ import { Environment } from '../environment';
  */
 export class SystemUserService {
   private static systemUser: BackendMember | null = null;
-  private static eciesService: ECIESService = new ECIESService();
 
   /**
    * Initializes and returns the system member's Member instance.
@@ -29,7 +27,7 @@ export class SystemUserService {
    */
   public static getSystemUser(
     environment: Environment,
-    constants: IConstants = Constants,
+    constants: IConstants,
   ): BackendMember {
     if (!SystemUserService.systemUser) {
       if (!environment.systemMnemonic) {
@@ -41,13 +39,14 @@ export class SystemUserService {
         );
       }
       const mnemonic: SecureString = environment.systemMnemonic;
+      const eciesService = new ECIESService(undefined, undefined, constants.ECIES);
       const { wallet } =
-        SystemUserService.eciesService.walletAndSeedFromMnemonic(mnemonic);
+        eciesService.walletAndSeedFromMnemonic(mnemonic);
       const keyPair =
-        SystemUserService.eciesService.walletToSimpleKeyPairBuffer(wallet);
+        eciesService.walletToSimpleKeyPairBuffer(wallet);
 
       SystemUserService.systemUser = new BackendMember(
-        SystemUserService.eciesService,
+        eciesService,
         MemberType.System,
         constants.SystemUser,
         new EmailString(constants.SystemEmail),
@@ -70,7 +69,7 @@ export class SystemUserService {
 
   public static setSystemUser(
     user: BackendMember,
-    constants: IConstants = Constants,
+    constants: IConstants,
   ): void {
     if (user.type !== MemberType.System || user.name !== constants.SystemUser) {
       throw new Error(

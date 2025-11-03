@@ -68,7 +68,7 @@ export class CrcService {
     expectedCrc8: Buffer,
   ): Promise<boolean> {
     const calculatedCrc8 = await this.crc8Async(data);
-    return calculatedCrc8.equals(expectedCrc8);
+    return calculatedCrc8.equals(new Uint8Array(expectedCrc8));
   }
   /**
    * Perform a CRC16 checksum on the data
@@ -136,7 +136,7 @@ export class CrcService {
     expectedCrc16: Buffer,
   ): Promise<boolean> {
     const calculatedCrc16 = await this.crc16Async(data);
-    return calculatedCrc16.equals(expectedCrc16);
+    return calculatedCrc16.equals(new Uint8Array(expectedCrc16));
   }
   /**
    * Perform a CRC32 checksum on the data
@@ -173,7 +173,7 @@ export class CrcService {
       });
 
       input.on('end', () => {
-        const fullBuffer = Buffer.concat(chunks);
+        const fullBuffer = Buffer.concat(chunks.map(c => new Uint8Array(c)));
         resolve(this.crc32(fullBuffer));
       });
 
@@ -208,6 +208,6 @@ export class CrcService {
     expectedCrc32: Buffer,
   ): Promise<boolean> {
     const calculatedCrc32 = await this.crc32Async(data);
-    return calculatedCrc32.equals(expectedCrc32);
+    return calculatedCrc32.equals(new Uint8Array(expectedCrc32));
   }
 }

@@ -6,6 +6,7 @@ import {
 import { CallbackWithoutResultAndOptionalError, Schema } from 'mongoose';
 import { IRoleDocument } from '../documents/role';
 import { BaseModelName } from '../enumerations';
+import { IConstants } from '../interfaces';
 
 /**
  * Configuration options for creating a role schema
@@ -31,7 +32,8 @@ export interface RoleSchemaOptions<
 export function createRoleSchema<
   TRole extends string = Role,
   TModelName extends string = BaseModelName,
->(options: RoleSchemaOptions<TRole, TModelName> = {}): Schema<IRoleDocument> {
+  TConstants extends IConstants = IConstants,
+>(options: RoleSchemaOptions<TRole, TModelName> = {}, constants: TConstants = {} as TConstants): Schema<IRoleDocument> {
   const {
     roleEnum = Object.values(Role) as TRole[],
     userModelName = BaseModelName.User as TModelName,

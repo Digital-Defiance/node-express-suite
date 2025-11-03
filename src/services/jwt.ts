@@ -13,17 +13,16 @@ import {
 } from 'jsonwebtoken';
 import { Types } from 'mongoose';
 import { promisify } from 'util';
-import { Constants as AppConstants } from '../constants';
+import { IBaseDocument } from '../documents';
 import { IUserDocument } from '../documents/user';
+import { Environment } from '../environment';
 import { InvalidJwtTokenError } from '../errors/invalid-jwt-token';
 import { TokenExpiredError } from '../errors/token-expired';
+import { IConstants } from '../interfaces';
 import { IApplication } from '../interfaces/application';
 import { IJwtSignResponse } from '../interfaces/jwt-sign-response';
 import { BaseService } from './base';
 import { RoleService } from './role';
-import { IConstants } from '../interfaces';
-import { Environment } from '../environment';
-import { IBaseDocument } from '../documents';
 
 const verifyAsync = promisify<
   string,
@@ -37,7 +36,19 @@ export class JwtService<
   D extends Date = Date,
   TTokenRole extends ITokenRole<I, D> = ITokenRole<I, D>,
   TTokenUser extends ITokenUser = ITokenUser,
-  TApplication extends IApplication<any, Types.ObjectId, IBaseDocument<any, Types.ObjectId>, Environment, IConstants> = IApplication<any, Types.ObjectId, IBaseDocument<any, Types.ObjectId>, Environment, IConstants>,
+  TApplication extends IApplication<
+    any,
+    Types.ObjectId,
+    IBaseDocument<any, Types.ObjectId>,
+    Environment,
+    IConstants
+  > = IApplication<
+    any,
+    Types.ObjectId,
+    IBaseDocument<any, Types.ObjectId>,
+    Environment,
+    IConstants
+  >,
 > extends BaseService {
   private readonly roleService: RoleService<I, D, TTokenRole>;
 
@@ -79,9 +90,9 @@ export class JwtService<
     } as TTokenUser;
     // amazonq-ignore-next-line false positive
     const token = sign(tokenUser, jwtSecret, {
-      algorithm: AppConstants.JWT.ALGORITHM,
+      algorithm: this.application.constants.JWT.ALGORITHM,
       allowInsecureKeySizes: false,
-      expiresIn: AppConstants.JWT.EXPIRATION_SEC,
+      expiresIn: this.application.constants.JWT.EXPIRATION_SEC,
     });
     return {
       token,
@@ -105,7 +116,7 @@ export class JwtService<
         token,
         this.application.environment.jwtSecret,
         {
-          algorithms: [AppConstants.JWT.ALGORITHM],
+          algorithms: [this.application.constants.JWT.ALGORITHM],
         },
       )) as JwtPayload;
 

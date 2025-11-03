@@ -1,9 +1,8 @@
 import { faker } from '@faker-js/faker';
 import { randomBytes } from 'crypto';
-import { SymmetricErrorType } from '../../src/enumerations/symmetric-error-type';
+import { LocalhostConstants } from '../../src/constants';
 import { SymmetricError } from '../../src/errors/symmetric';
 import { SymmetricService } from '../../src/services/symmetric';
-import { Constants } from '../../src/constants';
 
 describe('SymmetricService', () => {
   // Set a longer timeout for all tests in this file
@@ -16,7 +15,7 @@ describe('SymmetricService', () => {
     object: { message: faker.lorem.word() }, // Use shorter strings for faster tests
     buffer: Buffer.from(faker.lorem.word(), 'utf-8'), // Use shorter strings for faster tests
   };
-  const testKey = randomBytes(Constants.ECIES.SYMMETRIC.KEY_SIZE);
+  const testKey = randomBytes(LocalhostConstants.ECIES.SYMMETRIC.KEY_SIZE);
 
   describe('buffer encryption', () => {
     it('should encrypt and decrypt with provided key', () => {
@@ -49,7 +48,10 @@ describe('SymmetricService', () => {
     });
 
     it('should throw error with incorrect key length', () => {
-      const shortKey = Buffer.alloc(Constants.ECIES.SYMMETRIC.KEY_SIZE - 1, 'a');
+      const shortKey = Buffer.alloc(
+        LocalhostConstants.ECIES.SYMMETRIC.KEY_SIZE - 1,
+        'a',
+      );
       expect(() =>
         SymmetricService.encryptBuffer(testData.buffer, shortKey),
       ).toThrow(SymmetricError);
@@ -91,16 +93,21 @@ describe('SymmetricService', () => {
 
     it('should handle error cases', () => {
       // Test null input
-      expect(() => SymmetricService.encryptJson<unknown>(null)).toThrow(SymmetricError);
+      expect(() => SymmetricService.encryptJson<unknown>(null)).toThrow(
+        SymmetricError,
+      );
 
       // Test undefined input
-      expect(() =>
-        SymmetricService.encryptJson<unknown>(undefined),
-      ).toThrow(SymmetricError);
+      expect(() => SymmetricService.encryptJson<unknown>(undefined)).toThrow(
+        SymmetricError,
+      );
 
       // Test invalid key - should throw authentication error with AES-GCM
       const encrypted = SymmetricService.encryptJson<string>(testData.string);
-      const invalidKey = Buffer.alloc(Constants.ECIES.SYMMETRIC.KEY_SIZE, 'x');
+      const invalidKey = Buffer.alloc(
+        LocalhostConstants.ECIES.SYMMETRIC.KEY_SIZE,
+        'x',
+      );
       expect(() =>
         SymmetricService.decryptJson<string>(
           encrypted.encryptedData,

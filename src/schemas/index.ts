@@ -3,5 +3,5 @@ export * from './mnemonic';
 export * from './role';
 export * from './schema';
 export * from './used-direct-login-token';
-export * from './user-role';
 export * from './user';
+export * from './user-role';

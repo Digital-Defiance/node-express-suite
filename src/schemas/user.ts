@@ -7,7 +7,7 @@ import {
 } from '@digitaldefiance/suite-core-lib';
 import { Schema } from 'mongoose';
 import validator from 'validator';
-import { Constants as AppConstants } from '../constants';
+import { LocalhostConstants as AppConstants } from '../constants';
 import { IUserDocument } from '../documents/user';
 import { BaseModelName } from '../enumerations';
 import { IConstants } from '../interfaces/constants';
@@ -16,11 +16,11 @@ import { IConstants } from '../interfaces/constants';
  * Create a user schema with custom or default constants
  */
 export function createUserSchema<T extends IConstants = IConstants>(
-  constants: T = AppConstants as T,
   usernameValidationMessage?: () => string,
   emailValidationMessage?: () => string,
   timezoneValidationMessage?: () => string,
   supportedLanguages?: readonly string[],
+  constants: T = AppConstants as T,
 ): Schema<IUserDocument> {
   /**
    * Schema for users

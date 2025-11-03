@@ -1,12 +1,15 @@
-import * as argon2 from 'argon2';
+import { MemberType } from '@digitaldefiance/ecies-lib';
 import type { Member as BackendMember } from '@digitaldefiance/node-ecies-lib';
-import { BackupCode } from '../src/backup-code';
 import { Constants as ApiConstants } from '@digitaldefiance/node-ecies-lib';
-import { Constants as AppConstants } from '../src/constants';
+import {
+  InvalidBackupCodeError,
+  PrivateKeyRequiredError,
+} from '@digitaldefiance/suite-core-lib';
+import * as argon2 from 'argon2';
+import { BackupCode } from '../src/backup-code';
+import { LocalhostConstants as AppConstants } from '../src/constants';
 import { InvalidBackupCodeVersionError } from '../src/errors/invalid-backup-code-version';
 import { SymmetricService } from '../src/services/symmetric';
-import { InvalidBackupCodeError, PrivateKeyRequiredError } from '@digitaldefiance/suite-core-lib';
-import { MemberType } from '@digitaldefiance/ecies-lib';
 
 // Mock argon2 at the module level
 jest.mock('argon2', () => ({

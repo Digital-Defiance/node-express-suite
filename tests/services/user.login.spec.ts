@@ -1,28 +1,37 @@
 // ModelRegistry pattern: use string model names
-import { createApplicationMock } from '../__tests__/helpers/application.mock';
+import {
+  MemberType,
+  SecureBuffer,
+  SecureString,
+} from '@digitaldefiance/ecies-lib';
+import {
+  Member as BackendMember,
+  ECIESService,
+} from '@digitaldefiance/node-ecies-lib';
+import {
+  AccountLockedError,
+  AccountStatus,
+  InvalidCredentialsError,
+} from '@digitaldefiance/suite-core-lib';
+import { Document, Model } from 'mongoose';
+import { BaseModelName } from '../../src/enumerations/base-model-name';
 import { ModelRegistry } from '../../src/model-registry';
-import { Model, Document } from 'mongoose';
-
-beforeAll(() => {
-  // This will be overridden by makeService, just set up a default
-});
+import { BackupCodeService } from '../../src/services/backup-code';
+import { KeyWrappingService } from '../../src/services/key-wrapping';
+import { RoleService } from '../../src/services/role';
+import { SystemUserService } from '../../src/services/system-user';
+import { UserService } from '../../src/services/user';
+import { createApplicationMock } from '../__tests__/helpers/application.mock';
 import {
   makeRoleModel,
   makeUserModel,
   makeUserRoleModel,
 } from '../__tests__/helpers/model-mocks.mock';
-import { Member as BackendMember } from '@digitaldefiance/node-ecies-lib';
-import { BackupCodeService } from '../../src/services/backup-code';
-import { ECIESService } from '@digitaldefiance/node-ecies-lib';
 import { DummyEmailService } from './dummy-email-service';
-import { KeyWrappingService } from '../../src/services/key-wrapping';
-import { RoleService } from '../../src/services/role';
-import { SystemUserService } from '../../src/services/system-user';
-import { UserService } from '../../src/services/user';
-import { MemberType, SecureString, SecureBuffer } from '@digitaldefiance/ecies-lib';
-import { AccountStatus, InvalidCredentialsError, AccountLockedError } from '@digitaldefiance/suite-core-lib';
-import { BaseModelName } from '../../src/enumerations/base-model-name';
 
+beforeAll(() => {
+  // This will be overridden by makeService, just set up a default
+});
 
 function makeService(
   userDoc: unknown | null,
@@ -34,35 +43,44 @@ function makeService(
   const roleModel = makeRoleModel(roleDoc);
 
   // Mock ModelRegistry
-  jest.spyOn(ModelRegistry.instance, 'getTypedModel').mockImplementation((modelName: string) => {
-    if (modelName.includes('User') && !modelName.includes('Role')) return userModel as any;
-    if (modelName.includes('UserRole')) return userRoleModel as any;
-    if (modelName.includes('Role') && !modelName.includes('User')) return roleModel as any;
-    if (modelName.includes('Mnemonic')) return {
-      findOne: jest.fn().mockReturnValue({
-        session: jest.fn().mockResolvedValue(null),
-      }),
-      findById: jest.fn().mockReturnValue({
-        select: jest.fn().mockReturnThis(),
-        session: jest.fn().mockReturnThis(),
-        lean: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(null),
-      }),
-    } as any;
-    return {
-      findOne: jest.fn().mockReturnValue({
-        session: jest.fn().mockResolvedValue(null),
-      }),
-    } as any;
-  });
-  jest.spyOn(ModelRegistry.instance, 'get').mockImplementation((modelName: string) => {
-    let model: any;
-    if (modelName.includes('User') && !modelName.includes('Role')) model = userModel;
-    else if (modelName.includes('UserRole')) model = userRoleModel;
-    else if (modelName.includes('Role') && !modelName.includes('User')) model = roleModel;
-    else model = { findOne: jest.fn() };
-    return { model, schema: {} as any } as any;
-  });
+  jest
+    .spyOn(ModelRegistry.instance, 'getTypedModel')
+    .mockImplementation((modelName: string) => {
+      if (modelName.includes('User') && !modelName.includes('Role'))
+        return userModel as any;
+      if (modelName.includes('UserRole')) return userRoleModel as any;
+      if (modelName.includes('Role') && !modelName.includes('User'))
+        return roleModel as any;
+      if (modelName.includes('Mnemonic'))
+        return {
+          findOne: jest.fn().mockReturnValue({
+            session: jest.fn().mockResolvedValue(null),
+          }),
+          findById: jest.fn().mockReturnValue({
+            select: jest.fn().mockReturnThis(),
+            session: jest.fn().mockReturnThis(),
+            lean: jest.fn().mockReturnThis(),
+            exec: jest.fn().mockResolvedValue(null),
+          }),
+        } as any;
+      return {
+        findOne: jest.fn().mockReturnValue({
+          session: jest.fn().mockResolvedValue(null),
+        }),
+      } as any;
+    });
+  jest
+    .spyOn(ModelRegistry.instance, 'get')
+    .mockImplementation((modelName: string) => {
+      let model: any;
+      if (modelName.includes('User') && !modelName.includes('Role'))
+        model = userModel;
+      else if (modelName.includes('UserRole')) model = userRoleModel;
+      else if (modelName.includes('Role') && !modelName.includes('User'))
+        model = roleModel;
+      else model = { findOne: jest.fn() };
+      return { model, schema: {} as any } as any;
+    });
 
   const getModelFn = <T extends Document>(modelName: BaseModelName) => {
     switch (modelName) {

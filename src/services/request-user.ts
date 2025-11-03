@@ -1,4 +1,4 @@
-import { IRequestUserDTO, ITokenRole } from '@digitaldefiance/suite-core-lib';
+import { IRequestUserDTO, IRoleDTO, ITokenRole } from '@digitaldefiance/suite-core-lib';
 import { Types } from 'mongoose';
 import { IUserDocument } from '../documents';
 import { IRequestUserBackendObject } from '../interfaces/backend-objects/request-user';
@@ -39,7 +39,7 @@ export class RequestUserService<I, TTokenRole extends ITokenRole<I>> {
     S extends string,
     TRequestUserDTO extends IRequestUserDTO & { siteLanguage: S },
   >(requestUser: TRequestUserDTO): IRequestUserBackendObject<S> {
-    const hydratedRoles = requestUser.roles.map((role) =>
+    const hydratedRoles = requestUser.roles.map((role: IRoleDTO) =>
       RoleService.hydrateRoleDTOToBackend(role),
     );
 

@@ -50,10 +50,10 @@ export class FecService {
       });
     }
 
-    if (shardSize > FEC.MAX_SHARD_SIZE) {
+    if (shardSize > fecConstants.MAX_SHARD_SIZE) {
       throw new FecError(FecErrorType.ShardSizeExceedsMaximum, undefined, {
         SIZE: shardSize.toString(),
-        MAXIMUM: FEC.MAX_SHARD_SIZE.toString(),
+        MAXIMUM: fecConstants.MAX_SHARD_SIZE.toString(),
       });
     }
 
@@ -63,7 +63,7 @@ export class FecService {
 
     try {
       const shards = new Uint8Array(shardSize * (dataShards + parityShards));
-      shards.set(data);
+      shards.set(new Uint8Array(data));
 
       // Encoding
       const reedSolomonErasure =
@@ -119,15 +119,16 @@ export class FecService {
     }
 
     try {
+      const uint8Data = new Uint8Array(data);
       const reedSolomonErasure =
         await ReedSolomonErasure.fromCurrentDirectory();
       reedSolomonErasure.reconstruct(
-        data,
+        uint8Data,
         dataShards,
         parityShards,
         shardsAvailable,
       );
-      return data.subarray(0, shardSize * dataShards);
+      return Buffer.from(uint8Data.subarray(0, shardSize * dataShards));
     } catch (error) {
       throw new FecError(FecErrorType.FecDecodingFailed, undefined, {
         ERROR: error instanceof Error ? error.message : 'Unknown error',
@@ -141,6 +142,7 @@ export class FecService {
   public async createParityData(
     fileData: Buffer,
     parityCount: number,
+    fecConstants: IFECConsts = FEC,
   ): Promise<ParityData[]> {
     if (!fileData || fileData.length === 0) {
       throw new FecError(FecErrorType.DataRequired);
@@ -150,7 +152,7 @@ export class FecService {
       throw new FecError(FecErrorType.ParityDataCountMustBePositive);
     }
 
-    const shardSize = Math.min(fileData.length, FEC.MAX_SHARD_SIZE);
+    const shardSize = Math.min(fileData.length, fecConstants.MAX_SHARD_SIZE);
     const requiredShards = Math.ceil(fileData.length / shardSize);
 
     try {
@@ -165,10 +167,8 @@ export class FecService {
         const chunk = fileData.subarray(start, end);
 
         // Pad chunk if necessary
-        const paddedChunk =
-          chunk.length < shardSize
-            ? Buffer.concat([chunk, Buffer.alloc(shardSize - chunk.length)])
-            : chunk;
+        const paddedChunk = Buffer.alloc(shardSize);
+        paddedChunk.set(chunk.subarray(0, shardSize));
 
         const chunkParity = await this.encode(
           paddedChunk,
@@ -176,6 +176,7 @@ export class FecService {
           1,
           parityCount,
           true,
+          fecConstants,
         );
 
         // Distribute parity data
@@ -184,10 +185,12 @@ export class FecService {
             j * shardSize,
             (j + 1) * shardSize,
           );
-          resultParityData[j] = Buffer.concat([
-            resultParityData[j],
-            parityChunk,
-          ]);
+          const combined = Buffer.alloc(
+            resultParityData[j].length + parityChunk.length,
+          );
+          combined.set(resultParityData[j], 0);
+          combined.set(parityChunk, resultParityData[j].length);
+          resultParityData[j] = combined;
         }
       }
 
@@ -209,6 +212,7 @@ export class FecService {
     corruptedData: Buffer | null,
     parityData: ParityData[],
     originalSize: number,
+    fecConstants: IFECConsts = FEC,
   ): Promise<RecoveryResult> {
     if (!parityData || parityData.length === 0) {
       throw new FecError(FecErrorType.ParityDataRequired);
@@ -219,13 +223,10 @@ export class FecService {
     }
 
     try {
-      const shardSize = Math.min(originalSize, FEC.MAX_SHARD_SIZE);
+      const shardSize = Math.min(originalSize, fecConstants.MAX_SHARD_SIZE);
       const requiredShards = Math.ceil(originalSize / shardSize);
-
-      // Set up shard availability array (data shard unavailable, parity shards available)
-      const availableShards = [false, ...Array(parityData.length).fill(true)];
-
       let recoveredData = Buffer.alloc(0);
+      let parityUsed = false;
 
       // Recover each shard
       for (let i = 0; i < requiredShards; i++) {
@@ -233,18 +234,72 @@ export class FecService {
         const end = Math.min(start + shardSize, originalSize);
         const chunkSize = end - start;
 
-        // Create placeholder for corrupted data shard
-        const corruptedShard = Buffer.alloc(shardSize);
+        // Use corrupted data if available, otherwise create placeholder
+        const corruptedShard = corruptedData
+          ? corruptedData.subarray(start, Math.min(end, corruptedData.length))
+          : Buffer.alloc(0);
 
-        // Combine corrupted and parity data for this shard
-        const shardData = Buffer.concat([
-          corruptedShard,
-          ...parityData.map((parity) =>
-            parity.data.subarray(i * shardSize, (i + 1) * shardSize),
-          ),
-        ]);
+        const parityChunks = parityData.map((parity) =>
+          parity.data.subarray(i * shardSize, (i + 1) * shardSize),
+        );
 
-        // Recover this shard
+        const hasDataShard = corruptedShard.length > 0;
+        const paddedCorruptedShard = Buffer.alloc(shardSize);
+        if (hasDataShard) {
+          paddedCorruptedShard.set(
+            corruptedShard.subarray(
+              0,
+              Math.min(shardSize, corruptedShard.length),
+            ),
+          );
+        }
+
+        let shardIsHealthy = false;
+        if (hasDataShard) {
+          const regeneratedParity = await this.encode(
+            paddedCorruptedShard,
+            shardSize,
+            1,
+            parityData.length,
+            true,
+            fecConstants,
+          );
+
+          shardIsHealthy = parityChunks.every((parityChunk, index) =>
+            parityChunk.equals(
+              Uint8Array.from(
+                regeneratedParity.subarray(
+                  index * shardSize,
+                  (index + 1) * shardSize,
+                ),
+              ),
+            ),
+          );
+        }
+
+        if (shardIsHealthy) {
+          const actualShard = Buffer.from(
+            paddedCorruptedShard.subarray(0, chunkSize),
+          );
+          const combinedRecovered = Buffer.alloc(
+            recoveredData.length + actualShard.length,
+          );
+          combinedRecovered.set(recoveredData, 0);
+          combinedRecovered.set(actualShard, recoveredData.length);
+          recoveredData = combinedRecovered;
+          continue;
+        }
+
+        // Mark data shard as missing and attempt recovery using parity
+        parityUsed = true;
+        const shardData = Buffer.alloc((1 + parityData.length) * shardSize);
+        shardData.set(paddedCorruptedShard, 0);
+        parityChunks.forEach((chunk, index) => {
+          shardData.set(chunk, (index + 1) * shardSize);
+        });
+
+        const availableShards = [false, ...Array(parityData.length).fill(true)];
+
         const recoveredShard = await this.decode(
           shardData,
           shardSize,
@@ -253,18 +308,18 @@ export class FecService {
           availableShards,
         );
 
-        // Only take the actual data length for the last shard
-        const actualShard =
-          i === requiredShards - 1
-            ? recoveredShard.subarray(0, chunkSize)
-            : recoveredShard;
-
-        recoveredData = Buffer.concat([recoveredData, actualShard]);
+        const actualShard = recoveredShard.subarray(0, chunkSize);
+        const combinedRecovered = Buffer.alloc(
+          recoveredData.length + actualShard.length,
+        );
+        combinedRecovered.set(recoveredData, 0);
+        combinedRecovered.set(actualShard, recoveredData.length);
+        recoveredData = combinedRecovered;
       }
 
       return {
         data: recoveredData,
-        recovered: true,
+        recovered: parityUsed || corruptedData === null,
       };
     } catch (error) {
       throw new FecError(FecErrorType.FecDecodingFailed, undefined, {
@@ -286,8 +341,12 @@ export class FecService {
         parityData.length,
       );
 
-      return parityData.every((original, index) =>
-        original.data.equals(regeneratedParity[index].data),
+      return parityData.every(
+        (original, index) =>
+          Buffer.compare(
+            new Uint8Array(original.data),
+            new Uint8Array(regeneratedParity[index].data),
+          ) === 0,
       );
     } catch {
       return false;

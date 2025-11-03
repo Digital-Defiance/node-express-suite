@@ -1,5 +1,10 @@
 import { ECIES as ECIESDefaults } from '@digitaldefiance/ecies-lib';
-import { createConstants } from '@digitaldefiance/suite-core-lib';
+import { Constants as NodeEciesConstants } from '@digitaldefiance/node-ecies-lib';
+import {
+  createConstants,
+  SuiteCoreStringKey,
+  TranslatableSuiteError,
+} from '@digitaldefiance/suite-core-lib';
 import { IFECConsts } from './interfaces';
 import { IChecksumConsts } from './interfaces/checksum-consts';
 import { IConstants } from './interfaces/constants';
@@ -51,19 +56,23 @@ export const createExpressConstants = (
   overrides?: Partial<IConstants>,
 ): IConstants => {
   return Object.freeze({
-    ...createConstants(siteDomain, overrides),
+    ...NodeEciesConstants,
     CHECKSUM: CHECKSUM,
     JWT: JWT,
     FEC: FEC,
     ECIES: ECIES,
+    ...createConstants(siteDomain, overrides),
   } as const);
 };
 
-export const Constants: IConstants = createExpressConstants('localhost');
+export const LocalhostConstants: IConstants =
+  createExpressConstants('localhost');
 
 if (
   CHECKSUM.SHA3_BUFFER_LENGTH !== CHECKSUM.SHA3_DEFAULT_HASH_BITS / 8 ||
   CHECKSUM.SHA3_BUFFER_LENGTH !== CHECKSUM.SHA3_DEFAULT_HASH_BITS / 8
 ) {
-  throw new Error('Invalid checksum constants');
+  throw new TranslatableSuiteError(
+    SuiteCoreStringKey.Error_InvalidChecksumConstants,
+  );
 }

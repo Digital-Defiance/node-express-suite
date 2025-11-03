@@ -1,4 +1,5 @@
 import { ECIES as BaseECIES } from '@digitaldefiance/ecies-lib';
+import { Constants as NodeEciesConstants } from '@digitaldefiance/node-ecies-lib';
 import { Constants as CoreConstants } from '@digitaldefiance/suite-core-lib';
 import { CHECKSUM, ECIES, FEC, JWT } from './constants';
 import { IConstants } from './interfaces/constants';
@@ -10,6 +11,7 @@ export const EXPRESS_RUNTIME_CONFIGURATION_KEY = Symbol.for(
 
 const defaultConfig: IConstants = Object.freeze({
   ...CoreConstants,
+  ...NodeEciesConstants,
   CHECKSUM: CHECKSUM,
   JWT: JWT,
   ECIES: ECIES,
@@ -30,6 +32,19 @@ export function createExpressRuntimeConfiguration(
     PasswordRegex: (overrides?.PasswordRegex ?? base.PasswordRegex) as RegExp,
     MnemonicRegex: (overrides?.MnemonicRegex ?? base.MnemonicRegex) as RegExp,
     HmacRegex: (overrides?.HmacRegex ?? base.HmacRegex) as RegExp,
+    KEYRING: {
+      ALGORITHM: overrides?.KEYRING?.ALGORITHM ?? base.KEYRING.ALGORITHM,
+      KEY_BITS: overrides?.KEYRING?.KEY_BITS ?? base.KEYRING.KEY_BITS,
+      MODE: overrides?.KEYRING?.MODE ?? base.KEYRING.MODE,
+    },
+    ENCRYPTION: {
+      ENCRYPTION_TYPE_SIZE:
+        overrides?.ENCRYPTION?.ENCRYPTION_TYPE_SIZE ??
+        base.ENCRYPTION.ENCRYPTION_TYPE_SIZE,
+      RECIPIENT_ID_SIZE:
+        overrides?.ENCRYPTION?.RECIPIENT_ID_SIZE ??
+        base.ENCRYPTION.RECIPIENT_ID_SIZE,
+    },
     BACKUP_CODES: {
       ...base.BACKUP_CODES,
       ...(overrides?.BACKUP_CODES ?? {}),
@@ -45,6 +60,98 @@ export function createExpressRuntimeConfiguration(
     JWT: {
       ...base.JWT,
       ...(overrides?.JWT ?? {}),
+    },
+    PBKDF2: {
+      ...base.PBKDF2,
+      ...(overrides?.PBKDF2 ?? {}),
+      ALGORITHM:
+        overrides?.PBKDF2?.ALGORITHM ?? base.PBKDF2.ALGORITHM ?? 'sha256',
+    },
+    PBKDF2_PROFILES: {
+      USER_LOGIN: {
+        hashBytes:
+          overrides?.PBKDF2_PROFILES?.USER_LOGIN?.hashBytes ??
+          base.PBKDF2_PROFILES.USER_LOGIN.hashBytes,
+        iterations:
+          overrides?.PBKDF2_PROFILES?.USER_LOGIN?.iterations ??
+          base.PBKDF2_PROFILES.USER_LOGIN.iterations,
+        saltBytes:
+          overrides?.PBKDF2_PROFILES?.USER_LOGIN?.saltBytes ??
+          base.PBKDF2_PROFILES.USER_LOGIN.saltBytes,
+        algorithm:
+          overrides?.PBKDF2_PROFILES?.USER_LOGIN?.algorithm ??
+          base.PBKDF2_PROFILES.USER_LOGIN.algorithm,
+      },
+      KEY_WRAPPING: {
+        hashBytes:
+          overrides?.PBKDF2_PROFILES?.KEY_WRAPPING?.hashBytes ??
+          base.PBKDF2_PROFILES.KEY_WRAPPING.hashBytes,
+        iterations:
+          overrides?.PBKDF2_PROFILES?.KEY_WRAPPING?.iterations ??
+          base.PBKDF2_PROFILES.KEY_WRAPPING.iterations,
+        saltBytes:
+          overrides?.PBKDF2_PROFILES?.KEY_WRAPPING?.saltBytes ??
+          base.PBKDF2_PROFILES.KEY_WRAPPING.saltBytes,
+        algorithm:
+          overrides?.PBKDF2_PROFILES?.KEY_WRAPPING?.algorithm ??
+          base.PBKDF2_PROFILES.KEY_WRAPPING.algorithm,
+      },
+      BACKUP_CODES: {
+        hashBytes:
+          overrides?.PBKDF2_PROFILES?.BACKUP_CODES?.hashBytes ??
+          base.PBKDF2_PROFILES.BACKUP_CODES.hashBytes,
+        iterations:
+          overrides?.PBKDF2_PROFILES?.BACKUP_CODES?.iterations ??
+          base.PBKDF2_PROFILES.BACKUP_CODES.iterations,
+        saltBytes:
+          overrides?.PBKDF2_PROFILES?.BACKUP_CODES?.saltBytes ??
+          base.PBKDF2_PROFILES.BACKUP_CODES.saltBytes,
+        algorithm:
+          overrides?.PBKDF2_PROFILES?.BACKUP_CODES?.algorithm ??
+          base.PBKDF2_PROFILES.BACKUP_CODES.algorithm,
+      },
+      HIGH_SECURITY: {
+        hashBytes:
+          overrides?.PBKDF2_PROFILES?.HIGH_SECURITY?.hashBytes ??
+          base.PBKDF2_PROFILES.HIGH_SECURITY.hashBytes,
+        iterations:
+          overrides?.PBKDF2_PROFILES?.HIGH_SECURITY?.iterations ??
+          base.PBKDF2_PROFILES.HIGH_SECURITY.iterations,
+        saltBytes:
+          overrides?.PBKDF2_PROFILES?.HIGH_SECURITY?.saltBytes ??
+          base.PBKDF2_PROFILES.HIGH_SECURITY.saltBytes,
+        algorithm:
+          overrides?.PBKDF2_PROFILES?.HIGH_SECURITY?.algorithm ??
+          base.PBKDF2_PROFILES.HIGH_SECURITY.algorithm,
+      },
+      BROWSER_PASSWORD: {
+        hashBytes:
+          overrides?.PBKDF2_PROFILES?.BROWSER_PASSWORD?.hashBytes ??
+          base.PBKDF2_PROFILES.BROWSER_PASSWORD.hashBytes,
+        iterations:
+          overrides?.PBKDF2_PROFILES?.BROWSER_PASSWORD?.iterations ??
+          base.PBKDF2_PROFILES.BROWSER_PASSWORD.iterations,
+        saltBytes:
+          overrides?.PBKDF2_PROFILES?.BROWSER_PASSWORD?.saltBytes ??
+          base.PBKDF2_PROFILES.BROWSER_PASSWORD.saltBytes,
+        algorithm:
+          overrides?.PBKDF2_PROFILES?.BROWSER_PASSWORD?.algorithm ??
+          base.PBKDF2_PROFILES.BROWSER_PASSWORD.algorithm,
+      },
+      TEST_FAST: {
+        hashBytes:
+          overrides?.PBKDF2_PROFILES?.TEST_FAST?.hashBytes ??
+          base.PBKDF2_PROFILES.TEST_FAST.hashBytes,
+        iterations:
+          overrides?.PBKDF2_PROFILES?.TEST_FAST?.iterations ??
+          base.PBKDF2_PROFILES.TEST_FAST.iterations,
+        saltBytes:
+          overrides?.PBKDF2_PROFILES?.TEST_FAST?.saltBytes ??
+          base.PBKDF2_PROFILES.TEST_FAST.saltBytes,
+        algorithm:
+          overrides?.PBKDF2_PROFILES?.TEST_FAST?.algorithm ??
+          base.PBKDF2_PROFILES.TEST_FAST.algorithm,
+      },
     },
     ECIES: {
       ...BaseECIES,
@@ -73,6 +180,17 @@ export function createExpressRuntimeConfiguration(
     FEC: {
       ...base.FEC,
       ...(overrides?.FEC ?? {}),
+    },
+    WRAPPED_KEY: {
+      SALT_SIZE:
+        overrides?.WRAPPED_KEY?.SALT_SIZE ?? base.WRAPPED_KEY.SALT_SIZE,
+      IV_SIZE: overrides?.WRAPPED_KEY?.IV_SIZE ?? base.WRAPPED_KEY.IV_SIZE,
+      MASTER_KEY_SIZE:
+        overrides?.WRAPPED_KEY?.MASTER_KEY_SIZE ??
+        base.WRAPPED_KEY.MASTER_KEY_SIZE,
+      MIN_ITERATIONS:
+        overrides?.WRAPPED_KEY?.MIN_ITERATIONS ??
+        base.WRAPPED_KEY.MIN_ITERATIONS,
     },
   };
   return Object.freeze(merged);

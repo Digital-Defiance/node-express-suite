@@ -16,17 +16,17 @@ import {
 import { timingSafeEqual } from 'crypto';
 import { ClientSession, Types } from 'mongoose';
 import { BackupCode } from '../backup-code';
-import { Constants as AppConstants } from '../constants';
+import { LocalhostConstants as AppConstants } from '../constants';
 import { IBaseDocument, IUserDocument } from '../documents';
+import { Environment } from '../environment';
 import { InvalidBackupCodeVersionError } from '../errors/invalid-backup-code-version';
+import { IConstants } from '../interfaces';
 import { IApplication } from '../interfaces/application';
 import { BaseService } from './base';
 import { KeyWrappingService } from './index';
 import { RoleService } from './role';
 import { SymmetricService } from './symmetric';
 import { SystemUserService } from './system-user';
-import { Environment } from '../environment';
-import { IConstants } from '../interfaces';
 
 /**
  * Service handling generation, storage, validation, consumption, and recovery using backup codes.
@@ -42,7 +42,19 @@ export class BackupCodeService<
   I = Types.ObjectId,
   D extends Date = Date,
   TTokenRole extends ITokenRole<I, D> = ITokenRole<I, D>,
-  TApplication extends IApplication<any, Types.ObjectId, IBaseDocument<any, Types.ObjectId>, Environment, IConstants> = IApplication<any, Types.ObjectId, IBaseDocument<any, Types.ObjectId>, Environment, IConstants>,
+  TApplication extends IApplication<
+    any,
+    Types.ObjectId,
+    IBaseDocument<any, Types.ObjectId>,
+    Environment,
+    IConstants
+  > = IApplication<
+    any,
+    Types.ObjectId,
+    IBaseDocument<any, Types.ObjectId>,
+    Environment,
+    IConstants
+  >,
 > extends BaseService {
   private readonly eciesService: ECIESService;
   private systemUser?: BackendMember;
@@ -71,6 +83,7 @@ export class BackupCodeService<
     if (!this.systemUser) {
       this.systemUser = SystemUserService.getSystemUser(
         this.application.environment,
+        this.application.constants,
       );
     }
     return this.systemUser;
@@ -181,6 +194,7 @@ export class BackupCodeService<
           decryptionKey = await BackupCode.getBackupKeyV1(
             code.checksumSalt,
             normalizedCode,
+            this.application.constants,
           );
           const privateKeyUnwrapped = adminMember.decryptData(
             Buffer.from(code.encrypted, 'hex'),
@@ -218,6 +232,7 @@ export class BackupCodeService<
           const wrapped = this.keyWrappingService.wrapSecret(
             decryptedPrivateKey,
             newPassword,
+            this.application.constants,
           );
           userDoc.passwordWrappedPrivateKey = wrapped;
           await userDoc.save({ session: sess });

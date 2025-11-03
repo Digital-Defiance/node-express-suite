@@ -4,7 +4,7 @@ import {
   SuiteCoreComponentId,
   SuiteCoreStringKey,
 } from '@digitaldefiance/suite-core-lib';
-import { Constants } from '../constants';
+import { LocalhostConstants } from '../constants';
 import { SymmetricErrorType } from '../enumerations/symmetric-error-type';
 import { IConstants } from '../interfaces/constants';
 import { SymmetricService } from '../services/symmetric';
@@ -17,7 +17,7 @@ export class SymmetricError extends PluginTypedError<
   constructor(
     type: SymmetricErrorType,
     language?: CoreLanguageCode,
-    constants: IConstants = Constants,
+    constants: IConstants = LocalhostConstants,
   ) {
     const engine = getSuiteCoreI18nEngine();
     super(

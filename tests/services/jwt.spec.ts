@@ -1,11 +1,12 @@
+import { LanguageCodes } from '@digitaldefiance/i18n-lib';
+import { Role } from '@digitaldefiance/suite-core-lib';
 import { Types } from 'mongoose';
 import { IUserDocument } from '../../src/documents/user';
 import { IApplication } from '../../src/interfaces/application';
 import { IEnvironment } from '../../src/interfaces/environment';
+import { LocalhostConstants } from '../../src/constants';
 import { JwtService } from '../../src/services/jwt';
 import { RoleService } from '../../src/services/role';
-import { Role } from '@digitaldefiance/suite-core-lib';
-import { LanguageCodes } from '@digitaldefiance/i18n-lib';
 
 // Mock the RoleService
 const mockRoleService = {
@@ -19,7 +20,7 @@ jest.mock('../../src/services/role', () => ({
 
 describe('JwtService', () => {
   let jwtService: JwtService;
-  let mockApplication: IApplication;
+  let mockApplication: IApplication<any, Types.ObjectId>;
   const testSecret = 'test-jwt-secret-key';
 
   beforeEach(() => {
@@ -31,7 +32,8 @@ describe('JwtService', () => {
 
     mockApplication = {
       environment: mockEnvironment as IEnvironment,
-    } as IApplication;
+      constants: LocalhostConstants,
+    } as unknown as IApplication<any, Types.ObjectId>;
 
     jwtService = new JwtService(mockApplication);
   });

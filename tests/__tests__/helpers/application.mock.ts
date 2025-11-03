@@ -1,12 +1,12 @@
 import { SecureString } from '@digitaldefiance/ecies-lib';
-import { IApplication } from '../../../src/interfaces/application';
-import { Model, Document } from 'mongoose';
+import { Document, Model } from 'mongoose';
+import { LocalhostConstants } from '../../../src/constants';
 import { Environment } from '../../../src/environment';
-import { Constants } from '../../../src/constants';
+import { IApplication } from '../../../src/interfaces/application';
 
 export function createApplicationMock(
   overrides?: Partial<IApplication>,
-  envOverrides?: Partial<Environment>
+  envOverrides?: Partial<Environment>,
 ): IApplication {
   const mockEnvironment = {
     jwtSecret: new SecureString('test-jwt-secret'),
@@ -18,11 +18,12 @@ export function createApplicationMock(
     ...envOverrides,
   } as Environment;
 
-  const defaultGetModel = <T extends Document>(name: string): Model<T> => ({} as Model<T>);
+  const defaultGetModel = <T extends Document>(name: string): Model<T> =>
+    ({}) as Model<T>;
 
   return {
     environment: mockEnvironment,
-    constants: Constants,
+    constants: LocalhostConstants,
     db: overrides?.db || ({} as any),
     ready: true,
     start: jest.fn(),

@@ -5,28 +5,27 @@ import {
 } from '@digitaldefiance/suite-core-lib';
 import { createHmac } from 'crypto';
 import { ClientSession, Model } from 'mongoose';
-import { Constants as AppConstants } from '../constants';
 import { IMnemonicDocument } from '../documents/mnemonic';
-import { KeyWrappingService } from './key-wrapping';
+import { IConstants } from '../interfaces';
 
 /**
  * Encrypts and stores mnemonics securely, using an HMAC to check for
  * uniqueness without exposing the mnemonic itself.
  */
 export class MnemonicService {
-  private readonly keyWrappingService: KeyWrappingService;
   private readonly hmacSecret: SecureBuffer;
   private readonly MnemonicModel: Model<IMnemonicDocument>;
+  private readonly constants: IConstants;
 
   constructor(
     mnemonicModel: Model<IMnemonicDocument>,
     hmacSecret: SecureBuffer,
-    keyWrappingService: KeyWrappingService,
+    constants: IConstants,
   ) {
     this.MnemonicModel = mnemonicModel;
     // Immediately wrap secrets in secure containers
     this.hmacSecret = hmacSecret;
-    this.keyWrappingService = keyWrappingService;
+    this.constants = constants;
   }
 
   /**
@@ -76,7 +75,7 @@ export class MnemonicService {
   ): Promise<{
     document: IMnemonicDocument | null;
   }> {
-    if (!mnemonic.value || !AppConstants.MnemonicRegex.test(mnemonic.value)) {
+    if (!mnemonic.value || !this.constants.MnemonicRegex.test(mnemonic.value)) {
       throw new TranslatableSuiteError(
         SuiteCoreStringKey.Validation_MnemonicRegex,
       );
@@ -111,7 +110,7 @@ export class MnemonicService {
     mnemonic: SecureString,
     session?: ClientSession,
   ): Promise<IMnemonicDocument | null> {
-    if (!mnemonic.value || !AppConstants.MnemonicRegex.test(mnemonic.value)) {
+    if (!mnemonic.value || !this.constants.MnemonicRegex.test(mnemonic.value)) {
       throw new TranslatableSuiteError(
         SuiteCoreStringKey.Validation_MnemonicRegex,
       );

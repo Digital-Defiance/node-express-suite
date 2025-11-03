@@ -4,17 +4,23 @@ import {
   IUsedDirectLoginTokenBase,
 } from '@digitaldefiance/suite-core-lib';
 import { ClientSession, Types } from 'mongoose';
+import { IBaseDocument } from '../documents';
 import { IUsedDirectLoginTokenDocument } from '../documents/used-direct-login-token';
 import { BaseModelName } from '../enumerations/base-model-name';
+import { Environment } from '../environment';
+import { IConstants } from '../interfaces';
 import { IApplication } from '../interfaces/application';
 import { ModelRegistry } from '../model-registry';
 import { withTransaction } from '../utils';
-import { IBaseDocument } from '../documents';
-import { Environment } from '../environment';
-import { IConstants } from '../interfaces';
 export abstract class DirectLoginTokenService {
   public static async useToken(
-    app: IApplication<any, Types.ObjectId, IBaseDocument<any, Types.ObjectId>, Environment, IConstants>,
+    app: IApplication<
+      any,
+      Types.ObjectId,
+      IBaseDocument<any, Types.ObjectId>,
+      Environment,
+      IConstants
+    >,
     userId: Types.ObjectId,
     token: string,
     session?: ClientSession,

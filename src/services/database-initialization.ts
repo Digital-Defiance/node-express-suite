@@ -6,7 +6,11 @@ import {
   SecureBuffer,
   SecureString,
 } from '@digitaldefiance/ecies-lib';
-import { CoreLanguageCode, PluginTranslatableGenericError, PluginTranslatableHandleableGenericError } from '@digitaldefiance/i18n-lib';
+import {
+  CoreLanguageCode,
+  PluginTranslatableGenericError,
+  PluginTranslatableHandleableGenericError,
+} from '@digitaldefiance/i18n-lib';
 import {
   Member as BackendMember,
   ECIESService,
@@ -658,7 +662,7 @@ export abstract class DatabaseInitializationService {
             options.systemId,
           );
           backupCodeService.setSystemUser(systemUser.member);
-          SystemUserService.setSystemUser(systemUser.member);
+          SystemUserService.setSystemUser(systemUser.member, application.constants);
           // Encrypt mnemonic for recovery
           const systemEncryptedMnemonic = systemUser.member
             .encryptData(Buffer.from(systemUser.mnemonic.value ?? '', 'utf-8'))
@@ -688,6 +692,7 @@ export abstract class DatabaseInitializationService {
           const systemWrapped = keyWrappingService.wrapSecret(
             systemUser.member.privateKey!,
             systemPasswordSecure,
+            application.constants,
           );
           const systemBackupCodes =
             options.systemBackupCodes ?? BackupCode.generateBackupCodes();
@@ -1051,7 +1056,7 @@ export abstract class DatabaseInitializationService {
       if (
         error instanceof PluginTranslatableGenericError ||
         error instanceof PluginTranslatableHandleableGenericError ||
-        error instanceof TranslatableSuiteError || 
+        error instanceof TranslatableSuiteError ||
         error instanceof TranslatableSuiteHandleableError
       ) {
         return {
@@ -1060,7 +1065,7 @@ export abstract class DatabaseInitializationService {
           error: error,
         };
       }
-      
+
       return {
         success: false,
         message: getSuiteCoreI18nEngine().translate(
@@ -1411,7 +1416,9 @@ export abstract class DatabaseInitializationService {
     debugLog(
       true,
       'log',
-      this.defaultI18nTFunc('\n=== {{SuiteCoreStringKey.Admin_EndCredentials}} ==='),
+      this.defaultI18nTFunc(
+        '\n=== {{SuiteCoreStringKey.Admin_EndCredentials}} ===',
+      ),
     );
   }
 
@@ -1458,11 +1465,10 @@ export abstract class DatabaseInitializationService {
     const mnemonicModel = ModelRegistry.instance.getTypedModel<
       IBaseDocument<IMnemonicBase<Types.ObjectId>>
     >(BaseModelName.Mnemonic);
-    const keyWrappingService = new KeyWrappingService();
     const mnemonicService = new MnemonicService(
       mnemonicModel,
       application.environment.mnemonicHmacSecret,
-      keyWrappingService,
+      application.constants,
     );
     const config: IECIESConfig = {
       curveName: ECIES.CURVE_NAME,
@@ -1474,6 +1480,7 @@ export abstract class DatabaseInitializationService {
     };
     const eciesService = new ECIESService(config);
     const roleService = new RoleService(application);
+    const keyWrappingService = new KeyWrappingService();
     const backupCodeService = new BackupCodeService(
       application,
       eciesService,

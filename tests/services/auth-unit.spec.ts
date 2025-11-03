@@ -1,5 +1,5 @@
-import { KeyWrappingService } from '../../src/services/key-wrapping';
 import { SecureString } from '@digitaldefiance/ecies-lib';
+import { KeyWrappingService } from '../../src/services/key-wrapping';
 
 describe('Authentication Unit Tests', () => {
   let keyWrappingService: KeyWrappingService;

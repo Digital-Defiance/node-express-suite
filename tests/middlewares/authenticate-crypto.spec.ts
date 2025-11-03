@@ -1,7 +1,7 @@
+import { AccountStatus } from '@digitaldefiance/suite-core-lib';
 import express from 'express';
 import request from 'supertest';
 import { createApplicationMock } from '../__tests__/helpers/application.mock';
-import { AccountStatus } from '@digitaldefiance/suite-core-lib';
 
 // Mock UserService used inside authenticate-crypto
 const mockLoginWithMnemonic = jest.fn();

@@ -1,9 +1,13 @@
+import {
+  BackupCodeString,
+  IBackupCode,
+  InvalidBackupCodeError,
+} from '@digitaldefiance/suite-core-lib';
 import { Buffer } from 'buffer';
 import { hkdfSync, randomBytes } from 'crypto';
 import { BackupCode } from '../../src/backup-code';
+import { LocalhostConstants as AppConstants } from '../../src/constants';
 import { InvalidBackupCodeVersionError } from '../../src/errors/invalid-backup-code-version';
-import { BackupCodeString, IBackupCode, InvalidBackupCodeError } from '@digitaldefiance/suite-core-lib';
-import { Constants as AppConstants } from '../../src/constants';
 
 // Mock argon2 to avoid native dependency; make key derivation deterministic.
 jest.mock('argon2', () => ({

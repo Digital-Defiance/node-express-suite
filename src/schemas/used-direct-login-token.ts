@@ -1,6 +1,7 @@
 import { Schema } from 'mongoose';
 import { IUsedDirectLoginTokenDocument } from '../documents/used-direct-login-token';
 import { BaseModelName } from '../enumerations';
+import { IConstants } from '../interfaces';
 
 /**
  * Configuration options for creating a used direct login token schema
@@ -17,8 +18,10 @@ export interface UsedDirectLoginTokenSchemaOptions<
  */
 export function createUsedDirectLoginTokenSchema<
   TModelName extends string = BaseModelName,
+  TConstants extends IConstants = IConstants,
 >(
   options: UsedDirectLoginTokenSchemaOptions<TModelName> = {},
+  constants?: TConstants,
 ): Schema<IUsedDirectLoginTokenDocument> {
   const { userModelName = BaseModelName.User as TModelName } = options;
 

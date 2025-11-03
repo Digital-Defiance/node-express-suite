@@ -5,7 +5,11 @@ import {
   ITokenUser,
   IUserBase,
 } from '@digitaldefiance/suite-core-lib';
+import { Types } from 'mongoose';
 import { UserController } from '../controllers/user';
+import { IBaseDocument } from '../documents';
+import { Environment } from '../environment';
+import { IConstants } from '../interfaces';
 import { IApplication } from '../interfaces/application';
 import { IEmailService } from '../interfaces/email-service';
 import { emailServiceRegistry } from '../registry';
@@ -15,10 +19,6 @@ import { KeyWrappingService } from '../services/key-wrapping';
 import { RoleService } from '../services/role';
 import { UserService } from '../services/user';
 import { BaseRouter } from './base';
-import { Types } from 'mongoose';
-import { IBaseDocument } from '../documents';
-import { Environment } from '../environment';
-import { IConstants } from '../interfaces';
 
 /**
  * Router for the API
@@ -30,11 +30,26 @@ export class ApiRouter<
   A extends string,
   TUser extends IUserBase<I, D, S, A> = IUserBase<I, D, S, A>,
   TTokenRole extends ITokenRole<I, D> = ITokenRole<I, D>,
-  TBaseDocument extends IBaseDocument<any, Types.ObjectId> = IBaseDocument<any, Types.ObjectId>,
+  TBaseDocument extends IBaseDocument<any, Types.ObjectId> = IBaseDocument<
+    any,
+    Types.ObjectId
+  >,
   TTokenUser extends ITokenUser = ITokenUser,
   TConstants extends IConstants = IConstants,
   TEnvironment extends Environment = Environment,
-  TApplication extends IApplication<any, Types.ObjectId, TBaseDocument, TEnvironment, TConstants> = IApplication<any, Types.ObjectId, TBaseDocument, TEnvironment, TConstants>,
+  TApplication extends IApplication<
+    any,
+    Types.ObjectId,
+    TBaseDocument,
+    TEnvironment,
+    TConstants
+  > = IApplication<
+    any,
+    Types.ObjectId,
+    TBaseDocument,
+    TEnvironment,
+    TConstants
+  >,
 > extends BaseRouter<TApplication> {
   private readonly userController: UserController<
     I,

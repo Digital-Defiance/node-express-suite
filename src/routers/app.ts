@@ -15,14 +15,14 @@ import {
   Response,
 } from 'express';
 import { existsSync, readdirSync } from 'fs';
-import { basename, join, resolve, sep } from 'path';
-import { IApplication } from '../interfaces/application';
-import { debugLog, handleError, sendApiMessageResponse } from '../utils';
-import { BaseRouter } from './base';
 import { Types } from 'mongoose';
+import { basename, resolve, sep } from 'path';
 import { IBaseDocument } from '../documents';
 import { Environment } from '../environment';
 import { IConstants } from '../interfaces';
+import { IApplication } from '../interfaces/application';
+import { debugLog, handleError, sendApiMessageResponse } from '../utils';
+import { BaseRouter } from './base';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function keepEJS() {
@@ -33,7 +33,21 @@ function keepEJS() {
  * Application router
  * Sets up the API and static file serving
  */
-export class AppRouter<TApplication extends IApplication<any, Types.ObjectId, IBaseDocument<any, Types.ObjectId>, Environment, IConstants> = IApplication<any, Types.ObjectId, IBaseDocument<any, Types.ObjectId>, Environment, IConstants>> {
+export class AppRouter<
+  TApplication extends IApplication<
+    any,
+    Types.ObjectId,
+    IBaseDocument<any, Types.ObjectId>,
+    Environment,
+    IConstants
+  > = IApplication<
+    any,
+    Types.ObjectId,
+    IBaseDocument<any, Types.ObjectId>,
+    Environment,
+    IConstants
+  >,
+> {
   private readonly viewsPath: string;
   private readonly indexPath: string;
   private readonly assetsDir: string;
@@ -51,16 +65,22 @@ export class AppRouter<TApplication extends IApplication<any, Types.ObjectId, IB
       this.application.environment.apiDistDir.includes('..') ||
       this.application.environment.reactDistDir.includes('..')
     ) {
-      throw new TranslatableSuiteError(SuiteCoreStringKey.Error_InvalidPathContainsParentDirectoryReference);
+      throw new TranslatableSuiteError(
+        SuiteCoreStringKey.Error_InvalidPathContainsParentDirectoryReference,
+      );
     }
 
-    const normalizedApiDistDir = resolve(this.application.environment.apiDistDir);
+    const normalizedApiDistDir = resolve(
+      this.application.environment.apiDistDir,
+    );
     const viewsPath = resolve(normalizedApiDistDir, 'views');
     if (
       !viewsPath.startsWith(normalizedApiDistDir + sep) &&
       viewsPath !== normalizedApiDistDir
     ) {
-      throw new TranslatableSuiteError(SuiteCoreStringKey.Error_InvalidViewsPathEscapesBaseDirectory);
+      throw new TranslatableSuiteError(
+        SuiteCoreStringKey.Error_InvalidViewsPathEscapesBaseDirectory,
+      );
     }
     this.viewsPath = viewsPath;
 
@@ -68,13 +88,15 @@ export class AppRouter<TApplication extends IApplication<any, Types.ObjectId, IB
       this.application.environment.reactDistDir,
     );
     this.reactDistDir = normalizedReactDistDir;
-    
+
     const indexPath = resolve(normalizedReactDistDir, 'index.html');
     if (
       !indexPath.startsWith(normalizedReactDistDir + sep) &&
       indexPath !== normalizedReactDistDir
     ) {
-      throw new TranslatableSuiteError(SuiteCoreStringKey.Error_InvalidIndexPathEscapesBaseDirectory);
+      throw new TranslatableSuiteError(
+        SuiteCoreStringKey.Error_InvalidIndexPathEscapesBaseDirectory,
+      );
     }
     this.indexPath = indexPath;
 
@@ -83,7 +105,9 @@ export class AppRouter<TApplication extends IApplication<any, Types.ObjectId, IB
       !assetsPath.startsWith(normalizedReactDistDir + sep) &&
       assetsPath !== normalizedReactDistDir
     ) {
-      throw new TranslatableSuiteError(SuiteCoreStringKey.Error_InvalidAssetsPathEscapesBaseDirectory);
+      throw new TranslatableSuiteError(
+        SuiteCoreStringKey.Error_InvalidAssetsPathEscapesBaseDirectory,
+      );
     }
     this.assetsDir = assetsPath;
   }
@@ -116,8 +140,8 @@ export class AppRouter<TApplication extends IApplication<any, Types.ObjectId, IB
    */
   public init(app: Application) {
     if (
-      basename(this.apiRouter.application.environment.reactDistDir) !== 'dist')
-   {
+      basename(this.apiRouter.application.environment.reactDistDir) !== 'dist'
+    ) {
       throw new PluginTranslatableGenericError<SuiteCoreStringKey, string>(
         CoreI18nComponentId,
         SuiteCoreStringKey.Error_AppDoesNotAppearToBeRunningWithinDistTemplate,
@@ -172,8 +196,7 @@ export class AppRouter<TApplication extends IApplication<any, Types.ObjectId, IB
       debugLog(
         this.apiRouter.application.environment.debug,
         'log',
-        `Trying to serve static for ${(req.url || '')
-          .replace(/[\r\n]/g, ' ')}`,
+        `Trying to serve static for ${(req.url || '').replace(/[\r\n]/g, ' ')}`,
       );
       if (req.url.endsWith('.js')) {
         res.type('application/javascript');
@@ -183,8 +206,7 @@ export class AppRouter<TApplication extends IApplication<any, Types.ObjectId, IB
           const sanitizedErr =
             err instanceof Error
               ? err.message.replace(/[\r\n]/g, ' ')
-              : String(err)
-                  .replace(/[\r\n]/g, ' ');
+              : String(err).replace(/[\r\n]/g, ' ');
           debugLog(
             this.apiRouter.application.environment.debug,
             'error',
@@ -241,8 +263,7 @@ export class AppRouter<TApplication extends IApplication<any, Types.ObjectId, IB
           if (err) {
             const errMsg =
               err && typeof err === 'object' && 'message' in err
-                ? String(err.message)
-                    .replace(/[\r\n]/g, ' ')
+                ? String(err.message).replace(/[\r\n]/g, ' ')
                 : 'Unknown error';
             console.error('Error rendering: ' + errMsg);
             if (!res.headersSent) {

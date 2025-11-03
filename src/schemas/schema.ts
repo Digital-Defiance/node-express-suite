@@ -16,12 +16,13 @@ import UsedDirectLoginTokenModel from '../models/used-direct-login-token';
 import UserModel from '../models/user';
 import UserRoleModel from '../models/user-role';
 import { SchemaMap } from '../types';
-import { EmailTokenSchema } from './email-token';
-import { MnemonicSchema } from './mnemonic';
-import { RoleSchema } from './role';
-import { UsedDirectLoginTokenSchema } from './used-direct-login-token';
-import { UserSchema } from './user';
-import { UserRoleSchema } from './user-role';
+import { EmailTokenSchema, createEmailTokenSchema } from './email-token';
+import { MnemonicSchema, createMnemonicSchema } from './mnemonic';
+import { RoleSchema, createRoleSchema } from './role';
+import { UsedDirectLoginTokenSchema, createUsedDirectLoginTokenSchema } from './used-direct-login-token';
+import { UserSchema, createUserSchema } from './user';
+import { UserRoleSchema, createUserRoleSchema } from './user-role';
+import { IConstants } from '../interfaces';
 
 export interface BaseModelDocs {
   EmailToken: IEmailTokenDocument;
@@ -33,6 +34,7 @@ export interface BaseModelDocs {
 }
 
 export interface SchemaMapOptions {
+  constants?: IConstants;
   schemas?: {
     EmailToken?: Schema<IEmailTokenDocument>;
     Mnemonic?: Schema<IMnemonicDocument>;
@@ -63,7 +65,15 @@ export function getSchemaMap(
   connection: Connection,
   options: SchemaMapOptions = {},
 ): SchemaMap<BaseModelDocs> {
-  const { schemas = {}, modelNames = {}, collections = {} } = options;
+  const schemas = options.schemas ?? {
+    EmailToken: createEmailTokenSchema(undefined, options?.constants),
+    Mnemonic: createMnemonicSchema(undefined, options?.constants),
+    Role: createRoleSchema(undefined, options?.constants),
+    UsedDirectLoginToken: createUsedDirectLoginTokenSchema(undefined, options?.constants),
+    User: createUserSchema(undefined, undefined, undefined, undefined, options?.constants),
+    UserRole: createUserRoleSchema(undefined, options?.constants),
+  };
+  const { modelNames = {}, collections = {} } = options;
 
   return {
     EmailToken: {

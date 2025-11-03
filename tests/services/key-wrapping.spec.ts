@@ -1,7 +1,9 @@
-
 import { SecureBuffer, SecureString } from '@digitaldefiance/ecies-lib';
+import {
+  InvalidNewPasswordError,
+  InvalidPasswordError,
+} from '../../src/errors';
 import { KeyWrappingService } from '../../src/services/key-wrapping';
-import { InvalidNewPasswordError, InvalidPasswordError } from '../../src/errors';
 
 describe('KeyWrappingService', () => {
   // test fixture values - not real credentials

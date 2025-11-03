@@ -11,9 +11,12 @@ import {
 } from '@digitaldefiance/suite-core-lib';
 import { NextFunction, Request, Response } from 'express';
 import { ClientSession, Types } from 'mongoose';
+import { IBaseDocument } from '../documents';
 import { IUserDocument } from '../documents/user';
 import { BaseModelName } from '../enumerations';
+import { Environment } from '../environment';
 import { InvalidPasswordError } from '../errors';
+import { IConstants } from '../interfaces';
 import { IApplication } from '../interfaces/application';
 import { emailServiceRegistry } from '../registry';
 import { BackupCodeService } from '../services/backup-code';
@@ -21,9 +24,6 @@ import { KeyWrappingService } from '../services/key-wrapping';
 import { RoleService } from '../services/role';
 import { UserService } from '../services/user';
 import { withTransaction } from '../utils';
-import { IBaseDocument } from '../documents';
-import { Environment } from '../environment';
-import { IConstants } from '../interfaces';
 
 /**
  * Middleware to authenticate crypto operations requiring private key access
@@ -32,19 +32,23 @@ import { IConstants } from '../interfaces';
 export async function authenticateCrypto<
   TAccountStatus extends string = AccountStatus,
 >(
-  application: IApplication<any, Types.ObjectId, IBaseDocument<any, Types.ObjectId>, Environment, IConstants>,
+  application: IApplication<
+    any,
+    Types.ObjectId,
+    IBaseDocument<any, Types.ObjectId>,
+    Environment,
+    IConstants
+  >,
   req: Request,
   res: Response,
   next: NextFunction,
   activeStatusValue: TAccountStatus = AccountStatus.Active as TAccountStatus,
 ): Promise<Response | void> {
   if (!req.user) {
-    return res
-      .status(401)
-      .send(
-        // amazonq-ignore-next-line false positive, hardcoded string
-        getSuiteCoreTranslation(SuiteCoreStringKey.Validation_InvalidToken),
-      );
+    return res.status(401).send(
+      // amazonq-ignore-next-line false positive, hardcoded string
+      getSuiteCoreTranslation(SuiteCoreStringKey.Validation_InvalidToken),
+    );
   }
 
   // Try validatedBody first (if validation has run), then fall back to raw body
@@ -120,29 +124,19 @@ export async function authenticateCrypto<
           .exec();
 
         if (!userDoc || userDoc.accountStatus !== activeStatusValue) {
-          return (
-            res
-              .status(403)
-              .send(
-                // amazonq-ignore-next-line false positive, hardcoded string
-                getSuiteCoreTranslation(
-                  SuiteCoreStringKey.Validation_UserNotFound,
-                ),
-              )
+          return res.status(403).send(
+            // amazonq-ignore-next-line false positive, hardcoded string
+            getSuiteCoreTranslation(SuiteCoreStringKey.Validation_UserNotFound),
           );
         }
 
         // Ensure we're only authenticating the currently logged-in user
         if (userDoc._id.toString() !== req.user!.id) {
-          return (
-            res
-              .status(403)
-              .send(
-                // amazonq-ignore-next-line false positive, hardcoded string
-                getSuiteCoreTranslation(
-                  SuiteCoreStringKey.Validation_InvalidCredentials,
-                ),
-              )
+          return res.status(403).send(
+            // amazonq-ignore-next-line false positive, hardcoded string
+            getSuiteCoreTranslation(
+              SuiteCoreStringKey.Validation_InvalidCredentials,
+            ),
           );
         }
 
@@ -183,15 +177,11 @@ export async function authenticateCrypto<
 
         // Double-check authenticated user matches logged-in user
         if (loginResult.userDoc._id.toString() !== req.user!.id) {
-          return (
-            res
-              .status(403)
-              .send(
-                // amazonq-ignore-next-line false positive, hardcoded string
-                getSuiteCoreTranslation(
-                  SuiteCoreStringKey.Validation_InvalidCredentials,
-                ),
-              )
+          return res.status(403).send(
+            // amazonq-ignore-next-line false positive, hardcoded string
+            getSuiteCoreTranslation(
+              SuiteCoreStringKey.Validation_InvalidCredentials,
+            ),
           );
         }
 

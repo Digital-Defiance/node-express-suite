@@ -1,15 +1,20 @@
-import { createApplicationMock } from '../__tests__/helpers/application.mock';
-import { BackupCodeService } from '../../src/services/backup-code';
+import { SecureBuffer } from '@digitaldefiance/ecies-lib';
 import { ECIESService } from '@digitaldefiance/node-ecies-lib';
+import {
+  AccountStatus,
+  EmailTokenExpiredError,
+  EmailTokenType,
+  EmailTokenUsedOrInvalidError,
+} from '@digitaldefiance/suite-core-lib';
+import { LocalhostConstants as AppConstants } from '../../src/constants';
+import { ModelRegistry } from '../../src/model-registry';
 import { emailServiceRegistry } from '../../src/registry';
+import { BackupCodeService } from '../../src/services/backup-code';
 import { KeyWrappingService } from '../../src/services/key-wrapping';
 import { RoleService } from '../../src/services/role';
 import { UserService } from '../../src/services/user';
-import { SecureBuffer } from '@digitaldefiance/ecies-lib';
-import { AccountStatus, EmailTokenExpiredError, EmailTokenType, EmailTokenUsedOrInvalidError } from '@digitaldefiance/suite-core-lib';
-import { Constants as AppConstants } from '../../src/constants';
+import { createApplicationMock } from '../__tests__/helpers/application.mock';
 import { DummyEmailService } from './dummy-email-service';
-import { ModelRegistry } from '../../src/model-registry';
 
 beforeAll(() => {
   const app = createApplicationMock();
@@ -26,16 +31,24 @@ function makeSvc(overrides: {
   roleService?: Partial<RoleService>;
 }) {
   // Mock ModelRegistry for this test
-  jest.spyOn(ModelRegistry.instance, 'getTypedModel').mockImplementation((modelName: string) => {
-    if (modelName.includes('EmailToken')) return overrides.emailTokenModel as any;
-    if (modelName.includes('User')) return overrides.userModel as any;
-    if (modelName.includes('Mnemonic')) return {
-      findOne: jest.fn().mockReturnValue({ session: jest.fn().mockResolvedValue(null) }),
-    } as any;
-    return {
-      findOne: jest.fn().mockReturnValue({ session: jest.fn().mockResolvedValue(null) }),
-    } as any;
-  });
+  jest
+    .spyOn(ModelRegistry.instance, 'getTypedModel')
+    .mockImplementation((modelName: string) => {
+      if (modelName.includes('EmailToken'))
+        return overrides.emailTokenModel as any;
+      if (modelName.includes('User')) return overrides.userModel as any;
+      if (modelName.includes('Mnemonic'))
+        return {
+          findOne: jest
+            .fn()
+            .mockReturnValue({ session: jest.fn().mockResolvedValue(null) }),
+        } as any;
+      return {
+        findOne: jest
+          .fn()
+          .mockReturnValue({ session: jest.fn().mockResolvedValue(null) }),
+      } as any;
+    });
   jest.spyOn(ModelRegistry.instance, 'get').mockReturnValue({
     model: overrides.userModel || {},
     schema: {} as any,
@@ -91,7 +104,6 @@ function makeSvc(overrides: {
   );
   return { svc, application } as const;
 }
-
 
 describe('UserService.resendEmailToken', () => {
   it('throws when no valid token found', async () => {
@@ -186,12 +198,18 @@ describe('UserService.verifyAccountTokenAndComplete', () => {
       session: jest.fn().mockResolvedValue({ acknowledged: true }),
     };
     const emailTokenModel = {
-      findOne: jest.fn().mockReturnValue({ session: jest.fn().mockResolvedValue(token) }),
+      findOne: jest
+        .fn()
+        .mockReturnValue({ session: jest.fn().mockResolvedValue(token) }),
       deleteOne: jest.fn().mockReturnValue(deleteChainable),
     };
     const userModel = {
-      findById: jest.fn().mockReturnValue({ session: jest.fn().mockResolvedValue(null) }),
-      findOne: jest.fn().mockReturnValue({ session: jest.fn().mockResolvedValue(null) }),
+      findById: jest
+        .fn()
+        .mockReturnValue({ session: jest.fn().mockResolvedValue(null) }),
+      findOne: jest
+        .fn()
+        .mockReturnValue({ session: jest.fn().mockResolvedValue(null) }),
     };
     const { svc } = makeSvc({ emailTokenModel, userModel });
     jest.spyOn(svc as any, 'findEmailToken').mockResolvedValue(token);
@@ -209,12 +227,22 @@ describe('UserService.verifyAccountTokenAndComplete', () => {
       expiresAt: new Date(Date.now() + 100000),
     };
     const emailTokenModel = {
-      findOne: jest.fn().mockReturnValue({ session: jest.fn().mockResolvedValue(token) }),
-      deleteOne: jest.fn().mockReturnValue({ session: jest.fn().mockResolvedValue({ acknowledged: true }) }),
+      findOne: jest
+        .fn()
+        .mockReturnValue({ session: jest.fn().mockResolvedValue(token) }),
+      deleteOne: jest
+        .fn()
+        .mockReturnValue({
+          session: jest.fn().mockResolvedValue({ acknowledged: true }),
+        }),
     };
     const userModel = {
-      findById: jest.fn().mockReturnValue({ session: jest.fn().mockResolvedValue(null) }),
-      findOne: jest.fn().mockReturnValue({ session: jest.fn().mockResolvedValue(null) }),
+      findById: jest
+        .fn()
+        .mockReturnValue({ session: jest.fn().mockResolvedValue(null) }),
+      findOne: jest
+        .fn()
+        .mockReturnValue({ session: jest.fn().mockResolvedValue(null) }),
     };
     const { svc } = makeSvc({ emailTokenModel, userModel });
     jest.spyOn(svc as any, 'findEmailToken').mockResolvedValue(token);
@@ -239,12 +267,22 @@ describe('UserService.verifyAccountTokenAndComplete', () => {
       save: jest.fn(),
     };
     const emailTokenModel = {
-      findOne: jest.fn().mockReturnValue({ session: jest.fn().mockResolvedValue(token) }),
-      deleteOne: jest.fn().mockReturnValue({ session: jest.fn().mockResolvedValue({ acknowledged: true }) }),
+      findOne: jest
+        .fn()
+        .mockReturnValue({ session: jest.fn().mockResolvedValue(token) }),
+      deleteOne: jest
+        .fn()
+        .mockReturnValue({
+          session: jest.fn().mockResolvedValue({ acknowledged: true }),
+        }),
     };
     const userModel = {
-      findById: jest.fn().mockReturnValue({ session: jest.fn().mockResolvedValue(user) }),
-      findOne: jest.fn().mockReturnValue({ session: jest.fn().mockResolvedValue(user) }),
+      findById: jest
+        .fn()
+        .mockReturnValue({ session: jest.fn().mockResolvedValue(user) }),
+      findOne: jest
+        .fn()
+        .mockReturnValue({ session: jest.fn().mockResolvedValue(user) }),
     };
     const memberRoleId = 'rid';
     const { svc } = makeSvc({

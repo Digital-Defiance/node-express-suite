@@ -1,6 +1,20 @@
-import { createApplicationMock } from '../__tests__/helpers/application.mock';
-import { ModelRegistry } from '../../src/model-registry';
+import { InvalidEmailError } from '@digitaldefiance/ecies-lib';
 import { I18nEngine } from '@digitaldefiance/i18n-lib';
+import { ECIESService } from '@digitaldefiance/node-ecies-lib';
+import {
+  AccountLockedError,
+  AccountStatus,
+  AccountStatusError,
+  InvalidUsernameError,
+  UsernameOrEmailRequiredError,
+} from '@digitaldefiance/suite-core-lib';
+import { ModelRegistry } from '../../src/model-registry';
+import { BackupCodeService } from '../../src/services/backup-code';
+import { KeyWrappingService } from '../../src/services/key-wrapping';
+import { RoleService } from '../../src/services/role';
+import { UserService } from '../../src/services/user';
+import { createApplicationMock } from '../__tests__/helpers/application.mock';
+import { DummyEmailService } from './dummy-email-service';
 
 beforeAll(() => {
   const mockModel = {
@@ -8,28 +22,19 @@ beforeAll(() => {
       session: jest.fn().mockResolvedValue(null),
     }),
   };
-  jest.spyOn(ModelRegistry.instance, 'getTypedModel').mockReturnValue(mockModel as any);
+  jest
+    .spyOn(ModelRegistry.instance, 'getTypedModel')
+    .mockReturnValue(mockModel as any);
   jest.spyOn(ModelRegistry.instance, 'get').mockReturnValue({
     model: mockModel,
     schema: {} as any,
   } as any);
-  
+
   // Mock I18nEngine for InvalidEmailError
   jest.spyOn(I18nEngine, 'getInstance').mockReturnValue({
     translate: jest.fn().mockReturnValue('Invalid email'),
   } as any);
 });
-import { BackupCodeService } from '../../src/services/backup-code';
-import { ECIESService } from '@digitaldefiance/node-ecies-lib';
-import { KeyWrappingService } from '../../src/services/key-wrapping';
-import { RoleService } from '../../src/services/role';
-import { UserService } from '../../src/services/user';
-import { AccountLockedError, AccountStatus, AccountStatusError, InvalidUsernameError, UsernameOrEmailRequiredError } from '@digitaldefiance/suite-core-lib';
-import { InvalidEmailError } from '@digitaldefiance/ecies-lib';
-import { SecureBuffer, SecureString } from '@digitaldefiance/ecies-lib';
-import { DummyEmailService } from './dummy-email-service';
-import { IUserDocument } from '../../src/documents';
-
 
 function makeService(userDoc: unknown | null) {
   // Mock UserModel.findOne().session().exec() and .collation().session().exec() chaining
@@ -46,7 +51,9 @@ function makeService(userDoc: unknown | null) {
   };
 
   // Mock ModelRegistry to return our mock
-  jest.spyOn(ModelRegistry.instance, 'getTypedModel').mockReturnValue(mockUserModel as any);
+  jest
+    .spyOn(ModelRegistry.instance, 'getTypedModel')
+    .mockReturnValue(mockUserModel as any);
   jest.spyOn(ModelRegistry.instance, 'get').mockReturnValue({
     model: mockUserModel,
     schema: {} as any,
@@ -125,7 +132,7 @@ describe('UserService.findUser', () => {
   });
 
   it('throws AccountLockedError when AdminLock', async () => {
-    const svc = makeService({ 
+    const svc = makeService({
       accountStatus: AccountStatus.AdminLock,
       _id: '507f1f77bcf86cd799439011',
       email: 'user@example.com',
@@ -149,7 +156,7 @@ describe('UserService.findUser', () => {
   });
 
   it('throws AccountStatusError for unknown status', async () => {
-    const svc = makeService({ 
+    const svc = makeService({
       accountStatus: 'Weird',
       _id: '507f1f77bcf86cd799439011',
       email: 'user@example.com',

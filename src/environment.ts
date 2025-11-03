@@ -10,7 +10,7 @@ import { existsSync } from 'fs';
 import { ObjectId } from 'mongodb';
 import { Types } from 'mongoose';
 import { BackupCode } from './backup-code';
-import { Constants } from './constants';
+import { LocalhostConstants } from './constants';
 import { setGlobalActiveContextAdminLanguageFromProcessArgvOrEnv } from './get-language';
 import { setGlobalActiveContextAdminTimezoneFromProcessArgvOrEnv } from './get-timezone';
 import { IConstants } from './interfaces/constants';
@@ -30,18 +30,24 @@ export class Environment implements IEnvironment {
   private readonly _envObject: object;
   public static requireEnv<T>(key: string, obj: object): T {
     if (!Object.prototype.hasOwnProperty.call(obj, key)) {
-      throw new TranslatableSuiteError(SuiteCoreStringKey.Error_MissingRequiredEnvironmentVariableTemplate, { key });
+      throw new TranslatableSuiteError(
+        SuiteCoreStringKey.Error_MissingRequiredEnvironmentVariableTemplate,
+        { key },
+      );
     }
-    if (!(obj as any)[key] || (String((obj as any)[key]).trim() === '')) {
-      throw new TranslatableSuiteError(SuiteCoreStringKey.Error_EmptyEnvironmentVariableTemplate, { key });
+    if (!(obj as any)[key] || String((obj as any)[key]).trim() === '') {
+      throw new TranslatableSuiteError(
+        SuiteCoreStringKey.Error_EmptyEnvironmentVariableTemplate,
+        { key },
+      );
     }
-    return ((obj as any)[key]) as T;
+    return (obj as any)[key] as T;
   }
   constructor(
     path?: string,
     initialization = false,
     override = true,
-    constants: IConstants = Constants,
+    constants: IConstants = LocalhostConstants,
   ) {
     let envObj = process.env;
     let debug = envObj['DEBUG'] === 'true' || envObj['DEBUG'] === '1';
@@ -108,14 +114,12 @@ export class Environment implements IEnvironment {
         envObj['NODE_ENV'] === 'production'
           ? 'https://localhost'
           : httpsDevCertRoot
-          ? `https://localhost:${httpsDevPort}`
-          : 'http://localhost:3000',
+            ? `https://localhost:${httpsDevPort}`
+            : 'http://localhost:3000',
       // Avoid importing Application here to prevent circular deps
       // Compute dist dir from process.cwd() directly
-      apiDistDir:
-        Environment.requireEnv<string>('API_DIST_DIR', envObj),
-      reactDistDir:
-        Environment.requireEnv<string>('REACT_DIST_DIR', envObj),
+      apiDistDir: Environment.requireEnv<string>('API_DIST_DIR', envObj),
+      reactDistDir: Environment.requireEnv<string>('REACT_DIST_DIR', envObj),
       httpsDevCertRoot: httpsDevCertRoot,
       httpsDevPort: httpsDevPort,
       disableEmailSend:
@@ -185,8 +189,8 @@ export class Environment implements IEnvironment {
         transactionRetryBaseDelay: envObj['MONGO_TRANSACTION_RETRY_BASE_DELAY']
           ? parseInt(envObj['MONGO_TRANSACTION_RETRY_BASE_DELAY'])
           : envObj['NODE_ENV'] === 'test'
-          ? 25
-          : 100,
+            ? 25
+            : 100,
       },
       adminMnemonic: new SecureString(envObj['ADMIN_MNEMONIC'] ?? null),
       adminCreatedAt: envObj['ADMIN_CREATED_AT']

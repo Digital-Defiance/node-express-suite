@@ -9,17 +9,17 @@ import {
 import { NextFunction, Request, Response } from 'express';
 import { IncomingHttpHeaders } from 'http';
 import { ClientSession, Types } from 'mongoose';
+import { IBaseDocument } from '../documents';
 import { IUserDocument } from '../documents/user';
 import { BaseModelName } from '../enumerations/base-model-name';
+import { Environment } from '../environment';
 import { TokenExpiredError } from '../errors/token-expired';
+import { IConstants } from '../interfaces';
 import { IApplication } from '../interfaces/application';
 import { JwtService } from '../services/jwt';
 import { RequestUserService } from '../services/request-user';
 import { RoleService } from '../services/role';
 import { withTransaction } from '../utils';
-import { IBaseDocument } from '../documents';
-import { Environment } from '../environment';
-import { IConstants } from '../interfaces';
 
 /**
  * Find the auth token in the headers
@@ -50,7 +50,19 @@ export async function authenticateToken<
   D extends Date = Date,
   TTokenRole extends ITokenRole<I, D> = ITokenRole<I, D>,
   TTokenUser extends ITokenUser = ITokenUser,
-  TApplication extends IApplication<any, Types.ObjectId, IBaseDocument<any, Types.ObjectId>, Environment, IConstants> = IApplication<any, Types.ObjectId, IBaseDocument<any, Types.ObjectId>, Environment, IConstants>,
+  TApplication extends IApplication<
+    any,
+    Types.ObjectId,
+    IBaseDocument<any, Types.ObjectId>,
+    Environment,
+    IConstants
+  > = IApplication<
+    any,
+    Types.ObjectId,
+    IBaseDocument<any, Types.ObjectId>,
+    Environment,
+    IConstants
+  >,
 >(
   application: TApplication,
   req: Request,
@@ -82,15 +94,9 @@ export async function authenticateToken<
         >(application);
         const user: TTokenUser | null = await jwtService.verifyToken(token);
         if (user === null) {
-          return (
-            res
-              .status(403)
-              .send(
-                // amazonq-ignore-next-line false positive, hardcoded string
-                getSuiteCoreTranslation(
-                  SuiteCoreStringKey.Validation_UserNotFound,
-                ),
-              )
+          return res.status(403).send(
+            // amazonq-ignore-next-line false positive, hardcoded string
+            getSuiteCoreTranslation(SuiteCoreStringKey.Validation_UserNotFound),
           );
         }
         const userDoc = await UserModel.findById(user.userId, {
@@ -99,15 +105,9 @@ export async function authenticateToken<
           .session(sess ?? null)
           .exec();
         if (!userDoc || userDoc.accountStatus !== AccountStatus.Active) {
-          return (
-            res
-              .status(403)
-              .send(
-                // amazonq-ignore-next-line false positive, hardcoded string
-                getSuiteCoreTranslation(
-                  SuiteCoreStringKey.Validation_UserNotFound,
-                ),
-              )
+          return res.status(403).send(
+            // amazonq-ignore-next-line false positive, hardcoded string
+            getSuiteCoreTranslation(SuiteCoreStringKey.Validation_UserNotFound),
           );
         }
         const roleService: RoleService = new RoleService(application);

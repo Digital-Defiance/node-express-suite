@@ -2,7 +2,6 @@ import {
   createExpressRuntimeConfiguration,
   getExpressRuntimeConfiguration,
   registerExpressRuntimeConfiguration,
-  EXPRESS_RUNTIME_CONFIGURATION_KEY,
 } from '../src/defaults';
 
 describe('Express Runtime Configuration Registry', () => {

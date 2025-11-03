@@ -1,6 +1,7 @@
 import { Schema } from 'mongoose';
 import { IUserRoleDocument } from '../documents/user-role';
 import { BaseModelName } from '../enumerations';
+import { IConstants } from '../interfaces';
 
 /**
  * Configuration options for creating a user-role schema
@@ -17,8 +18,9 @@ export interface UserRoleSchemaOptions<
 /**
  * Factory function to create an extensible user-role schema
  */
-export function createUserRoleSchema<TModelName extends string = BaseModelName>(
+export function createUserRoleSchema<TModelName extends string = BaseModelName, TConstants extends IConstants = IConstants>(
   options: UserRoleSchemaOptions<TModelName> = {},
+  constants?: TConstants
 ): Schema<IUserRoleDocument> {
   const {
     userModelName = BaseModelName.User as TModelName,

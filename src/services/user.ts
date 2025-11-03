@@ -1,5 +1,4 @@
 import {
-  Constants as EciesConstants,
   EmailString,
   getEciesI18nEngine,
   IECIESConfig,
@@ -31,6 +30,7 @@ import {
   IBackupCode,
   InvalidChallengeResponseError,
   InvalidCredentialsError,
+  InvalidTokenError,
   InvalidUsernameError,
   IRequestUserDTO,
   ITokenRole,
@@ -144,7 +144,7 @@ export class UserService<
     this.mnemonicService = new MnemonicService(
       mnemonicModel,
       application.environment.mnemonicHmacSecret,
-      this.keyWrappingService,
+      this.application.constants,
     );
   }
 
@@ -454,6 +454,9 @@ export class UserService<
       case EmailTokenType.PrivateKeyRequest:
       default:
         throw new Error('Invalid email token type');
+        throw new TranslatableSuiteError(
+          SuiteCoreStringKey.Error_InvalidEmailTokenType,
+        );
     }
     const emailSubject = getSuiteCoreTranslation(subjectString);
     const emailText = `${getSuiteCoreTranslation(bodyString)}\r\n\r\n${url}`;
@@ -824,6 +827,7 @@ export class UserService<
               const wrapped = this.keyWrappingService.wrapSecret(
                 priv,
                 passwordSecure,
+                this.application.constants,
               );
               newUserDoc.passwordWrappedPrivateKey = wrapped;
             } finally {
@@ -1061,6 +1065,7 @@ export class UserService<
       // Generate a nonce challenge to verify they can decrypt with their key
       const adminMember = SystemUserService.getSystemUser(
         this.application.environment,
+        this.application.constants,
       );
       const nonce = randomBytes(32);
       const signature = adminMember.sign(nonce);
@@ -1148,6 +1153,7 @@ export class UserService<
     // re-sign the time + nonce and check if the signature matches
     const adminMember = SystemUserService.getSystemUser(
       this.application.environment,
+      this.application.constants,
     );
     const timeAndNonce = Buffer.concat([time, nonce]);
     const expectedSignature = adminMember.sign(timeAndNonce);
@@ -1259,6 +1265,7 @@ export class UserService<
 
       const adminMember = SystemUserService.getSystemUser(
         this.application.environment,
+        this.application.constants,
       );
 
       return {
@@ -1381,6 +1388,7 @@ export class UserService<
     const unwrapped = await this.keyWrappingService.unwrapSecretAsync(
       userDoc.passwordWrappedPrivateKey!,
       password,
+      this.application.constants,
     );
 
     // Build user member with unwrapped private key to decrypt challenge
@@ -1397,6 +1405,7 @@ export class UserService<
     // Generate a nonce challenge signed by system
     const adminMember = SystemUserService.getSystemUser(
       this.application.environment,
+      this.application.constants,
     );
     const nonce = randomBytes(32);
     const signature = adminMember.sign(nonce);
@@ -1662,7 +1671,7 @@ export class UserService<
           throw new UserNotFoundError();
         }
 
-        if (!EciesConstants.PasswordRegex.test(newPassword)) {
+        if (!this.application.constants.PasswordRegex.test(newPassword)) {
           throw new InvalidNewPasswordError();
         }
 
@@ -1679,6 +1688,7 @@ export class UserService<
             const wrapped = this.keyWrappingService.wrapSecret(
               priv,
               newPasswordSecure,
+              this.application.constants,
             );
             userDoc.passwordWrappedPrivateKey = wrapped;
             await userDoc.save({ session: sess });
@@ -1764,7 +1774,7 @@ export class UserService<
     credential?: string, // either mnemonic or current password; required
     session?: ClientSession,
   ): Promise<void> {
-    if (!EciesConstants.PasswordRegex.test(newPassword)) {
+    if (!this.application.constants.PasswordRegex.test(newPassword)) {
       throw new InvalidNewPasswordError();
     }
     if (!credential) {
@@ -1802,7 +1812,7 @@ export class UserService<
         // Update password-wrapped secrets based on credential type (Option B)
         const newPasswordSecure = new SecureString(newPassword);
         try {
-          if (EciesConstants.MnemonicRegex.test(credential)) {
+          if (this.application.constants.MnemonicRegex.test(credential)) {
             // Credential is mnemonic: verify it belongs to this user via public key
             const providedMnemonic = new SecureString(credential);
             try {
@@ -1825,6 +1835,7 @@ export class UserService<
                 const wrappedPriv = this.keyWrappingService.wrapSecret(
                   priv,
                   newPasswordSecure,
+                  this.application.constants,
                 );
                 userDoc.passwordWrappedPrivateKey = wrappedPriv;
                 await userDoc.save({ session: sess });
@@ -1843,12 +1854,14 @@ export class UserService<
               await this.keyWrappingService.unwrapSecretAsync(
                 userDoc.passwordWrappedPrivateKey!,
                 credential,
+                this.application.constants,
               );
             try {
               // Re-wrap the existing private key under the new password
               const wrappedPriv = this.keyWrappingService.wrapSecret(
                 privateKeyBuf,
                 newPasswordSecure,
+                this.application.constants,
               );
               userDoc.passwordWrappedPrivateKey = wrappedPriv;
               await userDoc.save({ session: sess });
@@ -1881,6 +1894,7 @@ export class UserService<
   public generateDirectLoginChallenge(): string {
     const adminMember = SystemUserService.getSystemUser(
       this.application.environment,
+      this.application.constants,
     );
     const time = Buffer.alloc(8);
     time.writeBigUInt64BE(BigInt(new Date().getTime()));
@@ -1949,6 +1963,7 @@ export class UserService<
         // validate the server's signature on the time + nonce portion
         const adminMember = SystemUserService.getSystemUser(
           this.application.environment,
+          this.application.constants,
         );
         if (
           !adminMember.verify(
