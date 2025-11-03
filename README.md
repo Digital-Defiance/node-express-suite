@@ -663,6 +663,10 @@ For issues and questions:
 
 ## ChangeLog
 
+### Version 1.3.23
+
+- Make vars protected
+
 ### Version 1.3.22
 
 - Overridable view rendering

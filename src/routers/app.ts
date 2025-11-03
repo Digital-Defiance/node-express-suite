@@ -49,13 +49,13 @@ export class AppRouter<
     IConstants
   >,
 > {
-  private readonly viewsPath: string;
-  private readonly indexPath: string;
-  private readonly assetsDir: string;
-  private readonly reactDistDir: string;
+  protected readonly viewsPath: string;
+  protected readonly indexPath: string;
+  protected readonly assetsDir: string;
+  protected readonly reactDistDir: string;
 
-  private readonly apiRouter: BaseRouter<TApplication>;
-  private readonly application: TApplication;
+  protected readonly apiRouter: BaseRouter<TApplication>;
+  protected readonly application: TApplication;
 
   constructor(apiRouter: BaseRouter<TApplication>) {
     this.application = apiRouter.application;
