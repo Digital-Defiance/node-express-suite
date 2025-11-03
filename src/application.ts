@@ -20,13 +20,15 @@ import { isAbsolute, normalize, resolve } from 'path';
 import { BaseApplication } from './application-base';
 import { IBaseDocument } from './documents/base';
 import { Environment } from './environment';
-import { IApplication, ICSPConfig, IFailableResult } from './interfaces';
+import { IApplication, ICSPConfig, IFailableResult, isCSPConfig } from './interfaces';
 import { IConstants } from './interfaces/constants';
-import { initMiddleware } from './middlewares';
+import { initMiddleware, isHelmetOptions } from './middlewares';
 import { AppRouter } from './routers/app';
 import { BaseRouter } from './routers/base';
 import { SchemaMap } from './types';
 import { debugLog, handleError, sendApiMessageResponse } from './utils';
+import { HelmetOptions } from 'helmet';
+import { IFlexibleCSP, isFlexibleCSP } from './interfaces/flexible-csp';
 
 /**
  * Application class
@@ -48,9 +50,10 @@ export class Application<
 {
   public readonly expressApp: ExpressApplication;
   private server: ServerWithOptionalClose | null = null;
-  private readonly _cspConfig: ICSPConfig;
+  private readonly _cspConfig: ICSPConfig | HelmetOptions | IFlexibleCSP;
   private readonly _apiRouterFactory: (app: IApplication<T, I, TBaseDocument, TEnvironment, TConstants>) => BaseRouter;
   private readonly _appRouterFactory: (apiRouter: BaseRouter) => TAppRouter;
+  private readonly _initMiddleware: typeof initMiddleware;
   private _apiRouter?: BaseRouter;
 
   public override get environment(): TEnvironment {
@@ -69,7 +72,7 @@ export class Application<
       application: BaseApplication<TModelDocs, TInitResults>,
     ) => Promise<IFailableResult<TInitResults>>,
     initResultHashFunction: (initResults: TInitResults) => string,
-    cspConfig: ICSPConfig = {
+    cspConfig: ICSPConfig | HelmetOptions | IFlexibleCSP = {
       corsWhitelist: [],
       csp: {
         defaultSrc: [],
@@ -83,6 +86,7 @@ export class Application<
     },
     constants: TConstants = Constants as TConstants,
     appRouterFactory: (apiRouter: BaseRouter) => TAppRouter = (apiRouter) => new AppRouter(apiRouter) as TAppRouter,
+    customInitMiddleware: typeof initMiddleware = initMiddleware,
   ) {
     super(
       environment,
@@ -93,6 +97,7 @@ export class Application<
     );
     this._apiRouterFactory = apiRouterFactory;
     this._appRouterFactory = appRouterFactory;
+    this._initMiddleware = customInitMiddleware;
     this.expressApp = express();
     this.server = null;
     this._cspConfig = cspConfig;
@@ -103,11 +108,15 @@ export class Application<
     await super.start(mongoUri, true);
     try {
       this._apiRouter = this._apiRouterFactory(this);
-      initMiddleware(
-        this.expressApp,
-        this._cspConfig.corsWhitelist,
-        this._cspConfig.csp,
-      );
+      if (isFlexibleCSP(this._cspConfig) || isCSPConfig(this._cspConfig)) {
+          this._initMiddleware(
+            this.expressApp,
+            this._cspConfig.corsWhitelist,
+            this._cspConfig.csp,
+          );
+      } else if (isHelmetOptions(this._cspConfig)) {
+        this._initMiddleware(this.expressApp, [], this._cspConfig);
+      }
       const appRouter = this._appRouterFactory(this._apiRouter);
 
       appRouter.init(this.expressApp);

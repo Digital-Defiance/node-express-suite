@@ -10,8 +10,9 @@ import {
 } from 'express';
 import helmet, { HelmetOptions } from 'helmet';
 import { IncomingMessage, ServerResponse } from 'http';
+import { ISimpleCSPDef, isSimpleCSPDef } from './interfaces/csp-definition';
 
-const corsOptionsDelegate = (corsWhitelist: string[]) => {
+export const corsOptionsDelegate = (corsWhitelist: string[]) => {
   return (
     req: cors.CorsRequest,
     callback: (
@@ -39,58 +40,8 @@ const corsOptionsDelegate = (corsWhitelist: string[]) => {
   };
 };
 
-type CSPDef = {
-      defaultSrc: (
-        | string
-        | ((req: IncomingMessage, res: ServerResponse) => string)
-      )[];
-      imgSrc: (
-        | string
-        | ((req: IncomingMessage, res: ServerResponse) => string)
-      )[];
-      connectSrc: (
-        | string
-        | ((req: IncomingMessage, res: ServerResponse) => string)
-      )[];
-      scriptSrc: (
-        | string
-        | ((req: IncomingMessage, res: ServerResponse) => string)
-      )[];
-      styleSrc: (
-        | string
-        | ((req: IncomingMessage, res: ServerResponse) => string)
-      )[];
-      fontSrc: (
-        | string
-        | ((req: IncomingMessage, res: ServerResponse) => string)
-      )[];
-      frameSrc: (
-        | string
-        | ((req: IncomingMessage, res: ServerResponse) => string)
-      )[];
-    };
 
-const isCSPDef = (obj: CSPDef | HelmetOptions): obj is CSPDef => {
-  return (
-    obj &&
-    'defaultSrc' in obj &&
-    'imgSrc' in obj &&
-    'connectSrc' in obj &&
-    'scriptSrc' in obj &&
-    'styleSrc' in obj &&
-    'fontSrc' in obj &&
-    'frameSrc' in obj &&
-    Array.isArray(obj.defaultSrc) &&
-    Array.isArray(obj.imgSrc) &&
-    Array.isArray(obj.connectSrc) &&
-    Array.isArray(obj.scriptSrc) &&
-    Array.isArray(obj.styleSrc) &&
-    Array.isArray(obj.fontSrc) &&
-    Array.isArray(obj.frameSrc)
-  );
-}
-
-const isHelmetOptions = (obj: any): boolean => {
+export const isHelmetOptions = (obj: any): boolean => {
   // A very basic check; in real scenarios, you might want to be more thorough
   return obj && typeof obj === 'object' && (
     ('contentSecurityPolicy' in obj) ||
@@ -104,7 +55,7 @@ const isHelmetOptions = (obj: any): boolean => {
 export const initMiddleware = (
     app: Application,
     corsWhitelist: string[],
-    csp: CSPDef | HelmetOptions,
+    csp: ISimpleCSPDef | HelmetOptions,
   ): void => {
     // Helmet helps you secure your Express apps by setting various HTTP headers
     // CSP nonce
@@ -112,7 +63,7 @@ export const initMiddleware = (
       res.locals['cspNonce'] = randomBytes(32).toString('hex');
       next();
     });
-    if (isCSPDef(csp)) {
+    if (isSimpleCSPDef(csp)) {
       app.use(
         helmet({
           contentSecurityPolicy: {

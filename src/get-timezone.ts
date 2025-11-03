@@ -15,19 +15,19 @@ export function setGlobalActiveContextAdminTimezoneFromProcessArgvOrEnv(): Timez
     arg.startsWith('--timezone='),
   );
 
-  // Prioritize /etc/timezone, environment variable, then command-line argument
-  // if /etc/timezone has a timezone, and is valid (isValidTimezone) start with that
-  // if TZ env is set, and is valid (isValidTimezone), override with that
-  // if command-line argument is set, and is valid (isValidTimezone), override with that
+  // Prioritize command-line argument, then environment variable, then /etc/timezone
+  // if command-line argument is set, and is valid (isValidTimezone), use that
+  // if TZ env is set, and is valid (isValidTimezone), use that
+  // if /etc/timezone has a timezone, and is valid (isValidTimezone) use that
   const validSystemTz =
     systemTz && isValidTimezone(systemTz) ? new Timezone(systemTz) : undefined;
   const validConsoleTimezoneEnv =
     consoleTimezoneEnv && isValidTimezone(consoleTimezoneEnv)
       ? new Timezone(consoleTimezoneEnv)
       : undefined;
-  const validConsoleTimezoneArgv = consoleTimezoneArgv
-    ? new Timezone(consoleTimezoneArgv.split('=')[1])
-    : undefined;
+  const argValue = consoleTimezoneArgv?.split('=')[1];
+  const validConsoleTimezoneArgv =
+    argValue && isValidTimezone(argValue) ? new Timezone(argValue) : undefined;
 
   const context = GlobalActiveContext.getInstance<
     string,
@@ -35,9 +35,9 @@ export function setGlobalActiveContextAdminTimezoneFromProcessArgvOrEnv(): Timez
   >();
 
   const timezone =
-    validSystemTz ??
-    validConsoleTimezoneEnv ??
     validConsoleTimezoneArgv ??
+    validConsoleTimezoneEnv ??
+    validSystemTz ??
     context.adminTimezone;
 
   context.adminTimezone = timezone;
