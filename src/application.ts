@@ -22,7 +22,7 @@ import { IBaseDocument } from './documents/base';
 import { Environment } from './environment';
 import { IApplication, ICSPConfig, IFailableResult } from './interfaces';
 import { IConstants } from './interfaces/constants';
-import { Middlewares } from './middlewares';
+import { initMiddleware } from './middlewares';
 import { AppRouter } from './routers/app';
 import { BaseRouter } from './routers/base';
 import { SchemaMap } from './types';
@@ -103,7 +103,7 @@ export class Application<
     await super.start(mongoUri, true);
     try {
       this._apiRouter = this._apiRouterFactory(this);
-      Middlewares.init(
+      initMiddleware(
         this.expressApp,
         this._cspConfig.corsWhitelist,
         this._cspConfig.csp,
