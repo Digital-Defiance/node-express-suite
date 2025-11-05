@@ -54,16 +54,14 @@ export abstract class DatabaseInitializationService {
     Promise<IFailableResult<IServerInitResult>>
   >();
   protected static initializationLock = new Map<string, boolean>();
-  protected static get defaultI18nTFunc(): (
+  protected static defaultI18nTFunc(
     componentId: string,
     str: string,
     variables?: Record<string, any>,
     language?: string
-  ) => string {
-    return (componentId: string, str: string, variables?: Record<string, any>, language?: string) => {
-      // Use the I18nEngine's t() function which handles {{component.key}} syntax
-      return getSuiteCoreI18nEngine().t(str, variables, language);
-    };
+  ): string {
+    // Use the I18nEngine's t() function which handles {{component.key}} syntax
+    return getSuiteCoreI18nEngine().t(str, variables, language);
   }
 
   /**

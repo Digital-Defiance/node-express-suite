@@ -1087,6 +1087,10 @@ The following v1.x patterns still work in v2.0:
 
 - minor bugfix for translation in database-initialization
 
+### Version 2.1.18
+
+- minor bugfix for translation in database-initialization
+
 ### Version 2.1.17
 
 - minor bugfix for translation in database-initialization
