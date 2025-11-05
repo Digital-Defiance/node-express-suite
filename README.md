@@ -1083,6 +1083,10 @@ The following v1.x patterns still work in v2.0:
 
 ## ChangeLog
 
+### Version 2.1.5
+
+- Minor version bump from i18n/ecies
+
 ### Version 2.1.3 (January 2025)
 
 **Test Suite Stabilization**
