@@ -521,7 +521,6 @@ export class UserService<
 
     if (!userDoc || userDoc.deletedAt) {
       if (email) {
-        const engine = getEciesI18nEngine();
         throw new InvalidEmailError(InvalidEmailErrorType.Missing);
       }
       throw new InvalidUsernameError();
@@ -1138,7 +1137,6 @@ export class UserService<
 
     const userDoc = await this.findUser(email, username, session);
     if (!userDoc && email) {
-      const engine = getEciesI18nEngine();
       throw new InvalidEmailError(InvalidEmailErrorType.Missing);
     } else if (!userDoc) {
       throw new InvalidUsernameError();

@@ -635,6 +635,42 @@ describe('DatabaseInitializationService', () => {
     });
   });
 
+  describe('defaultI18nTFunc', () => {
+    it('should process template strings with component.key syntax', () => {
+      // Restore the real implementation for this test
+      if (defaultI18nTFuncSpy) {
+        defaultI18nTFuncSpy.mockRestore();
+      }
+
+      const tFunc = (DatabaseInitializationService as any).defaultI18nTFunc;
+      const result = tFunc('suite-core-lib', '{{suite-core-lib.Admin_DroppingDatabase}}');
+
+      // Should process the template and return the translated string
+      expect(result).toBeDefined();
+      expect(typeof result).toBe('string');
+      // Should not contain the template syntax
+      expect(result).not.toContain('{{');
+      expect(result).not.toContain('}}');
+    });
+
+    it('should handle variables in template strings', () => {
+      if (defaultI18nTFuncSpy) {
+        defaultI18nTFuncSpy.mockRestore();
+      }
+
+      const tFunc = (DatabaseInitializationService as any).defaultI18nTFunc;
+      const result = tFunc(
+        'suite-core-lib',
+        '{{suite-core-lib.Common_System}} {{suite-core-lib.Common_ID}}: {id}',
+        { id: '12345' }
+      );
+
+      expect(result).toBeDefined();
+      expect(result).toContain('12345');
+      expect(result).not.toContain('{{');
+    });
+  });
+
   describe('dropDatabase', () => {
     it('should drop database when connection has db', async () => {
       const result =

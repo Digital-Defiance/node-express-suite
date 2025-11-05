@@ -60,7 +60,9 @@ export abstract class DatabaseInitializationService {
     variables?: Record<string, any>,
     language?: string
   ) => string {
-    return getSuiteCoreI18nEngine().translate.bind(getSuiteCoreI18nEngine());
+    return (componentId: string, str: string, variables?: Record<string, any>, language?: string) => {
+      return getSuiteCoreI18nEngine().t(str, variables, language);
+    };
   }
 
   /**
