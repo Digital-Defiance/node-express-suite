@@ -5,37 +5,37 @@ __metadata:
   version: 8
   cacheKey: 10c0
 
-"@digitaldefiance/ecies-lib@npm:2.1.6":
-  version: 2.1.6
-  resolution: "@digitaldefiance/ecies-lib@npm:2.1.6"
+"@digitaldefiance/ecies-lib@npm:2.1.10":
+  version: 2.1.10
+  resolution: "@digitaldefiance/ecies-lib@npm:2.1.10"
   dependencies:
-    "@digitaldefiance/i18n-lib": "npm:2.1.6"
+    "@digitaldefiance/i18n-lib": "npm:2.1.10"
     "@ethereumjs/wallet": "npm:^10.0.0"
     "@noble/curves": "npm:^2.0.1"
     "@noble/hashes": "npm:^2.0.1"
     "@scure/bip32": "npm:^2.0.0"
     bson: "npm:^6.10.4"
     ts-brand: "npm:^0.2.0"
-  checksum: 10c0/97d9d02fcc155341755cedc655db433b70f379ed7618d97b7509f8979965e1897fbb0837c39b09b81236b5f818162b39222f2051b9e41ef48197710435a865b5
+  checksum: 10c0/532798341d5394fa50152b065f4663d954b9a3d91a20c266e0c25a717d8516e089c2191cd41dbd98a6d78ff58e90376041a07a744d4c300b94b6a04e900b4ed7
   languageName: node
   linkType: hard
 
-"@digitaldefiance/i18n-lib@npm:2.1.6":
-  version: 2.1.6
-  resolution: "@digitaldefiance/i18n-lib@npm:2.1.6"
+"@digitaldefiance/i18n-lib@npm:2.1.10":
+  version: 2.1.10
+  resolution: "@digitaldefiance/i18n-lib@npm:2.1.10"
   dependencies:
     moment: "npm:^2.30.1"
     moment-timezone: "npm:^0.6.0"
-  checksum: 10c0/33c015b3beed634330d1245c6477a2daca0bda496448dd94645ce66c8af29de08f59d29b24ced4a20fcdbc668f34f701854eae828a023b3a3577df1124867f00
+  checksum: 10c0/9be51096b5f2823c2866636c909acca3b041f927d72039115662501111a03c0b69792bae017e3b30c503166d368df04b265ab4f70904d5a56b390991c5062cba
   languageName: node
   linkType: hard
 
-"@digitaldefiance/node-ecies-lib@npm:2.1.6":
-  version: 2.1.6
-  resolution: "@digitaldefiance/node-ecies-lib@npm:2.1.6"
+"@digitaldefiance/node-ecies-lib@npm:2.1.10":
+  version: 2.1.10
+  resolution: "@digitaldefiance/node-ecies-lib@npm:2.1.10"
   dependencies:
-    "@digitaldefiance/ecies-lib": "npm:2.1.6"
-    "@digitaldefiance/i18n-lib": "npm:2.1.6"
+    "@digitaldefiance/ecies-lib": "npm:2.1.10"
+    "@digitaldefiance/i18n-lib": "npm:2.1.10"
     "@ethereumjs/wallet": "npm:^10.0.0"
     "@noble/curves": "npm:^2.0.1"
     "@noble/hashes": "npm:^2.0.1"
@@ -43,7 +43,7 @@ __metadata:
     bson: "npm:^6.10.4"
     ethereum-cryptography: "npm:^3.2.0"
     ts-brand: "npm:^0.2.0"
-  checksum: 10c0/81525b83036df55c28143cace762f970d457c46231436cb69117cd9b8c1b3228892fb869b5cb1595960e1aa08c4151d7910c10e169b6fe1499dcbcd4cccee8a1
+  checksum: 10c0/275940dd376ce665d65bb7685304a503ab62e468b6c3b4c4465b0e6bf3148e4ffa9d0b921c7b32e04fe3de6a065bcd903262ad473c9b8bd41d98f5766da30625
   languageName: node
   linkType: hard
 
@@ -51,10 +51,10 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@digitaldefiance/node-express-suite@workspace:."
   dependencies:
-    "@digitaldefiance/ecies-lib": "npm:2.1.6"
-    "@digitaldefiance/i18n-lib": "npm:2.1.6"
-    "@digitaldefiance/node-ecies-lib": "npm:2.1.6"
-    "@digitaldefiance/suite-core-lib": "npm:2.1.7"
+    "@digitaldefiance/ecies-lib": "npm:2.1.10"
+    "@digitaldefiance/i18n-lib": "npm:2.1.10"
+    "@digitaldefiance/node-ecies-lib": "npm:2.1.10"
+    "@digitaldefiance/suite-core-lib": "npm:2.1.10"
     "@subspace/reed-solomon-erasure.wasm": "npm:^0.2.5"
     argon2: "npm:^0.40.1"
     cors: "npm:^2.8.5"
@@ -73,13 +73,13 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@digitaldefiance/suite-core-lib@npm:2.1.7":
-  version: 2.1.7
-  resolution: "@digitaldefiance/suite-core-lib@npm:2.1.7"
+"@digitaldefiance/suite-core-lib@npm:2.1.10":
+  version: 2.1.10
+  resolution: "@digitaldefiance/suite-core-lib@npm:2.1.10"
   dependencies:
-    "@digitaldefiance/ecies-lib": "npm:2.1.6"
-    "@digitaldefiance/i18n-lib": "npm:2.1.6"
-  checksum: 10c0/93cd725de0c39bd60e175439388e640031fab3407dea078aae5e4e7c2b9f1415317ba41f81aba0f05111eb0edf295b78af5f6c93b2fab0907bc5d44312821976
+    "@digitaldefiance/ecies-lib": "npm:2.1.10"
+    "@digitaldefiance/i18n-lib": "npm:2.1.10"
+  checksum: 10c0/3c4d15a055983ad429192cbe60569945040604e13718f16ebca9cac2bcfa7211b93d216be3624e36e9bb0e860f25ca5c153d61cab0d7d510b28f891eb9a15747
   languageName: node
   linkType: hard
 
