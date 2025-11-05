@@ -39,13 +39,7 @@ export class RoleService<
    * @param application The application object
    */
   constructor(
-    application: IApplication<
-      any,
-      Types.ObjectId,
-      IBaseDocument<any, Types.ObjectId>,
-      Environment,
-      IConstants
-    >,
+    application: IApplication,
   ) {
     super(application);
   }

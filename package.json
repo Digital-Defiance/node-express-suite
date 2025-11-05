@@ -1,13 +1,16 @@
 {
   "name": "@digitaldefiance/node-express-suite",
-  "version": "1.3.28",
+  "version": "2.1.3",
   "description": "Generic express application and routing library with decorator support",
   "main": "src/index.js",
   "types": "src/index.d.ts",
   "scripts": {
     "build": "npx nx build digitaldefiance-node-express-suite",
+    "build:stream": "npx nx build --outputStyle=stream digitaldefiance-node-express-suite",
+    "build:logged": "npx nx build --outputStyle=stream --skip-nx-cache digitaldefiance-node-express-suite 2>&1 | ansifilter -o build.log",
     "test": "npx nx test digitaldefiance-node-express-suite",
-    "test:stream": "npx nx test digitaldefiance-node-express-suite --output-style=stream",
+    "test:stream": "npx nx test --outputStyle=stream digitaldefiance-node-express-suite",
+    "test:logged": "npx nx test --outputStyle=stream digitaldefiance-node-express-suite 2>&1 | ansifilter -o test.log",
     "lint": "npx nx lint digitaldefiance-node-express-suite",
     "lint:fix": "npx nx lint digitaldefiance-node-express-suite --fix",
     "prettier:check": "prettier --check 'src/**/*.{ts,tsx}' 'tests/**/*.{ts,tsx}'",
@@ -18,10 +21,10 @@
     "publish:public": "npm publish --access public"
   },
   "dependencies": {
-    "@digitaldefiance/ecies-lib": "1.3.27",
-    "@digitaldefiance/i18n-lib": "1.3.27",
-    "@digitaldefiance/node-ecies-lib": "1.3.27",
-    "@digitaldefiance/suite-core-lib": "1.3.27",
+    "@digitaldefiance/ecies-lib": "2.1.3",
+    "@digitaldefiance/i18n-lib": "2.1.1",
+    "@digitaldefiance/node-ecies-lib": "2.1.3",
+    "@digitaldefiance/suite-core-lib": "2.1.3",
     "@subspace/reed-solomon-erasure.wasm": "^0.2.5",
     "argon2": "^0.40.1",
     "cors": "^2.8.5",

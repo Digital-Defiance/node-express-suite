@@ -1,7 +1,17 @@
 import { FecService, ParityData, RecoveryResult } from '../../src/services/fec';
+import { initSuiteCoreI18nEngine } from '@digitaldefiance/suite-core-lib';
+import { LanguageRegistry } from '@digitaldefiance/i18n-lib';
 
 describe('FecService', () => {
   let fecService: FecService;
+  beforeAll(() => {
+    // Initialize i18n system
+    LanguageRegistry['languages'].clear();
+    LanguageRegistry.registerLanguage({ id: 'en', code: 'en', name: 'English', isDefault: true });
+    LanguageRegistry.setDefaultLanguage('en');
+    initSuiteCoreI18nEngine();
+  });
+  
   beforeEach(() => {
     fecService = new FecService();
   });

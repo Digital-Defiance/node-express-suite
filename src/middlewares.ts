@@ -11,6 +11,7 @@ import {
 import helmet, { HelmetOptions } from 'helmet';
 import { IncomingMessage, ServerResponse } from 'http';
 import { ISimpleCSPDef, isSimpleCSPDef } from './interfaces/csp-definition';
+import { SuiteCoreStringKey, TranslatableSuiteError } from '@digitaldefiance/suite-core-lib';
 
 export const corsOptionsDelegate = (corsWhitelist: string[]) => {
   return (
@@ -93,7 +94,7 @@ export const initMiddleware = (
     } else if (isHelmetOptions(csp)) {
       app.use(helmet(csp));
     } else {
-      throw new Error('Invalid CSP or Helmet options provided.');
+      throw new TranslatableSuiteError(SuiteCoreStringKey.Error_InvalidCspOrHelmetOptionsProvided);
     }
     // Enable CORS
     app.use(cors(corsOptionsDelegate(corsWhitelist)));

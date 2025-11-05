@@ -79,6 +79,8 @@ export interface RouteConfig<H extends object, TLanguage extends string> {
   validation?: FlexibleValidationChain<TLanguage>;
   rawJsonHandler?: boolean;
   authFailureStatusCode?: number;
+  useTransaction?: boolean;
+  transactionTimeout?: number;
 }
 
 export function routeConfig<T extends object, TLanguage extends string>(

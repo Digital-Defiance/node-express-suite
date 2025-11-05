@@ -63,19 +63,36 @@ describe('DatabaseInitializationService', () => {
     if (!originalDefaultTFunc) {
       originalDefaultTFunc = DatabaseInitializationService['defaultI18nTFunc'];
     }
+    // Mock the translation function to return actual English strings
     DatabaseInitializationService['defaultI18nTFunc'] = (
-      template: string,
-      _language?: unknown,
-      ...variables: Record<string, string | number>[]
+      _componentId: string,
+      key: string,
+      variables?: Record<string, any>,
+      _language?: string
     ): string => {
-      return variables.reduce((acc, replacements) => {
-        return Object.entries(replacements).reduce(
-          (current, [token, value]) => {
-            return current.split(`{${token}}`).join(String(value));
-          },
-          acc,
-        );
-      }, template);
+      // Map keys to English translations - handle both enum values and string keys
+      const translations: Record<string, string> = {
+        [SuiteCoreStringKey.Admin_AccountCredentials]: 'Account Credentials',
+        [SuiteCoreStringKey.Admin_EndCredentials]: 'End Credentials',
+        [SuiteCoreStringKey.Common_System]: 'System',
+        [SuiteCoreStringKey.Common_Admin]: 'Admin',
+        [SuiteCoreStringKey.Common_Member]: 'Member',
+        [SuiteCoreStringKey.Admin_UserId]: 'User ID',
+        [SuiteCoreStringKey.Admin_Username]: 'Username',
+        [SuiteCoreStringKey.Admin_Email]: 'Email',
+        [SuiteCoreStringKey.Admin_Password]: 'Password',
+        [SuiteCoreStringKey.Admin_Mnemonic]: 'Mnemonic',
+        [SuiteCoreStringKey.Admin_BackupCodes]: 'Backup Codes',
+        [SuiteCoreStringKey.Admin_PublicKey]: 'Public Key',
+      };
+      const template = translations[key] || key;
+      if (!variables) return template;
+      return Object.entries(variables).reduce(
+        (current, [token, value]) => {
+          return current.split(`{${token}}`).join(String(value));
+        },
+        template
+      );
     };
     // Mock console.warn to suppress i18n warnings in tests
     jest.spyOn(console, 'warn').mockImplementation(() => {});

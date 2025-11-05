@@ -1,4 +1,4 @@
-export function withConsoleMocks(fn: () => void): void {
+export function withConsoleMocks<T>(fn: () => T): T {
   const originalError = console.error;
   const originalWarn = console.warn;
   const originalLog = console.log;
@@ -8,7 +8,7 @@ export function withConsoleMocks(fn: () => void): void {
   console.log = jest.fn();
 
   try {
-    fn();
+    return fn();
   } finally {
     console.error = originalError;
     console.warn = originalWarn;

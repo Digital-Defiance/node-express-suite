@@ -20,7 +20,8 @@ function makeRes() {
 describe('setGlobalContextLanguageFromRequest', () => {
   let context: GlobalActiveContext<string, IActiveContext<string>>;
   beforeAll(() => {
-    // Initialize LanguageRegistry with default language
+    // Clear and initialize LanguageRegistry with default language
+    LanguageRegistry['languages'].clear();
     LanguageRegistry.registerLanguage({ id: 'en', code: 'en', name: 'English', isDefault: true });
     LanguageRegistry.registerLanguage({ id: 'fr', code: 'fr', name: 'French' });
     LanguageRegistry.registerLanguage({ id: 'es', code: 'es', name: 'Spanish' });

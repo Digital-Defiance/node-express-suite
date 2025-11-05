@@ -7,14 +7,7 @@ import { createApplicationMock } from '../__tests__/helpers/application.mock';
 const mockLoginWithMnemonic = jest.fn();
 const mockLoginWithPassword = jest.fn();
 
-jest.mock('../../src/services/user', () => {
-  return {
-    UserService: jest.fn().mockImplementation(() => ({
-      loginWithMnemonic: mockLoginWithMnemonic,
-      loginWithPassword: mockLoginWithPassword,
-    })),
-  };
-});
+// UserService will be mocked via service container in makeApp
 
 // Mock email service registry
 jest.mock('../../src/registry', () => ({
@@ -46,6 +39,12 @@ function makeApp(
     },
     { mongo: { uri: 'mongodb://localhost:27017', transactionTimeout: 60000 } },
   );
+
+  // Register UserService in the container
+  application.services.register('user', () => ({
+    loginWithMnemonic: mockLoginWithMnemonic,
+    loginWithPassword: mockLoginWithPassword,
+  }));
 
   // Optional middleware to set req.user
   if (overrides.setUser) {

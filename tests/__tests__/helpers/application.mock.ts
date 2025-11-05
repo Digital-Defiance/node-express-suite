@@ -1,8 +1,10 @@
 import { SecureString } from '@digitaldefiance/ecies-lib';
 import { Document, Model } from 'mongoose';
 import { LocalhostConstants } from '../../../src/constants';
+import { ServiceContainer } from '../../../src/container';
 import { Environment } from '../../../src/environment';
 import { IApplication } from '../../../src/interfaces/application';
+import { PluginManager } from '../../../src/plugins';
 
 export function createApplicationMock(
   overrides?: Partial<IApplication>,
@@ -28,5 +30,7 @@ export function createApplicationMock(
     ready: true,
     start: jest.fn(),
     getModel: overrides?.getModel || defaultGetModel,
+    services: new ServiceContainer(),
+    plugins: new PluginManager(),
   } as IApplication;
 }

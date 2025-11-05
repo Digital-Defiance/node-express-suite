@@ -1,4 +1,3 @@
-import { GlobalActiveContext, Timezone } from '@digitaldefiance/i18n-lib';
 import {
   AccountStatus,
   getSuiteCoreTranslation,
@@ -6,6 +5,15 @@ import {
   ITokenUser,
   SuiteCoreStringKey,
 } from '@digitaldefiance/suite-core-lib';
+import { GlobalActiveContext } from '@digitaldefiance/i18n-lib';
+import type { Timezone as TimezoneType } from '@digitaldefiance/i18n-lib';
+
+// Helper to create Timezone from the same module instance as GlobalActiveContext
+function createTimezone(tz: string): TimezoneType {
+  const context = GlobalActiveContext.getInstance();
+  const TimezoneConstructor = context.adminTimezone.constructor as any;
+  return new TimezoneConstructor(tz);
+}
 import { NextFunction, Request, Response } from 'express';
 import { IncomingHttpHeaders } from 'http';
 import { ClientSession, Types } from 'mongoose';
@@ -50,19 +58,7 @@ export async function authenticateToken<
   D extends Date = Date,
   TTokenRole extends ITokenRole<I, D> = ITokenRole<I, D>,
   TTokenUser extends ITokenUser = ITokenUser,
-  TApplication extends IApplication<
-    any,
-    Types.ObjectId,
-    IBaseDocument<any, Types.ObjectId>,
-    Environment,
-    IConstants
-  > = IApplication<
-    any,
-    Types.ObjectId,
-    IBaseDocument<any, Types.ObjectId>,
-    Environment,
-    IConstants
-  >,
+  TApplication extends IApplication = IApplication,
 >(
   application: TApplication,
   req: Request,
@@ -117,7 +113,7 @@ export async function authenticateToken<
         const context = GlobalActiveContext.getInstance();
         context.userLanguage = userDoc.siteLanguage ?? context.userLanguage;
         context.setLanguageContextSpace('user');
-        context.userTimezone = new Timezone(userDoc.timezone);
+        context.userTimezone = createTimezone(userDoc.timezone);
         next();
         return res;
       },

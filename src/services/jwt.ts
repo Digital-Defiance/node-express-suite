@@ -36,19 +36,7 @@ export class JwtService<
   D extends Date = Date,
   TTokenRole extends ITokenRole<I, D> = ITokenRole<I, D>,
   TTokenUser extends ITokenUser = ITokenUser,
-  TApplication extends IApplication<
-    any,
-    Types.ObjectId,
-    IBaseDocument<any, Types.ObjectId>,
-    Environment,
-    IConstants
-  > = IApplication<
-    any,
-    Types.ObjectId,
-    IBaseDocument<any, Types.ObjectId>,
-    Environment,
-    IConstants
-  >,
+  TApplication extends IApplication = IApplication,
 > extends BaseService {
   private readonly roleService: RoleService<I, D, TTokenRole>;
 

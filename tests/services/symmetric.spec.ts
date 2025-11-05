@@ -3,10 +3,20 @@ import { randomBytes } from 'crypto';
 import { LocalhostConstants } from '../../src/constants';
 import { SymmetricError } from '../../src/errors/symmetric';
 import { SymmetricService } from '../../src/services/symmetric';
+import { initSuiteCoreI18nEngine } from '@digitaldefiance/suite-core-lib';
+import { LanguageRegistry } from '@digitaldefiance/i18n-lib';
 
 describe('SymmetricService', () => {
   // Set a longer timeout for all tests in this file
   jest.setTimeout(30000);
+  
+  beforeAll(() => {
+    // Initialize i18n system
+    LanguageRegistry['languages'].clear();
+    LanguageRegistry.registerLanguage({ id: 'en', code: 'en', name: 'English', isDefault: true });
+    LanguageRegistry.setDefaultLanguage('en');
+    initSuiteCoreI18nEngine();
+  });
 
   // Shared test data
   const testData = {

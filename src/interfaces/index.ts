@@ -8,6 +8,7 @@ export * from './backend-objects';
 export * from './checksum-config';
 export * from './checksum-consts';
 export * from './constants';
+export * from './controller-config';
 export * from './create-user-basics';
 export * from './csp-config';
 export * from './csp-definition';

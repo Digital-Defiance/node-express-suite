@@ -1,6 +1,6 @@
 import {
   CoreI18nComponentId,
-  PluginTranslatableGenericError,
+  TranslatableGenericError,
 } from '@digitaldefiance/i18n-lib';
 import {
   getSuiteCoreTranslation,
@@ -35,19 +35,7 @@ function keepEJS() {
  * Sets up the API and static file serving
  */
 export class AppRouter<
-  TApplication extends IApplication<
-    any,
-    Types.ObjectId,
-    IBaseDocument<any, Types.ObjectId>,
-    Environment,
-    IConstants
-  > = IApplication<
-    any,
-    Types.ObjectId,
-    IBaseDocument<any, Types.ObjectId>,
-    Environment,
-    IConstants
-  >,
+  TApplication extends IApplication = IApplication,
 > {
   protected readonly viewsPath: string;
   protected readonly indexPath: string;
@@ -260,14 +248,14 @@ export class AppRouter<
       .filter((segment) => segment.length > 0)
       .some((segment) => segment.toLowerCase() === 'dist');
     if (!reactDistHasDistSegment) {
-      throw new PluginTranslatableGenericError<SuiteCoreStringKey, string>(
+      throw new TranslatableGenericError<SuiteCoreStringKey>(
         CoreI18nComponentId,
         SuiteCoreStringKey.Error_AppDoesNotAppearToBeRunningWithinDistTemplate,
         { dir: this.apiRouter.application.environment.reactDistDir },
       );
     }
     if (!existsSync(this.indexPath)) {
-      throw new PluginTranslatableGenericError<SuiteCoreStringKey, string>(
+      throw new TranslatableGenericError<SuiteCoreStringKey>(
         CoreI18nComponentId,
         SuiteCoreStringKey.Error_IndexFileNotFoundTemplate,
         { path: this.indexPath },

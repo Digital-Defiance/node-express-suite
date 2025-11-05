@@ -4,11 +4,10 @@ import {
   HandleableError,
   IActiveContext,
   PluginI18nEngine,
-  PluginTranslatableGenericError,
+  TranslatableGenericError,
 } from '@digitaldefiance/i18n-lib';
 import {
   AccountStatus,
-  DefaultLanguageCode,
   getSuiteCoreTranslation,
   IRequestUserDTO,
   IUserBase,
@@ -30,6 +29,7 @@ import {
   validationResult,
 } from 'express-validator';
 import { ClientSession, Types } from 'mongoose';
+import { TransactionManager } from '../transactions';
 import { IBaseDocument } from '../documents';
 import { IUserDocument } from '../documents/user';
 import { BaseModelName } from '../enumerations/base-model-name';
@@ -66,32 +66,30 @@ export abstract class BaseController<
   public readonly router: Router;
   private activeRequest: Request | null = null;
   private activeResponse: Response | null = null;
-  public readonly application: IApplication<
-    any,
-    Types.ObjectId,
-    IBaseDocument<any, Types.ObjectId>,
-    Environment,
-    IConstants
-  >;
+  private activeSession: ClientSession | undefined = undefined;
+  public readonly application: IApplication;
   protected routeDefinitions: RouteConfig<H, TLanguage>[] = [];
+  protected get constants(): IConstants {
+    if (!this.application.constants) {
+      throw new Error('Constants not initialized');
+    }
+    return this.application.constants;
+  }
   protected readonly pluginEngine: PluginI18nEngine<TLanguage> =
     PluginI18nEngine.getInstance<TLanguage>();
   protected handlers: H;
   // Allowlist of registered validation functions to prevent code injection
   private static validationRegistry = new WeakSet<Function>();
+  protected transactionManager: TransactionManager;
 
-  public constructor(
-    application: IApplication<
-      any,
-      Types.ObjectId,
-      IBaseDocument<any, Types.ObjectId>,
-      Environment,
-      IConstants
-    >,
-  ) {
+  public constructor(application: IApplication) {
     this.application = application;
     this.router = Router();
     this.handlers = {} as H;
+    this.transactionManager = new TransactionManager(
+      application.db.connection,
+      application.environment.mongo.useTransactions
+    );
     this.initRouteDefinitions();
     this.registerValidationFunctions();
     this.initializeRoutes();
@@ -186,7 +184,9 @@ export abstract class BaseController<
 
     return async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const validationArray = validationFn(
+        const context = { constants: this.constants };
+        const validationArray = validationFn.call(
+          context,
           GlobalActiveContext.getInstance<
             TLanguage,
             IActiveContext<TLanguage>
@@ -237,15 +237,31 @@ export abstract class BaseController<
           : sendApiMessageResponse.bind(this);
 
         const handlerArgs = config.handlerArgs ?? [];
-        const { statusCode, response, headers } = await (handler as any)(
-          req,
-          ...handlerArgs,
-        );
+        
+        let result;
+        if (config.useTransaction) {
+          result = await this.transactionManager.execute(
+            async (session) => {
+              this.activeSession = session;
+              try {
+                return await (handler as any)(req, ...handlerArgs);
+              } finally {
+                this.activeSession = undefined;
+              }
+            },
+            { timeoutMs: config.transactionTimeout }
+          );
+        } else {
+          result = await (handler as any)(req, ...handlerArgs);
+        }
+        
+        const { statusCode, response, headers } = result;
         if (headers) {
           res.set(headers);
         }
         sendFunc(statusCode, response, res);
       } catch (error) {
+        this.activeSession = undefined;
         handleError(
           error,
           res as Response<ApiErrorResponse>,
@@ -350,7 +366,7 @@ export abstract class BaseController<
 
     const language =
       GlobalActiveContext.getInstance<TLanguage, IActiveContext<TLanguage>>()
-        .userLanguage ?? DefaultLanguageCode;
+        .userLanguage ?? 'en-US';
 
     // If validationArray is a function, call it with the language
     const valArray =
@@ -367,13 +383,13 @@ export abstract class BaseController<
 
   public get user(): IRequestUserDTO {
     if (!this.activeRequest) {
-      throw new PluginTranslatableGenericError<SuiteCoreStringKey, string>(
+      throw new TranslatableGenericError<SuiteCoreStringKey>(
         SuiteCoreComponentId,
         SuiteCoreStringKey.Common_NoActiveRequest,
       );
     }
     if (!this.activeRequest.user) {
-      throw new PluginTranslatableGenericError<SuiteCoreStringKey, string>(
+      throw new TranslatableGenericError<SuiteCoreStringKey>(
         SuiteCoreComponentId,
         SuiteCoreStringKey.Common_NoUserOnRequest,
       );
@@ -383,7 +399,7 @@ export abstract class BaseController<
 
   public get validatedBody(): Record<string, any> {
     if (!this.activeRequest) {
-      throw new PluginTranslatableGenericError<SuiteCoreStringKey, string>(
+      throw new TranslatableGenericError<SuiteCoreStringKey>(
         SuiteCoreComponentId,
         SuiteCoreStringKey.Common_NoActiveRequest,
       );
@@ -396,7 +412,7 @@ export abstract class BaseController<
 
   public get req(): Request {
     if (!this.activeRequest) {
-      throw new PluginTranslatableGenericError<SuiteCoreStringKey, string>(
+      throw new TranslatableGenericError<SuiteCoreStringKey>(
         SuiteCoreComponentId,
         SuiteCoreStringKey.Common_NoActiveRequest,
       );
@@ -406,12 +422,16 @@ export abstract class BaseController<
 
   public get res(): Response {
     if (!this.activeResponse) {
-      throw new PluginTranslatableGenericError<SuiteCoreStringKey, string>(
+      throw new TranslatableGenericError<SuiteCoreStringKey>(
         SuiteCoreComponentId,
         SuiteCoreStringKey.Common_NoActiveResponse,
       );
     }
     return this.activeResponse;
+  }
+
+  public get session(): ClientSession | undefined {
+    return this.activeSession;
   }
 
   protected async validateAndFetchRequestUser(

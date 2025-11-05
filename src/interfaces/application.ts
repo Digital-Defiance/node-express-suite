@@ -1,19 +1,16 @@
-import mongoose, { Model, Types } from 'mongoose';
+import mongoose, { Model } from 'mongoose';
 import { IBaseDocument } from '../documents';
 import { Environment } from '../environment';
 import { IConstants } from './constants';
+import { ServiceContainer } from '../container';
 
-export interface IApplication<
-  T,
-  I extends Types.ObjectId | string,
-  TBaseDocument extends IBaseDocument<T, I> = IBaseDocument<T, I>,
-  TEnvironment extends Environment = Environment,
-  TConstants extends IConstants = IConstants,
-> {
-  get environment(): TEnvironment;
-  get constants(): TConstants;
+export interface IApplication {
+  get environment(): Environment;
+  get constants(): IConstants;
   get db(): typeof mongoose;
   get ready(): boolean;
+  get services(): ServiceContainer;
+  get plugins(): import('../plugins').PluginManager;
   start(): Promise<void>;
-  getModel<U extends TBaseDocument>(modelName: string): Model<U>;
+  getModel<U extends IBaseDocument<any, any>>(modelName: string): Model<U>;
 }

@@ -10,19 +10,7 @@ import {
 } from '../utils';
 
 export class BaseService<
-  TApplication extends IApplication<
-    any,
-    Types.ObjectId,
-    IBaseDocument<any, Types.ObjectId>,
-    Environment,
-    IConstants
-  > = IApplication<
-    any,
-    Types.ObjectId,
-    IBaseDocument<any, Types.ObjectId>,
-    Environment,
-    IConstants
-  >,
+  TApplication extends IApplication = IApplication,
 > {
   protected readonly application: TApplication;
 

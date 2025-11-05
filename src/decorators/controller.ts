@@ -3,21 +3,31 @@ import { RequestHandler } from 'express';
 import { ValidationChain } from 'express-validator';
 import 'reflect-metadata';
 import { z } from 'zod';
+import { IConstants } from '../interfaces';
 
 // Metadata keys for storing decorator information
 export const CONTROLLER_METADATA = Symbol('controller');
 export const ROUTES_METADATA = Symbol('routes');
 
+// Validation context with constants - all properties are guaranteed to exist at runtime
+// The constants object is injected by the base controller during route initialization
+export type ValidationContext<TConstants extends IConstants = IConstants> = {
+  constants: TConstants;
+};
+
 // Route decorator options
 export interface RouteOptions<
   TLanguage extends CoreLanguageCode = CoreLanguageCode,
+  TConstants extends IConstants = IConstants,
 > {
-  validation?: ValidationChain[] | ((lang: TLanguage) => ValidationChain[]);
+  validation?: ValidationChain[] | ((this: ValidationContext<TConstants>, lang: TLanguage) => ValidationChain[]);
   schema?: z.ZodSchema;
   middleware?: RequestHandler[];
   auth?: boolean;
   cryptoAuth?: boolean;
   rawJson?: boolean;
+  transaction?: boolean;
+  transactionTimeout?: number;
 }
 
 // Route metadata structure

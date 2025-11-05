@@ -1,8 +1,5 @@
-import { IECIESConfig, SecureString } from '@digitaldefiance/ecies-lib';
-import {
-  Member as BackendMember,
-  ECIESService,
-} from '@digitaldefiance/node-ecies-lib';
+import { SecureString } from '@digitaldefiance/ecies-lib';
+import { Member as BackendMember } from '@digitaldefiance/node-ecies-lib';
 import {
   AccountStatus,
   getSuiteCoreTranslation,
@@ -18,11 +15,7 @@ import { Environment } from '../environment';
 import { InvalidPasswordError } from '../errors';
 import { IConstants } from '../interfaces';
 import { IApplication } from '../interfaces/application';
-import { emailServiceRegistry } from '../registry';
-import { BackupCodeService } from '../services/backup-code';
-import { KeyWrappingService } from '../services/key-wrapping';
-import { RoleService } from '../services/role';
-import { UserService } from '../services/user';
+import { ServiceKeys } from '../container';
 import { withTransaction } from '../utils';
 
 /**
@@ -32,13 +25,7 @@ import { withTransaction } from '../utils';
 export async function authenticateCrypto<
   TAccountStatus extends string = AccountStatus,
 >(
-  application: IApplication<
-    any,
-    Types.ObjectId,
-    IBaseDocument<any, Types.ObjectId>,
-    Environment,
-    IConstants
-  >,
+  application: IApplication,
   req: Request,
   res: Response,
   next: NextFunction,
@@ -87,31 +74,7 @@ export async function authenticateCrypto<
   const UserModel = application.getModel<IUserDocument<string>>(
     BaseModelName.User,
   );
-  const config: IECIESConfig = {
-    curveName: application.constants.ECIES.CURVE_NAME,
-    primaryKeyDerivationPath:
-      application.constants.ECIES.PRIMARY_KEY_DERIVATION_PATH,
-    mnemonicStrength: application.constants.ECIES.MNEMONIC_STRENGTH,
-    symmetricAlgorithm:
-      application.constants.ECIES.SYMMETRIC_ALGORITHM_CONFIGURATION,
-    symmetricKeyBits: application.constants.ECIES.SYMMETRIC.KEY_BITS,
-    symmetricKeyMode: application.constants.ECIES.SYMMETRIC.MODE,
-  };
-  const keyWrappingService = new KeyWrappingService();
-
-  const roleService = new RoleService(application);
-  const userService = new UserService(
-    application,
-    roleService,
-    emailServiceRegistry.getService(),
-    keyWrappingService,
-    new BackupCodeService(
-      application,
-      new ECIESService(config),
-      keyWrappingService,
-      roleService,
-    ),
-  );
+  const userService = application.services.get(ServiceKeys.USER) as any;
 
   try {
     return await withTransaction<Response | void>(

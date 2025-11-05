@@ -1,5 +1,4 @@
 import { SecureBuffer, SecureString } from '@digitaldefiance/ecies-lib';
-import { Timezone } from '@digitaldefiance/i18n-lib';
 import {
   getSuiteCoreTranslation,
   SuiteCoreStringKey,
@@ -315,18 +314,18 @@ export class Environment implements IEnvironment {
       );
     }
     if (this._environment.mnemonicHmacSecret.length !== 32) {
-      throw new Error('MNEMONIC_HMAC_SECRET must be a 64 character hex string');
+      throw new TranslatableSuiteError(SuiteCoreStringKey.Error_MnemonicHmacSecretMustBe64CharHexString);
     }
     if (this._environment.mnemonicEncryptionKey.length !== 32) {
-      throw new Error(
-        'MNEMONIC_ENCRYPTION_KEY must be a 64 character hex string',
+      throw new TranslatableSuiteError(
+        SuiteCoreStringKey.Error_MnemonicEncryptionKeyMustBe64CharHexString,
       );
     }
     if (
       this._environment.adminMnemonic?.value &&
       !constants.MnemonicRegex.test(this._environment.adminMnemonic.value ?? '')
     ) {
-      throw new Error('ADMIN_MNEMONIC must be a valid mnemonic phrase');
+      throw new TranslatableSuiteError(SuiteCoreStringKey.Error_AdminMnemonicMustBeValidMnemonicPhrase);
     }
     if (
       this._environment.memberMnemonic?.value &&
@@ -334,7 +333,7 @@ export class Environment implements IEnvironment {
         this._environment.memberMnemonic.value ?? '',
       )
     ) {
-      throw new Error('MEMBER_MNEMONIC must be a valid mnemonic phrase');
+      throw new TranslatableSuiteError(SuiteCoreStringKey.Error_MemberMnemonicMustBeValidMnemonicPhrase);
     }
     if (!this._environment.apiDistDir) {
       throw new Error(
@@ -371,7 +370,7 @@ export class Environment implements IEnvironment {
       );
     }
     if (this.pbkdf2Iterations < 1) {
-      throw new Error('PBKDF2_ITERATIONS must be greater than 0');
+      throw new TranslatableSuiteError(SuiteCoreStringKey.Error_Pbkdf2IterationsMustBeGreaterThanZero);
     }
   }
 
@@ -670,7 +669,7 @@ export class Environment implements IEnvironment {
   /**
    * The timezone for the server
    */
-  public get timezone(): Timezone {
+  public get timezone(): string {
     return this._environment.timezone;
   }
 
@@ -712,7 +711,7 @@ SERVER_URL: ${this.serverUrl}
 API_DIST_DIR: ${this.apiDistDir}
 REACT_DIST_DIR: ${this.reactDistDir}
 DISABLE_EMAIL_SEND: ${this.disableEmailSend}
-TIMEZONE: ${this.timezone.value}
+TIMEZONE: ${this.timezone}
 Mongo:
 -- URI: ${this.mongo.uri}
 -- USE_TRANSACTIONS: ${this.mongo.useTransactions ? 'true' : 'false'}

@@ -24,7 +24,6 @@ export interface IConstants extends IBaseConstants {
   UINT64_SIZE: number;
   UINT64_MAX: bigint;
   HEX_RADIX: number;
-  GUID_SIZE: number;
   /**
    * Number of rounds for bcrypt hashing. Higher values increase security but also consume more CPU resources.
    */

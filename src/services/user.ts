@@ -18,7 +18,6 @@ import {
   AccountLockedError,
   AccountStatus,
   AccountStatusError,
-  DefaultLanguageCode,
   EmailInUseError,
   EmailTokenExpiredError,
   EmailTokenFailedToSendError,
@@ -90,13 +89,7 @@ export class UserService<
   TBaseDocument extends IBaseDocument<T, I> = IBaseDocument<T, I>,
   TUser extends IUserBase<I, D, S, A> = IUserBase<I, D, S, A>,
   TTokenRole extends ITokenRole<I, D> = ITokenRole<I, D>,
-  TApplication extends IApplication<
-    T,
-    I,
-    TBaseDocument,
-    TEnvironment,
-    TConstants
-  > = IApplication<T, I, TBaseDocument, TEnvironment, TConstants>,
+  TApplication extends IApplication = IApplication,
 > extends BaseService {
   protected readonly roleService: RoleService<I, D, TTokenRole>;
   protected readonly eciesService: ECIESService;
@@ -113,7 +106,7 @@ export class UserService<
   protected readonly disableEmailSend: boolean;
 
   constructor(
-    application: IApplication<T, I, TBaseDocument, TEnvironment, TConstants>,
+    application: IApplication,
     roleService: RoleService<I, D, TTokenRole>,
     emailService: IEmailService,
     keyWrappingService: KeyWrappingService,
@@ -529,7 +522,7 @@ export class UserService<
     if (!userDoc || userDoc.deletedAt) {
       if (email) {
         const engine = getEciesI18nEngine();
-        throw new InvalidEmailError(InvalidEmailErrorType.Missing, engine);
+        throw new InvalidEmailError(InvalidEmailErrorType.Missing);
       }
       throw new InvalidUsernameError();
     }
@@ -659,8 +652,8 @@ export class UserService<
       email: newUser.email.toLowerCase(),
       emailVerified: false,
       accountStatus: AccountStatus.PendingEmailVerification,
+      siteLanguage: 'en-US',
       duressPasswords: [],
-      siteLanguage: DefaultLanguageCode,
       publicKey: '',
       backupCodes,
       mnemonicRecovery: encryptedMnemonic,
@@ -1146,7 +1139,7 @@ export class UserService<
     const userDoc = await this.findUser(email, username, session);
     if (!userDoc && email) {
       const engine = getEciesI18nEngine();
-      throw new InvalidEmailError(InvalidEmailErrorType.Missing, engine);
+      throw new InvalidEmailError(InvalidEmailErrorType.Missing);
     } else if (!userDoc) {
       throw new InvalidUsernameError();
     }

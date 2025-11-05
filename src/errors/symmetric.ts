@@ -11,17 +11,14 @@ import { SymmetricService } from '../services/symmetric';
 
 export class SymmetricError extends PluginTypedError<
   typeof SymmetricErrorType,
-  SuiteCoreStringKey,
-  CoreLanguageCode
+  SuiteCoreStringKey
 > {
   constructor(
     type: SymmetricErrorType,
     language?: CoreLanguageCode,
     constants: IConstants = LocalhostConstants,
   ) {
-    const engine = getSuiteCoreI18nEngine();
     super(
-      engine,
       SuiteCoreComponentId,
       type,
       {

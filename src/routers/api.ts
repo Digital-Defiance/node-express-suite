@@ -19,6 +19,7 @@ import { KeyWrappingService } from '../services/key-wrapping';
 import { RoleService } from '../services/role';
 import { UserService } from '../services/user';
 import { BaseRouter } from './base';
+import { ServiceKeys } from '../container';
 
 /**
  * Router for the API
@@ -37,19 +38,7 @@ export class ApiRouter<
   TTokenUser extends ITokenUser = ITokenUser,
   TConstants extends IConstants = IConstants,
   TEnvironment extends Environment = Environment,
-  TApplication extends IApplication<
-    any,
-    Types.ObjectId,
-    TBaseDocument,
-    TEnvironment,
-    TConstants
-  > = IApplication<
-    any,
-    Types.ObjectId,
-    TBaseDocument,
-    TEnvironment,
-    TConstants
-  >,
+  TApplication extends IApplication = IApplication,
 > extends BaseRouter<TApplication> {
   private readonly userController: UserController<
     I,
@@ -98,52 +87,14 @@ export class ApiRouter<
    */
   constructor(application: TApplication) {
     super(application);
-    this.jwtService = new JwtService(application);
-    this.roleService = new RoleService<I, D, TTokenRole>(application);
-    this.emailService = emailServiceRegistry.getService();
-    this.keyWrappingService = new KeyWrappingService();
-    const config: IECIESConfig = {
-      curveName: application.constants.ECIES.CURVE_NAME,
-      primaryKeyDerivationPath:
-        application.constants.ECIES.PRIMARY_KEY_DERIVATION_PATH,
-      mnemonicStrength: application.constants.ECIES.MNEMONIC_STRENGTH,
-      symmetricAlgorithm:
-        application.constants.ECIES.SYMMETRIC_ALGORITHM_CONFIGURATION,
-      symmetricKeyBits: application.constants.ECIES.SYMMETRIC.KEY_BITS,
-      symmetricKeyMode: application.constants.ECIES.SYMMETRIC.MODE,
-    };
-    this.eciesService = new ECIESService(config);
-    this.backupCodeService = new BackupCodeService<
-      I,
-      D,
-      TTokenRole,
-      TApplication
-    >(
-      application,
-      this.eciesService,
-      this.keyWrappingService,
-      this.roleService,
-    );
-
-    this.userService = new UserService<
-      any,
-      I,
-      D,
-      S,
-      A,
-      TEnvironment,
-      TConstants,
-      TBaseDocument,
-      TUser,
-      TTokenRole,
-      TApplication
-    >(
-      application,
-      this.roleService,
-      this.emailService,
-      this.keyWrappingService,
-      this.backupCodeService,
-    );
+    this.registerServices();
+    this.jwtService = application.services.get(ServiceKeys.JWT);
+    this.roleService = application.services.get(ServiceKeys.ROLE);
+    this.emailService = application.services.get(ServiceKeys.EMAIL);
+    this.keyWrappingService = application.services.get(ServiceKeys.KEY_WRAPPING);
+    this.eciesService = application.services.get(ServiceKeys.ECIES);
+    this.backupCodeService = application.services.get(ServiceKeys.BACKUP_CODE);
+    this.userService = application.services.get(ServiceKeys.USER);
     this.userController = new UserController<
       I,
       D,
@@ -162,5 +113,56 @@ export class ApiRouter<
       this.eciesService,
     );
     this.router.use('/user', this.userController.router);
+  }
+
+  private registerServices(): void {
+    const app = this.application;
+    
+    if (!app.services.has(ServiceKeys.JWT)) {
+      app.services.register(ServiceKeys.JWT, () => new JwtService(app));
+    }
+    if (!app.services.has(ServiceKeys.ROLE)) {
+      app.services.register(ServiceKeys.ROLE, () => new RoleService<I, D, TTokenRole>(app));
+    }
+    if (!app.services.has(ServiceKeys.EMAIL)) {
+      app.services.register(ServiceKeys.EMAIL, () => emailServiceRegistry.getService());
+    }
+    if (!app.services.has(ServiceKeys.KEY_WRAPPING)) {
+      app.services.register(ServiceKeys.KEY_WRAPPING, () => new KeyWrappingService());
+    }
+    if (!app.services.has(ServiceKeys.ECIES)) {
+      app.services.register(ServiceKeys.ECIES, () => {
+        const config: IECIESConfig = {
+          curveName: app.constants.ECIES.CURVE_NAME,
+          primaryKeyDerivationPath: app.constants.ECIES.PRIMARY_KEY_DERIVATION_PATH,
+          mnemonicStrength: app.constants.ECIES.MNEMONIC_STRENGTH,
+          symmetricAlgorithm: app.constants.ECIES.SYMMETRIC_ALGORITHM_CONFIGURATION,
+          symmetricKeyBits: app.constants.ECIES.SYMMETRIC.KEY_BITS,
+          symmetricKeyMode: app.constants.ECIES.SYMMETRIC.MODE,
+        };
+        return new ECIESService(config);
+      });
+    }
+    if (!app.services.has(ServiceKeys.BACKUP_CODE)) {
+      app.services.register(ServiceKeys.BACKUP_CODE, () => 
+        new BackupCodeService<I, D, TTokenRole, TApplication>(
+          app,
+          app.services.get(ServiceKeys.ECIES),
+          app.services.get(ServiceKeys.KEY_WRAPPING),
+          app.services.get(ServiceKeys.ROLE),
+        )
+      );
+    }
+    if (!app.services.has(ServiceKeys.USER)) {
+      app.services.register(ServiceKeys.USER, () =>
+        new UserService<any, I, D, S, A, TEnvironment, TConstants, TBaseDocument, TUser, TTokenRole, TApplication>(
+          app,
+          app.services.get(ServiceKeys.ROLE),
+          app.services.get(ServiceKeys.EMAIL),
+          app.services.get(ServiceKeys.KEY_WRAPPING),
+          app.services.get(ServiceKeys.BACKUP_CODE),
+        )
+      );
+    }
   }
 }

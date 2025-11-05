@@ -1,4 +1,4 @@
-import { Timezone } from '@digitaldefiance/i18n-lib';
+import { LanguageRegistry, Timezone } from '@digitaldefiance/i18n-lib';
 import { existsSync, mkdirSync, rmSync, unlinkSync, writeFileSync } from 'fs';
 import { ObjectId } from 'mongodb';
 import { join } from 'path';
@@ -13,6 +13,10 @@ describe('Environment', () => {
   let tempReactDistDir: string;
 
   beforeAll(() => {
+    // Initialize i18n system
+    LanguageRegistry['languages'].clear();
+    LanguageRegistry.registerLanguage({ id: 'en', code: 'en', name: 'English', isDefault: true });
+    LanguageRegistry.setDefaultLanguage('en');
     // Create temporary directories for testing
     tempDir = join(process.cwd(), 'tmp-test-env');
     tempEnvFile = join(tempDir, '.env.test');
@@ -130,7 +134,9 @@ describe('Environment', () => {
 
   describe('constructor', () => {
     it('should create environment with default values', () => {
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
       const env = new Environment();
+      consoleErrorSpy.mockRestore();
 
       expect(env.debug).toBe(false);
       expect(env.detailedDebug).toBe(false);
@@ -664,7 +670,7 @@ PORT=9000
     });
 
     it('should return correct timezone and language', () => {
-      expect(env.timezone).toBeInstanceOf(Timezone);
+      expect(typeof env.timezone).toBe('string');
       expect(env.adminLanguage).toBeDefined();
     });
   });

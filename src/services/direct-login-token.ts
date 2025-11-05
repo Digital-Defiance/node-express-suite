@@ -14,13 +14,7 @@ import { ModelRegistry } from '../model-registry';
 import { withTransaction } from '../utils';
 export abstract class DirectLoginTokenService {
   public static async useToken(
-    app: IApplication<
-      any,
-      Types.ObjectId,
-      IBaseDocument<any, Types.ObjectId>,
-      Environment,
-      IConstants
-    >,
+    app: IApplication,
     userId: Types.ObjectId,
     token: string,
     session?: ClientSession,

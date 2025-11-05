@@ -1,7 +1,6 @@
 import { isValidTimezone, LanguageCodes } from '@digitaldefiance/i18n-lib';
 import {
   AccountStatus,
-  DefaultLanguageCode,
   getSuiteCoreTranslation,
   SuiteCoreStringKey,
 } from '@digitaldefiance/suite-core-lib';
@@ -96,7 +95,7 @@ export function createUserSchema<T extends IConstants = IConstants>(
       siteLanguage: {
         type: String,
         enum: supportedLanguages || Object.values(LanguageCodes),
-        default: DefaultLanguageCode,
+        default: LanguageCodes.EN_US,
         required: true,
       },
       directChallenge: {

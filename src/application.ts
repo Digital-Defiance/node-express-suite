@@ -29,6 +29,7 @@ import { SchemaMap } from './types';
 import { debugLog, handleError, sendApiMessageResponse } from './utils';
 import { HelmetOptions } from 'helmet';
 import { IFlexibleCSP, isFlexibleCSP } from './interfaces/flexible-csp';
+import { ServiceKeys } from './container';
 
 /**
  * Application class
@@ -46,12 +47,12 @@ export class Application<
     TAppRouter extends AppRouter = AppRouter,
   >
   extends BaseApplication<TModelDocs, TInitResults, TConstants>
-  implements IApplication<T, I, TBaseDocument, TEnvironment, TConstants>
+  implements IApplication
 {
   public readonly expressApp: ExpressApplication;
   private server: ServerWithOptionalClose | null = null;
   private readonly _cspConfig: ICSPConfig | HelmetOptions | IFlexibleCSP;
-  private readonly _apiRouterFactory: (app: IApplication<T, I, TBaseDocument, TEnvironment, TConstants>) => BaseRouter;
+  private readonly _apiRouterFactory: (app: IApplication) => BaseRouter;
   private readonly _appRouterFactory: (apiRouter: BaseRouter) => TAppRouter;
   private readonly _initMiddleware: typeof initMiddleware;
   private _apiRouter?: BaseRouter;
@@ -60,11 +61,14 @@ export class Application<
     return super.environment as TEnvironment;
   }
 
+  protected registerServices(): void {
+    // Services will be registered by subclasses or ApiRouter
+    // Base implementation does nothing
+  }
+
   constructor(
     environment: TEnvironment,
-    apiRouterFactory: (
-      app: IApplication<T, I, TBaseDocument, TEnvironment, TConstants>,
-    ) => BaseRouter,
+    apiRouterFactory: (app: IApplication) => BaseRouter,
     schemaMapFactory: (
       connection: mongoose.Connection,
     ) => SchemaMap<TModelDocs>,
@@ -101,6 +105,7 @@ export class Application<
     this.expressApp = express();
     this.server = null;
     this._cspConfig = cspConfig;
+    this.registerServices();
   }
 
   public override async start(mongoUri?: string): Promise<void> {

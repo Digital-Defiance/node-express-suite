@@ -2,11 +2,19 @@ import {
   GlobalActiveContext,
   IActiveContext,
   isValidTimezone,
-  Timezone,
 } from '@digitaldefiance/i18n-lib';
 import { existsSync, readFileSync } from 'fs';
+import type { Timezone as TimezoneType } from '@digitaldefiance/i18n-lib';
 
-export function setGlobalActiveContextAdminTimezoneFromProcessArgvOrEnv(): Timezone {
+// Helper to create Timezone from the same module instance as GlobalActiveContext
+function createTimezone(tz: string): TimezoneType {
+  const context = GlobalActiveContext.getInstance<string, IActiveContext<string>>();
+  // Get the Timezone constructor from the existing timezone object
+  const TimezoneConstructor = context.adminTimezone.constructor as any;
+  return new TimezoneConstructor(tz);
+}
+
+export function setGlobalActiveContextAdminTimezoneFromProcessArgvOrEnv(): string {
   const systemTz = existsSync('/etc/timezone')
     ? readFileSync('/etc/timezone', 'utf8').trim()
     : undefined;
@@ -20,26 +28,27 @@ export function setGlobalActiveContextAdminTimezoneFromProcessArgvOrEnv(): Timez
   // if TZ env is set, and is valid (isValidTimezone), use that
   // if /etc/timezone has a timezone, and is valid (isValidTimezone) use that
   const validSystemTz =
-    systemTz && isValidTimezone(systemTz) ? new Timezone(systemTz) : undefined;
+    systemTz && isValidTimezone(systemTz) ? systemTz : undefined;
   const validConsoleTimezoneEnv =
     consoleTimezoneEnv && isValidTimezone(consoleTimezoneEnv)
-      ? new Timezone(consoleTimezoneEnv)
+      ? consoleTimezoneEnv
       : undefined;
   const argValue = consoleTimezoneArgv?.split('=')[1];
   const validConsoleTimezoneArgv =
-    argValue && isValidTimezone(argValue) ? new Timezone(argValue) : undefined;
+    argValue && isValidTimezone(argValue) ? argValue : undefined;
 
   const context = GlobalActiveContext.getInstance<
     string,
     IActiveContext<string>
   >();
 
-  const timezone =
+  const timezoneStr =
     validConsoleTimezoneArgv ??
     validConsoleTimezoneEnv ??
     validSystemTz ??
-    context.adminTimezone;
+    context.adminTimezone.value;
 
-  context.adminTimezone = timezone;
-  return timezone;
+  const finalTimezone = timezoneStr ?? 'UTC';
+  context.adminTimezone = createTimezone(finalTimezone);
+  return finalTimezone;
 }

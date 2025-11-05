@@ -6,19 +6,7 @@ import { IConstants } from '../interfaces';
 import { IApplication } from '../interfaces/application';
 
 export abstract class BaseRouter<
-  TApplication extends IApplication<
-    any,
-    Types.ObjectId,
-    IBaseDocument<any, Types.ObjectId>,
-    Environment,
-    IConstants
-  > = IApplication<
-    any,
-    Types.ObjectId,
-    IBaseDocument<any, Types.ObjectId>,
-    Environment,
-    IConstants
-  >,
+  TApplication extends IApplication = IApplication,
 > {
   public readonly router: Router;
   public readonly application: TApplication;

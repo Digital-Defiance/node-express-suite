@@ -1,5 +1,4 @@
 import { SecureBuffer, SecureString } from '@digitaldefiance/ecies-lib';
-import { Timezone } from '@digitaldefiance/i18n-lib';
 import { Types } from 'mongoose';
 import { BackupCode } from '../backup-code';
 import { IMongoEnvironment } from './environment-mongo';
@@ -165,7 +164,7 @@ export interface IEnvironment {
   /**
    * The timezone for the server
    */
-  timezone: Timezone;
+  timezone: string;
   /**
    * The default language for the admin interface/CLI
    */

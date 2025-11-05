@@ -19,6 +19,8 @@ import { ISchema } from './interfaces/schema';
 import { ModelRegistry } from './model-registry';
 import { SchemaMap } from './types';
 import { debugLog } from './utils';
+import { ServiceContainer } from './container';
+import { PluginManager } from './plugins';
 
 /**
  * Base Application class with core functionality
@@ -27,14 +29,7 @@ export class BaseApplication<
   TModelDocs extends Record<string, IBaseDocument<any>>,
   TInitResults,
   TConstants extends IConstants = IConstants,
-> implements
-    IApplication<
-      any,
-      Types.ObjectId,
-      IBaseDocument<any, Types.ObjectId>,
-      Environment,
-      IConstants
-    >
+> implements IApplication
 {
   /**
    * Application environment
@@ -118,6 +113,16 @@ export class BaseApplication<
   protected _ready: boolean;
 
   /**
+   * Service container for dependency injection
+   */
+  public readonly services: ServiceContainer;
+
+  /**
+   * Plugin manager for extensibility
+   */
+  public readonly plugins: PluginManager;
+
+  /**
    * Get the connected MongoDB database instance
    */
   public get db(): typeof mongoose {
@@ -153,6 +158,8 @@ export class BaseApplication<
     this._schemaMapFactory = schemaMapFactory;
     this._databaseInitFunction = databaseInitFunction;
     this._initResultHashFunction = initResultHashFunction;
+    this.services = new ServiceContainer();
+    this.plugins = new PluginManager();
   }
 
   /**
@@ -457,6 +464,9 @@ export class BaseApplication<
         this.environment.debug,
       );
 
+      // Initialize plugins
+      await this.plugins.initAll(this);
+
       // Database initialization should be handled by the consuming application
     } catch (err) {
       const sanitizedErr =
@@ -476,6 +486,7 @@ export class BaseApplication<
    * Stop the application
    */
   public async stop(): Promise<void> {
+    await this.plugins.stopAll();
     await this.disconnectDatabase();
     if (this._devDatabase) {
       await this._devDatabase.stop();

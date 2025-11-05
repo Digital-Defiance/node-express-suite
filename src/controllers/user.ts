@@ -18,7 +18,6 @@ import {
 } from '@digitaldefiance/node-ecies-lib';
 import {
   AccountStatus,
-  Constants as AppConstants,
   EmailTokenType,
   GenericValidationError,
   getSuiteCoreTranslation,
@@ -95,19 +94,7 @@ export class UserController<
   TUser extends IUserBase<I, D, S, A> = IUserBase<I, D, S, A>,
   TTokenRole extends ITokenRole<I, D> = ITokenRole<I, D>,
   TTokenUser extends ITokenUser = ITokenUser,
-  TApplication extends IApplication<
-    any,
-    Types.ObjectId,
-    IBaseDocument<any, Types.ObjectId>,
-    Environment,
-    IConstants
-  > = IApplication<
-    any,
-    Types.ObjectId,
-    IBaseDocument<any, Types.ObjectId>,
-    Environment,
-    IConstants
-  >,
+  TApplication extends IApplication = IApplication,
   TLanguage extends CoreLanguageCode = CoreLanguageCode,
 > extends DecoratorBaseController<TLanguage> {
   protected readonly userService: UserService<
@@ -141,13 +128,7 @@ export class UserController<
   protected readonly systemUser: BackendMember;
 
   constructor(
-    application: IApplication<
-      any,
-      Types.ObjectId,
-      IBaseDocument<any, Types.ObjectId>,
-      Environment,
-      IConstants
-    >,
+    application: IApplication,
     jwtService: JwtService<I, D, TTokenRole, TTokenUser, TApplication>,
     userService: UserService<
       any,
@@ -258,9 +239,9 @@ export class UserController<
 
   @Post('/register', {
     schema: RegisterSchema,
-    validation: (validationLanguage: TLanguage) => [
+    validation: function(validationLanguage: TLanguage) { return [
       body('username')
-        .matches(AppConstants.UsernameRegex)
+        .matches(this.constants.UsernameRegex)
         .withMessage(
           getSuiteCoreTranslation(
             SuiteCoreStringKey.Validation_UsernameRegexErrorTemplate,
@@ -289,13 +270,13 @@ export class UserController<
         ),
       body('password')
         .optional()
-        .matches(AppConstants.PasswordRegex)
+        .matches(this.constants.PasswordRegex)
         .withMessage(
           getSuiteCoreTranslation(
             SuiteCoreStringKey.Validation_PasswordRegexErrorTemplate,
           ),
         ),
-    ],
+    ]; },
   })
   async register(
     req: Request,
@@ -366,7 +347,7 @@ export class UserController<
   }
 
   @Post('/account-verification', {
-    validation: (validationLanguage: TLanguage) => [
+    validation: function(validationLanguage: TLanguage) { return [
       body('token')
         .not()
         .isEmpty()
@@ -377,7 +358,7 @@ export class UserController<
             validationLanguage,
           ),
         )
-        .matches(new RegExp(`^[a-f0-9]{${AppConstants.EmailTokenLength * 2}}$`))
+        .matches(new RegExp(`^[a-f0-9]{${this.constants.EmailTokenLength * 2}}$`))
         .withMessage(
           getSuiteCoreTranslation(
             SuiteCoreStringKey.Validation_InvalidToken,
@@ -385,7 +366,7 @@ export class UserController<
             validationLanguage,
           ),
         ),
-    ],
+    ]; },
   })
   async completeAccountVerification(
     req: Request,
@@ -417,7 +398,7 @@ export class UserController<
 
   @Post('/language', {
     auth: true,
-    validation: (validationLanguage: TLanguage) => [
+    validation: function(validationLanguage: TLanguage) { return [
       body('language')
         .isString()
         .withMessage(
@@ -435,7 +416,7 @@ export class UserController<
             validationLanguage,
           ),
         ),
-    ],
+    ]; },
   })
   async setLanguage(
     req: Request,
@@ -510,7 +491,7 @@ export class UserController<
   @Post('/backup-codes', {
     auth: true,
     cryptoAuth: true,
-    validation: (validationLanguage: TLanguage) => [
+    validation: function(validationLanguage: TLanguage) { return [
       body().custom((value, { req }) => {
         if (!req.body?.password && !req.body?.mnemonic) {
           throw new MnemonicOrPasswordRequiredError();
@@ -537,7 +518,7 @@ export class UserController<
             validationLanguage,
           ),
         )
-        .matches(AppConstants.MnemonicRegex)
+        .matches(this.constants.MnemonicRegex)
         .withMessage(
           getSuiteCoreTranslation(
             SuiteCoreStringKey.Validation_MnemonicRegex,
@@ -545,7 +526,7 @@ export class UserController<
             validationLanguage,
           ),
         ),
-    ],
+    ]; },
   })
   async resetBackupCodes(
     req: Request,
@@ -582,7 +563,7 @@ export class UserController<
   @Post('/recover-mnemonic', {
     auth: true,
     cryptoAuth: true,
-    validation: (validationLanguage: TLanguage) => [
+    validation: function(validationLanguage: TLanguage) { return [
       body('password')
         .isString()
         .withMessage(
@@ -592,7 +573,7 @@ export class UserController<
             validationLanguage,
           ),
         ),
-    ],
+    ]; },
   })
   async recoverMnemonic(
     req: Request,
@@ -659,7 +640,7 @@ export class UserController<
 
   @Post('/change-password', {
     auth: true,
-    validation: (validationLanguage: TLanguage) => [
+    validation: function(validationLanguage: TLanguage) { return [
       body('currentPassword')
         .notEmpty()
         .withMessage(
@@ -670,7 +651,7 @@ export class UserController<
           ),
         ),
       body('newPassword')
-        .matches(AppConstants.PasswordRegex)
+        .matches(this.constants.PasswordRegex)
         .withMessage(
           getSuiteCoreTranslation(
             SuiteCoreStringKey.Validation_PasswordRegexErrorTemplate,
@@ -684,7 +665,7 @@ export class UserController<
             validationLanguage,
           ),
         ),
-    ],
+    ]; },
   })
   async changePassword(
     req: Request,
@@ -756,7 +737,7 @@ export class UserController<
 
   @Post('/direct-challenge', {
     schema: DirectLoginChallengeSchema,
-    validation: (validationLanguage: TLanguage) => [
+    validation: function(validationLanguage: TLanguage) { return [
       body('challenge')
         .not()
         .isEmpty()
@@ -797,7 +778,7 @@ export class UserController<
       }),
       body('username')
         .optional()
-        .matches(AppConstants.UsernameRegex)
+        .matches(this.constants.UsernameRegex)
         .withMessage(
           getSuiteCoreTranslation(
             SuiteCoreStringKey.Validation_UsernameRegexErrorTemplate,
@@ -815,7 +796,7 @@ export class UserController<
             validationLanguage,
           ),
         ),
-    ],
+    ]; },
   })
   async directLoginChallenge(
     req: Request,
@@ -860,7 +841,7 @@ export class UserController<
   }
 
   @Post('/request-email-login', {
-    validation: (validationLanguage: TLanguage) => [
+    validation: function(validationLanguage: TLanguage) { return [
       body().custom((value, { req }) => {
         if (!req.body.username && !req.body.email) {
           throw new UsernameOrEmailRequiredError();
@@ -869,7 +850,7 @@ export class UserController<
       }),
       body('username')
         .optional()
-        .matches(AppConstants.UsernameRegex)
+        .matches(this.constants.UsernameRegex)
         .withMessage(
           getSuiteCoreTranslation(
             SuiteCoreStringKey.Validation_UsernameRegexErrorTemplate,
@@ -887,7 +868,7 @@ export class UserController<
             validationLanguage,
           ),
         ),
-    ],
+    ]; },
   })
   async requestEmailLogin(
     req: Request,
@@ -929,7 +910,7 @@ export class UserController<
 
   @Post('/email-challenge', {
     schema: EmailLoginChallengeSchema,
-    validation: (validationLanguage: TLanguage) => [
+    validation: function(validationLanguage: TLanguage) { return [
       body('token')
         .not()
         .isEmpty()
@@ -940,7 +921,7 @@ export class UserController<
             validationLanguage,
           ),
         )
-        .matches(new RegExp(`^[a-f0-9]{${AppConstants.EmailTokenLength * 2}}$`))
+        .matches(new RegExp(`^[a-f0-9]{${this.constants.EmailTokenLength * 2}}$`))
         .withMessage(
           getSuiteCoreTranslation(
             SuiteCoreStringKey.Validation_InvalidToken,
@@ -966,7 +947,7 @@ export class UserController<
       }),
       body('username')
         .optional()
-        .matches(AppConstants.UsernameRegex)
+        .matches(this.constants.UsernameRegex)
         .withMessage(
           getSuiteCoreTranslation(
             SuiteCoreStringKey.Validation_UsernameRegexErrorTemplate,
@@ -984,7 +965,7 @@ export class UserController<
             validationLanguage,
           ),
         ),
-    ],
+    ]; },
   })
   async emailLoginChallenge(
     req: Request,
@@ -1027,7 +1008,7 @@ export class UserController<
   }
 
   @Post('/resend-verification', {
-    validation: (validationLanguage: TLanguage) => [
+    validation: function(validationLanguage: TLanguage) { return [
       body().custom((value, { req }) => {
         if (!req.body.username && !req.body.email) {
           throw new UsernameOrEmailRequiredError();
@@ -1037,7 +1018,7 @@ export class UserController<
       body('username')
         .optional()
         .isString()
-        .matches(AppConstants.UsernameRegex)
+        .matches(this.constants.UsernameRegex)
         .withMessage(
           getSuiteCoreTranslation(
             SuiteCoreStringKey.Validation_UsernameRegexErrorTemplate,
@@ -1046,7 +1027,7 @@ export class UserController<
           ),
         ),
       body('email').optional().isEmail(),
-    ],
+    ]; },
   })
   async resendVerification(
     req: Request,
@@ -1102,11 +1083,11 @@ export class UserController<
   }
 
   @Post('/backup-code', {
-    validation: (validationLanguage: TLanguage) => [
+    validation: function(validationLanguage: TLanguage) { return [
       body('email').optional().isEmail(),
       body('username')
         .optional()
-        .matches(AppConstants.UsernameRegex)
+        .matches(this.constants.UsernameRegex)
         .withMessage(
           getSuiteCoreTranslation(
             SuiteCoreStringKey.Validation_UsernameRegexErrorTemplate,
@@ -1118,8 +1099,8 @@ export class UserController<
         .custom((value) => {
           const normalized = BackupCode.normalizeCode(value);
           return (
-            AppConstants.BACKUP_CODES.DisplayRegex.test(value) ||
-            AppConstants.BACKUP_CODES.NormalizedHexRegex.test(normalized)
+            this.constants.BACKUP_CODES.DisplayRegex.test(value) ||
+            this.constants.BACKUP_CODES.NormalizedHexRegex.test(normalized)
           );
         })
         .withMessage(
@@ -1132,7 +1113,7 @@ export class UserController<
       body('recoverMnemonic').isBoolean().optional(),
       body('newPassword')
         .optional()
-        .matches(AppConstants.PasswordRegex)
+        .matches(this.constants.PasswordRegex)
         .withMessage(
           getSuiteCoreTranslation(
             SuiteCoreStringKey.Validation_PasswordRegexErrorTemplate,
@@ -1140,7 +1121,7 @@ export class UserController<
             validationLanguage,
           ),
         ),
-    ],
+    ]; },
   })
   async useBackupCodeLogin(
     req: Request,
@@ -1236,7 +1217,7 @@ export class UserController<
   }
 
   @Post('/forgot-password', {
-    validation: (validationLanguage: TLanguage) => [
+    validation: function(validationLanguage: TLanguage) { return [
       body('email')
         .isEmail()
         .withMessage(
@@ -1246,7 +1227,7 @@ export class UserController<
             validationLanguage,
           ),
         ),
-    ],
+    ]; },
   })
   async forgotPassword(
     req: Request,
@@ -1339,7 +1320,7 @@ export class UserController<
   }
 
   @Post('/reset-password', {
-    validation: (validationLanguage: TLanguage) => [
+    validation: function(validationLanguage: TLanguage) { return [
       body('token')
         .not()
         .isEmpty()
@@ -1350,7 +1331,7 @@ export class UserController<
             validationLanguage,
           ),
         )
-        .matches(new RegExp(`^[a-f0-9]{${AppConstants.EmailTokenLength * 2}}$`))
+        .matches(new RegExp(`^[a-f0-9]{${this.constants.EmailTokenLength * 2}}$`))
         .withMessage(
           getSuiteCoreTranslation(
             SuiteCoreStringKey.Validation_InvalidToken,
@@ -1368,7 +1349,7 @@ export class UserController<
             validationLanguage,
           ),
         )
-        .matches(AppConstants.PasswordRegex)
+        .matches(this.constants.PasswordRegex)
         .withMessage(
           getSuiteCoreTranslation(
             SuiteCoreStringKey.Validation_PasswordRegexErrorTemplate,
@@ -1386,7 +1367,7 @@ export class UserController<
             validationLanguage,
           ),
         )
-        .matches(AppConstants.PasswordRegex)
+        .matches(this.constants.PasswordRegex)
         .withMessage(
           getSuiteCoreTranslation(
             SuiteCoreStringKey.Validation_PasswordRegexErrorTemplate,
@@ -1396,7 +1377,7 @@ export class UserController<
         ),
       body('currentPassword').optional().isString(),
       body('mnemonic').optional().isString(),
-    ],
+    ]; },
   })
   async resetPassword(
     req: Request,

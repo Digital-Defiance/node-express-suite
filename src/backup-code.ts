@@ -8,6 +8,8 @@ import {
   IBackupCode,
   InvalidBackupCodeError,
   PrivateKeyRequiredError,
+  SuiteCoreStringKey,
+  TranslatableSuiteError,
 } from '@digitaldefiance/suite-core-lib';
 import * as argon2 from 'argon2';
 import { createHmac, randomBytes, timingSafeEqual } from 'crypto';
@@ -151,7 +153,7 @@ export class BackupCode extends BackupCodeString {
       throw new PrivateKeyRequiredError();
     }
     if (systemUser.type !== MemberType.System) {
-      throw new Error('System user must be of MemberType.System');
+      throw new TranslatableSuiteError(SuiteCoreStringKey.Error_SystemUserMustBeSystemMemberType);
     }
     const raw = this.value ?? '';
     const normalized = BackupCode.normalizeCode(raw);

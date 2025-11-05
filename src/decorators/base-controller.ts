@@ -1,40 +1,32 @@
 import { CoreLanguageCode } from '@digitaldefiance/i18n-lib';
-import { Types } from 'mongoose';
 import 'reflect-metadata';
 import { BaseController } from '../controllers/base';
-import { IBaseDocument } from '../documents';
-import { Environment } from '../environment';
-import { IConstants } from '../interfaces';
 import { IApplication } from '../interfaces/application';
 import { ApiResponse } from '../types';
-import { ROUTES_METADATA, RouteMetadata } from './controller';
+import { ROUTES_METADATA, RouteMetadata, ValidationContext } from './controller';
 import { zodToExpressValidator } from './zod-validation';
 
 export abstract class DecoratorBaseController<
   TLanguage extends CoreLanguageCode = CoreLanguageCode,
 > extends BaseController<ApiResponse, Record<string, any>, TLanguage> {
-  constructor(
-    application: IApplication<
-      any,
-      Types.ObjectId,
-      IBaseDocument<any, Types.ObjectId>,
-      Environment,
-      IConstants
-    >,
-  ) {
+  constructor(application: IApplication) {
     super(application);
   }
 
   protected initRouteDefinitions(): void {
     const routes = (Reflect.getMetadata(ROUTES_METADATA, this.constructor) ||
       []) as RouteMetadata<TLanguage>[];
+    const constants = this.application.constants;
 
     this.routeDefinitions = routes.map((route) => {
       let validation = route.options.validation;
 
-      // Bind validation function to preserve 'this' context
+      // Bind validation function to preserve 'this' context and inject constants
       if (typeof validation === 'function') {
-        validation = validation.bind(this) as typeof validation;
+        const context: ValidationContext = { constants };
+        validation = ((lang: TLanguage) => {
+          return (validation as (this: ValidationContext, lang: TLanguage) => any).call(context, lang);
+        }) as typeof validation;
       }
 
       // Convert Zod schema to validation if present
@@ -59,6 +51,8 @@ export abstract class DecoratorBaseController<
         validation: validation as any,
         middleware: route.options.middleware,
         rawJsonHandler: route.options.rawJson ?? false,
+        useTransaction: route.options.transaction ?? false,
+        transactionTimeout: route.options.transactionTimeout,
       };
     });
 

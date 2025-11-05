@@ -524,7 +524,7 @@ function sendErrorResponse<TStringKey extends keyof RequiredStringKeys>(
     send(
       handleableError.statusCode,
       {
-        message: engine.translate('ValidationError' as TStringKey),
+        message: engine.translate('core', 'ValidationError' as TStringKey),
         errors:
           error.errors instanceof Result ? error.errors.array() : error.errors,
         errorType: 'ExpressValidationError',
@@ -536,7 +536,7 @@ function sendErrorResponse<TStringKey extends keyof RequiredStringKeys>(
     send(
       handleableError.statusCode,
       {
-        message: engine.translate('ValidationError' as TStringKey),
+        message: engine.translate('core', 'ValidationError' as TStringKey),
         errors: error.errors,
         errorType: 'MongooseValidationError',
       },
