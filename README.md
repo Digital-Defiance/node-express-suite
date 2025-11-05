@@ -1083,6 +1083,10 @@ The following v1.x patterns still work in v2.0:
 
 ## ChangeLog
 
+### Version 2.1.7
+
+- Minor version bump from suite-core-lib
+
 ### Version 2.1.6
 
 - Minor version bump from i18n/ecies
