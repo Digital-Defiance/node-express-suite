@@ -55,16 +55,15 @@ describe('DatabaseInitializationService', () => {
   let mockBackupCodeService: jest.Mocked<BackupCodeService>;
   let mockWallet: any;
   let mockBackendMember: jest.Mocked<BackendMember>;
-  let originalDefaultTFunc:
-    | (typeof DatabaseInitializationService)['defaultI18nTFunc']
-    | undefined;
+  let defaultI18nTFuncSpy: jest.SpyInstance | undefined;
 
   beforeEach(() => {
-    if (!originalDefaultTFunc) {
-      originalDefaultTFunc = DatabaseInitializationService['defaultI18nTFunc'];
-    }
     // Mock the translation function to return actual English strings
-    DatabaseInitializationService['defaultI18nTFunc'] = (
+    defaultI18nTFuncSpy = jest.spyOn(
+      DatabaseInitializationService as any,
+      'defaultI18nTFunc',
+      'get'
+    ).mockReturnValue((
       _componentId: string,
       key: string,
       variables?: Record<string, any>,
@@ -93,7 +92,7 @@ describe('DatabaseInitializationService', () => {
         },
         template
       );
-    };
+    });
     // Mock console.warn to suppress i18n warnings in tests
     jest.spyOn(console, 'warn').mockImplementation(() => {});
 
@@ -368,8 +367,8 @@ describe('DatabaseInitializationService', () => {
   });
 
   afterEach(() => {
-    if (originalDefaultTFunc) {
-      DatabaseInitializationService['defaultI18nTFunc'] = originalDefaultTFunc;
+    if (defaultI18nTFuncSpy) {
+      defaultI18nTFuncSpy.mockRestore();
     }
     jest.clearAllMocks();
     jest.restoreAllMocks();

@@ -54,12 +54,14 @@ export abstract class DatabaseInitializationService {
     Promise<IFailableResult<IServerInitResult>>
   >();
   protected static initializationLock = new Map<string, boolean>();
-  protected static defaultI18nTFunc: (
+  protected static get defaultI18nTFunc(): (
     componentId: string,
     str: string,
     variables?: Record<string, any>,
     language?: string
-  ) => string = getSuiteCoreI18nEngine().translate.bind(getSuiteCoreI18nEngine());
+  ) => string {
+    return getSuiteCoreI18nEngine().translate.bind(getSuiteCoreI18nEngine());
+  }
 
   /**
    * Get the mnemonic or generate a new one if not present

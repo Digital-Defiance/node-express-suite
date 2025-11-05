@@ -1083,6 +1083,10 @@ The following v1.x patterns still work in v2.0:
 
 ## ChangeLog
 
+### Version 2.1.14
+
+- Minor update to i18n area of node-express-suite in database initialization
+
 ### Version 2.1.13
 
 - Update i18n
