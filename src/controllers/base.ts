@@ -75,8 +75,9 @@ export abstract class BaseController<
     }
     return this.application.constants;
   }
-  protected readonly pluginEngine: PluginI18nEngine<TLanguage> =
-    PluginI18nEngine.getInstance<TLanguage>();
+  protected get pluginEngine(): PluginI18nEngine<TLanguage> {
+    return PluginI18nEngine.getInstance<TLanguage>();
+  }
   protected handlers: H;
   // Allowlist of registered validation functions to prevent code injection
   private static validationRegistry = new WeakSet<Function>();
