@@ -1083,6 +1083,10 @@ The following v1.x patterns still work in v2.0:
 
 ## ChangeLog
 
+### Version 2.1.12
+
+- Minor bump for node-ecies
+
 ### Version 2.1.11
 
 - Minor change from suite-core for createSuiteCoreComponentConfig()
