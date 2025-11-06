@@ -1083,6 +1083,10 @@ The following v1.x patterns still work in v2.0:
 
 ## ChangeLog
 
+### Version 2.1.21
+
+- Continued bugfixes
+
 ### Version 2.1.20
 
 - Minor bugfixes for database-initialization

@@ -60,10 +60,8 @@ export abstract class DatabaseInitializationService {
     variables?: Record<string, any>,
     language?: string
   ): string {
-    // Use the I18nEngine's t() function which handles {{component.key}} syntax
-    const engine = getSuiteCoreI18nEngine();
-    const result = engine.t(str, variables, language);
-    return result;
+    // All callers pass template strings with {{component.key}} syntax
+    return getSuiteCoreI18nEngine().t(str, variables, language);
   }
 
   /**
