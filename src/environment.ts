@@ -740,7 +740,7 @@ Admin User Data:
 -- ADMIN_ROLE_ID: ${this.adminRoleId?.toString()}
 -- ADMIN_ROLE_ID: ${this.adminUserRoleId?.toString()}
 -- ADMIN_BACKUP_CODES: ${this.adminBackupCodes
-        ?.map((code: SecureString) => code.value)
+        ?.map((code: BackupCode) => code.value)
         .join(', ')}
 Member User Data:
 -- MEMBER_ID: ${this.memberId?.toString()}
@@ -750,7 +750,7 @@ Member User Data:
 -- MEMBER_ROLE_ID: ${this.memberRoleId?.toString()}
 -- MEMBER_USER_ROLE_ID: ${this.memberUserRoleId?.toString()}
 -- MEMBER_BACKUP_CODES: ${this.memberBackupCodes
-        ?.map((code: SecureString) => code.value)
+        ?.map((code: BackupCode) => code.value)
         .join(', ')}
 System User Data:
 -- SYSTEM_ID: ${this.systemId?.toString()}
@@ -761,7 +761,7 @@ System User Data:
 -- SYSTEM_ROLE_ID: ${this.systemRoleId?.toString()}
 -- SYSTEM_ROLE_ID: ${this.systemUserRoleId?.toString()}
 -- SYSTEM_BACKUP_CODES: ${this.systemBackupCodes
-        ?.map((code: SecureString) => code.value)
+        ?.map((code: BackupCode) => code.value)
         .join(', ')}
 Mnemonic Service Configuration:
 -- MNEMONIC_HMAC_SECRET: ${this.mnemonicHmacSecret.valueAsHexString}

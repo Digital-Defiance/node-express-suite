@@ -61,7 +61,9 @@ export abstract class DatabaseInitializationService {
     language?: string
   ): string {
     // Use the I18nEngine's t() function which handles {{component.key}} syntax
-    return getSuiteCoreI18nEngine().t(str, variables, language);
+    const engine = getSuiteCoreI18nEngine();
+    const result = engine.t(str, variables, language);
+    return result;
   }
 
   /**
@@ -526,19 +528,19 @@ export abstract class DatabaseInitializationService {
         systemUserRoleDoc: IUserRoleDocument;
         systemPassword: string;
         systemMnemonic: string;
-        systemBackupCodes: SecureString[];
+        systemBackupCodes: BackupCode[];
         systemMember: BackendMember;
         adminDoc: IUserDocument;
         adminUserRoleDoc: IUserRoleDocument;
         adminPassword: string;
         adminMnemonic: string;
-        adminBackupCodes: SecureString[];
+        adminBackupCodes: BackupCode[];
         adminMember: BackendMember;
         memberDoc: IUserDocument;
         memberUserRoleDoc: IUserRoleDocument;
         memberPassword: string;
         memberMnemonic: string;
-        memberBackupCodes: SecureString[];
+        memberBackupCodes: BackupCode[];
         memberUser: BackendMember;
       }>(
         application.db.connection,
@@ -988,19 +990,19 @@ export abstract class DatabaseInitializationService {
             systemUserRoleDoc,
             systemPassword: systemPasswordSecure.notNullValue,
             systemMnemonic: systemUser.mnemonic.notNullValue,
-            systemBackupCodes: systemBackupCodes as SecureString[],
+            systemBackupCodes: systemBackupCodes,
             systemMember: systemUser.member,
             adminDoc,
             adminUserRoleDoc,
             adminPassword: adminPasswordSecure.notNullValue,
             adminMnemonic: adminUser.mnemonic.notNullValue,
-            adminBackupCodes: adminBackupCodes as SecureString[],
+            adminBackupCodes: adminBackupCodes,
             adminMember: adminUser.member,
             memberDoc,
             memberUserRoleDoc,
             memberPassword: memberPasswordSecure.notNullValue,
             memberMnemonic: memberUser.mnemonic.notNullValue,
-            memberBackupCodes: memberBackupCodes as SecureString[],
+            memberBackupCodes: memberBackupCodes,
             memberUser: memberUser.member,
           };
         },

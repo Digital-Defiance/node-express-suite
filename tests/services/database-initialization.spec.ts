@@ -61,9 +61,8 @@ describe('DatabaseInitializationService', () => {
     // Mock the translation function to return actual English strings
     defaultI18nTFuncSpy = jest.spyOn(
       DatabaseInitializationService as any,
-      'defaultI18nTFunc',
-      'get'
-    ).mockReturnValue((
+      'defaultI18nTFunc'
+    ).mockImplementation((
       _componentId: string,
       key: string,
       variables?: Record<string, any>,

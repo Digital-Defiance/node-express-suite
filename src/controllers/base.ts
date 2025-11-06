@@ -367,7 +367,7 @@ export abstract class BaseController<
 
     const language =
       GlobalActiveContext.getInstance<TLanguage, IActiveContext<TLanguage>>()
-        .userLanguage ?? 'en-US';
+        .userLanguage ?? ('en-US' as TLanguage);
 
     // If validationArray is a function, call it with the language
     const valArray =
