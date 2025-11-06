@@ -7,9 +7,10 @@ export interface ICSPConfig {
 
 export const isCSPConfig = (obj: any): obj is ICSPConfig => {
   return (
-    obj &&
+    !!obj &&
     typeof obj === 'object' &&
     'corsWhitelist' in obj &&
+    'csp' in obj &&
     isSimpleCSPDef(obj.csp)
   );
 }

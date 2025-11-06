@@ -9,10 +9,10 @@ export interface IFlexibleCSP {
 
 export const isFlexibleCSP = (obj: any): obj is IFlexibleCSP => {
   return (
-    obj &&
+    !!obj &&
     typeof obj === 'object' &&
     'corsWhitelist' in obj &&
     'csp' in obj &&
-    isSimpleCSPDef(obj.csp) || isHelmetOptions(obj.csp)
+    (isSimpleCSPDef(obj.csp) || isHelmetOptions(obj.csp))
   );
 }

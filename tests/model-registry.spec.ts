@@ -58,6 +58,48 @@ describe('ModelRegistry', () => {
     });
   });
 
+  describe('getTypedModel', () => {
+    it('should retrieve typed model', () => {
+      const schema = new Schema({ name: String });
+      const testModel = model('TypedModel', schema);
+      
+      registry.register({
+        modelName: 'TypedModel',
+        schema,
+        model: testModel,
+        collection: 'typed',
+      });
+
+      const retrieved = registry.getTypedModel('TypedModel');
+      expect(retrieved).toBe(testModel);
+    });
+
+    it('should throw InvalidModelError for unregistered model', () => {
+      expect(() => registry.getTypedModel('NonExistent')).toThrow(InvalidModelError);
+    });
+  });
+
+  describe('getTypedSchema', () => {
+    it('should retrieve typed schema', () => {
+      const schema = new Schema({ name: String });
+      const testModel = model('SchemaModel', schema);
+      
+      registry.register({
+        modelName: 'SchemaModel',
+        schema,
+        model: testModel,
+        collection: 'schema',
+      });
+
+      const retrieved = registry.getTypedSchema('SchemaModel');
+      expect(retrieved).toBe(schema);
+    });
+
+    it('should throw InvalidModelError for unregistered model', () => {
+      expect(() => registry.getTypedSchema('NonExistent')).toThrow(InvalidModelError);
+    });
+  });
+
   describe('singleton', () => {
     it('should return same instance', () => {
       const instance1 = ModelRegistry.instance;

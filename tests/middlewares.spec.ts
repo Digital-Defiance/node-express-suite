@@ -32,6 +32,16 @@ describe('middlewares', () => {
         done();
       });
     });
+
+    it('should block when no origin header', (done) => {
+      const delegate = corsOptionsDelegate(['http://localhost:3000']);
+      const req = { headers: {} } as any;
+      delegate(req, (err, options) => {
+        expect(err).toBeNull();
+        expect(options?.origin).toBe(false);
+        done();
+      });
+    });
   });
 
   describe('isHelmetOptions', () => {
