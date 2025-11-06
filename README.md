@@ -1083,7 +1083,7 @@ The following v1.x patterns still work in v2.0:
 
 ## ChangeLog
 
-### Version 2.1.23
+### Version 2.1.24
 
 - Provide mocks/fixtures for use in testing
 - Provide concrete/runnable ApplicationConcrete class
