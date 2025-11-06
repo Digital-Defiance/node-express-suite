@@ -27,7 +27,7 @@ import {
   makeUserModel,
   makeUserRoleModel,
 } from '../__tests__/helpers/model-mocks.mock';
-import { DummyEmailService } from './dummy-email-service';
+import { DummyEmailService } from '../../src/services/dummy-email-service';
 
 beforeAll(() => {
   // This will be overridden by makeService, just set up a default

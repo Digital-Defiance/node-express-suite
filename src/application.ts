@@ -15,7 +15,7 @@ import express, {
 import { readFileSync } from 'fs';
 import { Server } from 'http';
 import { createServer } from 'https';
-import mongoose, { Types } from 'mongoose';
+import mongoose from 'mongoose';
 import { isAbsolute, normalize, resolve } from 'path';
 import { BaseApplication } from './application-base';
 import { IBaseDocument } from './documents/base';
@@ -29,7 +29,6 @@ import { SchemaMap } from './types';
 import { debugLog, handleError, sendApiMessageResponse } from './utils';
 import { HelmetOptions } from 'helmet';
 import { IFlexibleCSP, isFlexibleCSP } from './interfaces/flexible-csp';
-import { ServiceKeys } from './container';
 
 /**
  * Application class
@@ -37,11 +36,8 @@ import { ServiceKeys } from './container';
 type ServerWithOptionalClose = Server & { closeAllConnections?: () => void };
 
 export class Application<
-    T,
-    I extends Types.ObjectId | string,
     TInitResults,
     TModelDocs extends Record<string, IBaseDocument<any>>,
-    TBaseDocument extends IBaseDocument<T, I> = IBaseDocument<T, I>,
     TEnvironment extends Environment = Environment,
     TConstants extends IConstants = IConstants,
     TAppRouter extends AppRouter = AppRouter,

@@ -1,5 +1,9 @@
-import { IApplication, IEmailService } from '../../src/interfaces';
+import { IApplication, IEmailService } from '../interfaces';
 
+/**
+ * Dummy email service that does nothing.
+ * Primarily for testing
+ */
 export class DummyEmailService<TApplication extends IApplication = IApplication>
   implements IEmailService
 {

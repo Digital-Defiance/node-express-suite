@@ -1083,6 +1083,13 @@ The following v1.x patterns still work in v2.0:
 
 ## ChangeLog
 
+### Version 2.1.23
+
+- Provide mocks/fixtures for use in testing
+- Provide concrete/runnable ApplicationConcrete class
+- Export DummyEmailService for testing
+- Further streamline Application generics
+
 ### Version 2.1.22
 
 - Updates from suite-core

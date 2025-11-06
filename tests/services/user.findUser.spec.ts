@@ -14,7 +14,7 @@ import { KeyWrappingService } from '../../src/services/key-wrapping';
 import { RoleService } from '../../src/services/role';
 import { UserService } from '../../src/services/user';
 import { createApplicationMock } from '../__tests__/helpers/application.mock';
-import { DummyEmailService } from './dummy-email-service';
+import { DummyEmailService } from '../../src/services/dummy-email-service';
 
 beforeAll(() => {
   const mockModel = {

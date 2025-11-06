@@ -930,10 +930,6 @@ Both systems can coexist in the same application during migration.
 
 MIT
 
-## Repository
-
-Part of the DigitalBurnbag project - a secure file sharing and automated protocol system.
-
 ## ChangeLog
 
 ### Version 1.1.2

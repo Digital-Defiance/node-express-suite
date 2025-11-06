@@ -72,7 +72,7 @@ export class ApplicationBuilder<
     return this;
   }
 
-  build(): Application<any, Types.ObjectId, TInitResults, TModelDocs, IBaseDocument<any, Types.ObjectId>, Environment, TConstants, AppRouter> {
+  build(): Application<TInitResults, TModelDocs, Environment, TConstants, AppRouter> {
     if (!this.environment) throw new TranslatableSuiteError(SuiteCoreStringKey.Error_EnvironmentIsRequired);
     if (!this.apiRouterFactory) throw new TranslatableSuiteError(SuiteCoreStringKey.Error_ApiRouterFactoryIsRequired);
     if (!this.schemaMapFactory) throw new TranslatableSuiteError(SuiteCoreStringKey.Error_SchemaMapFactoryIsRequired);
