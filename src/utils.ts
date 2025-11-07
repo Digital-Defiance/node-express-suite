@@ -8,7 +8,7 @@ import { resolve } from 'path';
 import { z, ZodType } from 'zod';
 import { ExpressValidationError } from './errors/express-validation';
 import { MongooseValidationError } from './errors/mongoose-validation';
-import { IApiErrorResponse } from './interfaces';
+import { IApiErrorResponse, IApplication } from './interfaces';
 import { IApiExpressValidationErrorResponse } from './interfaces/api-express-validation-error-response';
 import { IApiMongoValidationErrorResponse } from './interfaces/api-mongo-validation-error-response';
 import { IMongoErrors } from './interfaces/mongo-errors';
@@ -177,6 +177,7 @@ export const DEFAULT_TRANSACTION_LOCK_REQUEST_TIMEOUT =
   process.env['NODE_ENV'] === 'test' ? 10000 : 30000;
 
 export interface TransactionOptions {
+  application?: IApplication;
   timeoutMs?: number;
   retryAttempts?: number;
   baseDelay?: number;
@@ -217,7 +218,7 @@ export async function withTransaction<T>(
   options: TransactionOptions = {},
   ...args: any
 ): Promise<T> {
-  const engine = getSuiteCoreI18nEngine();
+  const engine = getSuiteCoreI18nEngine(options.application ? { constants: options.application.constants } : undefined);
   const isTestEnvironment = process.env['NODE_ENV'] === 'test';
   const {
     timeoutMs = DEFAULT_TRANSACTION_TIMEOUT,
@@ -389,8 +390,9 @@ export function sendApiExpressValidationErrorResponse(
   status: number,
   errors: ValidationError[],
   res: Response,
+  application?: IApplication,
 ): void {
-  const engine = getSuiteCoreI18nEngine();
+  const engine = getSuiteCoreI18nEngine(application ? { constants: application.constants } : undefined);
   sendApiMessageResponse<IApiExpressValidationErrorResponse>(
     status,
     {
@@ -453,11 +455,11 @@ function markErrorAsHandling(error: unknown): void {
   }
 }
 
-function getSafeErrorMessage(message?: string): string {
+function getSafeErrorMessage(message?: string, application?: IApplication): string {
   if (message && typeof message === 'string' && message.trim() !== '') {
     return message;
   }
-  const engine = getSuiteCoreI18nEngine();
+  const engine = getSuiteCoreI18nEngine(application ? { constants: application.constants } : undefined);
   try {
     const translated = engine.translate(
       SuiteCoreComponentId,

@@ -374,63 +374,48 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@digitaldefiance/ecies-lib@npm:2.1.25":
-  version: 2.1.25
-  resolution: "@digitaldefiance/ecies-lib@npm:2.1.25"
+"@digitaldefiance/ecies-lib@npm:2.1.32":
+  version: 2.1.32
+  resolution: "@digitaldefiance/ecies-lib@npm:2.1.32"
   dependencies:
-    "@digitaldefiance/i18n-lib": "npm:2.1.25"
+    "@digitaldefiance/i18n-lib": "npm:2.1.32"
     "@ethereumjs/wallet": "npm:^10.0.0"
     "@noble/curves": "npm:^2.0.1"
     "@noble/hashes": "npm:^2.0.1"
     "@scure/bip32": "npm:^2.0.0"
     bson: "npm:^6.10.4"
     ts-brand: "npm:^0.2.0"
-  checksum: 10c0/7e8eb4f52cf622b42a9add938392a9e47c316720d6a183f5a1550bb7fc746905d1be4f613041fb23e2459af254ab5aeeec457b8e7102bafb15b333cb92f22ca2
+  checksum: 10c0/f16866daa5c2f41be8ba5d81160d13eb040bcc51e8fb8aa963e1dbe51b605813898753b1e61d72628a9ddf5c2a6d750384e35ff1bcffcd6f35af975cc999a60a
   languageName: node
   linkType: hard
 
-"@digitaldefiance/ecies-lib@npm:2.1.26":
-  version: 2.1.26
-  resolution: "@digitaldefiance/ecies-lib@npm:2.1.26"
-  dependencies:
-    "@digitaldefiance/i18n-lib": "npm:2.1.25"
-    "@ethereumjs/wallet": "npm:^10.0.0"
-    "@noble/curves": "npm:^2.0.1"
-    "@noble/hashes": "npm:^2.0.1"
-    "@scure/bip32": "npm:^2.0.0"
-    bson: "npm:^6.10.4"
-    ts-brand: "npm:^0.2.0"
-  checksum: 10c0/21a69b4e788d453add60f26a8abbdbe8f35fa931e2da920a620dd76ca475bc53846269db851633d986557d23a4cc6a38d31ee20ece70eaddcbc5cd18ddd5b084
-  languageName: node
-  linkType: hard
-
-"@digitaldefiance/express-suite-test-utils@npm:1.0.3":
-  version: 1.0.3
-  resolution: "@digitaldefiance/express-suite-test-utils@npm:1.0.3"
+"@digitaldefiance/express-suite-test-utils@npm:1.0.6":
+  version: 1.0.6
+  resolution: "@digitaldefiance/express-suite-test-utils@npm:1.0.6"
   dependencies:
     "@jest/globals": "npm:^30.0.5"
     "@types/jest": "npm:^30.0.0"
     expect: "npm:^30.0.5"
-  checksum: 10c0/55c8c412cafbde3aedd29342d696644c4632f27e32c97bc30e11f96c7d1ff2b88ac2809573d5c46f32d90daf2435dcf744a210f51ea3bd1d22a12e9f00cd3f02
+  checksum: 10c0/bbbb7cd9e96ee635e1d59193153f0b9d28ca245106ccc74156128179bcf5c895d92c6a7f73c87d7be48a072bc5fe8dcc2c55d28144681a7d914cb705d3bdf56c
   languageName: node
   linkType: hard
 
-"@digitaldefiance/i18n-lib@npm:2.1.25":
-  version: 2.1.25
-  resolution: "@digitaldefiance/i18n-lib@npm:2.1.25"
+"@digitaldefiance/i18n-lib@npm:2.1.32":
+  version: 2.1.32
+  resolution: "@digitaldefiance/i18n-lib@npm:2.1.32"
   dependencies:
     moment: "npm:^2.30.1"
     moment-timezone: "npm:^0.6.0"
-  checksum: 10c0/8586e692d6fd7f8b7006c3ab1addfba58134aa22e8641b7100259b9bea98c3b73fb53c00b0341934008194749f6609ab3b7367f8015ef1288021fbf31c1d41f6
+  checksum: 10c0/3552982d141a05a1c4db07fe62f15600d77a7d94851c344c4d16952f58e0869a8b884c0633e25e5d82c810474d0eda25b88589f6afa35fdf453deb9fee2d5ab3
   languageName: node
   linkType: hard
 
-"@digitaldefiance/node-ecies-lib@npm:2.1.27":
-  version: 2.1.27
-  resolution: "@digitaldefiance/node-ecies-lib@npm:2.1.27"
+"@digitaldefiance/node-ecies-lib@npm:2.1.33":
+  version: 2.1.33
+  resolution: "@digitaldefiance/node-ecies-lib@npm:2.1.33"
   dependencies:
-    "@digitaldefiance/ecies-lib": "npm:2.1.26"
-    "@digitaldefiance/i18n-lib": "npm:2.1.25"
+    "@digitaldefiance/ecies-lib": "npm:2.1.32"
+    "@digitaldefiance/i18n-lib": "npm:2.1.32"
     "@ethereumjs/wallet": "npm:^10.0.0"
     "@noble/curves": "npm:^2.0.1"
     "@noble/hashes": "npm:^2.0.1"
@@ -438,7 +423,7 @@ __metadata:
     bson: "npm:^6.10.4"
     ethereum-cryptography: "npm:^3.2.0"
     ts-brand: "npm:^0.2.0"
-  checksum: 10c0/6eff7bee024c9a04084770a4ccd53d6c73d76d78020c33515612033acc6f40a1c38efda01729ff09681acb6b7c607415da63a731bc05242ce93d9d3425e42463
+  checksum: 10c0/dc6221e6def00d81e66c338327d3901f80677b0dc3133c4cc7ad04af7029b51b6bf222bd97e1b2733283b85eb02908a6826f0d017e8b2606e1941889bf335fd0
   languageName: node
   linkType: hard
 
@@ -446,11 +431,11 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@digitaldefiance/node-express-suite@workspace:."
   dependencies:
-    "@digitaldefiance/ecies-lib": "npm:2.1.26"
-    "@digitaldefiance/express-suite-test-utils": "npm:1.0.3"
-    "@digitaldefiance/i18n-lib": "npm:2.1.25"
-    "@digitaldefiance/node-ecies-lib": "npm:2.1.27"
-    "@digitaldefiance/suite-core-lib": "npm:2.1.25"
+    "@digitaldefiance/ecies-lib": "npm:2.1.32"
+    "@digitaldefiance/express-suite-test-utils": "npm:1.0.6"
+    "@digitaldefiance/i18n-lib": "npm:2.1.32"
+    "@digitaldefiance/node-ecies-lib": "npm:2.1.33"
+    "@digitaldefiance/suite-core-lib": "npm:2.1.35"
     "@subspace/reed-solomon-erasure.wasm": "npm:^0.2.5"
     argon2: "npm:^0.40.1"
     cors: "npm:^2.8.5"
@@ -469,13 +454,13 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@digitaldefiance/suite-core-lib@npm:2.1.25":
-  version: 2.1.25
-  resolution: "@digitaldefiance/suite-core-lib@npm:2.1.25"
+"@digitaldefiance/suite-core-lib@npm:2.1.35":
+  version: 2.1.35
+  resolution: "@digitaldefiance/suite-core-lib@npm:2.1.35"
   dependencies:
-    "@digitaldefiance/ecies-lib": "npm:2.1.25"
-    "@digitaldefiance/i18n-lib": "npm:2.1.25"
-  checksum: 10c0/122243cbc3ebbd9b6f66c15e12b041ea786c8a8ac6458a9639df2af9c0d2e7ed852c44ced7d5ad2fa4fee52edef23a4c9750f9ca292120a2bfbb977191040913
+    "@digitaldefiance/ecies-lib": "npm:2.1.32"
+    "@digitaldefiance/i18n-lib": "npm:2.1.32"
+  checksum: 10c0/77c0c23d6c43b2b1e8f9ae977244ac32bc84c1d266c5d902c270994d493802a2b0ec983d293c1fdddfd1a2c2a52972b37ad26132eb0e379ac9e499ab78e6ce8d
   languageName: node
   linkType: hard
 

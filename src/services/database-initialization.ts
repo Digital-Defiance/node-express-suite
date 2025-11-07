@@ -55,13 +55,13 @@ export abstract class DatabaseInitializationService {
   >();
   protected static initializationLock = new Map<string, boolean>();
   protected static defaultI18nTFunc(
-    componentId: string,
     str: string,
     variables?: Record<string, any>,
-    language?: string
+    language?: string,
+    application?: IApplication,
   ): string {
     // All callers pass template strings with {{component.key}} syntax
-    return getSuiteCoreI18nEngine().t(str, variables, language);
+    return getSuiteCoreI18nEngine(application ? { constants: application.constants } : undefined).t(str, variables, language);
   }
 
   /**
@@ -221,7 +221,7 @@ export abstract class DatabaseInitializationService {
     debugLog(
       true,
       'warn',
-      this.defaultI18nTFunc(SuiteCoreComponentId, '{{SuiteCoreStringKey.Admin_DroppingDatabase}}'),
+      this.defaultI18nTFunc('{{SuiteCoreStringKey.Admin_DroppingDatabase}}'),
     );
     return connection.db.dropDatabase();
   }
@@ -358,6 +358,7 @@ export abstract class DatabaseInitializationService {
     roleService: RoleService,
     backupCodeService: BackupCodeService,
   ): Promise<IFailableResult<IServerInitResult>> {
+    const engine = getSuiteCoreI18nEngine({ constants: application.constants });
     const isTestEnvironment = process.env['NODE_ENV'] === 'test';
     const options = DatabaseInitializationService.getInitOptions(application);
     const UserModel = ModelRegistry.instance.getTypedModel<IUserDocument>(
@@ -483,12 +484,12 @@ export abstract class DatabaseInitializationService {
 
       return {
         success: false,
-        message: getSuiteCoreI18nEngine().translate(
+        message: engine.translate(
           SuiteCoreComponentId,
           SuiteCoreStringKey.Admin_DatabaseAlreadyInitialized,
         ),
         error: new Error(
-          getSuiteCoreI18nEngine().translate(
+          engine.translate(
             SuiteCoreComponentId,
             SuiteCoreStringKey.Admin_DatabaseAlreadyInitialized,
           ),
@@ -499,7 +500,7 @@ export abstract class DatabaseInitializationService {
     debugLog(
       application.environment.detailedDebug,
       'log',
-      getSuiteCoreI18nEngine().translate(
+      engine.translate(
         SuiteCoreComponentId,
         SuiteCoreStringKey.Admin_SettingUpUsersAndRoles,
       ),
@@ -604,7 +605,7 @@ export abstract class DatabaseInitializationService {
               throw new TranslatableSuiteError(
                 SuiteCoreStringKey.Error_FailedToCreateRoleTemplate,
                 {
-                  NAME: getSuiteCoreI18nEngine().translate(
+                  NAME: engine.translate(
                     SuiteCoreComponentId,
                     SuiteCoreStringKey.Common_Member,
                   ),
@@ -665,11 +666,11 @@ export abstract class DatabaseInitializationService {
           );
           if (!systemMnemonicDoc) {
             throw new Error(
-              getSuiteCoreI18nEngine().translate(
+              engine.translate(
                 SuiteCoreComponentId,
                 SuiteCoreStringKey.Error_FailedToStoreUserMnemonicTemplate,
                 {
-                  NAME: getSuiteCoreI18nEngine().translate(
+                  NAME: engine.translate(
                     SuiteCoreComponentId,
                     SuiteCoreStringKey.Common_System,
                   ),
@@ -720,11 +721,11 @@ export abstract class DatabaseInitializationService {
           );
           if (systemDocs.length !== 1) {
             throw new Error(
-              getSuiteCoreI18nEngine().translate(
+              engine.translate(
                 SuiteCoreComponentId,
                 SuiteCoreStringKey.Error_FailedToCreateUserTemplate,
                 {
-                  NAME: getSuiteCoreI18nEngine().translate(
+                  NAME: engine.translate(
                     SuiteCoreComponentId,
                     SuiteCoreStringKey.Common_System,
                   ),
@@ -746,7 +747,7 @@ export abstract class DatabaseInitializationService {
 
           if (!systemUser.mnemonic.value) {
             throw new Error(
-              getSuiteCoreI18nEngine().translate(
+              engine.translate(
                 SuiteCoreComponentId,
                 SuiteCoreStringKey.Error_MnemonicIsNullTemplate,
                 {
@@ -775,11 +776,11 @@ export abstract class DatabaseInitializationService {
           );
           if (!adminMnemonicDoc) {
             throw new Error(
-              getSuiteCoreI18nEngine().translate(
+              engine.translate(
                 SuiteCoreComponentId,
                 SuiteCoreStringKey.Error_FailedToStoreUserMnemonicTemplate,
                 {
-                  NAME: getSuiteCoreI18nEngine().translate(
+                  NAME: engine.translate(
                     SuiteCoreComponentId,
                     SuiteCoreStringKey.Common_Admin,
                   ),
@@ -828,11 +829,11 @@ export abstract class DatabaseInitializationService {
           );
           if (adminDocs.length !== 1) {
             throw new Error(
-              getSuiteCoreI18nEngine().translate(
+              engine.translate(
                 SuiteCoreComponentId,
                 SuiteCoreStringKey.Error_FailedToCreateUserTemplate,
                 {
-                  NAME: getSuiteCoreI18nEngine().translate(
+                  NAME: engine.translate(
                     SuiteCoreComponentId,
                     SuiteCoreStringKey.Common_Admin,
                   ),
@@ -854,11 +855,11 @@ export abstract class DatabaseInitializationService {
 
           if (!adminUser.mnemonic.value) {
             throw new Error(
-              getSuiteCoreI18nEngine().translate(
+              engine.translate(
                 SuiteCoreComponentId,
                 SuiteCoreStringKey.Error_MnemonicIsNullTemplate,
                 {
-                  NAME: getSuiteCoreI18nEngine().translate(
+                  NAME: engine.translate(
                     SuiteCoreComponentId,
                     SuiteCoreStringKey.Common_Admin,
                   ),
@@ -886,11 +887,11 @@ export abstract class DatabaseInitializationService {
           );
           if (!memberMnemonicDoc) {
             throw new Error(
-              getSuiteCoreI18nEngine().translate(
+              engine.translate(
                 SuiteCoreComponentId,
                 SuiteCoreStringKey.Error_FailedToStoreUserMnemonicTemplate,
                 {
-                  NAME: getSuiteCoreI18nEngine().translate(
+                  NAME: engine.translate(
                     SuiteCoreComponentId,
                     SuiteCoreStringKey.Common_Member,
                   ),
@@ -941,11 +942,11 @@ export abstract class DatabaseInitializationService {
           );
           if (memberDocs.length !== 1) {
             throw new Error(
-              getSuiteCoreI18nEngine().translate(
+              engine.translate(
                 SuiteCoreComponentId,
                 SuiteCoreStringKey.Error_FailedToCreateUserTemplate,
                 {
-                  NAME: getSuiteCoreI18nEngine().translate(
+                  NAME: engine.translate(
                     SuiteCoreComponentId,
                     SuiteCoreStringKey.Common_Member,
                   ),
@@ -967,11 +968,11 @@ export abstract class DatabaseInitializationService {
 
           if (!memberUser.mnemonic.value) {
             throw new Error(
-              getSuiteCoreI18nEngine().translate(
+              engine.translate(
                 SuiteCoreComponentId,
                 SuiteCoreStringKey.Error_MnemonicIsNullTemplate,
                 {
-                  NAME: getSuiteCoreI18nEngine().translate(
+                  NAME: engine.translate(
                     SuiteCoreComponentId,
                     SuiteCoreStringKey.Common_Member,
                   ),
@@ -1060,7 +1061,7 @@ export abstract class DatabaseInitializationService {
 
       return {
         success: false,
-        message: getSuiteCoreI18nEngine().translate(
+        message: engine.translate(
           SuiteCoreComponentId,
           SuiteCoreStringKey.Admin_Error_FailedToInitializeUserDatabase,
         ),
@@ -1068,7 +1069,7 @@ export abstract class DatabaseInitializationService {
           error instanceof Error
             ? error
             : new Error(
-                getSuiteCoreI18nEngine().translate(
+                engine.translate(
                   SuiteCoreComponentId,
                   SuiteCoreStringKey.Admin_Error_FailedToInitializeUserDatabase,
                 ),
@@ -1082,7 +1083,6 @@ export abstract class DatabaseInitializationService {
       true,
       'log',
       this.defaultI18nTFunc(
-        SuiteCoreComponentId,
         '\n=== {{SuiteCoreStringKey.Admin_AccountCredentials}} ===',
       ),
     );
@@ -1090,7 +1090,6 @@ export abstract class DatabaseInitializationService {
       true,
       'log',
       this.defaultI18nTFunc(
-        SuiteCoreComponentId,
         '{{SuiteCoreStringKey.Common_System}} {{SuiteCoreStringKey.Common_ID}}: {id}',
         {
           id: result.systemUser._id.toHexString(),
@@ -1101,7 +1100,6 @@ export abstract class DatabaseInitializationService {
       true,
       'log',
       this.defaultI18nTFunc(
-        SuiteCoreComponentId,
         '{{SuiteCoreStringKey.Common_System}} {{SuiteCoreStringKey.Common_Role}}: {roleName}',
         {
           roleName: result.systemRole.name,
@@ -1112,7 +1110,6 @@ export abstract class DatabaseInitializationService {
       true,
       'log',
       this.defaultI18nTFunc(
-        SuiteCoreComponentId,
         '{{SuiteCoreStringKey.Common_System}} {{SuiteCoreStringKey.Common_Role}} {{SuiteCoreStringKey.Common_ID}}: {roleId}',
         {
           roleId: result.systemRole._id.toString(),
@@ -1123,7 +1120,6 @@ export abstract class DatabaseInitializationService {
       true,
       'log',
       this.defaultI18nTFunc(
-        SuiteCoreComponentId,
         '{{SuiteCoreStringKey.Common_System}} {{SuiteCoreStringKey.Common_User}} {{SuiteCoreStringKey.Common_Role}} {{SuiteCoreStringKey.Common_ID}}: {userRoleId}',
         {
           userRoleId: result.systemUserRole._id.toString(),
@@ -1134,7 +1130,6 @@ export abstract class DatabaseInitializationService {
       true,
       'log',
       this.defaultI18nTFunc(
-        SuiteCoreComponentId,
         '{{SuiteCoreStringKey.Common_System}} {{SuiteCoreStringKey.Common_Username}}: {username}',
         {
           username: result.systemUsername,
@@ -1145,7 +1140,6 @@ export abstract class DatabaseInitializationService {
       true,
       'log',
       this.defaultI18nTFunc(
-        SuiteCoreComponentId,
         '{{SuiteCoreStringKey.Common_System}} {{SuiteCoreStringKey.Common_Email}}: {email}',
         {
           email: result.systemEmail,
@@ -1156,7 +1150,6 @@ export abstract class DatabaseInitializationService {
       true,
       'log',
       this.defaultI18nTFunc(
-        SuiteCoreComponentId,
         '{{SuiteCoreStringKey.Common_System}} {{SuiteCoreStringKey.Common_Password}}: {password}',
         {
           password: result.systemPassword,
@@ -1167,7 +1160,6 @@ export abstract class DatabaseInitializationService {
       true,
       'log',
       this.defaultI18nTFunc(
-        SuiteCoreComponentId,
         '{{SuiteCoreStringKey.Common_System}} {{SuiteCoreStringKey.Common_Mnemonic}}: {mnemonic}',
         {
           mnemonic: result.systemMnemonic,
@@ -1178,7 +1170,6 @@ export abstract class DatabaseInitializationService {
       true,
       'log',
       this.defaultI18nTFunc(
-        SuiteCoreComponentId,
         '{{SuiteCoreStringKey.Common_System}} {{SuiteCoreStringKey.Common_PublicKey}}: {publicKey}',
         {
           publicKey: result.systemUser.publicKey,
@@ -1189,7 +1180,6 @@ export abstract class DatabaseInitializationService {
       true,
       'log',
       `${this.defaultI18nTFunc(
-        SuiteCoreComponentId,
         '{{SuiteCoreStringKey.Common_System}} {{SuiteCoreStringKey.Common_BackupCodes}}',
       )}: ${result.systemBackupCodes.join(', ')}`,
     );
@@ -1198,7 +1188,6 @@ export abstract class DatabaseInitializationService {
       true,
       'log',
       this.defaultI18nTFunc(
-        SuiteCoreComponentId,
         '{{SuiteCoreStringKey.Common_Admin}} {{SuiteCoreStringKey.Common_ID}}: {id}',
         {
           id: result.adminUser._id.toHexString(),
@@ -1209,7 +1198,6 @@ export abstract class DatabaseInitializationService {
       true,
       'log',
       this.defaultI18nTFunc(
-        SuiteCoreComponentId,
         '{{SuiteCoreStringKey.Common_Admin}} {{SuiteCoreStringKey.Common_Role}}: {roleName}',
         {
           roleName: result.adminRole.name,
@@ -1220,7 +1208,6 @@ export abstract class DatabaseInitializationService {
       true,
       'log',
       this.defaultI18nTFunc(
-        SuiteCoreComponentId,
         '{{SuiteCoreStringKey.Common_Admin}} {{SuiteCoreStringKey.Common_Role}} {{SuiteCoreStringKey.Common_ID}}: {roleId}',
         {
           roleId: result.adminRole._id.toString(),
@@ -1231,7 +1218,6 @@ export abstract class DatabaseInitializationService {
       true,
       'log',
       this.defaultI18nTFunc(
-        SuiteCoreComponentId,
         '{{SuiteCoreStringKey.Common_Admin}} {{SuiteCoreStringKey.Common_User}} {{SuiteCoreStringKey.Common_Role}} {{SuiteCoreStringKey.Common_ID}}: {userRoleId}',
         {
           userRoleId: result.adminUserRole._id.toString(),
@@ -1242,7 +1228,6 @@ export abstract class DatabaseInitializationService {
       true,
       'log',
       this.defaultI18nTFunc(
-        SuiteCoreComponentId,
         '{{SuiteCoreStringKey.Common_Admin}} {{SuiteCoreStringKey.Common_Username}}: {username}',
         {
           username: result.adminUsername,
@@ -1253,7 +1238,6 @@ export abstract class DatabaseInitializationService {
       true,
       'log',
       this.defaultI18nTFunc(
-        SuiteCoreComponentId,
         '{{SuiteCoreStringKey.Common_Admin}} {{SuiteCoreStringKey.Common_Email}}: {email}',
         {
           email: result.adminEmail,
@@ -1264,7 +1248,6 @@ export abstract class DatabaseInitializationService {
       true,
       'log',
       this.defaultI18nTFunc(
-        SuiteCoreComponentId,
         '{{SuiteCoreStringKey.Common_Admin}} {{SuiteCoreStringKey.Common_Password}}: {password}',
         {
           password: result.adminPassword,
@@ -1275,7 +1258,6 @@ export abstract class DatabaseInitializationService {
       true,
       'log',
       this.defaultI18nTFunc(
-        SuiteCoreComponentId,
         '{{SuiteCoreStringKey.Common_Admin}} {{SuiteCoreStringKey.Common_Mnemonic}}: {mnemonic}',
         {
           mnemonic: result.adminMnemonic,
@@ -1286,7 +1268,6 @@ export abstract class DatabaseInitializationService {
       true,
       'log',
       this.defaultI18nTFunc(
-        SuiteCoreComponentId,
         '{{SuiteCoreStringKey.Common_Admin}} {{SuiteCoreStringKey.Common_PublicKey}}: {publicKey}',
         {
           publicKey: result.adminUser.publicKey,
@@ -1297,7 +1278,6 @@ export abstract class DatabaseInitializationService {
       true,
       'log',
       `${this.defaultI18nTFunc(
-        SuiteCoreComponentId,
         '{{SuiteCoreStringKey.Common_Admin}} {{SuiteCoreStringKey.Common_BackupCodes}}',
       )}: ${result.adminBackupCodes.join(', ')}`,
     );
@@ -1306,7 +1286,6 @@ export abstract class DatabaseInitializationService {
       true,
       'log',
       this.defaultI18nTFunc(
-        SuiteCoreComponentId,
         '{{SuiteCoreStringKey.Common_Member}} {{SuiteCoreStringKey.Common_ID}}: {id}',
         {
           id: result.memberUser._id.toHexString(),
@@ -1317,7 +1296,6 @@ export abstract class DatabaseInitializationService {
       true,
       'log',
       this.defaultI18nTFunc(
-        SuiteCoreComponentId,
         '{{SuiteCoreStringKey.Common_Member}} {{SuiteCoreStringKey.Common_Role}}: {roleName}',
         {
           roleName: result.memberRole.name,
@@ -1328,7 +1306,6 @@ export abstract class DatabaseInitializationService {
       true,
       'log',
       this.defaultI18nTFunc(
-        SuiteCoreComponentId,
         '{{SuiteCoreStringKey.Common_Member}} {{SuiteCoreStringKey.Common_Role}} {{SuiteCoreStringKey.Common_ID}}: {roleId}',
         {
           roleId: result.memberRole._id.toString(),
@@ -1339,7 +1316,6 @@ export abstract class DatabaseInitializationService {
       true,
       'log',
       this.defaultI18nTFunc(
-        SuiteCoreComponentId,
         '{{SuiteCoreStringKey.Common_Member}} {{SuiteCoreStringKey.Common_User}} {{SuiteCoreStringKey.Common_Role}} {{SuiteCoreStringKey.Common_ID}}: {userRoleId}',
         {
           userRoleId: result.memberUserRole._id.toString(),
@@ -1350,7 +1326,6 @@ export abstract class DatabaseInitializationService {
       true,
       'log',
       this.defaultI18nTFunc(
-        SuiteCoreComponentId,
         '{{SuiteCoreStringKey.Common_Member}} {{SuiteCoreStringKey.Common_Username}}: {username}',
         {
           username: result.memberUsername,
@@ -1361,7 +1336,6 @@ export abstract class DatabaseInitializationService {
       true,
       'log',
       this.defaultI18nTFunc(
-        SuiteCoreComponentId,
         '{{SuiteCoreStringKey.Common_Member}} {{SuiteCoreStringKey.Common_Email}}: {email}',
         {
           email: result.memberEmail,
@@ -1372,7 +1346,6 @@ export abstract class DatabaseInitializationService {
       true,
       'log',
       this.defaultI18nTFunc(
-        SuiteCoreComponentId,
         '{{SuiteCoreStringKey.Common_Member}} {{SuiteCoreStringKey.Common_Password}}: {password}',
         {
           password: result.memberPassword,
@@ -1383,7 +1356,6 @@ export abstract class DatabaseInitializationService {
       true,
       'log',
       this.defaultI18nTFunc(
-        SuiteCoreComponentId,
         '{{SuiteCoreStringKey.Common_Member}} {{SuiteCoreStringKey.Common_Mnemonic}}: {mnemonic}',
         {
           mnemonic: result.memberMnemonic,
@@ -1394,7 +1366,6 @@ export abstract class DatabaseInitializationService {
       true,
       'log',
       this.defaultI18nTFunc(
-        SuiteCoreComponentId,
         '{{SuiteCoreStringKey.Common_Member}} {{SuiteCoreStringKey.Common_PublicKey}}: {publicKey}',
         {
           publicKey: result.memberUser.publicKey,
@@ -1405,7 +1376,6 @@ export abstract class DatabaseInitializationService {
       true,
       'log',
       `${this.defaultI18nTFunc(
-        SuiteCoreComponentId,
         '{{SuiteCoreStringKey.Common_Member}} {{SuiteCoreStringKey.Common_BackupCodes}}',
       )}: ${result.memberBackupCodes.join(', ')}`,
     );
@@ -1413,7 +1383,6 @@ export abstract class DatabaseInitializationService {
       true,
       'log',
       this.defaultI18nTFunc(
-        SuiteCoreComponentId,
         '\n=== {{SuiteCoreStringKey.Admin_EndCredentials}} ===',
       ),
     );

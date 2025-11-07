@@ -63,10 +63,10 @@ describe('DatabaseInitializationService', () => {
       DatabaseInitializationService as any,
       'defaultI18nTFunc'
     ).mockImplementation((
-      _componentId: string,
       key: string,
       variables?: Record<string, any>,
-      _language?: string
+      _language?: string,
+      application?: IApplication,
     ): string => {
       // Map keys to English translations - handle both enum values and string keys
       const translations: Record<string, string> = {
@@ -642,7 +642,7 @@ describe('DatabaseInitializationService', () => {
       }
 
       const tFunc = (DatabaseInitializationService as any).defaultI18nTFunc;
-      const result = tFunc(SuiteCoreComponentId, '{{suite-core.Admin_DroppingDatabase}}');
+      const result = tFunc('{{suite-core.Admin_DroppingDatabase}}');
 
       // Should process the template and return the translated string
       expect(result).toBeDefined();
@@ -659,7 +659,6 @@ describe('DatabaseInitializationService', () => {
 
       const tFunc = (DatabaseInitializationService as any).defaultI18nTFunc;
       const result = tFunc(
-        SuiteCoreComponentId,
         '{{suite-core.Common_System}} {{suite-core.Common_ID}}: {id}',
         { id: '12345' }
       );

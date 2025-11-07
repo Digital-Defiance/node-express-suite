@@ -218,7 +218,7 @@ export abstract class BaseController<
         handleError(
           new HandleableError(
             new Error(
-              getSuiteCoreTranslation(SuiteCoreStringKey.Common_Unauthorized),
+              getSuiteCoreTranslation(SuiteCoreStringKey.Common_Unauthorized, undefined, undefined, { constants: this.application.constants }),
             ),
             {
               statusCode: 401,
@@ -445,7 +445,7 @@ export abstract class BaseController<
     if (!req.user) {
       throw new HandleableError(
         new Error(
-          getSuiteCoreTranslation(SuiteCoreStringKey.Common_Unauthorized),
+          getSuiteCoreTranslation(SuiteCoreStringKey.Common_Unauthorized, undefined, undefined, { constants: this.application.constants }),
         ),
         {
           statusCode: 401,
@@ -470,7 +470,7 @@ export abstract class BaseController<
       this.application.environment.mongo.useTransactions,
       session,
       callback,
-      options,
+      { application: this.application, ...options },
       ...args,
     );
   }

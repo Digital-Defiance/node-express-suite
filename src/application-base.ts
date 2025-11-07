@@ -212,8 +212,14 @@ export class BaseApplication<
       'log',
       `[ ${getSuiteCoreTranslation(
         SuiteCoreStringKey.Common_Connecting,
+        undefined,
+        undefined,
+        { constants: this.constants }
       )} ] ${getSuiteCoreTranslation(
         SuiteCoreStringKey.Common_MongoDB,
+        undefined,
+        undefined,
+        { constants: this.constants }
       )}: ${mongoUri}`,
     );
 
@@ -245,7 +251,7 @@ export class BaseApplication<
       }
     });
 
-    const engine = getSuiteCoreI18nEngine();
+    const engine = getSuiteCoreI18nEngine({ constants: this.constants });
     debugLog(
       debug,
       'log',
@@ -341,7 +347,7 @@ export class BaseApplication<
     if (this._db && mongoose.connection.readyState !== 0) {
       await this._db.disconnect();
     }
-    const engine = getSuiteCoreI18nEngine();
+    const engine = getSuiteCoreI18nEngine({ constants: this.constants });
     this._db = undefined;
     debugLog(
       debug,
@@ -381,7 +387,7 @@ export class BaseApplication<
    * Initialize the development database with default data
    */
   protected async initializeDevDatabase(): Promise<TInitResults> {
-    const engine = getSuiteCoreI18nEngine();
+    const engine = getSuiteCoreI18nEngine({ constants: this.constants });
     debugLog(
       this._environment.debug,
       'log',

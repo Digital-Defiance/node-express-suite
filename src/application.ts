@@ -105,7 +105,7 @@ export class Application<
   }
 
   public override async start(mongoUri?: string): Promise<void> {
-    const engine = getSuiteCoreI18nEngine();
+    const engine = getSuiteCoreI18nEngine({ constants: this.constants });
     await super.start(mongoUri, true);
     try {
       this._apiRouter = this._apiRouterFactory(this);
@@ -229,7 +229,7 @@ export class Application<
   }
 
   public override async stop(): Promise<void> {
-    const engine = getSuiteCoreI18nEngine();
+    const engine = getSuiteCoreI18nEngine({ constants: this.constants });
     if (this.server) {
       debugLog(
         this.environment.debug,

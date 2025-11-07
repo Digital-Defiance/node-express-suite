@@ -5,6 +5,7 @@ import {
   SuiteCoreStringKey,
 } from '@digitaldefiance/suite-core-lib';
 import { Error } from 'mongoose';
+import { IApplication } from '../interfaces';
 
 export class MongooseValidationError extends HandleableError {
   public readonly errors: {
@@ -15,8 +16,9 @@ export class MongooseValidationError extends HandleableError {
       [path: string]: Error.CastError | Error.ValidatorError;
     },
     language?: CoreLanguageCode,
+    application?: IApplication,
   ) {
-    const coreEngine = getSuiteCoreI18nEngine();
+    const coreEngine = getSuiteCoreI18nEngine(application ? { constants: application.constants } : undefined);
     super(
       new Error(
         `${coreEngine.translate(

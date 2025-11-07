@@ -3,9 +3,10 @@
  */
 import { createCoreI18nEngine } from '@digitaldefiance/i18n-lib';
 import { SuiteCoreComponentId, SuiteCoreComponent, SuiteCoreComponentStrings } from '@digitaldefiance/suite-core-lib';
+import { LocalhostConstants } from '../src/constants';
 
 // Initialize core i18n engine
-const engine = createCoreI18nEngine();
+const engine = createCoreI18nEngine(undefined, { constants: LocalhostConstants });
 
 // Register suite-core component manually
 engine.registerComponent({

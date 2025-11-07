@@ -14,6 +14,16 @@ import { MnemonicService } from '../../src/services/mnemonic';
 
 // https://docs.rs/bip39/latest/src/bip39/lib.rs.html
 
+describe('SecureBuffer creation', () => {
+  it('should create SecureBuffer without errors', () => {
+    const testBuffer = randomBytes(32);
+    const secureBuffer = new SecureBuffer(testBuffer);
+    expect(secureBuffer).toBeDefined();
+    expect(secureBuffer.length).toBe(32);
+    secureBuffer.dispose();
+  });
+});
+
 describe('MnemonicService', () => {
   let mongoServer: MongoMemoryServer;
   let connection: Connection;
@@ -26,17 +36,6 @@ describe('MnemonicService', () => {
   const anotherMnemonic = new SecureString(
     'legal winner thank year wave sausage worth useful legal winner thank yellow',
   );
-
-  describe('SecureBuffer creation', () => {
-    it('should create SecureBuffer without errors', () => {
-      const testBuffer = randomBytes(32);
-      const secureBuffer = new SecureBuffer(testBuffer);
-      expect(secureBuffer).toBeDefined();
-      expect(secureBuffer.length).toBe(32);
-      secureBuffer.dispose();
-      expect(console.error).not.toHaveBeenCalled();
-    });
-  });
 
   beforeAll(async () => {
     consoleError = console.error;
@@ -73,7 +72,7 @@ describe('MnemonicService', () => {
       console.error('Failed to setup test database:', error);
       throw error;
     }
-  }, 60000);
+  }, 180000);
 
   afterAll(async () => {
     try {

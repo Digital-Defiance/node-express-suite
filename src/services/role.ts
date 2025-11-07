@@ -2,7 +2,7 @@ import { MemberType } from '@digitaldefiance/ecies-lib';
 import {
   GlobalActiveContext,
   IActiveContext,
-  PluginI18nEngine,
+  I18nEngine,
 } from '@digitaldefiance/i18n-lib';
 import {
   IRoleBase,
@@ -315,7 +315,7 @@ export class RoleService<
     overrideLanguage?: string,
   ): Array<TTokenRole> {
     return roles.map((role) => {
-      const engine = PluginI18nEngine.getInstance<string>();
+      const engine = I18nEngine.getInstance('default');
       const userLang = GlobalActiveContext.getInstance<
         string,
         IActiveContext<string>
