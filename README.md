@@ -1083,6 +1083,10 @@ The following v1.x patterns still work in v2.0:
 
 ## ChangeLog
 
+### Version 2.1.27
+
+- Upgrade node-ecies, use new express-suite-test-utils
+
 ### Version 2.1.25
 
 - Upgrade underlying libraries

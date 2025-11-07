@@ -221,7 +221,7 @@ export abstract class DatabaseInitializationService {
     debugLog(
       true,
       'warn',
-      this.defaultI18nTFunc('suite-core-lib', '{{SuiteCoreStringKey.Admin_DroppingDatabase}}'),
+      this.defaultI18nTFunc(SuiteCoreComponentId, '{{SuiteCoreStringKey.Admin_DroppingDatabase}}'),
     );
     return connection.db.dropDatabase();
   }

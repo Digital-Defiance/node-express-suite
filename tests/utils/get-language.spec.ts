@@ -1,6 +1,6 @@
 import { GlobalActiveContext, LanguageRegistry } from '@digitaldefiance/i18n-lib';
 import { setGlobalActiveContextAdminLanguageFromProcessArgvOrEnv } from '../../src/get-language';
-import { withConsoleMocks } from '../__tests__/helpers/console-mocks';
+import { withConsoleMocks } from '@digitaldefiance/express-suite-test-utils';
 
 describe('get-language', () => {
   let originalEnv: NodeJS.ProcessEnv;
@@ -30,7 +30,7 @@ describe('get-language', () => {
   });
 
   it('should return default language for invalid language code', () =>
-    withConsoleMocks(() => {
+    withConsoleMocks({ mute: true },() => {
       const context = GlobalActiveContext.getInstance();
       const defaultLang = context.adminLanguage;
       process.env['LANGUAGE'] = 'invalid-lang';
@@ -39,7 +39,7 @@ describe('get-language', () => {
     }));
 
   it('should strip quotes from language code', () =>
-    withConsoleMocks(() => {
+    withConsoleMocks({ mute: true },() => {
       process.argv = [...originalArgv, '--language="fr"'];
       const result = setGlobalActiveContextAdminLanguageFromProcessArgvOrEnv();
       expect(result).toBe('fr');

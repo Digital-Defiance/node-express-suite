@@ -642,7 +642,7 @@ describe('DatabaseInitializationService', () => {
       }
 
       const tFunc = (DatabaseInitializationService as any).defaultI18nTFunc;
-      const result = tFunc('suite-core-lib', '{{suite-core-lib.Admin_DroppingDatabase}}');
+      const result = tFunc(SuiteCoreComponentId, '{{suite-core.Admin_DroppingDatabase}}');
 
       // Should process the template and return the translated string
       expect(result).toBeDefined();
@@ -659,8 +659,8 @@ describe('DatabaseInitializationService', () => {
 
       const tFunc = (DatabaseInitializationService as any).defaultI18nTFunc;
       const result = tFunc(
-        'suite-core-lib',
-        '{{suite-core-lib.Common_System}} {{suite-core-lib.Common_ID}}: {id}',
+        SuiteCoreComponentId,
+        '{{suite-core.Common_System}} {{suite-core.Common_ID}}: {id}',
         { id: '12345' }
       );
 
