@@ -1111,6 +1111,10 @@ The following v1.x patterns still work in v2.0:
 
 ## ChangeLog
 
+### Version 2.1.40
+
+- Alignment
+
 ### Version 2.1.35
 
 - Upgrade i18n/bring config through
