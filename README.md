@@ -9,6 +9,8 @@ An opinionated, secure, extensible Node.js/Express service framework built on Di
 
 It is an 'out of the box' solution with a specific recipe (Mongo, Express, React, Node, (MERN) stack) with ejs templating, JWT authentication, role-based access control, custom multi-language support via @digitaldefiance/i18n-lib, and a dynamic model registry system. You might either find it limiting or freeing, depending on your use case. It includes mnemonic authentication, ECIES encryption/decryption, PBKDF2 key derivation, email token workflows, and more.
 
+Part of [Express Suite](https://github.com/Digital-Defiance/express-suite)
+
 ## What's New in v2.1
 
 ✨ **Quality & Stability Release** - All dependencies upgraded, 604 tests passing, improved coverage and type safety throughout.
@@ -563,6 +565,32 @@ npm test -- role.spec.ts
 
 # Run with coverage
 npm test -- --coverage
+```
+
+### Test Utilities
+
+Test helpers and mocks are available via a separate entry point:
+
+```typescript
+// Import test utilities
+import { 
+  mockFunctions,
+  setupTestEnv,
+  // ... other test helpers
+} from '@digitaldefiance/node-express-suite/testing';
+
+// Use in your tests
+beforeAll(async () => {
+  await setupTestEnv();
+});
+```
+
+**Note:** Test utilities require `@faker-js/faker` as a peer dependency. Install it in your dev dependencies:
+
+```bash
+npm install -D @faker-js/faker
+# or
+yarn add -D @faker-js/faker
 ```
 
 ### Test Coverage (v2.1)

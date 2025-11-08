@@ -1,9 +1,19 @@
 {
   "name": "@digitaldefiance/node-express-suite",
-  "version": "2.1.35",
+  "version": "2.1.37",
   "description": "Generic express application and routing library with decorator support",
   "main": "src/index.js",
   "types": "src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "default": "./src/index.js"
+    },
+    "./testing": {
+      "types": "./src/testing.d.ts",
+      "default": "./src/testing.js"
+    }
+  },
   "scripts": {
     "build": "npx nx build digitaldefiance-node-express-suite",
     "build:stream": "npx nx build --outputStyle=stream digitaldefiance-node-express-suite",
@@ -43,7 +53,7 @@
     "zod": "^3.24.0"
   },
   "devDependencies": {
-    "@digitaldefiance/express-suite-test-utils": "1.0.6"
+    "@digitaldefiance/express-suite-test-utils": "1.0.7"
   },
   "files": [
     "src",

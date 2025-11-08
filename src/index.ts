@@ -1,6 +1,5 @@
 import 'reflect-metadata';
 
-export * from './__tests__';
 export * from './application';
 export * from './application-base';
 export * from './application-concrete';
@@ -37,4 +36,3 @@ export * from './types';
 export { withTransaction } from './utils';
 export type { TransactionOptions as UtilsTransactionOptions } from './utils';
 export * from './validation';
-export * from './__tests__/helpers/setup-test-env';
