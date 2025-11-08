@@ -569,7 +569,7 @@ npm test -- --coverage
 
 ### Test Utilities
 
-Test helpers and mocks are available via a separate entry point:
+Test helpers and mocks are available via the `/testing` entry point:
 
 ```typescript
 // Import test utilities
@@ -585,7 +585,7 @@ beforeAll(async () => {
 });
 ```
 
-**Note:** Test utilities require `@faker-js/faker` as a peer dependency. Install it in your dev dependencies:
+**Note:** The `/testing` entry point requires `@faker-js/faker` as a peer dependency. Install it in your dev dependencies:
 
 ```bash
 npm install -D @faker-js/faker
@@ -1113,7 +1113,11 @@ The following v1.x patterns still work in v2.0:
 
 ### Version 2.1.40
 
-- Alignment
+- Alignment with Express Suite packages
+- All packages updated to v2.1.40 (i18n, ecies-lib, node-ecies-lib, suite-core-lib, node-express-suite, express-suite-react-components)
+- Test utilities remain at v1.0.7
+- `/testing` entry point exports test utilities (mockFunctions, setupTestEnv, etc.)
+- Requires `@faker-js/faker` as dev dependency for test utilities
 
 ### Version 2.1.35
 
