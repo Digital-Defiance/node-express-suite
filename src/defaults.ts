@@ -31,7 +31,10 @@ export function createExpressRuntimeConfiguration(
     UsernameRegex: (overrides?.UsernameRegex ?? base.UsernameRegex) as RegExp,
     PasswordRegex: (overrides?.PasswordRegex ?? base.PasswordRegex) as RegExp,
     MnemonicRegex: (overrides?.MnemonicRegex ?? base.MnemonicRegex) as RegExp,
-    HmacRegex: (overrides?.HmacRegex ?? base.HmacRegex) as RegExp,
+    JwtSecretRegex: (overrides?.JwtSecretRegex ?? base.JwtSecretRegex) as RegExp,
+    MnemonicEncryptionKeyRegex: (overrides?.MnemonicEncryptionKeyRegex ??
+      base.MnemonicEncryptionKeyRegex) as RegExp,
+    MnemonicHmacRegex: (overrides?.MnemonicHmacRegex ?? base.MnemonicHmacRegex) as RegExp,
     KEYRING: {
       ALGORITHM: overrides?.KEYRING?.ALGORITHM ?? base.KEYRING.ALGORITHM,
       KEY_BITS: overrides?.KEYRING?.KEY_BITS ?? base.KEYRING.KEY_BITS,

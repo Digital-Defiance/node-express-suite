@@ -1,4 +1,4 @@
-import { mockFunctions } from '@digitaldefiance/node-express-suite';
+import { mockFunctions } from '../../../src/__tests__/fixtures/model-mocks.mock';
 
 const { makeRoleModel, makeUserModel, makeUserRoleModel } = mockFunctions(jest);
 

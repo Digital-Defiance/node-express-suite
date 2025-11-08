@@ -102,7 +102,7 @@ describe('Environment', () => {
     process.env['PORT'] = '3000';
     // test fixture - not a real credential
     // amazonq-ignore-next-line
-    process.env['JWT_SECRET'] = 'test-jwt-secret';
+    process.env['JWT_SECRET'] = '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
     process.env['EMAIL_SENDER'] = 'test@example.com';
     process.env['MONGO_URI'] = 'mongodb://localhost:27017/test';
     process.env['API_DIST_DIR'] = tempApiDistDir;
@@ -142,7 +142,7 @@ describe('Environment', () => {
       expect(env.detailedDebug).toBe(false);
       expect(env.host).toBe('0.0.0.0');
       expect(env.port).toBe(3000);
-      expect(env.jwtSecret).toBe('test-jwt-secret');
+      expect(env.jwtSecret).toBe('0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef');
       expect(env.emailSender).toBe('test@example.com');
       expect(env.basePath).toBe('/');
       expect(env.disableEmailSend).toBe(false);
@@ -348,7 +348,7 @@ describe('Environment', () => {
 DETAILED_DEBUG=1
 HOST=custom-host
 PORT=9000
-JWT_SECRET=file-jwt-secret
+JWT_SECRET=abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789
 EMAIL_SENDER=file@example.com
 MONGO_URI=mongodb://file-host:27017/file-db
 `;
@@ -360,7 +360,7 @@ MONGO_URI=mongodb://file-host:27017/file-db
       expect(env.detailedDebug).toBe(true);
       expect(env.host).toBe('custom-host');
       expect(env.port).toBe(9000);
-      expect(env.jwtSecret).toBe('file-jwt-secret');
+      expect(env.jwtSecret).toBe('abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789');
       expect(env.emailSender).toBe('file@example.com');
       expect(env.mongo.uri).toBe('mongodb://file-host:27017/file-db');
     });
@@ -484,7 +484,7 @@ PORT=9000
 
       expect(() => {
         new Environment();
-      }).toThrow('MNEMONIC_HMAC_SECRET must be a 64 character hex string');
+      }).toThrow('MNEMONIC_HMAC_SECRET must match the required format');
     });
 
     it('should throw error for invalid MNEMONIC_ENCRYPTION_KEY length', () => {
@@ -492,7 +492,7 @@ PORT=9000
 
       expect(() => {
         new Environment();
-      }).toThrow('MNEMONIC_ENCRYPTION_KEY must be a 64 character hex string');
+      }).toThrow('MNEMONIC_ENCRYPTION_KEY must match the required format');
     });
 
     it('should throw error for invalid ADMIN_MNEMONIC', () => {
@@ -582,6 +582,60 @@ PORT=9000
         new Environment();
       }).toThrow('PBKDF2_ITERATIONS must be greater than 0');
     });
+
+    it('should throw error for JWT_SECRET not matching regex', () => {
+      process.env['JWT_SECRET'] = 'too-short';
+
+      expect(() => {
+        new Environment();
+      }).toThrow('JWT_SECRET must match the required format');
+    });
+
+    it('should throw error for MNEMONIC_HMAC_SECRET not matching regex', () => {
+      process.env['MNEMONIC_HMAC_SECRET'] = 'invalid-hmac-secret';
+
+      expect(() => {
+        new Environment();
+      }).toThrow('MNEMONIC_HMAC_SECRET must match the required format');
+    });
+
+    it('should throw error for MNEMONIC_ENCRYPTION_KEY not matching regex', () => {
+      process.env['MNEMONIC_ENCRYPTION_KEY'] = 'invalid-encryption-key';
+
+      expect(() => {
+        new Environment();
+      }).toThrow('MNEMONIC_ENCRYPTION_KEY must match the required format');
+    });
+
+    it('should accept valid JWT_SECRET matching regex', () => {
+      // test fixture - not a real credential
+      // amazonq-ignore-next-line
+      process.env['JWT_SECRET'] = '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
+
+      expect(() => {
+        new Environment();
+      }).not.toThrow();
+    });
+
+    it('should accept valid MNEMONIC_HMAC_SECRET matching regex', () => {
+      // test fixture - not a real credential
+      // amazonq-ignore-next-line
+      process.env['MNEMONIC_HMAC_SECRET'] = 'ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789';
+
+      expect(() => {
+        new Environment();
+      }).not.toThrow();
+    });
+
+    it('should accept valid MNEMONIC_ENCRYPTION_KEY matching regex', () => {
+      // test fixture - not a real credential
+      // amazonq-ignore-next-line
+      process.env['MNEMONIC_ENCRYPTION_KEY'] = 'fedcba9876543210FEDCBA9876543210fedcba9876543210FEDCBA9876543210';
+
+      expect(() => {
+        new Environment();
+      }).not.toThrow();
+    });
   });
 
   describe('getter methods', () => {
@@ -596,7 +650,7 @@ PORT=9000
       process.env['PORT'] = '8080';
       // test credential - not a real credential
       // amazonq-ignore-next-line
-      process.env['JWT_SECRET'] = 'test-jwt';
+      process.env['JWT_SECRET'] = 'fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210';
       process.env['EMAIL_SENDER'] = 'test@example.com';
       process.env['BASE_PATH'] = '/api';
       process.env['HTTPS_DEV_PORT'] = '8443';
@@ -629,7 +683,7 @@ PORT=9000
     it('should return correct server configuration', () => {
       expect(env.host).toBe('test-host');
       expect(env.port).toBe(8080);
-      expect(env.jwtSecret).toBe('test-jwt');
+      expect(env.jwtSecret).toBe('fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210');
       expect(env.emailSender).toBe('test@example.com');
       expect(env.basePath).toBe('/api');
       expect(env.httpsDevPort).toBe(8443);

@@ -292,6 +292,15 @@ export class Environment implements IEnvironment {
         }),
       );
     }
+    if (!constants.JwtSecretRegex.test(this._environment.jwtSecret)) {
+      throw new TranslatableSuiteError(SuiteCoreStringKey.Error_MustMatchRegexTemplate, { value: 'JWT_SECRET' });
+    }
+    if (!constants.MnemonicHmacRegex.test(this._environment.mnemonicHmacSecret.valueAsHexString)) {
+      throw new TranslatableSuiteError(SuiteCoreStringKey.Error_MustMatchRegexTemplate, { value: 'MNEMONIC_HMAC_SECRET' });
+    }
+    if (!constants.MnemonicEncryptionKeyRegex.test(this._environment.mnemonicEncryptionKey.valueAsHexString)) {
+      throw new TranslatableSuiteError(SuiteCoreStringKey.Error_MustMatchRegexTemplate, { value: 'MNEMONIC_ENCRYPTION_KEY' });
+    }
     if (!this._environment.mongo.uri) {
       throw new Error(
         getSuiteCoreTranslation(SuiteCoreStringKey.Admin_EnvNotSetTemplate, {
@@ -316,7 +325,15 @@ export class Environment implements IEnvironment {
     if (this._environment.mnemonicHmacSecret.length !== 32) {
       throw new TranslatableSuiteError(SuiteCoreStringKey.Error_MnemonicHmacSecretMustBe64CharHexString);
     }
+    if (!/^[0-9a-f]{64}$/i.test(envObj['MNEMONIC_HMAC_SECRET'] ?? '')) {
+      throw new TranslatableSuiteError(SuiteCoreStringKey.Error_MnemonicHmacSecretMustBe64CharHexString);
+    }
     if (this._environment.mnemonicEncryptionKey.length !== 32) {
+      throw new TranslatableSuiteError(
+        SuiteCoreStringKey.Error_MnemonicEncryptionKeyMustBe64CharHexString,
+      );
+    }
+    if (!/^[0-9a-f]{64}$/i.test(envObj['MNEMONIC_ENCRYPTION_KEY'] ?? '')) {
       throw new TranslatableSuiteError(
         SuiteCoreStringKey.Error_MnemonicEncryptionKeyMustBe64CharHexString,
       );

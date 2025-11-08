@@ -21,7 +21,7 @@ export function createMnemonicSchema<T extends IConstants = IConstants>(
       unique: true,
       index: true,
       validate: {
-        validator: (v: string) => constants.HmacRegex.test(v),
+        validator: (v: string) => constants.MnemonicHmacRegex.test(v),
         message:
           validationMessage ||
           (() =>

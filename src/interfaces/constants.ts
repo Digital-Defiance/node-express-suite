@@ -37,6 +37,10 @@ export interface IConstants extends IBaseConstants {
    */
   PasswordRegex: RegExp;
   /**
+   * The regular expression for valid JWT tokens.
+   */
+  JwtSecretRegex: RegExp;
+  /**
    * The regular expression for valid mnemonic phrases.
    * BIP39
    */
@@ -44,7 +48,11 @@ export interface IConstants extends IBaseConstants {
   /**
    * The regular expression for valid HMAC keys.
    */
-  HmacRegex: RegExp;
+  MnemonicHmacRegex: RegExp;
+  /**
+   * The regular expression for valid encryption keys.
+   */
+  MnemonicEncryptionKeyRegex: RegExp;
   /**
    * JWT constants
    */
