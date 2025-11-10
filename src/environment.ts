@@ -267,28 +267,28 @@ export class Environment implements IEnvironment {
     if (!this._environment.host) {
       throw new Error(
         getSuiteCoreTranslation(SuiteCoreStringKey.Admin_EnvNotSetTemplate, {
-          NAME: 'HOST',
+          variable: 'HOST',
         }),
       );
     }
     if (!this._environment.port) {
       throw new Error(
         getSuiteCoreTranslation(SuiteCoreStringKey.Admin_EnvNotSetTemplate, {
-          NAME: 'PORT',
+          variable: 'PORT',
         }),
       );
     }
     if (!this._environment.serverUrl) {
       throw new Error(
         getSuiteCoreTranslation(SuiteCoreStringKey.Admin_EnvNotSetTemplate, {
-          NAME: 'SERVER_URL',
+          variable: 'SERVER_URL',
         }),
       );
     }
     if (!this._environment.jwtSecret) {
       throw new Error(
         getSuiteCoreTranslation(SuiteCoreStringKey.Admin_EnvNotSetTemplate, {
-          NAME: 'JWT_SECRET',
+          variable: 'JWT_SECRET',
         }),
       );
     }
@@ -304,21 +304,21 @@ export class Environment implements IEnvironment {
     if (!this._environment.mongo.uri) {
       throw new Error(
         getSuiteCoreTranslation(SuiteCoreStringKey.Admin_EnvNotSetTemplate, {
-          NAME: 'MONGO_URI',
+          variable: 'MONGO_URI',
         }),
       );
     }
     if (!this._environment.emailSender) {
       throw new Error(
         getSuiteCoreTranslation(SuiteCoreStringKey.Admin_EnvNotSetTemplate, {
-          NAME: 'EMAIL_SENDER',
+          variable: 'EMAIL_SENDER',
         }),
       );
     }
     if (!initialization && !this._environment.systemPublicKeyHex) {
       throw new Error(
         getSuiteCoreTranslation(SuiteCoreStringKey.Admin_EnvNotSetTemplate, {
-          NAME: 'SYSTEM_PUBLIC_KEY',
+          variable: 'SYSTEM_PUBLIC_KEY',
         }),
       );
     }
@@ -355,7 +355,7 @@ export class Environment implements IEnvironment {
     if (!this._environment.apiDistDir) {
       throw new Error(
         getSuiteCoreTranslation(SuiteCoreStringKey.Admin_EnvNotSetTemplate, {
-          NAME: 'API_DIST_DIR',
+          variable: 'API_DIST_DIR',
         }),
       );
     } else if (!existsSync(this._environment.apiDistDir)) {
@@ -372,7 +372,7 @@ export class Environment implements IEnvironment {
     if (!this._environment.reactDistDir) {
       throw new Error(
         getSuiteCoreTranslation(SuiteCoreStringKey.Admin_EnvNotSetTemplate, {
-          NAME: 'REACT_DIST_DIR',
+          variable: 'REACT_DIST_DIR',
         }),
       );
     } else if (!existsSync(this._environment.reactDistDir)) {

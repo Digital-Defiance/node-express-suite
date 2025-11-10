@@ -12,11 +12,11 @@ describe('Schema', () => {
     mongoServer = await MongoMemoryServer.create();
     const uri = mongoServer.getUri();
     connection = mongoose.createConnection(uri);
-  });
+  }, 30000);
 
   afterAll(async () => {
-    await connection.close();
-    await mongoServer.stop();
+    if (connection) await connection.close();
+    if (mongoServer) await mongoServer.stop();
   });
 
   describe('getSchemaMap', () => {

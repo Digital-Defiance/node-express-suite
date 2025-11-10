@@ -1111,6 +1111,10 @@ The following v1.x patterns still work in v2.0:
 
 ## ChangeLog
 
+### Version 2.1.55
+
+- Fix EnvNotSet error
+
 ### Version 2.1.47
 
 - Add SiteEmailDomain
