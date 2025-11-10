@@ -1111,6 +1111,10 @@ The following v1.x patterns still work in v2.0:
 
 ## ChangeLog
 
+### Version 2.1.47
+
+- Add SiteEmailDomain
+
 ### Version 2.1.46
 
 - Update suite-core for flags and ISuccessMessage
