@@ -1111,6 +1111,10 @@ The following v1.x patterns still work in v2.0:
 
 ## ChangeLog
 
+### Version 2.1.44
+
+- Update suite-core for flags
+
 ### Version 2.1.43
 
 - Upgrade suite-core for adding strings
