@@ -389,14 +389,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@digitaldefiance/express-suite-test-utils@npm:1.0.7":
-  version: 1.0.7
-  resolution: "@digitaldefiance/express-suite-test-utils@npm:1.0.7"
+"@digitaldefiance/express-suite-test-utils@npm:1.0.8":
+  version: 1.0.8
+  resolution: "@digitaldefiance/express-suite-test-utils@npm:1.0.8"
   dependencies:
     "@jest/globals": "npm:^30.0.5"
     "@types/jest": "npm:^30.0.0"
     expect: "npm:^30.0.5"
-  checksum: 10c0/fbbee71dff9fcb927bccd8ba5055d9b74c06e92ecddd5607921bb86a73eec596c6c2172b9645305c7c96c1a090451d4b69976d0ad1c03463438a80740bf34c69
+  checksum: 10c0/82e0ae17951a37b7f5d584e8e8dba5a2d826c936727ff173aaed498f81a41ca9a66f7eea8c69f6aacd6069bb295a9b28f8bb0a8389961822d0818e837eb25285
   languageName: node
   linkType: hard
 
@@ -432,7 +432,7 @@ __metadata:
   resolution: "@digitaldefiance/node-express-suite@workspace:."
   dependencies:
     "@digitaldefiance/ecies-lib": "npm:2.1.42"
-    "@digitaldefiance/express-suite-test-utils": "npm:1.0.7"
+    "@digitaldefiance/express-suite-test-utils": "npm:1.0.8"
     "@digitaldefiance/i18n-lib": "npm:2.1.40"
     "@digitaldefiance/node-ecies-lib": "npm:2.1.42"
     "@digitaldefiance/suite-core-lib": "npm:2.1.53"

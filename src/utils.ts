@@ -2,7 +2,7 @@
 import { I18nEngine } from '@digitaldefiance/i18n-lib';
 import { NextFunction, Request, Response } from 'express';
 import { Result, ValidationError } from 'express-validator';
-import { existsSync, readdirSync } from 'fs';
+import { existsSync, readdirSync, writeSync } from 'fs';
 import { ClientSession, Connection, Types } from 'mongoose';
 import { resolve } from 'path';
 import { z, ZodType } from 'zod';
@@ -55,13 +55,16 @@ export function directLog(
     typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
   ).join(' ');
   
-  // Write directly to stdout/stderr to bypass Nx prefixing
-  if (type === 'error') {
-    process.stderr.write(message + '\n');
-  } else if (type === 'warn') {
-    process.stderr.write(message + '\n');
+  // Use fs.writeSync to write directly to the file descriptors
+  // This bypasses Node's stream handling and Nx's interception
+  const buffer = Buffer.from(message + '\n', 'utf8');
+  
+  if (type === 'error' || type === 'warn') {
+    // File descriptor 2 is stderr
+    writeSync(2, buffer);
   } else {
-    process.stdout.write(message + '\n');
+    // File descriptor 1 is stdout
+    writeSync(1, buffer);
   }
 }
 

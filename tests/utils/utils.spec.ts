@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import {
   debugLog,
+  directLog,
   getValueAtPath,
   mapZodIssuesToValidationErrors,
   isValidStringId,
@@ -20,6 +21,7 @@ import {
 } from '../../src/utils';
 import { LengthEncodingType } from '../../src/enumerations/length-encoding-type';
 import { Types } from 'mongoose';
+import * as fs from 'fs';
 
 describe('utils', () => {
   describe('debugLog', () => {
@@ -57,6 +59,50 @@ describe('utils', () => {
     it('should not log when debug is false', () => {
       debugLog(false, 'error', 'test');
       expect(consoleErrorSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('directLog', () => {
+    let writeSyncSpy: jest.SpyInstance;
+
+    beforeEach(() => {
+      writeSyncSpy = jest.spyOn(fs, 'writeSync').mockImplementation();
+    });
+
+    afterEach(() => {
+      writeSyncSpy.mockRestore();
+    });
+
+    it('should write to stderr (fd 2) when debug is true and type is error', () => {
+      directLog(true, 'error', 'test error');
+      expect(writeSyncSpy).toHaveBeenCalledWith(2, Buffer.from('test error\n', 'utf8'));
+    });
+
+    it('should write to stderr (fd 2) when debug is true and type is warn', () => {
+      directLog(true, 'warn', 'test warning');
+      expect(writeSyncSpy).toHaveBeenCalledWith(2, Buffer.from('test warning\n', 'utf8'));
+    });
+
+    it('should write to stdout (fd 1) when debug is true and type is log', () => {
+      directLog(true, 'log', 'test log');
+      expect(writeSyncSpy).toHaveBeenCalledWith(1, Buffer.from('test log\n', 'utf8'));
+    });
+
+    it('should not write when debug is false', () => {
+      directLog(false, 'error', 'test');
+      expect(writeSyncSpy).not.toHaveBeenCalled();
+    });
+
+    it('should format objects as JSON', () => {
+      const obj = { key: 'value', nested: { data: 123 } };
+      directLog(true, 'log', obj);
+      const expectedMessage = JSON.stringify(obj, null, 2) + '\n';
+      expect(writeSyncSpy).toHaveBeenCalledWith(1, Buffer.from(expectedMessage, 'utf8'));
+    });
+
+    it('should join multiple arguments', () => {
+      directLog(true, 'log', 'arg1', 'arg2', 'arg3');
+      expect(writeSyncSpy).toHaveBeenCalledWith(1, Buffer.from('arg1 arg2 arg3\n', 'utf8'));
     });
   });
 

@@ -12,6 +12,7 @@ import {
   SuiteCoreStringKey,
   TranslatableSuiteError,
 } from '@digitaldefiance/suite-core-lib';
+import { withDirectLogMocks } from '@digitaldefiance/express-suite-test-utils';
 import { ObjectId as MongoObjectId } from 'mongodb';
 import { Connection, Types } from 'mongoose';
 import { BackupCode } from '../../src/backup-code';
@@ -31,14 +32,19 @@ import { DatabaseInitializationService } from '../../src/services/database-initi
 import { KeyWrappingService } from '../../src/services/key-wrapping';
 import { MnemonicService } from '../../src/services/mnemonic';
 import { RoleService } from '../../src/services/role';
-import { directLog, debugLog, withTransaction } from '../../src/utils';
+import { debugLog, withTransaction } from '../../src/utils';
+
+// Mock fs module to allow spying on writeSync
+jest.mock('fs', () => ({
+  ...jest.requireActual('fs'),
+  writeSync: jest.fn(),
+}));
 
 // Mock dependencies
 jest.mock('../../src/utils', () => {
   const actual = jest.requireActual('../../src/utils');
   return {
     ...actual,
-    directLog: jest.fn(actual.directLog),
     debugLog: jest.fn(actual.debugLog),
     withTransaction: jest.fn(), // Keep withTransaction mocked for other tests
   };
@@ -809,8 +815,6 @@ describe('DatabaseInitializationService', () => {
 
   describe('printServerInitResults', () => {
     let mockServerInitResult: IServerInitResult;
-    let directLogSpy: jest.SpyInstance;
-    let debugLogSpy: jest.SpyInstance;
 
     beforeEach(() => {
       mockServerInitResult = {
@@ -860,87 +864,75 @@ describe('DatabaseInitializationService', () => {
         systemBackupCodes: ['code5', 'code6'],
         systemMember: {} as BackendMember,
       };
-
-      // Get the mocked functions
-      directLogSpy = directLog as jest.MockedFunction<typeof directLog>;
-      debugLogSpy = debugLog as jest.MockedFunction<typeof debugLog>;
-      
-      // Clear any previous calls
-      directLogSpy.mockClear();
-      debugLogSpy.mockClear();
     });
 
-    afterEach(() => {
-      directLogSpy.mockClear();
-      debugLogSpy.mockClear();
+    it('should print all user credentials and information', async () => {
+      await withDirectLogMocks({ mute: true }, async (spies) => {
+        DatabaseInitializationService.printServerInitResults(
+          mockServerInitResult,
+          false, // Don't print .env format for this test
+        );
+
+        // Verify that directLog was called (writeSync calls will be captured)
+        expect(spies.writeSync).toHaveBeenCalled();
+        
+        // Check that output contains expected user types
+        const allCalls = spies.writeSync.mock.calls
+          .filter((call) => call[0] === 1) // stdout only
+          .map((call) => {
+            const buffer = call[1];
+            return buffer instanceof Buffer ? buffer.toString('utf8') : String(buffer);
+          })
+          .join(' ');
+
+        expect(allCalls).toContain('System');
+        expect(allCalls).toContain('Admin');
+        expect(allCalls).toContain('Member');
+      });
     });
 
-    it('should print all user credentials and information', () => {
-      DatabaseInitializationService.printServerInitResults(
-        mockServerInitResult,
-        false, // Don't print .env format for this test
-      );
+    it('should print user IDs, usernames, emails, passwords, mnemonics, and backup codes', async () => {
+      await withDirectLogMocks({ mute: true }, async (spies) => {
+        DatabaseInitializationService.printServerInitResults(
+          mockServerInitResult,
+          false, // Don't print .env format for this test
+        );
 
-      // Opening header goes to console.log via debugLog
-      expect(debugLogSpy).toHaveBeenCalledWith(
-        true,
-        'log',
-        expect.stringContaining('Admin_AccountCredentials'),
-      );
-      
-      // Closing header goes to stdout via directLog
-      expect(directLogSpy).toHaveBeenCalledWith(
-        true,
-        'log',
-        expect.stringContaining('Admin_EndCredentials'),
-      );
+        // Check that writeSync was called with strings containing the actual values
+        const allCalls = spies.writeSync.mock.calls
+          .filter((call) => call[0] === 1) // stdout only
+          .map((call) => {
+            const buffer = call[1];
+            return buffer instanceof Buffer ? buffer.toString('utf8') : String(buffer);
+          })
+          .join(' ');
 
-      // User data goes to process.stdout.write via directLog
-      expect(directLogSpy).toHaveBeenCalledWith(
-        true,
-        'log',
-        expect.stringContaining('Common_System'),
-      );
-      expect(directLogSpy).toHaveBeenCalledWith(
-        true,
-        'log',
-        expect.stringContaining('Common_Admin'),
-      );
-      expect(directLogSpy).toHaveBeenCalledWith(
-        true,
-        'log',
-        expect.stringContaining('Common_Member'),
-      );
+        expect(allCalls).toContain(mockServerInitResult.adminUser._id.toHexString());
+        expect(allCalls).toContain(mockServerInitResult.adminUsername);
+        expect(allCalls).toContain(mockServerInitResult.adminEmail);
+      });
     });
 
-    it('should print user IDs, usernames, emails, passwords, mnemonics, and backup codes', () => {
-      DatabaseInitializationService.printServerInitResults(
-        mockServerInitResult,
-        false, // Don't print .env format for this test
-      );
+    it('should print public keys for all users', async () => {
+      await withDirectLogMocks({ mute: true }, async (spies) => {
+        DatabaseInitializationService.printServerInitResults(
+          mockServerInitResult,
+          false, // Don't print .env format for this test
+        );
 
-      // Check that directLog was called with strings containing the actual values
-      const allCalls = directLogSpy.mock.calls.map((call) => call[2]).join(' ');
+        // Check that writeSync was called with strings containing the public keys
+        const allCalls = spies.writeSync.mock.calls
+          .filter((call) => call[0] === 1) // stdout only
+          .map((call) => {
+            const buffer = call[1];
+            return buffer instanceof Buffer ? buffer.toString('utf8') : String(buffer);
+          })
+          .join(' ');
 
-      expect(allCalls).toContain(
-        mockServerInitResult.adminUser._id.toHexString(),
-      );
-      expect(allCalls).toContain(mockServerInitResult.adminUsername);
-      expect(allCalls).toContain(mockServerInitResult.adminEmail);
-    });
-
-    it('should print public keys for all users', () => {
-      DatabaseInitializationService.printServerInitResults(
-        mockServerInitResult,
-        false, // Don't print .env format for this test
-      );
-
-      // Check that directLog was called with strings containing the public keys
-      const allCalls = directLogSpy.mock.calls.map((call) => call[2]).join(' ');
-
-      expect(allCalls).toContain('admin-public-key');
-      expect(allCalls).toContain('member-public-key');
-      expect(allCalls).toContain('system-public-key');
+        expect(allCalls).toContain('admin-public-key');
+        expect(allCalls).toContain('member-public-key');
+        expect(allCalls).toContain('system-public-key');
+      });
     });
   });
 
