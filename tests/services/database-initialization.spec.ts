@@ -31,9 +31,18 @@ import { DatabaseInitializationService } from '../../src/services/database-initi
 import { KeyWrappingService } from '../../src/services/key-wrapping';
 import { MnemonicService } from '../../src/services/mnemonic';
 import { RoleService } from '../../src/services/role';
+import { directLog, debugLog, withTransaction } from '../../src/utils';
 
 // Mock dependencies
-jest.mock('../../src/utils');
+jest.mock('../../src/utils', () => {
+  const actual = jest.requireActual('../../src/utils');
+  return {
+    ...actual,
+    directLog: jest.fn(actual.directLog),
+    debugLog: jest.fn(actual.debugLog),
+    withTransaction: jest.fn(), // Keep withTransaction mocked for other tests
+  };
+});
 jest.mock('@digitaldefiance/node-ecies-lib');
 jest.mock('../../src/services/key-wrapping');
 jest.mock('../../src/services/mnemonic');
@@ -75,13 +84,13 @@ describe('DatabaseInitializationService', () => {
         [SuiteCoreStringKey.Common_System]: 'System',
         [SuiteCoreStringKey.Common_Admin]: 'Admin',
         [SuiteCoreStringKey.Common_Member]: 'Member',
-        [SuiteCoreStringKey.Admin_UserId]: 'User ID',
-        [SuiteCoreStringKey.Admin_Username]: 'Username',
-        [SuiteCoreStringKey.Admin_Email]: 'Email',
-        [SuiteCoreStringKey.Admin_Password]: 'Password',
-        [SuiteCoreStringKey.Admin_Mnemonic]: 'Mnemonic',
-        [SuiteCoreStringKey.Admin_BackupCodes]: 'Backup Codes',
-        [SuiteCoreStringKey.Admin_PublicKey]: 'Public Key',
+        [SuiteCoreStringKey.Common_UserId]: 'User ID',
+        [SuiteCoreStringKey.Common_Username]: 'Username',
+        [SuiteCoreStringKey.Cpmmon_Email]: 'Email',
+        [SuiteCoreStringKey.Common_Password]: 'Password',
+        [SuiteCoreStringKey.Common_Mnemonic]: 'Mnemonic',
+        [SuiteCoreStringKey.Common_BackupCodes]: 'Backup Codes',
+        [SuiteCoreStringKey.Common_PublicKey]: 'Public Key',
       };
       const template = translations[key] || key;
       if (!variables) return template;
@@ -296,14 +305,8 @@ describe('DatabaseInitializationService', () => {
       .fn()
       .mockResolvedValue(['encrypted-backup-1', 'encrypted-backup-2']);
 
-    // Mock withTransaction and debugLog utilities
-    const utils = require('../../src/utils');
-    (utils.debugLog as jest.Mock) = jest.fn((debug, type, ...args) => {
-      if (debug && type === 'log') {
-        console.log(...args);
-      }
-    });
-    (utils.withTransaction as jest.Mock).mockImplementation(
+    // Mock withTransaction utility
+    (withTransaction as jest.Mock).mockImplementation(
       async (connection, useTransactions, options, callback) => {
         // Create mock result that looks like what the actual callback returns
         const mockResult = {
@@ -806,7 +809,8 @@ describe('DatabaseInitializationService', () => {
 
   describe('printServerInitResults', () => {
     let mockServerInitResult: IServerInitResult;
-    let consoleSpy: jest.SpyInstance;
+    let directLogSpy: jest.SpyInstance;
+    let debugLogSpy: jest.SpyInstance;
 
     beforeEach(() => {
       mockServerInitResult = {
@@ -857,65 +861,86 @@ describe('DatabaseInitializationService', () => {
         systemMember: {} as BackendMember,
       };
 
-      // Mock console.log to capture debug output
-      consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+      // Get the mocked functions
+      directLogSpy = directLog as jest.MockedFunction<typeof directLog>;
+      debugLogSpy = debugLog as jest.MockedFunction<typeof debugLog>;
+      
+      // Clear any previous calls
+      directLogSpy.mockClear();
+      debugLogSpy.mockClear();
     });
 
     afterEach(() => {
-      consoleSpy.mockRestore();
+      directLogSpy.mockClear();
+      debugLogSpy.mockClear();
     });
 
     it('should print all user credentials and information', () => {
       DatabaseInitializationService.printServerInitResults(
         mockServerInitResult,
+        false, // Don't print .env format for this test
       );
 
-      // Should have printed information for all three users (system, admin, member)
-      expect(consoleSpy).toHaveBeenCalledWith(
+      // Opening header goes to console.log via debugLog
+      expect(debugLogSpy).toHaveBeenCalledWith(
+        true,
+        'log',
         expect.stringContaining('Admin_AccountCredentials'),
       );
-      expect(consoleSpy).toHaveBeenCalledWith(
+      
+      // Closing header goes to stdout via directLog
+      expect(directLogSpy).toHaveBeenCalledWith(
+        true,
+        'log',
+        expect.stringContaining('Admin_EndCredentials'),
+      );
+
+      // User data goes to process.stdout.write via directLog
+      expect(directLogSpy).toHaveBeenCalledWith(
+        true,
+        'log',
         expect.stringContaining('Common_System'),
       );
-      expect(consoleSpy).toHaveBeenCalledWith(
+      expect(directLogSpy).toHaveBeenCalledWith(
+        true,
+        'log',
         expect.stringContaining('Common_Admin'),
       );
-      expect(consoleSpy).toHaveBeenCalledWith(
+      expect(directLogSpy).toHaveBeenCalledWith(
+        true,
+        'log',
         expect.stringContaining('Common_Member'),
-      );
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Admin_EndCredentials'),
       );
     });
 
     it('should print user IDs, usernames, emails, passwords, mnemonics, and backup codes', () => {
       DatabaseInitializationService.printServerInitResults(
         mockServerInitResult,
+        false, // Don't print .env format for this test
       );
 
-      // Check that console.log was called with strings containing the actual values
-      const logCalls = consoleSpy.mock.calls.map((call) => call[0]);
-      const allLogs = logCalls.join(' ');
+      // Check that directLog was called with strings containing the actual values
+      const allCalls = directLogSpy.mock.calls.map((call) => call[2]).join(' ');
 
-      expect(allLogs).toContain(
+      expect(allCalls).toContain(
         mockServerInitResult.adminUser._id.toHexString(),
       );
-      expect(allLogs).toContain(mockServerInitResult.adminUsername);
-      expect(allLogs).toContain(mockServerInitResult.adminEmail);
+      expect(allCalls).toContain(mockServerInitResult.adminUsername);
+      expect(allCalls).toContain(mockServerInitResult.adminEmail);
     });
 
     it('should print public keys for all users', () => {
       DatabaseInitializationService.printServerInitResults(
         mockServerInitResult,
+        false, // Don't print .env format for this test
       );
 
-      // Check that console.log was called with strings containing the public keys
-      const logCalls = consoleSpy.mock.calls.map((call) => call[0]);
-      const allLogs = logCalls.join(' ');
+      // Check that directLog was called with strings containing the public keys
+      const allCalls = directLogSpy.mock.calls.map((call) => call[2]).join(' ');
 
-      expect(allLogs).toContain('admin-public-key');
-      expect(allLogs).toContain('member-public-key');
-      expect(allLogs).toContain('system-public-key');
+      expect(allCalls).toContain('admin-public-key');
+      expect(allCalls).toContain('member-public-key');
+      expect(allCalls).toContain('system-public-key');
     });
   });
 
