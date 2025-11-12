@@ -5,6 +5,7 @@ export * from './crc';
 export * from './database-initialization';
 export * from './db-init-cache';
 export * from './direct-login-token';
+export * from './dummy-email-service';
 export * from './fec';
 export * from './fec-usage-example';
 export * from './jwt';
