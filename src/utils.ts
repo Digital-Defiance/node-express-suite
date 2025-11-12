@@ -37,6 +37,34 @@ export function debugLog(
   }
 }
 
+/**
+ * Optionally prints certain debug messages
+ * @param debug Whether to print debug messages
+ * @param type What type of message to print
+ * @param args Any args to print
+ */
+export function directLog(
+  debug: boolean,
+  type: DEBUG_TYPE = 'log',
+  ...args: any[]
+): void {
+  if (!debug) return;
+  
+  // Format the message
+  const message = args.map(arg => 
+    typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+  ).join(' ');
+  
+  // Write directly to stdout/stderr to bypass Nx prefixing
+  if (type === 'error') {
+    process.stderr.write(message + '\n');
+  } else if (type === 'warn') {
+    process.stderr.write(message + '\n');
+  } else {
+    process.stdout.write(message + '\n');
+  }
+}
+
 // Helper: get value at a dotted path from an object
 export function getValueAtPath(obj: unknown, path: (string | number)[]) {
   return path.reduce<any>((acc, key) => {

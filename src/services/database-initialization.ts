@@ -41,7 +41,7 @@ import { IApplication } from '../interfaces/application';
 import { IServerInitResult } from '../interfaces/server-init-result';
 import { ModelRegistry } from '../model-registry';
 import { KeyWrappingService } from '../services/key-wrapping';
-import { debugLog, withTransaction } from '../utils';
+import { debugLog, directLog, withTransaction } from '../utils';
 import { BackupCodeService } from './backup-code';
 import { MnemonicService } from './mnemonic';
 import { RoleService } from './role';
@@ -1123,7 +1123,7 @@ SYSTEM_PASSWORD="${result.systemPassword}"
         '\n=== {{SuiteCoreStringKey.Admin_AccountCredentials}} ===',
       ),
     );
-    debugLog(
+    directLog(
       true,
       'log',
       this.defaultI18nTFunc(
@@ -1133,7 +1133,7 @@ SYSTEM_PASSWORD="${result.systemPassword}"
         },
       ),
     );
-    debugLog(
+    directLog(
       true,
       'log',
       this.defaultI18nTFunc(
@@ -1143,7 +1143,7 @@ SYSTEM_PASSWORD="${result.systemPassword}"
         },
       ),
     );
-    debugLog(
+    directLog(
       true,
       'log',
       this.defaultI18nTFunc(
@@ -1153,7 +1153,7 @@ SYSTEM_PASSWORD="${result.systemPassword}"
         },
       ),
     );
-    debugLog(
+    directLog(
       true,
       'log',
       this.defaultI18nTFunc(
@@ -1163,7 +1163,7 @@ SYSTEM_PASSWORD="${result.systemPassword}"
         },
       ),
     );
-    debugLog(
+    directLog(
       true,
       'log',
       this.defaultI18nTFunc(
@@ -1173,7 +1173,7 @@ SYSTEM_PASSWORD="${result.systemPassword}"
         },
       ),
     );
-    debugLog(
+    directLog(
       true,
       'log',
       this.defaultI18nTFunc(
@@ -1183,7 +1183,7 @@ SYSTEM_PASSWORD="${result.systemPassword}"
         },
       ),
     );
-    debugLog(
+    directLog(
       true,
       'log',
       this.defaultI18nTFunc(
@@ -1193,7 +1193,7 @@ SYSTEM_PASSWORD="${result.systemPassword}"
         },
       ),
     );
-    debugLog(
+    directLog(
       true,
       'log',
       this.defaultI18nTFunc(
@@ -1203,7 +1203,7 @@ SYSTEM_PASSWORD="${result.systemPassword}"
         },
       ),
     );
-    debugLog(
+    directLog(
       true,
       'log',
       this.defaultI18nTFunc(
@@ -1213,15 +1213,15 @@ SYSTEM_PASSWORD="${result.systemPassword}"
         },
       ),
     );
-    debugLog(
+    directLog(
       true,
       'log',
       `${this.defaultI18nTFunc(
         '{{SuiteCoreStringKey.Common_System}} {{SuiteCoreStringKey.Common_BackupCodes}}',
       )}: ${result.systemBackupCodes.join(', ')}`,
     );
-    debugLog(true, 'log', '');
-    debugLog(
+    directLog(true, 'log', '');
+    directLog(
       true,
       'log',
       this.defaultI18nTFunc(
@@ -1231,7 +1231,7 @@ SYSTEM_PASSWORD="${result.systemPassword}"
         },
       ),
     );
-    debugLog(
+    directLog(
       true,
       'log',
       this.defaultI18nTFunc(
@@ -1241,7 +1241,7 @@ SYSTEM_PASSWORD="${result.systemPassword}"
         },
       ),
     );
-    debugLog(
+    directLog(
       true,
       'log',
       this.defaultI18nTFunc(
@@ -1251,7 +1251,7 @@ SYSTEM_PASSWORD="${result.systemPassword}"
         },
       ),
     );
-    debugLog(
+    directLog(
       true,
       'log',
       this.defaultI18nTFunc(
@@ -1261,7 +1261,7 @@ SYSTEM_PASSWORD="${result.systemPassword}"
         },
       ),
     );
-    debugLog(
+    directLog(
       true,
       'log',
       this.defaultI18nTFunc(
@@ -1271,7 +1271,7 @@ SYSTEM_PASSWORD="${result.systemPassword}"
         },
       ),
     );
-    debugLog(
+    directLog(
       true,
       'log',
       this.defaultI18nTFunc(
@@ -1281,7 +1281,7 @@ SYSTEM_PASSWORD="${result.systemPassword}"
         },
       ),
     );
-    debugLog(
+    directLog(
       true,
       'log',
       this.defaultI18nTFunc(
@@ -1291,7 +1291,7 @@ SYSTEM_PASSWORD="${result.systemPassword}"
         },
       ),
     );
-    debugLog(
+    directLog(
       true,
       'log',
       this.defaultI18nTFunc(
@@ -1301,7 +1301,7 @@ SYSTEM_PASSWORD="${result.systemPassword}"
         },
       ),
     );
-    debugLog(
+    directLog(
       true,
       'log',
       this.defaultI18nTFunc(
@@ -1311,15 +1311,15 @@ SYSTEM_PASSWORD="${result.systemPassword}"
         },
       ),
     );
-    debugLog(
+    directLog(
       true,
       'log',
       `${this.defaultI18nTFunc(
         '{{SuiteCoreStringKey.Common_Admin}} {{SuiteCoreStringKey.Common_BackupCodes}}',
       )}: ${result.adminBackupCodes.join(', ')}`,
     );
-    debugLog(true, 'log', '');
-    debugLog(
+    directLog(true, 'log', '');
+    directLog(
       true,
       'log',
       this.defaultI18nTFunc(
@@ -1329,7 +1329,7 @@ SYSTEM_PASSWORD="${result.systemPassword}"
         },
       ),
     );
-    debugLog(
+    directLog(
       true,
       'log',
       this.defaultI18nTFunc(
@@ -1339,7 +1339,7 @@ SYSTEM_PASSWORD="${result.systemPassword}"
         },
       ),
     );
-    debugLog(
+    directLog(
       true,
       'log',
       this.defaultI18nTFunc(
@@ -1349,7 +1349,7 @@ SYSTEM_PASSWORD="${result.systemPassword}"
         },
       ),
     );
-    debugLog(
+    directLog(
       true,
       'log',
       this.defaultI18nTFunc(
@@ -1359,7 +1359,7 @@ SYSTEM_PASSWORD="${result.systemPassword}"
         },
       ),
     );
-    debugLog(
+    directLog(
       true,
       'log',
       this.defaultI18nTFunc(
@@ -1369,7 +1369,7 @@ SYSTEM_PASSWORD="${result.systemPassword}"
         },
       ),
     );
-    debugLog(
+    directLog(
       true,
       'log',
       this.defaultI18nTFunc(
@@ -1379,7 +1379,7 @@ SYSTEM_PASSWORD="${result.systemPassword}"
         },
       ),
     );
-    debugLog(
+    directLog(
       true,
       'log',
       this.defaultI18nTFunc(
@@ -1389,7 +1389,7 @@ SYSTEM_PASSWORD="${result.systemPassword}"
         },
       ),
     );
-    debugLog(
+    directLog(
       true,
       'log',
       this.defaultI18nTFunc(
@@ -1399,7 +1399,7 @@ SYSTEM_PASSWORD="${result.systemPassword}"
         },
       ),
     );
-    debugLog(
+    directLog(
       true,
       'log',
       this.defaultI18nTFunc(
@@ -1409,14 +1409,14 @@ SYSTEM_PASSWORD="${result.systemPassword}"
         },
       ),
     );
-    debugLog(
+    directLog(
       true,
       'log',
       `${this.defaultI18nTFunc(
         '{{SuiteCoreStringKey.Common_Member}} {{SuiteCoreStringKey.Common_BackupCodes}}',
       )}: ${result.memberBackupCodes.join(', ')}`,
     );
-    debugLog(
+    directLog(
       true,
       'log',
       this.defaultI18nTFunc(
@@ -1425,7 +1425,7 @@ SYSTEM_PASSWORD="${result.systemPassword}"
     );
 
     if (printDotEnv) {
-      debugLog(true, 'log', '');
+      directLog(true, 'log', '');
       debugLog(
         true,
         'log',
@@ -1433,7 +1433,7 @@ SYSTEM_PASSWORD="${result.systemPassword}"
           '=== {{SuiteCoreStringKey.Admin_DotEnvFormat}} ===',
         ),
       );
-      debugLog(true, 'log', this.serverInitResultsToDotEnv(result));
+      directLog(true, 'log', this.serverInitResultsToDotEnv(result));
       debugLog(
         true,
         'log',

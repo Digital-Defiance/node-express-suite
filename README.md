@@ -1111,6 +1111,10 @@ The following v1.x patterns still work in v2.0:
 
 ## ChangeLog
 
+### Version 2.1.59
+
+- Improve database initialization prints
+
 ### Version 2.1.58
 
 - Improve database initialization
