@@ -1078,7 +1078,27 @@ export abstract class DatabaseInitializationService {
     }
   }
 
-  public static printServerInitResults(result: IServerInitResult): void {
+  public static serverInitResultsToDotEnv(result: IServerInitResult): string {
+    return `ADMIN_ID="${result.adminUser._id.toHexString()}"
+ADMIN_MNEMONIC="${result.adminMnemonic}"
+ADMIN_ROLE_ID="${result.adminRole._id.toString()}"
+ADMIN_USER_ROLE_ID="${result.adminUserRole._id.toString()}"
+ADMIN_PASSWORD="${result.adminPassword}"
+MEMBER_ID="${result.memberUser._id.toHexString()}"
+MEMBER_MNEMONIC="${result.memberMnemonic}"
+MEMBER_ROLE_ID="${result.memberRole._id.toString()}"
+MEMBER_USER_ROLE_ID="${result.memberUserRole._id.toString()}"
+MEMBER_PASSWORD="${result.memberPassword}"
+SYSTEM_ID="${result.systemUser._id.toHexString()}"
+SYSTEM_MNEMONIC="${result.systemMnemonic}"
+SYSTEM_PUBLIC_KEY="${result.systemUser.publicKey}"
+SYSTEM_ROLE_ID="${result.systemRole._id.toString()}"
+SYSTEM_USER_ROLE_ID="${result.systemUserRole._id.toString()}"
+SYSTEM_PASSWORD="${result.systemPassword}"
+`;
+  }
+
+  public static printServerInitResults(result: IServerInitResult, printDotEnv: boolean = true): void {
     debugLog(
       true,
       'log',
@@ -1386,6 +1406,25 @@ export abstract class DatabaseInitializationService {
         '\n=== {{SuiteCoreStringKey.Admin_EndCredentials}} ===',
       ),
     );
+
+    if (printDotEnv) {
+      debugLog(true, 'log', '');
+      debugLog(
+        true,
+        'log',
+        this.defaultI18nTFunc(
+          '=== {{SuiteCoreStringKey.Admin_DotEnvFormat}} ===',
+        ),
+      );
+      debugLog(true, 'log', this.serverInitResultsToDotEnv(result));
+      debugLog(
+        true,
+        'log',
+        this.defaultI18nTFunc(
+          '=== {{SuiteCoreStringKey.Admin_EndDotEnvFormat}} ===',
+        ),
+      );
+    }
   }
 
   public static setEnvFromInitResults(result: IServerInitResult): void {

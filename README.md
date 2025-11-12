@@ -1111,6 +1111,11 @@ The following v1.x patterns still work in v2.0:
 
 ## ChangeLog
 
+### Version 2.1.56
+
+- Update suite-core
+- Add .env print to db init fcn
+
 ### Version 2.1.55
 
 - Fix EnvNotSet error
