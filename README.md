@@ -1111,6 +1111,14 @@ The following v1.x patterns still work in v2.0:
 
 ## ChangeLog
 
+### Version 2.1.58
+
+- Improve database initialization
+
+### Version 2.1.57
+
+- Update suite-core
+
 ### Version 2.1.56
 
 - Update suite-core

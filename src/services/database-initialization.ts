@@ -36,7 +36,7 @@ import { IUserDocument } from '../documents/user';
 import { IUserRoleDocument } from '../documents/user-role';
 import { BaseModelName } from '../enumerations/base-model-name';
 import { Environment } from '../environment';
-import { IConstants } from '../interfaces';
+import { IConstants, IDBInitResult } from '../interfaces';
 import { IApplication } from '../interfaces/application';
 import { IServerInitResult } from '../interfaces/server-init-result';
 import { ModelRegistry } from '../model-registry';
@@ -357,7 +357,7 @@ export abstract class DatabaseInitializationService {
     eciesService: ECIESService,
     roleService: RoleService,
     backupCodeService: BackupCodeService,
-  ): Promise<IFailableResult<IServerInitResult>> {
+  ): Promise<IDBInitResult<IServerInitResult>> {
     const engine = getSuiteCoreI18nEngine({ constants: application.constants });
     const isTestEnvironment = process.env['NODE_ENV'] === 'test';
     const options = DatabaseInitializationService.getInitOptions(application);
@@ -439,6 +439,7 @@ export abstract class DatabaseInitializationService {
           UserRoleModel.findOne({ userId: systemUserDoc._id }),
         ]);
 
+        // detailed case
         if (
           adminRole &&
           memberRole &&
@@ -448,7 +449,8 @@ export abstract class DatabaseInitializationService {
           systemUserRole
         ) {
           return {
-            success: true,
+            alreadyInitialized: true,
+            success: false,
             data: {
               adminRole,
               adminUserRole,
@@ -478,11 +480,23 @@ export abstract class DatabaseInitializationService {
               systemBackupCodes: [], // Not available in fallback
               systemMember: {} as BackendMember, // Not available in fallback
             },
+            message: engine.translate(
+              SuiteCoreComponentId,
+              SuiteCoreStringKey.Admin_DatabaseAlreadyInitialized,
+            ),
+            error: new Error(
+              engine.translate(
+                SuiteCoreComponentId,
+                SuiteCoreStringKey.Admin_DatabaseAlreadyInitialized,
+              ),
+            ),
           };
         }
       }
 
+      // basic case
       return {
+        alreadyInitialized: true,
         success: false,
         message: engine.translate(
           SuiteCoreComponentId,
@@ -1009,6 +1023,7 @@ export abstract class DatabaseInitializationService {
       );
 
       return {
+        alreadyInitialized: false,
         success: true,
         data: {
           adminRole: result.adminRole,
@@ -1053,6 +1068,7 @@ export abstract class DatabaseInitializationService {
         error instanceof TranslatableSuiteHandleableError
       ) {
         return {
+          alreadyInitialized: false,
           success: false,
           message: (error as Error).message,
           error: error as Error,
@@ -1060,6 +1076,7 @@ export abstract class DatabaseInitializationService {
       }
 
       return {
+        alreadyInitialized: false,
         success: false,
         message: engine.translate(
           SuiteCoreComponentId,

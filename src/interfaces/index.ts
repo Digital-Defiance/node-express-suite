@@ -12,6 +12,7 @@ export * from './controller-config';
 export * from './create-user-basics';
 export * from './csp-config';
 export * from './csp-definition';
+export * from './db-init-result'
 export * from './discriminator-collections';
 export * from './email-service';
 export * from './environment';
