@@ -1111,6 +1111,10 @@ The following v1.x patterns still work in v2.0:
 
 ## ChangeLog
 
+### Version 2.1.66
+
+- Add host to HTTPS
+
 ### Version 2.1.65
 
 - Clarify message

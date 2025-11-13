@@ -195,6 +195,7 @@ export class Application<
             new Promise<void>((resolve) => {
               createServer(options, this.expressApp).listen(
                 this.environment.httpsDevPort,
+                this.environment.host,
                 () => {
                   console.log(
                     `[ ${engine.translate(
