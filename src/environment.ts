@@ -97,12 +97,14 @@ export class Environment implements IEnvironment {
       ? parseInt(process.env['HTTPS_DEV_PORT'] ?? '3443')
       : 443;
 
+    const devDatabase = envObj['DEV_DATABASE'] !== undefined && envObj['DEV_DATABASE'] !== ''
+          ? envObj['DEV_DATABASE']
+          : undefined;
+    const isDevDatabase = devDatabase !== undefined && devDatabase !== '';
+
     this._environment = {
       debug: debug,
-      devDatabase:
-        envObj['DEV_DATABASE'] !== undefined && envObj['DEV_DATABASE'] !== ''
-          ? envObj['DEV_DATABASE']
-          : undefined,
+      devDatabase: devDatabase,
       detailedDebug: detailedDebug,
       host: envObj['HOST'] ?? '0.0.0.0',
       port: envObj['PORT'] ? Number(envObj['PORT']) : 3000,
@@ -315,7 +317,7 @@ export class Environment implements IEnvironment {
         }),
       );
     }
-    if (!initialization && !this._environment.systemPublicKeyHex) {
+    if (!initialization && !isDevDatabase && !this._environment.systemPublicKeyHex) {
       throw new Error(
         getSuiteCoreTranslation(SuiteCoreStringKey.Admin_EnvNotSetTemplate, {
           variable: 'SYSTEM_PUBLIC_KEY',
@@ -339,12 +341,14 @@ export class Environment implements IEnvironment {
       );
     }
     if (
+      !isDevDatabase &&
       this._environment.adminMnemonic?.value &&
       !constants.MnemonicRegex.test(this._environment.adminMnemonic.value ?? '')
     ) {
       throw new TranslatableSuiteError(SuiteCoreStringKey.Error_AdminMnemonicMustBeValidMnemonicPhrase);
     }
     if (
+      !isDevDatabase &&
       this._environment.memberMnemonic?.value &&
       !constants.MnemonicRegex.test(
         this._environment.memberMnemonic.value ?? '',

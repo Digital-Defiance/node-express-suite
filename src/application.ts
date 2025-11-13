@@ -107,6 +107,9 @@ export class Application<
   public override async start(mongoUri?: string): Promise<void> {
     const engine = getSuiteCoreI18nEngine({ constants: this.constants });
     await super.start(mongoUri, true);
+    if (this.devDatabase) {
+      await this.initializeDevDatabase();
+    }
     try {
       this._apiRouter = this._apiRouterFactory(this);
       if (isFlexibleCSP(this._cspConfig) || isCSPConfig(this._cspConfig)) {
