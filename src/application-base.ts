@@ -394,8 +394,7 @@ export class BaseApplication<
       `${engine.translate(
         SuiteCoreComponentId,
         SuiteCoreStringKey.Admin_StartingDatabaseInitialization,
-      )}:`,
-      this._environment.mongo.useTransactions,
+      )}: ${engine.translate(SuiteCoreComponentId, SuiteCoreStringKey.Admin_TransactionsEnabledDisabledTemplate, { STATE: this._environment.mongo.useTransactions ? engine.translate(SuiteCoreComponentId, SuiteCoreStringKey.Common_Enabled) : engine.translate(SuiteCoreComponentId, SuiteCoreStringKey.Common_Disabled) })}`,
     );
     let initTimeout: NodeJS.Timeout | undefined;
     const initTimeoutMs = 300000;
