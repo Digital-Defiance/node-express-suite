@@ -1111,6 +1111,10 @@ The following v1.x patterns still work in v2.0:
 
 ## ChangeLog
 
+### Version 2.1.67
+
+- Print server init results on dev init
+
 ### Version 2.1.66
 
 - Add host to HTTPS

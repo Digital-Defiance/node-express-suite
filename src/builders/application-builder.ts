@@ -4,7 +4,7 @@ import { BaseRouter } from '../routers/base';
 import { AppRouter } from '../routers/app';
 import { Environment } from '../environment';
 import { IConstants } from '../interfaces/constants';
-import { ICSPConfig, IFailableResult } from '../interfaces';
+import { ICSPConfig, IFailableResult, IServerInitResult } from '../interfaces';
 import { SchemaMap } from '../types';
 import { IBaseDocument } from '../documents';
 import { BaseApplication } from '../application-base';
@@ -15,7 +15,7 @@ import { SuiteCoreStringKey, TranslatableSuiteError } from '@digitaldefiance/sui
 
 export class ApplicationBuilder<
   TModelDocs extends Record<string, IBaseDocument<any>>,
-  TInitResults,
+  TInitResults extends IServerInitResult,
   TConstants extends IConstants = IConstants
 > {
   private environment?: Environment;

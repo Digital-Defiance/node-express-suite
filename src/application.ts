@@ -20,7 +20,7 @@ import { isAbsolute, normalize, resolve } from 'path';
 import { BaseApplication } from './application-base';
 import { IBaseDocument } from './documents/base';
 import { Environment } from './environment';
-import { IApplication, ICSPConfig, IFailableResult, isCSPConfig } from './interfaces';
+import { IApplication, ICSPConfig, IFailableResult, isCSPConfig, IServerInitResult } from './interfaces';
 import { IConstants } from './interfaces/constants';
 import { initMiddleware, isHelmetOptions } from './middlewares';
 import { AppRouter } from './routers/app';
@@ -29,6 +29,7 @@ import { SchemaMap } from './types';
 import { debugLog, handleError, sendApiMessageResponse } from './utils';
 import { HelmetOptions } from 'helmet';
 import { IFlexibleCSP, isFlexibleCSP } from './interfaces/flexible-csp';
+import { DatabaseInitializationService } from './services';
 
 /**
  * Application class
@@ -36,7 +37,7 @@ import { IFlexibleCSP, isFlexibleCSP } from './interfaces/flexible-csp';
 type ServerWithOptionalClose = Server & { closeAllConnections?: () => void };
 
 export class Application<
-    TInitResults,
+    TInitResults extends IServerInitResult,
     TModelDocs extends Record<string, IBaseDocument<any>>,
     TEnvironment extends Environment = Environment,
     TConstants extends IConstants = IConstants,
@@ -108,7 +109,8 @@ export class Application<
     const engine = getSuiteCoreI18nEngine({ constants: this.constants });
     await super.start(mongoUri, true);
     if (this.devDatabase) {
-      await this.initializeDevDatabase();
+      const result = await this.initializeDevDatabase();
+      DatabaseInitializationService.printServerInitResults(result, false);
     }
     try {
       this._apiRouter = this._apiRouterFactory(this);
