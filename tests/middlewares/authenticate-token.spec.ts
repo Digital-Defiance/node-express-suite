@@ -24,6 +24,30 @@ describe('findAuthToken', () => {
       } as unknown as NodeJS.Dict<string>),
     ).toBe('abc');
   });
+  
+  it('handles Authorization with capital A', () => {
+    expect(
+      findAuthToken({
+        Authorization: 'Bearer xyz',
+      } as unknown as NodeJS.Dict<string>),
+    ).toBe('xyz');
+  });
+
+  it('returns null when Bearer has wrong number of parts', () => {
+    expect(
+      findAuthToken({
+        authorization: 'Bearer',
+      } as unknown as NodeJS.Dict<string>),
+    ).toBeNull();
+  });
+
+  it('returns null when authorization is not a string', () => {
+    expect(
+      findAuthToken({
+        authorization: ['Bearer', 'token'],
+      } as any),
+    ).toBeNull();
+  });
 });
 
 describe('authenticateToken middleware', () => {

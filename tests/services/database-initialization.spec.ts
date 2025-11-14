@@ -33,6 +33,7 @@ import { KeyWrappingService } from '../../src/services/key-wrapping';
 import { MnemonicService } from '../../src/services/mnemonic';
 import { RoleService } from '../../src/services/role';
 import { debugLog, withTransaction } from '../../src/utils';
+import { withConsoleMocks } from '@digitaldefiance/express-suite-test-utils';
 
 // Mock fs module to allow spying on writeSync
 jest.mock('fs', () => ({
@@ -90,9 +91,9 @@ describe('DatabaseInitializationService', () => {
         [SuiteCoreStringKey.Common_System]: 'System',
         [SuiteCoreStringKey.Common_Admin]: 'Admin',
         [SuiteCoreStringKey.Common_Member]: 'Member',
-        [SuiteCoreStringKey.Common_UserId]: 'User ID',
+        [SuiteCoreStringKey.Common_UserID]: 'User ID',
         [SuiteCoreStringKey.Common_Username]: 'Username',
-        [SuiteCoreStringKey.Cpmmon_Email]: 'Email',
+        [SuiteCoreStringKey.Common_Email]: 'Email',
         [SuiteCoreStringKey.Common_Password]: 'Password',
         [SuiteCoreStringKey.Common_Mnemonic]: 'Mnemonic',
         [SuiteCoreStringKey.Common_BackupCodes]: 'Backup Codes',
@@ -867,71 +868,77 @@ describe('DatabaseInitializationService', () => {
     });
 
     it('should print all user credentials and information', async () => {
-      await withDirectLogMocks({ mute: true }, async (spies) => {
-        DatabaseInitializationService.printServerInitResults(
-          mockServerInitResult,
-          false, // Don't print .env format for this test
-        );
+      await withConsoleMocks({ mute: true }, async () => {
+        await withDirectLogMocks({ mute: true }, async (spies) => {
+          DatabaseInitializationService.printServerInitResults(
+            mockServerInitResult,
+            false, // Don't print .env format for this test
+          );
 
-        // Verify that directLog was called (writeSync calls will be captured)
-        expect(spies.writeSync).toHaveBeenCalled();
-        
-        // Check that output contains expected user types
-        const allCalls = spies.writeSync.mock.calls
-          .filter((call) => call[0] === 1) // stdout only
-          .map((call) => {
-            const buffer = call[1];
-            return buffer instanceof Buffer ? buffer.toString('utf8') : String(buffer);
-          })
-          .join(' ');
+          // Verify that directLog was called (writeSync calls will be captured)
+          expect(spies.writeSync).toHaveBeenCalled();
+          
+          // Check that output contains expected user types
+          const allCalls = spies.writeSync.mock.calls
+            .filter((call) => call[0] === 1) // stdout only
+            .map((call) => {
+              const buffer = call[1];
+              return buffer instanceof Buffer ? buffer.toString('utf8') : String(buffer);
+            })
+            .join(' ');
 
-        expect(allCalls).toContain('System');
-        expect(allCalls).toContain('Admin');
-        expect(allCalls).toContain('Member');
+          expect(allCalls).toContain('System');
+          expect(allCalls).toContain('Admin');
+          expect(allCalls).toContain('Member');
+        });
       });
     });
 
     it('should print user IDs, usernames, emails, passwords, mnemonics, and backup codes', async () => {
-      await withDirectLogMocks({ mute: true }, async (spies) => {
-        DatabaseInitializationService.printServerInitResults(
-          mockServerInitResult,
-          false, // Don't print .env format for this test
-        );
+      await withConsoleMocks({ mute: true }, async () => {
+        await withDirectLogMocks({ mute: true }, async (spies) => {
+          DatabaseInitializationService.printServerInitResults(
+            mockServerInitResult,
+            false, // Don't print .env format for this test
+          );
 
-        // Check that writeSync was called with strings containing the actual values
-        const allCalls = spies.writeSync.mock.calls
-          .filter((call) => call[0] === 1) // stdout only
-          .map((call) => {
-            const buffer = call[1];
-            return buffer instanceof Buffer ? buffer.toString('utf8') : String(buffer);
-          })
-          .join(' ');
+          // Check that writeSync was called with strings containing the actual values
+          const allCalls = spies.writeSync.mock.calls
+            .filter((call) => call[0] === 1) // stdout only
+            .map((call) => {
+              const buffer = call[1];
+              return buffer instanceof Buffer ? buffer.toString('utf8') : String(buffer);
+            })
+            .join(' ');
 
-        expect(allCalls).toContain(mockServerInitResult.adminUser._id.toHexString());
-        expect(allCalls).toContain(mockServerInitResult.adminUsername);
-        expect(allCalls).toContain(mockServerInitResult.adminEmail);
+          expect(allCalls).toContain(mockServerInitResult.adminUser._id.toHexString());
+          expect(allCalls).toContain(mockServerInitResult.adminUsername);
+          expect(allCalls).toContain(mockServerInitResult.adminEmail);
+        });
       });
     });
 
     it('should print public keys for all users', async () => {
-      await withDirectLogMocks({ mute: true }, async (spies) => {
-        DatabaseInitializationService.printServerInitResults(
-          mockServerInitResult,
-          false, // Don't print .env format for this test
-        );
+      await withConsoleMocks({ mute: true }, async () => {
+        await withDirectLogMocks({ mute: true }, async (spies) => {
+          DatabaseInitializationService.printServerInitResults(
+            mockServerInitResult,
+            false, // Don't print .env format for this test
+          );
 
-        // Check that writeSync was called with strings containing the public keys
-        const allCalls = spies.writeSync.mock.calls
-          .filter((call) => call[0] === 1) // stdout only
-          .map((call) => {
-            const buffer = call[1];
-            return buffer instanceof Buffer ? buffer.toString('utf8') : String(buffer);
-          })
-          .join(' ');
+          // Check that writeSync was called with strings containing the public keys
+          const allCalls = spies.writeSync.mock.calls
+            .filter((call) => call[0] === 1) // stdout only
+            .map((call) => {
+              const buffer = call[1];
+              return buffer instanceof Buffer ? buffer.toString('utf8') : String(buffer);
+            })
+            .join(' ');
 
-        expect(allCalls).toContain('admin-public-key');
-        expect(allCalls).toContain('member-public-key');
-        expect(allCalls).toContain('system-public-key');
+          expect(allCalls).toContain('admin-public-key');
+          expect(allCalls).toContain('member-public-key');
+          expect(allCalls).toContain('system-public-key');
+        });
       });
     });
   });

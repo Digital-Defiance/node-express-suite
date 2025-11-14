@@ -175,9 +175,11 @@ export class BaseApplication<
 
     // In production, block private IPs and localhost
     if (this._environment.production) {
-      const urlMatch = uri.match(/^mongodb(?:\+srv)?:\/\/(?:[^@]+@)?([^:/]+)/);
+      // Updated regex to handle IPv6 addresses with brackets
+      const urlMatch = uri.match(/^mongodb(?:\+srv)?:\/\/(?:[^@]+@)?(\[[^\]]+\]|[^:/]+)/);
       if (urlMatch) {
-        const hostname = urlMatch[1];
+        // Remove brackets from hostname for IPv6 addresses
+        const hostname = urlMatch[1].replace(/[\[\]]/g, '');
         // Block localhost and private IP ranges
         if (
           hostname === 'localhost' ||

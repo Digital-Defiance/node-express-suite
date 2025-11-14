@@ -243,4 +243,295 @@ describe('BackupCode', () => {
       ).toThrow(InvalidBackupCodeError);
     });
   });
+
+  describe('BackupCodeService', () => {
+    let service: any;
+    let mockApp: any;
+    let mockEciesService: any;
+    let mockKeyWrappingService: any;
+    let mockRoleService: any;
+    let mockSystemUser: any;
+
+    beforeEach(() => {
+      mockSystemUser = {
+        decryptData: jest.fn().mockReturnValue(Buffer.from('unwrapped-data')),
+        encryptData: jest.fn().mockReturnValue(Buffer.from('wrapped-data')),
+      };
+
+      mockApp = {
+        environment: {
+          mongo: { transactionTimeout: 5000 },
+        },
+        constants: AppConstants,
+        db: {
+          connection: {
+            getClient: jest.fn().mockReturnValue({
+              startSession: jest.fn().mockResolvedValue({
+                startTransaction: jest.fn(),
+                commitTransaction: jest.fn(),
+                abortTransaction: jest.fn(),
+                endSession: jest.fn(),
+                inTransaction: jest.fn().mockReturnValue(true),
+              }),
+            }),
+          },
+        },
+      };
+
+      mockEciesService = {};
+      mockKeyWrappingService = {
+        wrapSecret: jest.fn().mockReturnValue('wrapped-secret'),
+      };
+      mockRoleService = {
+        getMemberType: jest.fn().mockResolvedValue('user'),
+      };
+
+      // Import BackupCodeService - need to get it from the actual module
+      const { BackupCodeService } = require('../../src/services/backup-code');
+      service = new BackupCodeService(
+        mockApp,
+        mockEciesService,
+        mockKeyWrappingService,
+        mockRoleService,
+      );
+    });
+
+    describe('setSystemUser and getSystemUser', () => {
+      it('should set and retrieve system user', () => {
+        service.setSystemUser(mockSystemUser);
+        expect(service['systemUser']).toBe(mockSystemUser);
+      });
+
+      it('should lazily initialize system user via SystemUserService', () => {
+        const SystemUserService = require('../../src/services/system-user').SystemUserService;
+        const spy = jest.spyOn(SystemUserService, 'getSystemUser').mockReturnValue(mockSystemUser);
+        
+        const user = service['getSystemUser']();
+        
+        expect(spy).toHaveBeenCalledWith(mockApp.environment, mockApp.constants);
+        expect(user).toBe(mockSystemUser);
+        spy.mockRestore();
+      });
+    });
+
+    describe('useBackupCodeV1', () => {
+      it('should successfully use a valid backup code', () => {
+        const codeStr = 'a'.repeat(32);
+        const code = {
+          version: BackupCode.BackupCodeVersion,
+          checksumSalt: randomBytes(16).toString('hex'),
+          checksum: '',
+          encrypted: 'encrypted-data',
+        };
+        // Compute correct checksum
+        const salt = Buffer.from(code.checksumSalt, 'hex');
+        const checksum = (BackupCode as any).hkdfSha256(
+          Buffer.from(codeStr, 'utf8'),
+          salt,
+          Buffer.from('backup-checksum'),
+          32,
+        );
+        code.checksum = checksum.toString('hex');
+
+        const codes = [code];
+        const formatted = BackupCodeString.formatBackupCode(codeStr);
+        
+        const result = service.useBackupCodeV1(codes, formatted);
+        
+        expect(result.code).toBe(code);
+        expect(result.newCodesArray).toHaveLength(0);
+      });
+
+      it('should throw InvalidBackupCodeError for invalid format', () => {
+        expect(() => service.useBackupCodeV1([], 'invalid')).toThrow(InvalidBackupCodeError);
+      });
+
+      it('should throw InvalidBackupCodeError when no matching code found', () => {
+        const codes = [{
+          version: BackupCode.BackupCodeVersion,
+          checksumSalt: randomBytes(16).toString('hex'),
+          checksum: randomBytes(32).toString('hex'),
+          encrypted: 'data',
+        }];
+        
+        expect(() => service.useBackupCodeV1(codes, 'b'.repeat(32))).toThrow(InvalidBackupCodeError);
+      });
+    });
+
+    describe('useBackupCode', () => {
+      it('should dispatch to useBackupCodeV1 for v1 codes', () => {
+        const codeStr = 'c'.repeat(32);
+        const code = {
+          version: BackupCode.BackupCodeVersion,
+          checksumSalt: randomBytes(16).toString('hex'),
+          checksum: '',
+          encrypted: 'data',
+        };
+        const salt = Buffer.from(code.checksumSalt, 'hex');
+        code.checksum = (BackupCode as any).hkdfSha256(
+          Buffer.from(codeStr, 'utf8'),
+          salt,
+          Buffer.from('backup-checksum'),
+          32,
+        ).toString('hex');
+
+        const spy = jest.spyOn(service, 'useBackupCodeV1');
+        service.useBackupCode([code], codeStr);
+        
+        expect(spy).toHaveBeenCalled();
+      });
+
+      it('should throw InvalidBackupCodeVersionError for unknown version', () => {
+        const codes = [{
+          version: '9.9.9',
+          checksumSalt: '00',
+          checksum: '00',
+          encrypted: '00',
+        }];
+        
+        expect(() => service.useBackupCode(codes as any, 'd'.repeat(32))).toThrow();
+      });
+    });
+
+    describe('recoverKeyWithBackupCodeV1', () => {
+      it('should recover key without new password', async () => {
+        service.setSystemUser(mockSystemUser);
+        
+        const userDoc = {
+          _id: 'user123',
+          username: 'testuser',
+          email: 'test@example.com',
+          publicKey: Buffer.alloc(65).toString('hex'),
+          backupCodes: [],
+          save: jest.fn().mockResolvedValue(undefined),
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
+
+        const codeStr = 'e'.repeat(32);
+        const code = {
+          version: BackupCode.BackupCodeVersion,
+          checksumSalt: randomBytes(16).toString('hex'),
+          checksum: '',
+          encrypted: 'encrypted-key',
+        };
+        const salt = Buffer.from(code.checksumSalt, 'hex');
+        code.checksum = (BackupCode as any).hkdfSha256(
+          Buffer.from(codeStr, 'utf8'),
+          salt,
+          Buffer.from('backup-checksum'),
+          32,
+        ).toString('hex');
+        userDoc.backupCodes = [code];
+
+        // Mock withTransaction to execute callback immediately
+        service.withTransaction = jest.fn(async (fn) => await fn(undefined));
+
+        const result = await service.recoverKeyWithBackupCodeV1(userDoc, codeStr);
+        
+        expect(result.userDoc).toBe(userDoc);
+        expect(result.user).toBeDefined();
+        expect(result.codeCount).toBe(0);
+        expect(userDoc.save).toHaveBeenCalled();
+      });
+    });
+
+    describe('recoverKeyWithBackupCode', () => {
+      it('should dispatch to recoverKeyWithBackupCodeV1', async () => {
+        const codeStr = 'f'.repeat(32);
+        const code = {
+          version: BackupCode.BackupCodeVersion,
+          checksumSalt: randomBytes(16).toString('hex'),
+          checksum: '',
+          encrypted: 'data',
+        };
+        const salt = Buffer.from(code.checksumSalt, 'hex');
+        code.checksum = (BackupCode as any).hkdfSha256(
+          Buffer.from(codeStr, 'utf8'),
+          salt,
+          Buffer.from('backup-checksum'),
+          32,
+        ).toString('hex');
+
+        const userDoc = {
+          backupCodes: [code],
+        };
+
+        const spy = jest.spyOn(service, 'recoverKeyWithBackupCodeV1').mockResolvedValue({
+          userDoc,
+          user: {},
+          codeCount: 0,
+        });
+
+        await service.recoverKeyWithBackupCode(userDoc, codeStr);
+        
+        expect(spy).toHaveBeenCalled();
+      });
+    });
+
+    describe('rewrapAllUsersBackupCodes', () => {
+      it('should process users in batches and rewrap codes', async () => {
+        const oldSystem = {
+          decryptData: jest.fn().mockReturnValue(Buffer.from('decrypted')),
+        };
+        const newSystem = {
+          encryptData: jest.fn().mockReturnValue(Buffer.from('new-wrapped')),
+        };
+
+        const users = [
+          {
+            _id: 'user1',
+            backupCodes: [{
+              version: BackupCode.BackupCodeVersion,
+              encrypted: Buffer.alloc(100).toString('hex'),
+            }],
+          },
+        ];
+
+        const fetchBatch = jest.fn()
+          .mockResolvedValueOnce(users)
+          .mockResolvedValueOnce([]);
+        const saveUser = jest.fn().mockResolvedValue(undefined);
+
+        const count = await service.rewrapAllUsersBackupCodes(
+          fetchBatch,
+          saveUser,
+          oldSystem,
+          newSystem,
+        );
+
+        expect(count).toBeGreaterThan(0);
+        expect(fetchBatch).toHaveBeenCalledTimes(2);
+      });
+
+      it('should call onProgress callback if provided', async () => {
+        const oldSystem = { decryptData: jest.fn().mockReturnValue(Buffer.from('data')) };
+        const newSystem = { encryptData: jest.fn().mockReturnValue(Buffer.from('data')) };
+        
+        const users = [{
+          _id: 'user1',
+          backupCodes: [{
+            version: BackupCode.BackupCodeVersion,
+            encrypted: Buffer.alloc(100).toString('hex'),
+          }],
+        }];
+        
+        const fetchBatch = jest.fn()
+          .mockResolvedValueOnce(users)
+          .mockResolvedValueOnce([]);
+        const saveUser = jest.fn().mockResolvedValue(undefined);
+        const onProgress = jest.fn();
+
+        await service.rewrapAllUsersBackupCodes(
+          fetchBatch,
+          saveUser,
+          oldSystem,
+          newSystem,
+          { onProgress },
+        );
+
+        expect(onProgress).toHaveBeenCalled();
+      });
+    });
+  });
 });
