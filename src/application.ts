@@ -133,20 +133,36 @@ export class Application<
           res: Response,
           next: NextFunction,
         ) => {
-          const handleableError =
-            err instanceof HandleableError
-              ? err
-              : new HandleableError(
-                  new Error(
-                    err.message ||
-                      engine.translate(
-                        SuiteCoreComponentId,
-                        SuiteCoreStringKey.Common_UnexpectedError,
-                      ),
-                  ),
-                  { cause: err },
-                );
-          handleError(handleableError, res, sendApiMessageResponse, next);
+          try {
+            const handleableError =
+              err instanceof HandleableError
+                ? err
+                : new HandleableError(
+                    new Error(
+                      err.message ||
+                        engine.translate(
+                          SuiteCoreComponentId,
+                          SuiteCoreStringKey.Common_UnexpectedError,
+                        ),
+                    ),
+                    { cause: err },
+                  );
+            handleError(handleableError, res, sendApiMessageResponse, next);
+          } catch (handlerError) {
+            // Prevent infinite recursion by sending a simple error response
+            if (!res.headersSent) {
+              res.status(500).json({
+                message: engine.translate(
+                  SuiteCoreComponentId,
+                  SuiteCoreStringKey.Error_RecursiveErrorHandlingDetected,
+                ),
+                error: { message: err.message || engine.translate(
+                  SuiteCoreComponentId,
+                  SuiteCoreStringKey.Common_UnexpectedError,
+                ) },
+              });
+            }
+          }
         },
       );
 

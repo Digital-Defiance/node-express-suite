@@ -627,6 +627,9 @@ export function handleError(
       'status=' + String(handleableError.statusCode).replace(/[\r\n]/g, ''),
       'message=' + (handleableError.message || '').replace(/[\r\n]/g, ''),
     );
+    if (error instanceof Error && error.stack) {
+      debugLog(true, 'error', '[handleError] stack:', error.stack);
+    }
   }
 
   if (!res.headersSent) {
@@ -767,6 +770,7 @@ import moment from 'moment-timezone';
 import { BackupCode } from './backup-code';
 import { LengthEncodingType } from './enumerations/length-encoding-type';
 import { MissingValidatedDataError } from './errors';
+import { debuglog } from 'util';
 
 export function isValidTimezone(timezone: string): boolean {
   return moment.tz.zone(timezone) !== null;
