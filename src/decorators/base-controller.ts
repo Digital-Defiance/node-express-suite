@@ -24,8 +24,9 @@ export abstract class DecoratorBaseController<
       // Bind validation function to preserve 'this' context and inject constants
       if (typeof validation === 'function') {
         const context: ValidationContext = { constants };
+        const originalValidation = validation;
         validation = ((lang: TLanguage) => {
-          return (validation as (this: ValidationContext, lang: TLanguage) => any).call(context, lang);
+          return (originalValidation as (this: ValidationContext, lang: TLanguage) => any).call(context, lang);
         }) as typeof validation;
       }
 
