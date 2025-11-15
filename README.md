@@ -1111,6 +1111,10 @@ The following v1.x patterns still work in v2.0:
 
 ## ChangeLog
 
+### Version 2.2.7
+
+- Working on handleable error handling
+
 ### Version 2.2.6
 
 - Working on handleable error handling

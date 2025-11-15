@@ -133,49 +133,33 @@ export class Application<
           res: Response,
           next: NextFunction,
         ) => {
-          if (res.headersSent) {
+          if (res.headersSent || (err as any)._errorHandlerProcessing) {
             return;
           }
-          
-          if ((err as any)._errorHandlerProcessing) {
-            res.status(500).json({
-              message: engine.translate(
-                SuiteCoreComponentId,
-                SuiteCoreStringKey.Error_RecursiveErrorHandlingDetected,
-              ),
-              error: { message: String(err.message || 'Unknown error') },
-            });
-            return;
-          }
-          
           (err as any)._errorHandlerProcessing = true;
           
-          try {
-            const handleableError =
-              err instanceof HandleableError
-                ? err
-                : new HandleableError(
-                    new Error(
-                      err.message ||
-                        engine.translate(
-                          SuiteCoreComponentId,
-                          SuiteCoreStringKey.Common_UnexpectedError,
-                        ),
-                    ),
-                    { cause: err },
-                  );
-            handleError(handleableError, res, sendApiMessageResponse, () => {});
-          } catch (handlerError) {
-            if (!res.headersSent) {
+          const safeHandle = () => {
+            try {
+              const handleableError =
+                err instanceof HandleableError
+                  ? err
+                  : new HandleableError(err instanceof Error ? err : new Error(String(err)), { cause: err });
+              handleError(handleableError, res, sendApiMessageResponse, () => {});
+            } catch {
               res.status(500).json({
                 message: engine.translate(
                   SuiteCoreComponentId,
                   SuiteCoreStringKey.Error_RecursiveErrorHandlingDetected,
                 ),
-                error: { message: String(err.message || 'Unknown error') },
+                error: { message: err instanceof Error ? err.message : engine.translate(
+                  SuiteCoreComponentId,
+                  SuiteCoreStringKey.Common_UnexpectedError,
+                ) },
               });
             }
-          }
+          };
+          
+          setImmediate(safeHandle);
         },
       );
 
