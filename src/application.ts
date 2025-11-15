@@ -136,6 +136,20 @@ export class Application<
           if (res.headersSent) {
             return;
           }
+          
+          if ((err as any)._errorHandlerProcessing) {
+            res.status(500).json({
+              message: engine.translate(
+                SuiteCoreComponentId,
+                SuiteCoreStringKey.Error_RecursiveErrorHandlingDetected,
+              ),
+              error: { message: String(err.message || 'Unknown error') },
+            });
+            return;
+          }
+          
+          (err as any)._errorHandlerProcessing = true;
+          
           try {
             const handleableError =
               err instanceof HandleableError
@@ -158,10 +172,7 @@ export class Application<
                   SuiteCoreComponentId,
                   SuiteCoreStringKey.Error_RecursiveErrorHandlingDetected,
                 ),
-                error: { message: err.message || engine.translate(
-                  SuiteCoreComponentId,
-                  SuiteCoreStringKey.Common_UnexpectedError,
-                ) },
+                error: { message: String(err.message || 'Unknown error') },
               });
             }
           }
