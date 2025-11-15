@@ -133,6 +133,9 @@ export class Application<
           res: Response,
           next: NextFunction,
         ) => {
+          if (res.headersSent) {
+            return;
+          }
           try {
             const handleableError =
               err instanceof HandleableError
@@ -147,9 +150,8 @@ export class Application<
                     ),
                     { cause: err },
                   );
-            handleError(handleableError, res, sendApiMessageResponse, next);
+            handleError(handleableError, res, sendApiMessageResponse, () => {});
           } catch (handlerError) {
-            // Prevent infinite recursion by sending a simple error response
             if (!res.headersSent) {
               res.status(500).json({
                 message: engine.translate(
