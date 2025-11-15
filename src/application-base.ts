@@ -434,6 +434,9 @@ export class BaseApplication<
       }
       return accountDataResult.data;
     } else {
+      if (this._environment.detailedDebug && accountDataResult.error) {
+        debugLog(true, 'log', accountDataResult.error);
+      }
       throw new TranslatableSuiteError(
         SuiteCoreStringKey.Admin_Error_FailedToInitializeUserDatabase,
       );

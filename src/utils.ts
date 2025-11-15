@@ -633,11 +633,6 @@ export function handleError(
     sendErrorResponse(error, handleableError, errorType, send, res);
     handleableError.handled = true;
   }
-
-  if (!alreadyHandled) {
-    handleableError.handled = true;
-    next(handleableError);
-  }
 }
 
 export function locatePEMRoot(devRootDir: string): string | undefined {
