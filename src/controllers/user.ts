@@ -239,9 +239,11 @@ export class UserController<
 
   @Post('/register', {
     schema: RegisterSchema,
-    validation: function(validationLanguage: TLanguage) { return [
+    validation: function(validationLanguage: TLanguage) {
+      const constants = this.constants;
+      return [
       body('username')
-        .matches(this.constants.UsernameRegex)
+        .matches(constants.UsernameRegex)
         .withMessage(
           getSuiteCoreTranslation(
             SuiteCoreStringKey.Validation_UsernameRegexErrorTemplate,
@@ -270,7 +272,7 @@ export class UserController<
         ),
       body('password')
         .optional()
-        .matches(this.constants.PasswordRegex)
+        .matches(constants.PasswordRegex)
         .withMessage(
           getSuiteCoreTranslation(
             SuiteCoreStringKey.Validation_PasswordRegexErrorTemplate,
@@ -347,7 +349,9 @@ export class UserController<
   }
 
   @Post('/account-verification', {
-    validation: function(validationLanguage: TLanguage) { return [
+    validation: function(validationLanguage: TLanguage) {
+      const constants = this.constants;
+      return [
       body('token')
         .not()
         .isEmpty()
@@ -358,7 +362,7 @@ export class UserController<
             validationLanguage,
           ),
         )
-        .matches(new RegExp(`^[a-f0-9]{${this.constants.EmailTokenLength * 2}}$`))
+        .matches(new RegExp(`^[a-f0-9]{${constants.EmailTokenLength * 2}}$`))
         .withMessage(
           getSuiteCoreTranslation(
             SuiteCoreStringKey.Validation_InvalidToken,
@@ -491,7 +495,9 @@ export class UserController<
   @Post('/backup-codes', {
     auth: true,
     cryptoAuth: true,
-    validation: function(validationLanguage: TLanguage) { return [
+    validation: function(validationLanguage: TLanguage) {
+      const constants = this.constants;
+      return [
       body().custom((value, { req }) => {
         if (!req.body?.password && !req.body?.mnemonic) {
           throw new MnemonicOrPasswordRequiredError();
@@ -518,7 +524,7 @@ export class UserController<
             validationLanguage,
           ),
         )
-        .matches(this.constants.MnemonicRegex)
+        .matches(constants.MnemonicRegex)
         .withMessage(
           getSuiteCoreTranslation(
             SuiteCoreStringKey.Validation_MnemonicRegex,
@@ -640,7 +646,9 @@ export class UserController<
 
   @Post('/change-password', {
     auth: true,
-    validation: function(validationLanguage: TLanguage) { return [
+    validation: function(validationLanguage: TLanguage) {
+      const constants = this.constants;
+      return [
       body('currentPassword')
         .notEmpty()
         .withMessage(
@@ -651,7 +659,7 @@ export class UserController<
           ),
         ),
       body('newPassword')
-        .matches(this.constants.PasswordRegex)
+        .matches(constants.PasswordRegex)
         .withMessage(
           getSuiteCoreTranslation(
             SuiteCoreStringKey.Validation_PasswordRegexErrorTemplate,
@@ -737,7 +745,9 @@ export class UserController<
 
   @Post('/direct-challenge', {
     schema: DirectLoginChallengeSchema,
-    validation: function(validationLanguage: TLanguage) { return [
+    validation: function(validationLanguage: TLanguage) {
+      const constants = this.constants;
+      return [
       body('challenge')
         .not()
         .isEmpty()
@@ -778,7 +788,7 @@ export class UserController<
       }),
       body('username')
         .optional()
-        .matches(this.constants.UsernameRegex)
+        .matches(constants.UsernameRegex)
         .withMessage(
           getSuiteCoreTranslation(
             SuiteCoreStringKey.Validation_UsernameRegexErrorTemplate,
@@ -841,7 +851,9 @@ export class UserController<
   }
 
   @Post('/request-email-login', {
-    validation: function(validationLanguage: TLanguage) { return [
+    validation: function(validationLanguage: TLanguage) {
+      const constants = this.constants;
+      return [
       body().custom((value, { req }) => {
         if (!req.body.username && !req.body.email) {
           throw new UsernameOrEmailRequiredError();
@@ -850,7 +862,7 @@ export class UserController<
       }),
       body('username')
         .optional()
-        .matches(this.constants.UsernameRegex)
+        .matches(constants.UsernameRegex)
         .withMessage(
           getSuiteCoreTranslation(
             SuiteCoreStringKey.Validation_UsernameRegexErrorTemplate,
@@ -910,7 +922,9 @@ export class UserController<
 
   @Post('/email-challenge', {
     schema: EmailLoginChallengeSchema,
-    validation: function(validationLanguage: TLanguage) { return [
+    validation: function(validationLanguage: TLanguage) {
+      const constants = this.constants;
+      return [
       body('token')
         .not()
         .isEmpty()
@@ -921,7 +935,7 @@ export class UserController<
             validationLanguage,
           ),
         )
-        .matches(new RegExp(`^[a-f0-9]{${this.constants.EmailTokenLength * 2}}$`))
+        .matches(new RegExp(`^[a-f0-9]{${constants.EmailTokenLength * 2}}$`))
         .withMessage(
           getSuiteCoreTranslation(
             SuiteCoreStringKey.Validation_InvalidToken,
@@ -947,7 +961,7 @@ export class UserController<
       }),
       body('username')
         .optional()
-        .matches(this.constants.UsernameRegex)
+        .matches(constants.UsernameRegex)
         .withMessage(
           getSuiteCoreTranslation(
             SuiteCoreStringKey.Validation_UsernameRegexErrorTemplate,
@@ -1008,7 +1022,9 @@ export class UserController<
   }
 
   @Post('/resend-verification', {
-    validation: function(validationLanguage: TLanguage) { return [
+    validation: function(validationLanguage: TLanguage) {
+      const constants = this.constants;
+      return [
       body().custom((value, { req }) => {
         if (!req.body.username && !req.body.email) {
           throw new UsernameOrEmailRequiredError();
@@ -1018,7 +1034,7 @@ export class UserController<
       body('username')
         .optional()
         .isString()
-        .matches(this.constants.UsernameRegex)
+        .matches(constants.UsernameRegex)
         .withMessage(
           getSuiteCoreTranslation(
             SuiteCoreStringKey.Validation_UsernameRegexErrorTemplate,
@@ -1083,11 +1099,13 @@ export class UserController<
   }
 
   @Post('/backup-code', {
-    validation: function(validationLanguage: TLanguage) { return [
+    validation: function(validationLanguage: TLanguage) {
+      const constants = this.constants;
+      return [
       body('email').optional().isEmail(),
       body('username')
         .optional()
-        .matches(this.constants.UsernameRegex)
+        .matches(constants.UsernameRegex)
         .withMessage(
           getSuiteCoreTranslation(
             SuiteCoreStringKey.Validation_UsernameRegexErrorTemplate,
@@ -1099,8 +1117,8 @@ export class UserController<
         .custom((value) => {
           const normalized = BackupCode.normalizeCode(value);
           return (
-            this.constants.BACKUP_CODES.DisplayRegex.test(value) ||
-            this.constants.BACKUP_CODES.NormalizedHexRegex.test(normalized)
+            constants.BACKUP_CODES.DisplayRegex.test(value) ||
+            constants.BACKUP_CODES.NormalizedHexRegex.test(normalized)
           );
         })
         .withMessage(
@@ -1113,7 +1131,7 @@ export class UserController<
       body('recoverMnemonic').isBoolean().optional(),
       body('newPassword')
         .optional()
-        .matches(this.constants.PasswordRegex)
+        .matches(constants.PasswordRegex)
         .withMessage(
           getSuiteCoreTranslation(
             SuiteCoreStringKey.Validation_PasswordRegexErrorTemplate,
@@ -1166,24 +1184,8 @@ export class UserController<
 
         let mnemonic: SecureString | undefined;
         if (recoverMnemonic) {
-          const memberType = await this.roleService.getMemberType(
-            updatedUserDoc,
-            sess,
-          );
-          const freshUser = new BackendMember(
-            this.eciesService,
-            memberType,
-            updatedUserDoc.username,
-            new EmailString(updatedUserDoc.email),
-            Buffer.from(updatedUserDoc.publicKey, 'hex'),
-            user.privateKey,
-            undefined,
-            updatedUserDoc._id,
-            new Date(updatedUserDoc.createdAt),
-            new Date(updatedUserDoc.updatedAt),
-          );
           mnemonic = await this.userService.recoverMnemonic(
-            freshUser,
+            user,
             updatedUserDoc.mnemonicRecovery,
           );
         }
@@ -1320,7 +1322,9 @@ export class UserController<
   }
 
   @Post('/reset-password', {
-    validation: function(validationLanguage: TLanguage) { return [
+    validation: function(validationLanguage: TLanguage) {
+      const constants = this.constants;
+      return [
       body('token')
         .not()
         .isEmpty()
@@ -1331,7 +1335,7 @@ export class UserController<
             validationLanguage,
           ),
         )
-        .matches(new RegExp(`^[a-f0-9]{${this.constants.EmailTokenLength * 2}}$`))
+        .matches(new RegExp(`^[a-f0-9]{${constants.EmailTokenLength * 2}}$`))
         .withMessage(
           getSuiteCoreTranslation(
             SuiteCoreStringKey.Validation_InvalidToken,
@@ -1349,7 +1353,7 @@ export class UserController<
             validationLanguage,
           ),
         )
-        .matches(this.constants.PasswordRegex)
+        .matches(constants.PasswordRegex)
         .withMessage(
           getSuiteCoreTranslation(
             SuiteCoreStringKey.Validation_PasswordRegexErrorTemplate,
@@ -1367,7 +1371,7 @@ export class UserController<
             validationLanguage,
           ),
         )
-        .matches(this.constants.PasswordRegex)
+        .matches(constants.PasswordRegex)
         .withMessage(
           getSuiteCoreTranslation(
             SuiteCoreStringKey.Validation_PasswordRegexErrorTemplate,

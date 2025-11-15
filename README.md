@@ -1111,6 +1111,20 @@ The following v1.x patterns still work in v2.0:
 
 ## ChangeLog
 
+### Version 2.2.3
+
+- Fix user controller
+
+### Version 2.2.2
+
+- Fix Handleable loop
+- Print db init failures in application base
+
+### Version 2.2.1
+
+- Library upgrade for ecies, etc
+- Testing improvements
+
 ### Version 2.1.67
 
 - Print server init results on dev init
