@@ -974,7 +974,7 @@ export class UserService<
       new Date(userDoc.updatedAt),
       userDoc.createdBy,
     );
-    if ((privateKey?.originalLength ?? -1) > 0 && user.hasPrivateKey) {
+    if ((privateKey?.originalLength ?? -1) > 0 && user.hasPrivateKey && !wallet) {
       user.loadWallet(
         mnemonic ?? this.recoverMnemonic(user, userDoc.mnemonicRecovery),
       );
@@ -1019,15 +1019,6 @@ export class UserService<
         throw new InvalidCredentialsError();
       }
       const computedHmac = this.mnemonicService.getMnemonicHmac(mnemonic);
-      console.log('Debug mnemonic auth:', {
-        userDocId: userDoc._id.toString(),
-        userDocEmail: userDoc.email,
-        userDocUsername: userDoc.username,
-        mnemonicDocId: mnemonicDoc._id?.toString(),
-        storedHmac: mnemonicDoc.hmac,
-        computedHmac,
-        mnemonicsMatch: computedHmac === mnemonicDoc.hmac,
-      });
       if (computedHmac !== mnemonicDoc.hmac) {
         throw new InvalidCredentialsError();
       }
@@ -1078,6 +1069,7 @@ export class UserService<
       if (!isSignatureValid || !nonce.equals(decryptedNonce)) {
         throw new InvalidCredentialsError();
       }
+
 
       return {
         userMember,

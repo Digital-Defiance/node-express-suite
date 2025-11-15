@@ -184,7 +184,10 @@ export async function authenticateCrypto<
       err instanceof Error
         ? err.message.replace(/[\r\n]/g, ' ')
         : String(err).replace(/[\r\n]/g, ' ');
-    console.error('Unexpected error in authenticateCrypto:', sanitizedErr);
+    console.error(`${getSuiteCoreTranslation(SuiteCoreStringKey.Error_UnexpectedErrorInAuthenticateCrypto)}:`, sanitizedErr);
+    if (err instanceof Error && err.stack) {
+      console.error(`${getSuiteCoreTranslation(SuiteCoreStringKey.Common_StackTrace)}:`, err.stack);
+    }
     return res.status(500).send({
       // amazonq-ignore-next-line false positive, hardcoded string
       message: getSuiteCoreTranslation(
