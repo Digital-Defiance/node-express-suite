@@ -11,6 +11,7 @@ describe('RequestUserService', () => {
         username: 'testuser',
         timezone: 'UTC',
         emailVerified: true,
+        darkMode: false,
         siteLanguage: 'en',
       } as any;
 
@@ -45,6 +46,7 @@ describe('RequestUserService', () => {
         username: 'testuser',
         timezone: 'UTC',
         emailVerified: true,
+        darkMode: false,
         siteLanguage: 'en',
         roles: [],
       } as any;
@@ -61,6 +63,7 @@ describe('RequestUserService', () => {
         username: 'testuser',
         timezone: 'UTC',
         emailVerified: true,
+        darkMode: false,
         siteLanguage: 'en',
         roles: [],
         lastLogin: new Date().toISOString(),

@@ -1111,6 +1111,14 @@ The following v1.x patterns still work in v2.0:
 
 ## ChangeLog
 
+### Version 2.2.10
+
+- Add darkMode user preference
+
+### Version 2.2.9
+
+- fix authenticateCrypto
+
 ### Version 2.2.8
 
 - Changes to base controller

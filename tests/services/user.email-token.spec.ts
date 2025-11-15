@@ -263,6 +263,7 @@ describe('UserService.verifyAccountTokenAndComplete', () => {
       _id: 'uid',
       email: 'old@example.com',
       emailVerified: false,
+      darkMode: false,
       accountStatus: AccountStatus.PendingEmailVerification,
       save: jest.fn(),
     };

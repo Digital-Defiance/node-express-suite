@@ -650,6 +650,7 @@ export class UserService<
       ...newUser,
       email: newUser.email.toLowerCase(),
       emailVerified: false,
+      darkMode: false,
       accountStatus: AccountStatus.PendingEmailVerification,
       siteLanguage: 'en-US',
       duressPasswords: [],

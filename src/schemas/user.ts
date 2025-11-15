@@ -98,6 +98,14 @@ export function createUserSchema<T extends IConstants = IConstants>(
         default: LanguageCodes.EN_US,
         required: true,
       },
+      /**
+       * Whether the user prefers dark mode
+       */
+      darkMode: {
+        type: Boolean,
+        default: false,
+        required: true,
+      },
       directChallenge: {
         type: Boolean,
         default: false,

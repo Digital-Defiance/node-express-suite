@@ -47,4 +47,8 @@ export interface IRequestUser<
    * Whether the user has verified their email address
    */
   emailVerified: boolean;
+  /**
+   * Whether the user prefers dark mode
+   */
+  darkMode: boolean;
 }

@@ -26,6 +26,7 @@ export class RequestUserService<I, TTokenRole extends ITokenRole<I>> {
       timezone: userDoc.timezone,
       ...(userDoc.lastLogin && { lastLogin: userDoc.lastLogin.toString() }),
       emailVerified: userDoc.emailVerified,
+      darkMode: userDoc.darkMode,
       siteLanguage: userDoc.siteLanguage as string,
     } as TRequestUserDTO;
   }
@@ -50,6 +51,7 @@ export class RequestUserService<I, TTokenRole extends ITokenRole<I>> {
       username: requestUser.username,
       timezone: requestUser.timezone,
       emailVerified: requestUser.emailVerified,
+      darkMode: requestUser.darkMode,
       siteLanguage: requestUser.siteLanguage,
     };
 

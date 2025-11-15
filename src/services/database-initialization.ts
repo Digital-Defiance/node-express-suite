@@ -724,6 +724,7 @@ export abstract class DatabaseInitializationService {
                 timezone: application.environment.timezone,
                 siteLanguage: 'en-US',
                 emailVerified: true,
+                darkMode: false,
                 accountStatus: AccountStatus.Active,
                 createdAt: now,
                 updatedAt: now,
