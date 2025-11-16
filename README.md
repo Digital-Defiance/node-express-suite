@@ -1111,7 +1111,7 @@ The following v1.x patterns still work in v2.0:
 
 ## ChangeLog
 
-### Version 2.2.13
+### Version 2.2.14
 
 - Enable directChallenge login by default
 

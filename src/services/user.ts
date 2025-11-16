@@ -18,6 +18,7 @@ import {
   AccountLockedError,
   AccountStatus,
   AccountStatusError,
+  DirectChallengeNotEnabledError,
   EmailInUseError,
   EmailTokenExpiredError,
   EmailTokenFailedToSendError,
@@ -1984,7 +1985,7 @@ export class UserService<
         }
 
         if (userDoc.directChallenge !== true) {
-          throw new InvalidChallengeResponseError();
+          throw new DirectChallengeNotEnabledError();
         }
 
         // if the user is valid, try to use the token (prevents replay attacks)
