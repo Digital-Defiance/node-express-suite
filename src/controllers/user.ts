@@ -175,13 +175,29 @@ export class UserController<
         },
       );
     }
+    const user = {
+      id: req.user.id,
+      email: req.user.email,
+      username: req.user.username,
+      roles: req.user.roles?.map((r: any) => ({
+        id: r.id,
+        name: r.name,
+        admin: r.admin,
+        ...(r.description && { description: r.description }),
+      })) || [],
+      timezone: req.user.timezone,
+      emailVerified: req.user.emailVerified,
+      darkMode: req.user.darkMode,
+      siteLanguage: req.user.siteLanguage,
+      ...(req.user.lastLogin && { lastLogin: req.user.lastLogin }),
+    };
     return {
       statusCode: 200,
       response: {
         message: getSuiteCoreTranslation(
           SuiteCoreStringKey.Validation_TokenValid,
         ),
-        user: req.user,
+        user,
       },
     };
   }
