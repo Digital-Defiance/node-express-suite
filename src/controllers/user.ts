@@ -181,7 +181,7 @@ export class UserController<
         message: getSuiteCoreTranslation(
           SuiteCoreStringKey.Validation_TokenValid,
         ),
-        user: req.user,
+        user: req.user.toObject ? req.user.toObject() : req.user,
       },
     };
   }
