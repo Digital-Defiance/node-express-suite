@@ -1111,6 +1111,11 @@ The following v1.x patterns still work in v2.0:
 
 ## ChangeLog
 
+### Version 2.2.15
+
+- Add this.name to errors
+- Update suite-core-lib
+
 ### Version 2.2.14
 
 - Enable directChallenge login by default

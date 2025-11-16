@@ -6,6 +6,6 @@ import {
 export class InvalidModelError extends TranslatableSuiteError {
   constructor(public readonly modelKey: string) {
     super(SuiteCoreStringKey.Error_InvalidModelKeyTemplate, { modelKey });
-    this.name = 'ModelNotRegisteredError';
+    this.name = 'InvalidModelError';
   }
 }

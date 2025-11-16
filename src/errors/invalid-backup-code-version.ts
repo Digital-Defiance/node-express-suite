@@ -10,5 +10,6 @@ export class InvalidBackupCodeVersionError extends TranslatableSuiteError {
       version,
     });
     this.version = version;
+    this.name = 'InvalidBackupCodeVersionError';
   }
 }

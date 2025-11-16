@@ -8,5 +8,6 @@ export class MnemonicOrPasswordRequiredError extends TranslatableSuiteHandleable
     super(SuiteCoreStringKey.Validation_MnemonicOrPasswordRequired, {
       statusCode: 422,
     });
+    this.name = 'MnemonicOrPasswordRequiredError';
   }
 }

@@ -6,5 +6,6 @@ import {
 export class TokenExpiredError extends TranslatableSuiteError {
   constructor() {
     super(SuiteCoreStringKey.Validation_TokenExpired, { statusCode: 401 });
+    this.name = 'TokenExpiredError';
   }
 }
