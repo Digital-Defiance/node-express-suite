@@ -657,7 +657,7 @@ export class UserService<
       publicKey: '',
       backupCodes,
       mnemonicRecovery: encryptedMnemonic,
-      directChallenge: false,
+      directChallenge: true,
       createdAt: new Date(),
       createdBy: createdBy,
       updatedAt: new Date(),

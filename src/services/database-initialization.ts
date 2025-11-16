@@ -726,6 +726,7 @@ export abstract class DatabaseInitializationService {
                 emailVerified: true,
                 darkMode: false,
                 accountStatus: AccountStatus.Active,
+                directChallenge: true, // allow direct challenge login by default
                 createdAt: now,
                 updatedAt: now,
                 createdBy: systemUserId,

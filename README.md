@@ -1111,6 +1111,10 @@ The following v1.x patterns still work in v2.0:
 
 ## ChangeLog
 
+### Version 2.2.13
+
+- Enable directChallenge login by default
+
 ### Version 2.2.11
 
 - Fix req.user serialization
