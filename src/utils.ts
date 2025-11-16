@@ -581,7 +581,11 @@ function sendErrorResponse<TStringKey extends keyof RequiredStringKeys>(
       handleableError.statusCode,
       {
         message: handleableError.message,
-        error: handleableError,
+        error: {
+          message: handleableError.message,
+          statusCode: handleableError.statusCode,
+          ...(handleableError.stack && { stack: handleableError.stack }),
+        },
         errorType: errorType,
       },
       res,

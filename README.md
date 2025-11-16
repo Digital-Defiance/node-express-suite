@@ -1111,6 +1111,11 @@ The following v1.x patterns still work in v2.0:
 
 ## ChangeLog
 
+### Version 2.2.11
+
+- Fix req.user serialization
+- Update suite-core-lib
+
 ### Version 2.2.10
 
 - Add darkMode user preference
