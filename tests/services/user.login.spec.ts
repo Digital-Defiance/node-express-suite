@@ -12,6 +12,7 @@ import {
   AccountLockedError,
   AccountStatus,
   InvalidCredentialsError,
+  PasswordLoginNotEnabledError,
 } from '@digitaldefiance/suite-core-lib';
 import { Document, Model } from 'mongoose';
 import { BaseModelName } from '../../src/enumerations/base-model-name';
@@ -180,10 +181,10 @@ describe('UserService.loginWithPassword', () => {
     );
   });
 
-  it('throws InvalidCredentialsError when passwordWrappedPrivateKey or mnemonicId missing', async () => {
+  it('throws PasswordLoginNotEnabledError when passwordWrappedPrivateKey or mnemonicId missing', async () => {
     const svc = makeService({ accountStatus: AccountStatus.Active });
     await expect(svc.loginWithPassword(email, pwd)).rejects.toBeInstanceOf(
-      InvalidCredentialsError,
+      PasswordLoginNotEnabledError,
     );
   });
 

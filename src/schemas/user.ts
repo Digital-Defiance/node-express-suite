@@ -106,9 +106,12 @@ export function createUserSchema<T extends IConstants = IConstants>(
         default: false,
         required: true,
       },
+      /**
+       * Whether to enable direct challenge login for the user
+       */
       directChallenge: {
         type: Boolean,
-        default: false,
+        default: true,
         required: true,
       },
       /**

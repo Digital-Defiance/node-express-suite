@@ -34,6 +34,7 @@ import {
   EmailTokenSentTooRecentlyError,
   EmailVerifiedError,
   UserNotFoundError,
+  PasswordLoginNotEnabledError,
 } from '@digitaldefiance/suite-core-lib';
 import { SecureString, InvalidEmailError, InvalidEmailErrorType } from '@digitaldefiance/ecies-lib';
 import { Member as BackendMember } from '@digitaldefiance/node-ecies-lib';
@@ -1497,13 +1498,13 @@ describe('UserService', () => {
       expect(mockKeyWrappingService.unwrapSecretAsync).not.toHaveBeenCalled();
     });
 
-    it('should throw InvalidCredentialsError when credentials missing', async () => {
+    it('should throw PasswordLoginNotEnabledError when credentials missing', async () => {
       userDoc.passwordWrappedPrivateKey = undefined as any;
       setupPasswordQuery(userDoc);
 
       await expect(
         service.loginWithPassword('pw@example.com', 'StrongPass123!'),
-      ).rejects.toThrow(InvalidCredentialsError);
+      ).rejects.toThrow(PasswordLoginNotEnabledError);
     });
 
     it('should throw InvalidCredentialsError when user not found', async () => {

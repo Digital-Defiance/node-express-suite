@@ -273,9 +273,9 @@ describe('UserSchema validation with Mongoose', () => {
   });
 
   describe('boolean defaults', () => {
-    it('should default directChallenge to false', () => {
+    it('should default directChallenge to true', () => {
       const user = new UserModel(validUserData);
-      expect(user.directChallenge).toBe(false);
+      expect(user.directChallenge).toBe(true);
     });
 
     it('should default emailVerified to false', () => {

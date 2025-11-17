@@ -69,7 +69,7 @@ describe('UserSchema', () => {
       const defaults = {
         timezone: 'UTC',
         siteLanguage: LanguageCodes.EN_US,
-        directChallenge: false,
+        directChallenge: true,
         emailVerified: false,
         accountStatus: AccountStatus.PendingEmailVerification,
       };
