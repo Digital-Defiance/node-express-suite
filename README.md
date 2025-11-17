@@ -1111,6 +1111,10 @@ The following v1.x patterns still work in v2.0:
 
 ## ChangeLog
 
+### Version 2.2.21
+
+- Update libs
+
 ### Version 2.2.20
 
 - Add darkMode endpoint
