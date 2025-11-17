@@ -1111,6 +1111,10 @@ The following v1.x patterns still work in v2.0:
 
 ## ChangeLog
 
+### Version 2.2.18
+
+- Update suite-core-lib
+
 ### Version 2.2.17
 
 - Update suite-core-lib
