@@ -19,6 +19,7 @@ import {
   AccountStatus,
   AccountStatusError,
   DirectChallengeNotEnabledError,
+  PasswordLoginNotEnabledError,
   EmailInUseError,
   EmailTokenExpiredError,
   EmailTokenFailedToSendError,
@@ -1367,7 +1368,7 @@ export class UserService<
 
     // Check if user has password-based authentication set up (Option B requires passwordWrappedPrivateKey)
     if (!userDoc.passwordWrappedPrivateKey || !userDoc.mnemonicId) {
-      throw new InvalidCredentialsError();
+      throw new PasswordLoginNotEnabledError();
     }
     // Unwrap password-wrapped private key and complete challenge with possession of private key
     const unwrapped = await this.keyWrappingService.unwrapSecretAsync(
