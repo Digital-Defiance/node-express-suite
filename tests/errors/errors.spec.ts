@@ -54,6 +54,11 @@ describe('Error Classes', () => {
     it('should create error with model key', () => {
       const error = new InvalidModelError('User');
       expect(error.modelKey).toBe('User');
+      expect(error.name).toBe('InvalidModelError');
+    });
+    it('should create error with model name', () => {
+      const error = new ModelNotRegisteredError('User');
+      expect(error.modelName).toBe('User');
       expect(error.name).toBe('ModelNotRegisteredError');
     });
   });

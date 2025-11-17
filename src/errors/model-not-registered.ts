@@ -4,7 +4,7 @@ import {
 } from '@digitaldefiance/suite-core-lib';
 
 export class ModelNotRegisteredError extends TranslatableSuiteError {
-  constructor(modelName: string) {
+  constructor(public readonly modelName: string) {
     super(SuiteCoreStringKey.Error_ModelNotRegisteredTemplate, { modelName });
     this.name = 'ModelNotRegisteredError';
   }
