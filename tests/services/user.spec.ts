@@ -2300,5 +2300,51 @@ describe('UserService', () => {
       expect(findUserSpy).toHaveBeenCalledWith(undefined, 'directuser', undefined);
     });
   });
-});
 
+  describe('updateDarkMode', () => {
+    let withTransactionSpy: jest.SpyInstance;
+    let makeRequestUserDTOSpy: jest.SpyInstance;
+
+    beforeEach(() => {
+      withTransactionSpy = jest
+        .spyOn(service as any, 'withTransaction')
+        .mockImplementation(async (callback: any) => callback(undefined));
+      makeRequestUserDTOSpy = jest
+        .spyOn(RequestUserService, 'makeRequestUserDTO')
+        .mockReturnValue({ _id: 'user-id', darkMode: true } as any);
+      mockRoleService.getUserRoles.mockResolvedValue(['member'] as any);
+      mockRoleService.rolesToTokenRoles.mockReturnValue(['member']);
+    });
+
+    afterEach(() => {
+      withTransactionSpy.mockRestore();
+      makeRequestUserDTOSpy.mockRestore();
+    });
+
+    it('should update dark mode and return request user DTO', async () => {
+      const userDoc = { _id: new Types.ObjectId() };
+      const sessionMock = jest.fn().mockResolvedValue(userDoc);
+      mockUserModel.findByIdAndUpdate.mockReturnValue({ session: sessionMock });
+
+      const result = await service.updateDarkMode(userDoc._id.toString(), true);
+
+      expect(mockUserModel.findByIdAndUpdate).toHaveBeenCalledWith(
+        expect.any(Types.ObjectId),
+        { darkMode: true },
+        { new: true },
+      );
+      expect(mockRoleService.getUserRoles).toHaveBeenCalledWith(userDoc._id);
+      expect(makeRequestUserDTOSpy).toHaveBeenCalledWith(userDoc, ['member']);
+      expect(result).toEqual({ _id: 'user-id', darkMode: true });
+    });
+
+    it('should throw UserNotFoundError when update returns null', async () => {
+      const sessionMock = jest.fn().mockResolvedValue(null);
+      mockUserModel.findByIdAndUpdate.mockReturnValue({ session: sessionMock });
+
+      await expect(
+        service.updateDarkMode(new Types.ObjectId().toString(), false),
+      ).rejects.toThrow(UserNotFoundError);
+    });
+  });
+});

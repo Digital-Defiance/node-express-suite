@@ -1111,6 +1111,12 @@ The following v1.x patterns still work in v2.0:
 
 ## ChangeLog
 
+### Version 2.2.20
+
+- Add darkMode endpoint
+- Add user settings controller endpoint
+- Add user settings service function
+
 ### Version 2.2.19
 
 - Update suite-core-lib

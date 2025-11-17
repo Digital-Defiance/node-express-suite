@@ -659,6 +659,7 @@ export class UserService<
       publicKey: '',
       backupCodes,
       mnemonicRecovery: encryptedMnemonic,
+      currency: 'USD',
       directChallenge: true,
       createdAt: new Date(),
       createdBy: createdBy,
@@ -1622,6 +1623,112 @@ export class UserService<
         if (!userDoc) {
           throw new UserNotFoundError();
         }
+        const roles = await this.roleService.getUserRoles(userDoc._id);
+        const tokenRoles = this.roleService.rolesToTokenRoles(roles);
+        return RequestUserService.makeRequestUserDTO(userDoc, tokenRoles);
+      },
+      session,
+      {
+        timeoutMs: this.application.environment.mongo.transactionTimeout * 5,
+      },
+    );
+  }
+
+  /**
+   * Updates the user's Dark Mode preference
+   * @param userId - The ID of the user
+   * @param newDarkMode - The new Dark Mode preference
+   * @param session - The session to use for the query
+   * @returns The updated user
+   */
+  public async updateDarkMode(
+    userId: string,
+    newDarkMode: boolean,
+    session?: ClientSession,
+  ): Promise<IRequestUserDTO> {
+    return await this.withTransaction<IRequestUserDTO>(
+      async (sess: ClientSession | undefined) => {
+        const UserModel = ModelRegistry.instance.getTypedModel<IUserDocument>(
+          BaseModelName.User,
+        );
+        const userDoc = await UserModel.findByIdAndUpdate(
+          new Types.ObjectId(userId),
+          {
+            darkMode: newDarkMode,
+          },
+          { new: true },
+        ).session(sess ?? null);
+        if (!userDoc) {
+          throw new UserNotFoundError();
+        }
+        const roles = await this.roleService.getUserRoles(userDoc._id);
+        const tokenRoles = this.roleService.rolesToTokenRoles(roles);
+        return RequestUserService.makeRequestUserDTO(userDoc, tokenRoles);
+      },
+      session,
+      {
+        timeoutMs: this.application.environment.mongo.transactionTimeout * 5,
+      },
+    );
+  }
+
+  /**
+   * Updates multiple user settings at once
+   * @param userId - The ID of the user
+   * @param settings - Object containing settings to update
+   * @param session - The session to use for the query
+   * @returns The updated user
+   */
+  public async updateUserSettings(
+    userId: string,
+    settings: {
+      email?: string;
+      timezone?: string;
+      siteLanguage?: string;
+      currency?: string;
+      darkMode?: boolean;
+      directChallenge?: boolean;
+    },
+    session?: ClientSession,
+  ): Promise<IRequestUserDTO> {
+    return await this.withTransaction<IRequestUserDTO>(
+      async (sess: ClientSession | undefined) => {
+        const UserModel = ModelRegistry.instance.getTypedModel<IUserDocument>(
+          BaseModelName.User,
+        );
+        const userDoc = await UserModel.findById(new Types.ObjectId(userId)).session(sess ?? null);
+        if (!userDoc) {
+          throw new UserNotFoundError();
+        }
+
+        // Check if email is changing and if it's already in use
+        if (settings.email && settings.email.toLowerCase() !== userDoc.email.toLowerCase()) {
+          const existingUser = await UserModel.findOne({
+            email: settings.email.toLowerCase(),
+            _id: { $ne: userDoc._id },
+          }).session(sess ?? null);
+          if (existingUser) {
+            throw new EmailInUseError();
+          }
+          // Send verification email for new address
+          userDoc.email = settings.email.toLowerCase();
+          await this.createAndSendEmailTokenDirect(
+            userDoc,
+            EmailTokenType.AccountVerification,
+            sess!,
+            this.application.environment.debug,
+          );
+        }
+
+        // Update other settings
+        if (settings.timezone !== undefined) userDoc.timezone = settings.timezone;
+        if (settings.siteLanguage !== undefined) userDoc.siteLanguage = settings.siteLanguage;
+        if (settings.darkMode !== undefined) userDoc.darkMode = settings.darkMode;
+        if (settings.currency !== undefined) userDoc.currency = settings.currency;
+        if (settings.directChallenge !== undefined) userDoc.directChallenge = settings.directChallenge;
+
+        await userDoc.save({ session: sess });
+
         const roles = await this.roleService.getUserRoles(userDoc._id);
         const tokenRoles = this.roleService.rolesToTokenRoles(roles);
         return RequestUserService.makeRequestUserDTO(userDoc, tokenRoles);

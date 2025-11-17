@@ -2,7 +2,6 @@
 
 import {
   ECIES,
-  EmailString,
   SecureString,
   UINT64_SIZE,
 } from '@digitaldefiance/ecies-lib';
@@ -34,10 +33,8 @@ import { z } from 'zod';
 import { BackupCode } from '../backup-code';
 import { DecoratorBaseController } from '../decorators/base-controller';
 import { Controller, Get, Post } from '../decorators/controller';
-import { IBaseDocument } from '../documents';
 import { IUserDocument } from '../documents/user';
 import { BaseModelName } from '../enumerations/base-model-name';
-import { Environment } from '../environment';
 import { MnemonicOrPasswordRequiredError } from '../errors/mnemonic-or-password-required';
 import {
   IApiChallengeResponse,
@@ -47,7 +44,6 @@ import {
   IApiMnemonicResponse,
   IApiRegistrationResponse,
   IApiRequestUserResponse,
-  IConstants,
 } from '../interfaces';
 import { IApiBackupCodesResponse } from '../interfaces/api-responses/backup-codes-response';
 import type { IApplication } from '../interfaces/application';
@@ -186,9 +182,11 @@ export class UserController<
         ...(r.description && { description: r.description }),
       })) || [],
       timezone: req.user.timezone,
+      currency: req.user.currency,
       emailVerified: req.user.emailVerified,
       darkMode: req.user.darkMode,
       siteLanguage: req.user.siteLanguage,
+      directChallenge: req.user.directChallenge,
       ...(req.user.lastLogin && { lastLogin: req.user.lastLogin }),
     };
     return {
@@ -471,6 +469,174 @@ export class UserController<
           response: {
             message: getSuiteCoreTranslation(
               SuiteCoreStringKey.LanguageUpdate_Success,
+            ),
+            user,
+          },
+        };
+      },
+    );
+  }
+
+  @Post('/dark-mode', {
+    auth: true,
+    validation: function(validationLanguage: TLanguage) { return [
+      body('darkMode')
+        .isBoolean()
+        .withMessage(
+          getSuiteCoreTranslation(
+            SuiteCoreStringKey.Validation_Required,
+            undefined,
+            validationLanguage,
+          ),
+        ),
+    ]; },
+  })
+  async setDarkMode(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<IStatusCodeResponse<IApiRequestUserResponse | ApiErrorResponse>> {
+    return await withTransaction(
+      this.application.db.connection,
+      this.application.environment.mongo.useTransactions,
+      undefined,
+      async (sess) => {
+        const { darkMode } = this.validatedBody;
+        if (!req.user) {
+          throw new HandleableError(
+            new Error(
+              getSuiteCoreTranslation(
+                SuiteCoreStringKey.Common_NoUserOnRequest,
+              ),
+            ),
+            { statusCode: 401 },
+          );
+        }
+
+        const user = await this.userService.updateDarkMode(
+          req.user.id,
+          darkMode as boolean,
+          sess,
+        );
+
+        return {
+          statusCode: 200,
+          response: {
+            message: 'Dark mode updated successfully',
+            user,
+          },
+        };
+      },
+    );
+  }
+
+  @Post('/settings', {
+    auth: true,
+    validation: function(validationLanguage: TLanguage) { return [
+      body('email')
+        .optional()
+        .isEmail()
+        .withMessage(
+          getSuiteCoreTranslation(
+            SuiteCoreStringKey.Validation_InvalidEmail,
+            undefined,
+            validationLanguage,
+          ),
+        ),
+      body('timezone')
+        .optional()
+        .isString()
+        .custom((value) => isValidTimezone(value))
+        .withMessage(
+          getSuiteCoreTranslation(
+            SuiteCoreStringKey.Validation_TimezoneInvalid,
+            undefined,
+            validationLanguage,
+          ),
+        ),
+      body('siteLanguage')
+        .optional()
+        .isString()
+        .isIn(Object.values(LanguageCodes))
+        .withMessage(
+          getSuiteCoreTranslation(
+            SuiteCoreStringKey.Validation_InvalidLanguage,
+            undefined,
+            validationLanguage,
+          ),
+        ),
+      body('currency')
+        .optional()
+        .isString()
+        .withMessage(
+          getSuiteCoreTranslation(
+            SuiteCoreStringKey.Validation_CurrencyCodeRequired,
+            undefined,
+            validationLanguage,
+          ),
+        ),
+      body('darkMode')
+        .optional()
+        .isBoolean()
+        .withMessage(
+          getSuiteCoreTranslation(
+            SuiteCoreStringKey.Validation_Required,
+            undefined,
+            validationLanguage,
+          ),
+        ),
+      body('directChallenge')
+        .optional()
+        .isBoolean()
+        .withMessage(
+          getSuiteCoreTranslation(
+            SuiteCoreStringKey.Validation_Required,
+            undefined,
+            validationLanguage,
+          ),
+        ),
+    ]; },
+  })
+  async updateSettings(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<IStatusCodeResponse<IApiRequestUserResponse | ApiErrorResponse>> {
+    return await withTransaction(
+      this.application.db.connection,
+      this.application.environment.mongo.useTransactions,
+      undefined,
+      async (sess) => {
+        const { email, timezone, siteLanguage, currency, darkMode, directChallenge } = this.validatedBody;
+        if (!req.user) {
+          throw new HandleableError(
+            new Error(
+              getSuiteCoreTranslation(
+                SuiteCoreStringKey.Common_NoUserOnRequest,
+              ),
+            ),
+            { statusCode: 401 },
+          );
+        }
+
+        const user = await this.userService.updateUserSettings(
+          req.user.id,
+          {
+            ...(email !== undefined && { email: email as string }),
+            ...(timezone !== undefined && { timezone: timezone as string }),
+            ...(siteLanguage !== undefined && { siteLanguage: siteLanguage as string }),
+            ...(currency !== undefined && { currency: currency as string }),
+            ...(darkMode !== undefined && { darkMode: darkMode as boolean }),
+            ...(directChallenge !== undefined && { directChallenge: directChallenge as boolean }),
+          },
+          sess,
+        );
+
+        return {
+          statusCode: 200,
+          response: {
+            message: getSuiteCoreTranslation(
+              SuiteCoreStringKey.Settings_SaveSuccess,
             ),
             user,
           },
