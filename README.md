@@ -1128,6 +1128,20 @@ The following v1.x patterns still work in v2.0:
 
 ## ChangeLog
 
+### Version 2.2.24
+
+- Update user schema for currency
+- Update request user function for currency
+
+### Version 2.2.23
+
+- Documentation, library updates
+
+### Version 2.2.22
+
+- Documentation, library updates
+- Add settings endpoint
+
 ### Version 2.2.21
 
 - Update libs

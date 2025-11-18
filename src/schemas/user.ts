@@ -4,6 +4,7 @@ import {
   getSuiteCoreTranslation,
   SuiteCoreStringKey,
 } from '@digitaldefiance/suite-core-lib';
+import { codes } from 'currency-codes';
 import { Schema } from 'mongoose';
 import validator from 'validator';
 import { LocalhostConstants as AppConstants } from '../constants';
@@ -18,6 +19,7 @@ export function createUserSchema<T extends IConstants = IConstants>(
   usernameValidationMessage?: () => string,
   emailValidationMessage?: () => string,
   timezoneValidationMessage?: () => string,
+  currencyValidationMessage?: () => string,
   supportedLanguages?: readonly string[],
   constants: T = AppConstants as T,
 ): Schema<IUserDocument> {
@@ -88,6 +90,21 @@ export function createUserSchema<T extends IConstants = IConstants>(
                 { timezone: props.value },
               )),
         },
+      },
+      currency: {
+        type: String,
+        required: true,
+        default: 'USD',
+        validate: {
+          validator: function (v: string) {
+            return Object.values(codes).includes(v);
+          },
+          message: currencyValidationMessage || ((props: { value: string }) =>
+            getSuiteCoreTranslation(
+              SuiteCoreStringKey.Common_NotValidCurrencyTemplate,
+              { currency: props.value },
+            )),
+        }
       },
       /**
        * The language of the site for the user

@@ -24,10 +24,12 @@ export class RequestUserService<I, TTokenRole extends ITokenRole<I>> {
       roles: roles.map((r) => RoleService.roleToRoleDTO(r)),
       username: userDoc.username,
       timezone: userDoc.timezone,
-      ...(userDoc.lastLogin && { lastLogin: userDoc.lastLogin.toString() }),
+      currency: userDoc.currency,
+      directChallenge: userDoc.directChallenge,
       emailVerified: userDoc.emailVerified,
       darkMode: userDoc.darkMode,
       siteLanguage: userDoc.siteLanguage as string,
+      ...(userDoc.lastLogin && { lastLogin: userDoc.lastLogin.toString() }),
     } as TRequestUserDTO;
   }
 
