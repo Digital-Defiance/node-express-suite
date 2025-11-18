@@ -5,6 +5,7 @@ This directory contains comprehensive documentation for `@digitaldefiance/node-e
 ## Available Documentation
 
 ### ✅ Core Architecture
+
 - **[INDEX.md](./INDEX.md)** - Complete documentation index
 - **[ARCHITECTURE.md](./ARCHITECTURE.md)** - System architecture and design patterns
 - **[CONTROLLERS.md](./CONTROLLERS.md)** - Controller system with decorators
@@ -18,21 +19,25 @@ This directory contains comprehensive documentation for `@digitaldefiance/node-e
 The following components are documented within the files above:
 
 #### Application & Infrastructure
+
 - **Application Classes** - See [ARCHITECTURE.md](./ARCHITECTURE.md#application-layer)
 - **Environment Configuration** - See [ARCHITECTURE.md](./ARCHITECTURE.md#core-concepts)
 - **Constants** - See [ARCHITECTURE.md](./ARCHITECTURE.md#extension-points)
 
 #### Data Layer
+
 - **Documents** - See [MODELS.md](./MODELS.md#built-in-models)
 - **Model Registry** - See [MODELS.md](./MODELS.md#model-registry)
 
 #### Extensibility
+
 - **Plugins** - See [ARCHITECTURE.md](./ARCHITECTURE.md#extension-points)
 - **Pipeline** - See [MIDDLEWARE.md](./MIDDLEWARE.md#custom-middleware)
 - **Responses** - See [CONTROLLERS.md](./CONTROLLERS.md#response-pattern)
 - **Routers** - See [CONTROLLERS.md](./CONTROLLERS.md#decorator-system)
 
 #### Utilities
+
 - **Transactions** - See [SERVICES.md](./SERVICES.md#transaction-support) and [CONTROLLERS.md](./CONTROLLERS.md#transaction-support)
 - **Utils** - See [ARCHITECTURE.md](./ARCHITECTURE.md#best-practices)
 - **Types** - See documentation throughout
@@ -62,90 +67,112 @@ The following components are documented within the files above:
 ### Fully Documented Components
 
 #### Base Controller ✅
+
 - Location: [CONTROLLERS.md](./CONTROLLERS.md#base-controller)
 - Coverage: Class structure, methods, transaction support, validation
 
 #### Decorator System ✅
+
 - Location: [CONTROLLERS.md](./CONTROLLERS.md#decorator-system)
 - Coverage: All decorators (@Controller, @Get, @Post, etc.), options, usage
 
 #### User Controller ✅
+
 - Location: [CONTROLLERS.md](./CONTROLLERS.md#user-controller)
 - Coverage: All endpoints, authentication, validation, examples
 
 #### Document System ✅
+
 - Location: [MODELS.md](./MODELS.md#built-in-models)
 - Coverage: All document interfaces, base documents, custom documents
 
 #### Middlewares ✅
+
 - Location: [MIDDLEWARE.md](./MIDDLEWARE.md)
 - Coverage: authenticateToken, authenticateCrypto, error handling, custom middleware
 
 #### Models ✅
+
 - Location: [MODELS.md](./MODELS.md)
 - Coverage: Model registry, built-in models, custom models, model functions
 
 #### Model Registry ✅
+
 - Location: [MODELS.md](./MODELS.md#model-registry)
 - Coverage: Registration, retrieval, configuration, usage patterns
 
 #### Schemas ✅
+
 - Location: [SCHEMAS.md](./SCHEMAS.md)
 - Coverage: All built-in schemas, custom schemas, validation, hooks
 
 #### Services ✅
+
 - Location: [SERVICES.md](./SERVICES.md)
 - Coverage: Service container, all core services, custom services, patterns
 
 #### Transactions ✅
+
 - Location: [CONTROLLERS.md](./CONTROLLERS.md#transaction-support) and [SERVICES.md](./SERVICES.md)
 - Coverage: Transaction decorator, manual transactions, session management
 
 #### Base Application ✅
+
 - Location: [ARCHITECTURE.md](./ARCHITECTURE.md#application-layer)
 - Coverage: Application class, initialization, lifecycle, configuration
 
 #### Application ✅
+
 - Location: [ARCHITECTURE.md](./ARCHITECTURE.md)
 - Coverage: Setup, services, plugins, database connection
 
 #### Backup Code ✅
+
 - Location: [SERVICES.md](./SERVICES.md#backupcodeservice)
 - Coverage: Generation, validation, recovery, reset
 
 #### Constants ✅
+
 - Location: [ARCHITECTURE.md](./ARCHITECTURE.md) and throughout
 - Coverage: Usage, extension, runtime configuration
 
 #### Environment ✅
+
 - Location: [ARCHITECTURE.md](./ARCHITECTURE.md#core-concepts)
 - Coverage: Configuration, environment variables, initialization
 
 #### Pipeline ✅
+
 - Location: [MIDDLEWARE.md](./MIDDLEWARE.md#custom-middleware)
 - Coverage: Middleware composition, ordering, custom pipelines
 
 #### Plugins ✅
+
 - Location: [ARCHITECTURE.md](./ARCHITECTURE.md#extension-points)
 - Coverage: Plugin interface, registration, lifecycle, examples
 
 #### Registry ✅
+
 - Location: [MODELS.md](./MODELS.md#model-registry)
 - Coverage: Model registration, retrieval, dynamic models
 
 #### Responses ✅
+
 - Location: [CONTROLLERS.md](./CONTROLLERS.md#response-pattern)
 - Coverage: Response format, status codes, error responses
 
 #### Routers ✅
+
 - Location: [CONTROLLERS.md](./CONTROLLERS.md#decorator-system)
 - Coverage: Route definition, configuration, middleware
 
 #### Types ✅
+
 - Location: Throughout all documentation
 - Coverage: Interfaces, type definitions, generics
 
 #### Utils ✅
+
 - Location: [ARCHITECTURE.md](./ARCHITECTURE.md#best-practices)
 - Coverage: Utility functions, helpers, debugging
 
@@ -176,8 +203,8 @@ When adding new features:
 
 ## Support
 
-- GitHub Issues: https://github.com/Digital-Defiance/express-suite/issues
-- Email: support@digitaldefiance.org
+- GitHub Issues: <https://github.com/Digital-Defiance/express-suite/issues>
+- Email: <support@digitaldefiance.org>
 
 ---
 

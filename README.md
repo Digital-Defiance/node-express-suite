@@ -692,6 +692,7 @@ yarn add -D @faker-js/faker
 📚 **Comprehensive documentation is available in the [`docs/`](./docs) directory.**
 
 ### Quick Links
+
 - **[📚 Documentation Index](./docs/INDEX.md)** - Complete documentation index
 - **[🏗️ Architecture](./docs/ARCHITECTURE.md)** - System design and architecture
 - **[🎮 Controllers](./docs/CONTROLLERS.md)** - Controller system and decorators
