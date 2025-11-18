@@ -44,6 +44,7 @@ import {
   IApiMnemonicResponse,
   IApiRegistrationResponse,
   IApiRequestUserResponse,
+  IApiUserSettingsResponse,
 } from '../interfaces';
 import { IApiBackupCodesResponse } from '../interfaces/api-responses/backup-codes-response';
 import type { IApplication } from '../interfaces/application';
@@ -522,12 +523,50 @@ export class UserController<
         return {
           statusCode: 200,
           response: {
-            message: 'Dark mode updated successfully',
+            message: getSuiteCoreTranslation(SuiteCoreStringKey.Settings_DarkModeSuccess),
             user,
           },
         };
       },
     );
+  }
+
+  @Get('/settings', { auth: true })
+  async getSettings(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<IStatusCodeResponse<IApiUserSettingsResponse | ApiErrorResponse>> {
+    if (!req.user) {
+      throw new HandleableError(
+        new Error(
+          getSuiteCoreTranslation(
+            SuiteCoreStringKey.Common_NoUserOnRequest,
+          ),
+        ),
+        { statusCode: 401 },
+      );
+    }
+
+    const UserModel = this.application.getModel<IUserDocument>(BaseModelName.User);
+    const userDoc = await UserModel.findById(req.user.id);
+
+    return {
+      statusCode: 200,
+      response: {
+        message: getSuiteCoreTranslation(
+          SuiteCoreStringKey.Settings_RetrievedSuccess,
+        ),
+        settings: {
+          email: userDoc?.email || '',
+          timezone: userDoc?.timezone || '',
+          currency: userDoc?.currency || '',
+          siteLanguage: userDoc?.siteLanguage || '',
+          darkMode: userDoc?.darkMode || false,
+          directChallenge: userDoc?.directChallenge || false,
+        },
+      },
+    };
   }
 
   @Post('/settings', {

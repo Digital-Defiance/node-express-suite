@@ -687,6 +687,22 @@ yarn add -D @faker-js/faker
 - `debugLog()` - Conditional logging utility
 - `withTransaction()` - MongoDB transaction wrapper
 
+## Documentation
+
+📚 **Comprehensive documentation is available in the [`docs/`](./docs) directory.**
+
+### Quick Links
+- **[📚 Documentation Index](./docs/INDEX.md)** - Complete documentation index
+- **[🏗️ Architecture](./docs/ARCHITECTURE.md)** - System design and architecture
+- **[🎮 Controllers](./docs/CONTROLLERS.md)** - Controller system and decorators
+- **[⚙️ Services](./docs/SERVICES.md)** - Business logic and service container
+- **[📊 Models](./docs/MODELS.md)** - Data models and registry
+- **[🔌 Middleware](./docs/MIDDLEWARE.md)** - Request pipeline
+- **[💾 Transactions](./docs/TRANSACTIONS.md)** - Transaction management
+- **[🔧 Plugins](./docs/PLUGINS.md)** - Plugin system
+
+See the [full documentation index](./docs/INDEX.md) for all available documentation.
+
 ## License
 
 MIT © Digital Defiance

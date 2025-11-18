@@ -1,6 +1,6 @@
 {
   "name": "@digitaldefiance/node-express-suite",
-  "version": "2.2.21",
+  "version": "2.2.22",
   "description": "Generic express application and routing library with decorator support",
   "main": "src/index.js",
   "types": "src/index.d.ts",
@@ -32,10 +32,10 @@
     "publish:public": "npm publish --access public"
   },
   "dependencies": {
-    "@digitaldefiance/ecies-lib": "3.0.5",
-    "@digitaldefiance/i18n-lib": "3.6.1",
-    "@digitaldefiance/node-ecies-lib": "3.0.5",
-    "@digitaldefiance/suite-core-lib": "^2.2.14",
+    "@digitaldefiance/ecies-lib": "3.0.6",
+    "@digitaldefiance/i18n-lib": "3.6.2",
+    "@digitaldefiance/node-ecies-lib": "3.0.6",
+    "@digitaldefiance/suite-core-lib": "^2.2.19",
     "@noble/curves": "^2.0.1",
     "@noble/hashes": "^2.0.1",
     "@subspace/reed-solomon-erasure.wasm": "^0.2.5",

@@ -24,6 +24,245 @@ jest.mock('../../src/services/system-user', () => ({
   },
 }));
 
+describe('UserController - GET /settings', () => {
+  let app: Application;
+  let controller: UserController;
+  let mockApp: any;
+  let mockJwtService: jest.Mocked<JwtService<any, any, any, any, any>>;
+  let mockUserService: jest.Mocked<UserService<any, any, any, any, any, any, any, any, any, any, any>>;
+  let mockBackupCodeService: jest.Mocked<BackupCodeService<any, any, any, any>>;
+  let mockRoleService: jest.Mocked<RoleService<any, any, any>>;
+  let mockEciesService: jest.Mocked<ECIESService>;
+  let mockToken: string;
+  let mockUserId: Types.ObjectId;
+
+  beforeEach(() => {
+    const mockAuthenticateToken = authenticateTokenModule.authenticateToken as jest.MockedFunction<typeof authenticateTokenModule.authenticateToken>;
+    mockAuthenticateToken.mockImplementation(async (app, req, res, next) => {
+      req.user = {
+        id: new Types.ObjectId().toString(),
+        email: 'test@example.com',
+        username: 'testuser',
+        roles: [],
+        timezone: 'UTC',
+        emailVerified: true,
+        darkMode: false,
+        siteLanguage: 'en-US',
+        directChallenge: false,
+      };
+      next();
+      return res;
+    });
+    process.env.JWT_SECRET = 'a'.repeat(64);
+    process.env.MNEMONIC_HMAC_SECRET = 'a'.repeat(64);
+    process.env.MNEMONIC_ENCRYPTION_KEY = 'b'.repeat(64);
+
+    mockUserId = new Types.ObjectId();
+    const mockUserDoc = {
+      _id: mockUserId,
+      email: 'test@example.com',
+      username: 'testuser',
+      timezone: 'America/New_York',
+      currency: 'USD',
+      siteLanguage: 'en-US',
+      darkMode: true,
+      directChallenge: false,
+      accountStatus: 'Active',
+      deletedAt: null,
+    };
+
+    mockApp = {
+      environment: {
+        mongo: { useTransactions: false, transactionTimeout: 30000 },
+        debug: false,
+        jwtSecret: 'a'.repeat(64),
+        systemPublicKeyHex: 'aabbccdd',
+      },
+      db: {
+        connection: {
+          startSession: jest.fn().mockResolvedValue({
+            startTransaction: jest.fn(),
+            commitTransaction: jest.fn(),
+            abortTransaction: jest.fn(),
+            endSession: jest.fn(),
+          }),
+        },
+      },
+      constants: {
+        BACKUP_CODES: { Count: 10 },
+        UsernameRegex: /^[a-zA-Z0-9_-]{3,30}$/,
+        PasswordRegex: /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{8,}$/,
+        EmailTokenLength: 32,
+        MnemonicRegex: /^[a-z ]{1,200}$/,
+        JWT: { ALGORITHM: 'HS256', EXPIRATION_SEC: 86400 },
+      },
+      getModel: jest.fn().mockReturnValue({
+        findById: jest.fn().mockResolvedValue(mockUserDoc),
+      }),
+    };
+
+    mockJwtService = {
+      sign: jest.fn().mockReturnValue('mock-jwt-token'),
+      verify: jest.fn().mockReturnValue({
+        id: mockUserId.toString(),
+        email: 'test@example.com',
+        username: 'testuser',
+        roles: [],
+      }),
+      createUserToken: jest.fn().mockResolvedValue('mock-token'),
+      verifyToken: jest.fn().mockResolvedValue({
+        id: mockUserId.toString(),
+        email: 'test@example.com',
+        username: 'testuser',
+        roles: [],
+      }),
+      signToken: jest.fn(),
+    } as any;
+
+    mockUserService = {
+      updateUserSettings: jest.fn(),
+    } as any;
+
+    mockBackupCodeService = {} as any;
+    mockRoleService = {
+      getUserRoles: jest.fn().mockResolvedValue([]),
+      rolesToTokenRoles: jest.fn().mockReturnValue([]),
+    } as any;
+    mockEciesService = {} as any;
+
+    controller = new UserController(
+      mockApp,
+      mockJwtService,
+      mockUserService,
+      mockBackupCodeService,
+      mockRoleService,
+      mockEciesService,
+    );
+
+    app = express();
+    app.use(express.json());
+    app.use('/api/user', controller.router);
+
+    mockToken = 'Bearer mock-token';
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  describe('successful retrieval', () => {
+    it('should return user settings', async () => {
+      const response = await request(app)
+        .get('/api/user/settings')
+        .set('Authorization', mockToken);
+
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveProperty('settings');
+      expect(response.body.settings).toEqual({
+        email: 'test@example.com',
+        timezone: 'America/New_York',
+        currency: 'USD',
+        siteLanguage: 'en-US',
+        darkMode: true,
+        directChallenge: false,
+      });
+    });
+
+    it('should return success message', async () => {
+      const response = await request(app)
+        .get('/api/user/settings')
+        .set('Authorization', mockToken);
+
+      expect(response.status).toBe(200);
+      expect(response.body.message).toBe(
+        getSuiteCoreTranslation(SuiteCoreStringKey.Settings_RetrievedSuccess),
+      );
+    });
+
+    it('should handle missing optional fields', async () => {
+      const mockUserDocWithMissingFields = {
+        _id: mockUserId,
+        email: 'test@example.com',
+        username: 'testuser',
+      };
+
+      mockApp.getModel.mockReturnValue({
+        findById: jest.fn().mockResolvedValue(mockUserDocWithMissingFields),
+      });
+
+      const response = await request(app)
+        .get('/api/user/settings')
+        .set('Authorization', mockToken);
+
+      expect(response.status).toBe(200);
+      expect(response.body.settings).toEqual({
+        email: 'test@example.com',
+        timezone: '',
+        currency: '',
+        siteLanguage: '',
+        darkMode: false,
+        directChallenge: false,
+      });
+    });
+  });
+
+  describe('authentication', () => {
+    it('should require authentication', async () => {
+      const mockAuthenticateToken = authenticateTokenModule.authenticateToken as jest.MockedFunction<typeof authenticateTokenModule.authenticateToken>;
+      mockAuthenticateToken.mockClear();
+
+      await request(app)
+        .get('/api/user/settings')
+        .set('Authorization', mockToken);
+
+      expect(mockAuthenticateToken).toHaveBeenCalled();
+    });
+
+    it('should use authenticated user ID to fetch settings', async () => {
+      const mockModel = {
+        findById: jest.fn().mockResolvedValue({
+          _id: mockUserId,
+          email: 'test@example.com',
+          timezone: 'UTC',
+        }),
+      };
+      mockApp.getModel.mockReturnValue(mockModel);
+
+      await request(app)
+        .get('/api/user/settings')
+        .set('Authorization', mockToken);
+
+      expect(mockModel.findById).toHaveBeenCalledWith(expect.any(String));
+    });
+  });
+
+  describe('response format', () => {
+    it('should return settings object with all expected fields', async () => {
+      const response = await request(app)
+        .get('/api/user/settings')
+        .set('Authorization', mockToken);
+
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveProperty('settings');
+      expect(response.body.settings).toHaveProperty('email');
+      expect(response.body.settings).toHaveProperty('timezone');
+      expect(response.body.settings).toHaveProperty('currency');
+      expect(response.body.settings).toHaveProperty('siteLanguage');
+      expect(response.body.settings).toHaveProperty('darkMode');
+      expect(response.body.settings).toHaveProperty('directChallenge');
+    });
+
+    it('should include message in response', async () => {
+      const response = await request(app)
+        .get('/api/user/settings')
+        .set('Authorization', mockToken);
+
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveProperty('message');
+    });
+  });
+});
+
 describe('UserController - POST /settings', () => {
   let app: Application;
   let controller: UserController;
