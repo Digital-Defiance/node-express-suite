@@ -1058,7 +1058,7 @@ export class UserController<
         return {
           statusCode: 200,
           response: {
-            user: userDoc as any,
+            user: RequestUserService.makeRequestUserDTO(userDoc, roles),
             token: jwtToken,
             serverPublicKey:
               this.application.environment.systemPublicKeyHex ?? '',
@@ -1229,7 +1229,7 @@ export class UserController<
         return {
           statusCode: 200,
           response: {
-            user: userDoc as any,
+            user: RequestUserService.makeRequestUserDTO(userDoc, roles),
             token: jwtToken,
             serverPublicKey:
               this.application.environment.systemPublicKeyHex ?? '',

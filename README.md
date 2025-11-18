@@ -1128,6 +1128,10 @@ The following v1.x patterns still work in v2.0:
 
 ## ChangeLog
 
+### Version 2.2.26
+
+- Fix user controller direct/email login requestUserDTO response
+
 ### Version 2.2.25
 
 - Fix user schema validation/tests
