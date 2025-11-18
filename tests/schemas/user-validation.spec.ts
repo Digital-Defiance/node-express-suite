@@ -252,7 +252,7 @@ describe('UserSchema validation with Mongoose', () => {
   describe('unsupported languages', () => {
     it('should accept only specified languages', async () => {
       const customLangs = ['en', 'es', 'fr'];
-      const schema = createUserSchema(undefined, undefined, undefined, customLangs);
+      const schema = createUserSchema(undefined, undefined, undefined, undefined, customLangs);
       const CustomModel = mongoose.model<IUserDocument>('UserCustomLangs', schema);
       
       const validUser = new CustomModel({

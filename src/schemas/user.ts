@@ -97,7 +97,7 @@ export function createUserSchema<T extends IConstants = IConstants>(
         default: 'USD',
         validate: {
           validator: function (v: string) {
-            return Object.values(codes).includes(v);
+            return codes().includes(v);
           },
           message: currencyValidationMessage || ((props: { value: string }) =>
             getSuiteCoreTranslation(

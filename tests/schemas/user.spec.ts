@@ -30,7 +30,7 @@ describe('UserSchema', () => {
 
     it('should create schema with custom supported languages', () => {
       const customLanguages = ['en', 'es', 'fr'];
-      const schema = createUserSchema(undefined, undefined, undefined, customLanguages);
+      const schema = createUserSchema(undefined, undefined, undefined, undefined, customLanguages);
       
       expect(schema).toBeDefined();
       const siteLanguagePath = schema.path('siteLanguage') as any;
@@ -46,7 +46,7 @@ describe('UserSchema', () => {
         BACKUP_CODES: { Count: 10 },
       };
       
-      const schema = createUserSchema(undefined, undefined, undefined, undefined, customConstants);
+      const schema = createUserSchema(undefined, undefined, undefined, undefined, undefined, customConstants);
       expect(schema).toBeDefined();
     });
   });
