@@ -1128,6 +1128,10 @@ The following v1.x patterns still work in v2.0:
 
 ## ChangeLog
 
+### Version 2.2.28
+
+- Update libs
+
 ### Version 2.2.27
 
 - Update suite-core-lib
