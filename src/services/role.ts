@@ -340,8 +340,10 @@ export class RoleService<
       >().userLanguage;
       const lang = (overrideLanguage || userLang || 'en-US') as string;
       const roleTranslation = engine.translateEnum(Role, role.name, lang);
+      // Convert Mongoose document to plain object if needed
+      const roleObj = role instanceof Document ? role.toObject() : role;
       return {
-        ...role,
+        ...roleObj,
         translatedName: roleTranslation,
       } as TTokenRole;
     });
