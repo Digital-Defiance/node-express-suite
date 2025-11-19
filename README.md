@@ -1128,6 +1128,10 @@ The following v1.x patterns still work in v2.0:
 
 ## ChangeLog
 
+### Version 2.2.30
+
+- Second attempt to fix roles on login
+
 ### Version 2.2.29
 
 - Fix roles on login

@@ -176,12 +176,7 @@ export class UserController<
       id: req.user.id,
       email: req.user.email,
       username: req.user.username,
-      roles: req.user.roles?.map((r: any) => ({
-        id: r.id,
-        name: r.name,
-        admin: r.admin,
-        ...(r.description && { description: r.description }),
-      })) || [],
+      roles: req.user.roles || [],
       timezone: req.user.timezone,
       currency: req.user.currency,
       emailVerified: req.user.emailVerified,

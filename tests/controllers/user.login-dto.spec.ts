@@ -40,23 +40,31 @@ describe('UserController - Login DTO Validation', () => {
   const mockUserId = new Types.ObjectId();
   const mockRoleId = new Types.ObjectId();
 
-  // Mock role objects
+  // Mock role objects with all required properties
   const mockTokenRole: ITokenRole<Types.ObjectId> = {
     _id: mockRoleId,
-    name: 'user',
+    name: 'member',
     admin: false,
+    member: true,
     child: false,
-    parent: false,
-    directChallenge: true,
-  };
+    system: false,
+    createdAt: new Date(),
+    createdBy: mockUserId,
+    updatedAt: new Date(),
+    updatedBy: mockUserId,
+  } as any;
 
   const mockRoleDTO: IRoleDTO = {
     _id: mockRoleId.toString(),
-    name: 'user',
+    name: 'member',
     admin: false,
+    member: true,
     child: false,
-    parent: false,
-    directChallenge: true,
+    system: false,
+    createdAt: new Date().toISOString(),
+    createdBy: mockUserId.toString(),
+    updatedAt: new Date().toISOString(),
+    updatedBy: mockUserId.toString(),
   } as any;
 
   // Mock user document
@@ -218,9 +226,11 @@ describe('UserController - Login DTO Validation', () => {
       const role = user.roles[0];
       expect(typeof role._id).toBe('string'); // DTO has _id as string
       expect(role._id).toBe(mockRoleId.toString()); // Verify it's the expected role
-      expect(role.name).toBe('user');
-      expect(typeof role.admin).toBe('boolean');
-      expect(typeof role.child).toBe('boolean');
+      expect(role.name).toBe('member');
+      expect(role.admin).toBe(false);
+      expect(role.member).toBe(true);
+      expect(role.child).toBe(false);
+      expect(role.system).toBe(false);
     });
   });
 
@@ -272,9 +282,11 @@ describe('UserController - Login DTO Validation', () => {
       const role = user.roles[0];
       expect(typeof role._id).toBe('string'); // DTO has _id as string
       expect(role._id).toBe(mockRoleId.toString()); // Verify it's the expected role
-      expect(role.name).toBe('user');
-      expect(typeof role.admin).toBe('boolean');
-      expect(typeof role.child).toBe('boolean');
+      expect(role.name).toBe('member');
+      expect(role.admin).toBe(false);
+      expect(role.member).toBe(true);
+      expect(role.child).toBe(false);
+      expect(role.system).toBe(false);
     });
   });
 
@@ -330,7 +342,133 @@ describe('UserController - Login DTO Validation', () => {
       const role = user.roles[0];
       expect(typeof role._id).toBe('string'); // DTO has _id as string
       expect(role._id).toBe(mockRoleId.toString()); // Verify it's the expected role
-      expect(role.name).toBe('user');
+      expect(role.name).toBe('member');
+      expect(role.admin).toBe(false);
+      expect(role.member).toBe(true);
+      expect(role.child).toBe(false);
+      expect(role.system).toBe(false);
+    });
+  });
+
+  describe('GET /verify', () => {
+    it('should return user DTO with properly formatted roles array', async () => {
+      const mockReq = {
+        user: {
+          id: mockUserId.toString(),
+          username: 'testuser',
+          email: 'test@example.com',
+          roles: [mockRoleDTO],
+          timezone: 'UTC',
+          currency: 'USD',
+          emailVerified: true,
+          directChallenge: true,
+          darkMode: false,
+          siteLanguage: 'en-US',
+          lastLogin: new Date().toISOString(),
+        },
+        headers: {
+          authorization: 'Bearer mock-jwt-token',
+        },
+      } as any as Request;
+
+      const mockRes = {} as Response;
+      const mockNext = jest.fn();
+
+      // Set the active request context
+      (controller as any).activeRequest = mockReq;
+      (controller as any).activeResponse = mockRes;
+
+      const result = await controller.tokenVerifiedResponse(mockReq, mockRes, mockNext);
+
+      // Clear the active request context
+      (controller as any).activeRequest = null;
+      (controller as any).activeResponse = null;
+
+      // Verify the response structure
+      expect(result.statusCode).toBe(200);
+      expect(result.response).toHaveProperty('user');
+      expect(result.response).toHaveProperty('message');
+
+      // Verify user is a DTO, not a raw document
+      const user = (result.response as any).user;
+      expect(user).toBeDefined();
+      expect(user.id).toBe(mockUserId.toString()); // DTO has 'id' as string
+      expect(user._id).toBeUndefined(); // Raw doc would have _id
+
+      // Verify roles are properly formatted as IRoleDTO[]
+      expect(user.roles).toBeDefined();
+      expect(Array.isArray(user.roles)).toBe(true);
+      expect(user.roles.length).toBeGreaterThan(0);
+      
+      const role = user.roles[0];
+      expect(typeof role._id).toBe('string'); // DTO has _id as string
+      expect(role._id).toBe(mockRoleId.toString()); // Verify it's the expected role
+      expect(role.name).toBe('member');
+      expect(role.admin).toBe(false);
+      expect(role.member).toBe(true);
+      expect(role.child).toBe(false);
+      expect(role.system).toBe(false);
+      
+      // Verify all role properties are preserved from req.user.roles
+      expect(role).toEqual(mockRoleDTO);
+    });
+
+    it('should preserve all role properties from JWT token', async () => {
+      const fullMockRoleDTO: IRoleDTO = {
+        _id: mockRoleId.toString(),
+        name: 'member',
+        admin: false,
+        member: true,
+        child: false,
+        system: false,
+        createdAt: new Date().toISOString(),
+        createdBy: mockUserId.toString(),
+        updatedAt: new Date().toISOString(),
+        updatedBy: mockUserId.toString(),
+      } as any;
+
+      const mockReq = {
+        user: {
+          id: mockUserId.toString(),
+          username: 'testuser',
+          email: 'test@example.com',
+          roles: [fullMockRoleDTO],
+          timezone: 'UTC',
+          currency: 'USD',
+          emailVerified: true,
+          directChallenge: true,
+          darkMode: false,
+          siteLanguage: 'en-US',
+        },
+        headers: {
+          authorization: 'Bearer mock-jwt-token',
+        },
+      } as any as Request;
+
+      const mockRes = {} as Response;
+      const mockNext = jest.fn();
+
+      // Set the active request context
+      (controller as any).activeRequest = mockReq;
+      (controller as any).activeResponse = mockRes;
+
+      const result = await controller.tokenVerifiedResponse(mockReq, mockRes, mockNext);
+
+      // Clear the active request context
+      (controller as any).activeRequest = null;
+      (controller as any).activeResponse = null;
+
+      const user = (result.response as any).user;
+      const role = user.roles[0];
+      
+      // Verify all properties are preserved, not just admin
+      expect(role.name).toBe('member');
+      expect(role.admin).toBe(false);
+      expect(role.member).toBe(true);
+      expect(role.child).toBe(false);
+      expect(role.system).toBe(false);
+      expect(role.createdAt).toBeDefined();
+      expect(role.createdBy).toBeDefined();
     });
   });
 
