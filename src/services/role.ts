@@ -47,22 +47,40 @@ export class RoleService<
   public static roleToRoleDTO<I = Types.ObjectId, D extends Date = Date>(
     role: ITokenRole<I, D> | IRoleDocument | Partial<IRoleBase<I>>,
   ): ITokenRoleDTO {
+    const roleObj = role instanceof Document ? role.toObject() : role;
     return {
-      ...(role instanceof Document ? role.toObject() : role),
       _id: (role._id instanceof Types.ObjectId
         ? role._id.toString()
         : role._id) as string,
+      name: roleObj.name as string,
+      admin: roleObj.admin ?? false,
+      member: roleObj.member ?? false,
+      child: roleObj.child ?? false,
+      system: roleObj.system ?? false,
       translatedName:
         'translatedName' in role ? role.translatedName : role.name,
-      createdBy: (role.createdBy instanceof Date
+      createdAt: (roleObj.createdAt instanceof Date
+        ? roleObj.createdAt.toISOString()
+        : roleObj.createdAt) as string,
+      createdBy: (role.createdBy instanceof Types.ObjectId
         ? role.createdBy.toString()
         : role.createdBy) as string,
-      updatedBy: (role.updatedBy instanceof Date
+      updatedAt: (roleObj.updatedAt instanceof Date
+        ? roleObj.updatedAt.toISOString()
+        : roleObj.updatedAt) as string,
+      updatedBy: (role.updatedBy instanceof Types.ObjectId
         ? role.updatedBy.toString()
         : role.updatedBy) as string,
+      ...(roleObj.deletedAt
+        ? {
+            deletedAt: (roleObj.deletedAt instanceof Date
+              ? roleObj.deletedAt.toISOString()
+              : roleObj.deletedAt) as string,
+          }
+        : {}),
       ...(role.deletedBy
         ? {
-            deletedBy: (role.deletedBy instanceof Date
+            deletedBy: (role.deletedBy instanceof Types.ObjectId
               ? role.deletedBy.toString()
               : role.deletedBy) as string,
           }
