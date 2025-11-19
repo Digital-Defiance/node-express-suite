@@ -76,6 +76,12 @@ describe('UserService - updateUserSettings', () => {
     jest.spyOn(RequestUserService, 'makeRequestUserDTO').mockReturnValue({
       _id: 'user-id',
       email: 'updated@example.com',
+      rolePrivileges: {
+        admin: false,
+        member: true,
+        child: false,
+        system: false,
+      },
     } as any);
   });
 

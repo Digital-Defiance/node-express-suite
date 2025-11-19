@@ -177,6 +177,7 @@ export class UserController<
       email: req.user.email,
       username: req.user.username,
       roles: req.user.roles || [],
+      rolePrivileges: req.user.rolePrivileges,
       timezone: req.user.timezone,
       currency: req.user.currency,
       emailVerified: req.user.emailVerified,

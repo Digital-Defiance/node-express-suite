@@ -1,4 +1,4 @@
-import { IRoleDTO, IRoleFrontendObject } from '@digitaldefiance/suite-core-lib';
+import { ICombinedRolePrivileges, IRoleDTO, IRoleFrontendObject } from '@digitaldefiance/suite-core-lib';
 import { Types } from 'mongoose';
 import { IRoleBackendObject } from './backend-objects/role';
 
@@ -24,6 +24,10 @@ export interface IRequestUser<
    */
   roles: R;
   /**
+   * Combined role privileges across all user roles
+   */
+  rolePrivileges: ICombinedRolePrivileges;
+  /**
    * The username of the user
    */
   username: string;
@@ -35,6 +39,14 @@ export interface IRequestUser<
    * The timezone of the user
    */
   timezone: string;
+  /**
+   * The currency preference of the user
+   */
+  currency: string;
+  /**
+   * Whether the user has direct challenge login enabled
+   */
+  directChallenge: boolean;
   /**
    * The language of the user
    */

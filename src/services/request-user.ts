@@ -18,10 +18,20 @@ export class RequestUserService<I, TTokenRole extends ITokenRole<I>> {
     if (!userDoc._id) {
       throw new Error('User document is missing _id');
     }
+    
+    // Calculate combined role privileges across all roles
+    const rolePrivileges = {
+      admin: roles.some((r) => r.admin),
+      member: roles.some((r) => r.member),
+      child: roles.some((r) => r.child),
+      system: roles.some((r) => r.system),
+    };
+    
     return {
       id: userDoc._id.toString(),
       email: userDoc.email,
       roles: roles.map((r) => RoleService.roleToRoleDTO(r)),
+      rolePrivileges,
       username: userDoc.username,
       timezone: userDoc.timezone,
       currency: userDoc.currency,
@@ -50,8 +60,11 @@ export class RequestUserService<I, TTokenRole extends ITokenRole<I>> {
       id: new Types.ObjectId(requestUser.id),
       email: requestUser.email,
       roles: hydratedRoles,
+      rolePrivileges: requestUser.rolePrivileges,
       username: requestUser.username,
       timezone: requestUser.timezone,
+      currency: requestUser.currency,
+      directChallenge: requestUser.directChallenge,
       emailVerified: requestUser.emailVerified,
       darkMode: requestUser.darkMode,
       siteLanguage: requestUser.siteLanguage,

@@ -19,6 +19,10 @@ describe('RequestUserService', () => {
         {
           _id: new Types.ObjectId(),
           name: Role.Member,
+          admin: false,
+          member: true,
+          child: false,
+          system: false,
           createdAt: new Date(),
           createdBy: new Types.ObjectId(),
           updatedAt: new Date(),
@@ -30,11 +34,66 @@ describe('RequestUserService', () => {
       expect(result.email).toBe('test@example.com');
       expect(result.username).toBe('testuser');
       expect(result.roles).toHaveLength(1);
+      expect(result.rolePrivileges).toEqual({
+        admin: false,
+        member: true,
+        child: false,
+        system: false,
+      });
     });
 
     it('should throw if user document missing _id', () => {
       const userDoc = { email: 'test@example.com' } as any;
       expect(() => RequestUserService.makeRequestUserDTO(userDoc, [])).toThrow();
+    });
+
+    it('should combine role privileges across multiple roles', () => {
+      const userDoc = {
+        _id: new Types.ObjectId(),
+        email: 'test@example.com',
+        username: 'testuser',
+        timezone: 'UTC',
+        emailVerified: true,
+        darkMode: false,
+        siteLanguage: 'en',
+      } as any;
+
+      const roles = [
+        {
+          _id: new Types.ObjectId(),
+          name: Role.Member,
+          admin: false,
+          member: true,
+          child: false,
+          system: false,
+          createdAt: new Date(),
+          createdBy: new Types.ObjectId(),
+          updatedAt: new Date(),
+          updatedBy: new Types.ObjectId(),
+        },
+        {
+          _id: new Types.ObjectId(),
+          name: Role.Administrator,
+          admin: true,
+          member: false,
+          child: false,
+          system: false,
+          createdAt: new Date(),
+          createdBy: new Types.ObjectId(),
+          updatedAt: new Date(),
+          updatedBy: new Types.ObjectId(),
+        },
+      ] as any;
+
+      const result = RequestUserService.makeRequestUserDTO(userDoc, roles);
+      expect(result.roles).toHaveLength(2);
+      // Should combine privileges: admin OR member should both be true
+      expect(result.rolePrivileges).toEqual({
+        admin: true,
+        member: true,
+        child: false,
+        system: false,
+      });
     });
   });
 
@@ -45,15 +104,29 @@ describe('RequestUserService', () => {
         email: 'test@example.com',
         username: 'testuser',
         timezone: 'UTC',
+        currency: 'USD',
+        directChallenge: false,
         emailVerified: true,
         darkMode: false,
         siteLanguage: 'en',
         roles: [],
+        rolePrivileges: {
+          admin: false,
+          member: true,
+          child: false,
+          system: false,
+        },
       } as any;
 
       const result = RequestUserService.hydrateRequestUser(dto);
       expect(result.id).toBeInstanceOf(Types.ObjectId);
       expect(result.email).toBe('test@example.com');
+      expect(result.rolePrivileges).toEqual({
+        admin: false,
+        member: true,
+        child: false,
+        system: false,
+      });
     });
 
     it('should handle optional lastLogin', () => {
@@ -62,10 +135,18 @@ describe('RequestUserService', () => {
         email: 'test@example.com',
         username: 'testuser',
         timezone: 'UTC',
+        currency: 'USD',
+        directChallenge: false,
         emailVerified: true,
         darkMode: false,
         siteLanguage: 'en',
         roles: [],
+        rolePrivileges: {
+          admin: false,
+          member: true,
+          child: false,
+          system: false,
+        },
         lastLogin: new Date().toISOString(),
       } as any;
 

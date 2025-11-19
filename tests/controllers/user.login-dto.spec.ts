@@ -231,6 +231,13 @@ describe('UserController - Login DTO Validation', () => {
       expect(role.member).toBe(true);
       expect(role.child).toBe(false);
       expect(role.system).toBe(false);
+      
+      // Verify rolePrivileges are properly set
+      expect(user.rolePrivileges).toBeDefined();
+      expect(user.rolePrivileges.admin).toBe(false);
+      expect(user.rolePrivileges.member).toBe(true);
+      expect(user.rolePrivileges.child).toBe(false);
+      expect(user.rolePrivileges.system).toBe(false);
     });
   });
 
@@ -287,6 +294,13 @@ describe('UserController - Login DTO Validation', () => {
       expect(role.member).toBe(true);
       expect(role.child).toBe(false);
       expect(role.system).toBe(false);
+      
+      // Verify rolePrivileges are properly set
+      expect(user.rolePrivileges).toBeDefined();
+      expect(user.rolePrivileges.admin).toBe(false);
+      expect(user.rolePrivileges.member).toBe(true);
+      expect(user.rolePrivileges.child).toBe(false);
+      expect(user.rolePrivileges.system).toBe(false);
     });
   });
 
@@ -347,6 +361,13 @@ describe('UserController - Login DTO Validation', () => {
       expect(role.member).toBe(true);
       expect(role.child).toBe(false);
       expect(role.system).toBe(false);
+      
+      // Verify rolePrivileges are properly set
+      expect(user.rolePrivileges).toBeDefined();
+      expect(user.rolePrivileges.admin).toBe(false);
+      expect(user.rolePrivileges.member).toBe(true);
+      expect(user.rolePrivileges.child).toBe(false);
+      expect(user.rolePrivileges.system).toBe(false);
     });
   });
 
@@ -358,6 +379,12 @@ describe('UserController - Login DTO Validation', () => {
           username: 'testuser',
           email: 'test@example.com',
           roles: [mockRoleDTO],
+          rolePrivileges: {
+            admin: false,
+            member: true,
+            child: false,
+            system: false,
+          },
           timezone: 'UTC',
           currency: 'USD',
           emailVerified: true,
@@ -409,6 +436,13 @@ describe('UserController - Login DTO Validation', () => {
       expect(role.child).toBe(false);
       expect(role.system).toBe(false);
       
+      // Verify rolePrivileges are properly set
+      expect(user.rolePrivileges).toBeDefined();
+      expect(user.rolePrivileges.admin).toBe(false);
+      expect(user.rolePrivileges.member).toBe(true);
+      expect(user.rolePrivileges.child).toBe(false);
+      expect(user.rolePrivileges.system).toBe(false);
+      
       // Verify all role properties are preserved from req.user.roles
       expect(role).toEqual(mockRoleDTO);
     });
@@ -433,6 +467,12 @@ describe('UserController - Login DTO Validation', () => {
           username: 'testuser',
           email: 'test@example.com',
           roles: [fullMockRoleDTO],
+          rolePrivileges: {
+            admin: false,
+            member: true,
+            child: false,
+            system: false,
+          },
           timezone: 'UTC',
           currency: 'USD',
           emailVerified: true,
@@ -480,6 +520,12 @@ describe('UserController - Login DTO Validation', () => {
           username: 'testuser',
           email: 'test@example.com',
           roles: [mockRoleDTO],
+          rolePrivileges: {
+            admin: false,
+            member: true,
+            child: false,
+            system: false,
+          },
           siteLanguage: 'en-US',
         },
         headers: {
@@ -529,6 +575,13 @@ describe('UserController - Login DTO Validation', () => {
       const role = user.roles[0];
       expect(typeof role._id).toBe('string'); // DTO has _id as string
       expect(role._id).toBe(mockRoleId.toString()); // Verify it's the expected role
+      
+      // Verify rolePrivileges are properly set
+      expect(user.rolePrivileges).toBeDefined();
+      expect(user.rolePrivileges.admin).toBe(false);
+      expect(user.rolePrivileges.member).toBe(true);
+      expect(user.rolePrivileges.child).toBe(false);
+      expect(user.rolePrivileges.system).toBe(false);
     });
   });
 
@@ -563,6 +616,11 @@ describe('UserController - Login DTO Validation', () => {
           typeof user.email === 'string' &&
           Array.isArray(user.roles) &&
           user.roles.every((role: any) => typeof role._id === 'string') &&
+          typeof user.rolePrivileges === 'object' &&
+          typeof user.rolePrivileges.admin === 'boolean' &&
+          typeof user.rolePrivileges.member === 'boolean' &&
+          typeof user.rolePrivileges.child === 'boolean' &&
+          typeof user.rolePrivileges.system === 'boolean' &&
           user._id === undefined // Should not have MongoDB ObjectId
         );
       };
@@ -572,6 +630,12 @@ describe('UserController - Login DTO Validation', () => {
         username: 'testuser',
         email: 'test@example.com',
         roles: [mockRoleDTO],
+        rolePrivileges: {
+          admin: false,
+          member: true,
+          child: false,
+          system: false,
+        },
         timezone: 'UTC',
         currency: 'USD',
         emailVerified: true,
