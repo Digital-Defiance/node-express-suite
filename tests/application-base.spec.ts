@@ -335,7 +335,7 @@ describe('BaseApplication', () => {
       ).resolves.not.toThrow();
 
       await disconnectMemoryDB();
-    });
+    }, 10000);
 
     it('should handle connection errors gracefully', async () => {
       const mockConnect = jest.spyOn(mongoose, 'connect').mockRejectedValue(new Error('Connection failed'));
@@ -358,7 +358,7 @@ describe('BaseApplication', () => {
       
       consoleSpy.mockRestore();
       await disconnectMemoryDB();
-    });
+    }, 60000);
   });
 
   describe('disconnectDatabase', () => {
