@@ -439,7 +439,7 @@ __metadata:
     "@digitaldefiance/express-suite-test-utils": "npm:1.0.10"
     "@digitaldefiance/i18n-lib": "npm:3.6.4"
     "@digitaldefiance/node-ecies-lib": "npm:3.0.8"
-    "@digitaldefiance/suite-core-lib": "npm:^2.2.25"
+    "@digitaldefiance/suite-core-lib": "npm:^2.2.26"
     "@noble/curves": "npm:^2.0.1"
     "@noble/hashes": "npm:^2.0.1"
     "@subspace/reed-solomon-erasure.wasm": "npm:^0.2.5"
@@ -460,13 +460,13 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@digitaldefiance/suite-core-lib@npm:^2.2.25":
-  version: 2.2.25
-  resolution: "@digitaldefiance/suite-core-lib@npm:2.2.25"
+"@digitaldefiance/suite-core-lib@npm:^2.2.26":
+  version: 2.2.26
+  resolution: "@digitaldefiance/suite-core-lib@npm:2.2.26"
   dependencies:
     "@digitaldefiance/ecies-lib": "npm:3.0.8"
     "@digitaldefiance/i18n-lib": "npm:3.6.4"
-  checksum: 10c0/51ac6a05704df0d0eb7084a6d93771fd7589e1d0cfc0b949027ec8480a01af90af691a03ea640430f82d28d3a51abdacd1ffb1c9e8e3c466ebe069ae6cb1368e
+  checksum: 10c0/64c6ba6a7906a1140724074c13d8a5dedd9df29b03cb269bc66da605b97dcc217a4d0ad85cab125ba8227593177ec4d21dc3a28ddff441918c9c3630f925215a
   languageName: node
   linkType: hard
 
