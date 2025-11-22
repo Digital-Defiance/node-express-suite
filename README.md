@@ -11,9 +11,9 @@ It is an 'out of the box' solution with a specific recipe (Mongo, Express, React
 
 Part of [Express Suite](https://github.com/Digital-Defiance/express-suite)
 
-## What's New in v2.1
+## What's New in v3.0
 
-✨ **Quality & Stability Release** - All dependencies upgraded, 604 tests passing, improved coverage and type safety throughout.
+✨ **Major Dependency Upgrade** - Upgraded to `@digitaldefiance/suite-core-lib` v3.0.0 and `@digitaldefiance/ecies-lib` v4.1.0. This brings significant improvements in type safety, performance, and security.
 
 ## Features
 
@@ -1128,6 +1128,12 @@ The following v1.x patterns still work in v2.0:
 
 ## ChangeLog
 
+### Version 3.0.0
+
+- Upgrade to `@digitaldefiance/suite-core-lib` v3.0.0
+- Upgrade to `@digitaldefiance/ecies-lib` v4.1.0
+- Upgrade to `@digitaldefiance/node-ecies-lib` v4.1.0
+
 ### Version 2.2.36
 
 - Update suite-core-lib
@@ -1389,7 +1395,7 @@ The following v1.x patterns still work in v2.0:
 
 - Minor bugfixes for database-initialization
 
-### Version 2.1.18
+### Version 2.1.19
 
 - minor bugfix for translation in database-initialization
 

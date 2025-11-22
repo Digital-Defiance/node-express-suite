@@ -2,12 +2,9 @@ import {
   EmailString,
   getEciesI18nEngine,
   IECIESConfig,
-  InvalidEmailError,
-  InvalidEmailErrorType,
   MemberType,
   SecureBuffer,
   SecureString,
-  SignatureString,
 } from '@digitaldefiance/ecies-lib';
 import {
   Member as BackendMember,
@@ -31,6 +28,7 @@ import {
   IBackupCode,
   InvalidChallengeResponseError,
   InvalidCredentialsError,
+  InvalidEmailError,
   InvalidTokenError,
   InvalidUsernameError,
   IRequestUserDTO,
@@ -106,6 +104,8 @@ export class UserService<
   >;
   protected readonly serverUrl: string;
   protected readonly disableEmailSend: boolean;
+  protected readonly idConverter: (id: string) => I;
+  protected readonly idGenerator: () => I;
 
   constructor(
     application: IApplication,
@@ -113,6 +113,8 @@ export class UserService<
     emailService: IEmailService,
     keyWrappingService: KeyWrappingService,
     backupCodeService: BackupCodeService<I, D, TTokenRole, TApplication>,
+    idConverter?: (id: string) => I,
+    idGenerator?: () => I,
   ) {
     super(application);
     this.roleService = roleService;
@@ -121,6 +123,10 @@ export class UserService<
     this.backupCodeService = backupCodeService;
     this.serverUrl = application.environment.serverUrl;
     this.disableEmailSend = application.environment.disableEmailSend;
+    this.idConverter =
+      idConverter ?? ((id: string) => new Types.ObjectId(id) as I);
+    this.idGenerator =
+      idGenerator ?? (() => new Types.ObjectId() as I);
     const config: IECIESConfig = {
       curveName: this.application.constants.ECIES.CURVE_NAME,
       primaryKeyDerivationPath:
@@ -143,13 +149,21 @@ export class UserService<
     );
   }
 
+  public toId(id: string): I {
+    return this.idConverter(id);
+  }
+
+  public generateId(): I {
+    return this.idGenerator();
+  }
+
   /**
    * Given a User Document, make a User DTO
    * @param user a User Document
    * @returns An IUserDTO
    */
-  public static userToUserDTO(
-    user: IUserDocument | Record<string, unknown>,
+  public static userToUserDTO<S extends string, I extends string | Types.ObjectId = Types.ObjectId>(
+    user: IUserDocument<S, I> | Record<string, unknown>,
   ): IUserDTO {
     return {
       ...(user instanceof Document ? user.toObject() : user),
@@ -184,23 +198,25 @@ export class UserService<
    * @param user a User DTO
    * @returns An IUserBackendObject
    */
-  public hydrateUserDTOToBackend(user: IUserDTO): IUserBackendObject<string> {
+  public hydrateUserDTOToBackend(user: IUserDTO): IUserBackendObject<S, I> {
     return {
       ...user,
-      _id: new ObjectId(user._id),
+      _id: this.idConverter(user._id),
       ...(user.lastLogin ? { lastLogin: new Date(user.lastLogin) } : {}),
       createdAt: new Date(user.createdAt),
-      createdBy: new ObjectId(user.createdBy),
+      createdBy: this.idConverter(user.createdBy),
       updatedAt: new Date(user.updatedAt),
-      updatedBy: new ObjectId(user.updatedBy),
+      updatedBy: this.idConverter(user.updatedBy),
       ...(user.deletedAt ? { deletedAt: new Date(user.deletedAt) } : {}),
       ...(user.deletedBy
         ? {
-            deletedBy: new ObjectId(user.deletedBy),
+            deletedBy: this.idConverter(user.deletedBy),
           }
         : {}),
-      ...(user.mnemonicId ? { mnemonicId: new ObjectId(user.mnemonicId) } : {}),
-    } as IUserBackendObject<string>;
+      ...(user.mnemonicId
+        ? { mnemonicId: this.idConverter(user.mnemonicId) }
+        : {}),
+    } as IUserBackendObject<S, I>;
   }
 
   /**
@@ -211,7 +227,7 @@ export class UserService<
    * @returns The email token document
    */
   public async createEmailToken(
-    userDoc: IUserDocument,
+    userDoc: IUserDocument<S, I>,
     type: EmailTokenType,
     session?: ClientSession,
   ): Promise<IEmailTokenDocument> {
@@ -316,7 +332,7 @@ export class UserService<
    * @returns The email token document
    */
   public async createAndSendEmailToken(
-    user: IUserDocument,
+    user: IUserDocument<S, I>,
     type: EmailTokenType = EmailTokenType.AccountVerification,
     session?: ClientSession,
     debug = false,
@@ -339,7 +355,7 @@ export class UserService<
    * @returns The email token document
    */
   public async createAndSendEmailTokenDirect(
-    user: IUserDocument,
+    user: IUserDocument<S, I>,
     type: EmailTokenType = EmailTokenType.AccountVerification,
     session: ClientSession,
     debug = false,
@@ -448,7 +464,6 @@ export class UserService<
       case EmailTokenType.MnemonicRecoveryRequest:
       case EmailTokenType.PrivateKeyRequest:
       default:
-        throw new Error('Invalid email token type');
         throw new TranslatableSuiteError(
           SuiteCoreStringKey.Error_InvalidEmailTokenType,
         );
@@ -494,14 +509,14 @@ export class UserService<
     email?: string,
     username?: string,
     session?: ClientSession,
-  ): Promise<IUserDocument> {
+  ): Promise<IUserDocument<S, I>> {
     if (!email && !username) {
       throw new UsernameOrEmailRequiredError();
     }
-    const UserModel = ModelRegistry.instance.getTypedModel<IUserDocument>(
+    const UserModel = ModelRegistry.instance.getTypedModel<IUserDocument<S, I>>(
       BaseModelName.User,
     );
-    let userDoc: IUserDocument | null = null;
+    let userDoc: IUserDocument<S, I> | null = null;
 
     try {
       if (email) {
@@ -523,7 +538,7 @@ export class UserService<
 
     if (!userDoc || userDoc.deletedAt) {
       if (email) {
-        throw new InvalidEmailError(InvalidEmailErrorType.Missing);
+        throw new InvalidEmailError('Missing');
       }
       throw new InvalidUsernameError();
     }
@@ -539,7 +554,7 @@ export class UserService<
         throw new AccountStatusError(userDoc.accountStatus);
     }
 
-    return userDoc as IUserDocument;
+    return userDoc as IUserDocument<S, I>;
   }
 
   /**
@@ -550,12 +565,12 @@ export class UserService<
    * @returns The user document
    */
   public async findUserById(
-    userId: Types.ObjectId,
+    userId: I,
     throwIfNotActive: boolean,
     session?: ClientSession,
-    select?: ProjectionType<IUserDocument>,
-  ): Promise<IUserDocument> {
-    const UserModel = ModelRegistry.instance.getTypedModel<IUserDocument>(
+    select?: ProjectionType<IUserDocument<S, I>>,
+  ): Promise<IUserDocument<S, I>> {
+    const UserModel = ModelRegistry.instance.getTypedModel<IUserDocument<S, I>>(
       BaseModelName.User,
     );
     const baseQuery = UserModel.findById(userId).session(session ?? null);
@@ -567,7 +582,7 @@ export class UserService<
       ]);
       baseQuery.select(merged);
     }
-    const userDoc = (await baseQuery.exec()) as IUserDocument | null;
+    const userDoc = (await baseQuery.exec()) as IUserDocument<S, I> | null;
     if (!userDoc || userDoc.deletedAt) {
       throw new UserNotFoundError();
     }
@@ -592,9 +607,9 @@ export class UserService<
    * For exclusion projections, ensures required fields are not excluded.
    */
   private ensureRequiredFieldsInProjection(
-    select: ProjectionType<IUserDocument>,
+    select: ProjectionType<IUserDocument<S, I>>,
     required: string[],
-  ): ProjectionType<IUserDocument> {
+  ): ProjectionType<IUserDocument<S, I>> {
     if (typeof select === 'string') {
       const parts = select
         .split(/\s+/)
@@ -628,7 +643,7 @@ export class UserService<
         );
         keysToRemove.forEach((key) => delete proj[key]);
       }
-      return proj as ProjectionType<IUserDocument>;
+      return proj as ProjectionType<IUserDocument<S, I>>;
     }
     return select;
   }
@@ -641,11 +656,11 @@ export class UserService<
    */
   public fillUserDefaults(
     newUser: ICreateUserBasics,
-    createdBy: Types.ObjectId,
+    createdBy: I,
     backupCodes: Array<IBackupCode>,
     encryptedMnemonic: string,
-    userId?: Types.ObjectId,
-  ): IUserBackendObject<string> {
+    userId?: I,
+  ): IUserBackendObject<S, I> {
     return {
       ...(userId ? { _id: userId } : {}),
       timezone: 'UTC',
@@ -654,7 +669,7 @@ export class UserService<
       emailVerified: false,
       darkMode: false,
       accountStatus: AccountStatus.PendingEmailVerification,
-      siteLanguage: 'en-US',
+      siteLanguage: 'en-US' as S,
       duressPasswords: [],
       publicKey: '',
       backupCodes,
@@ -665,7 +680,7 @@ export class UserService<
       createdBy: createdBy,
       updatedAt: new Date(),
       updatedBy: createdBy,
-    } as IUserBackendObject<string>;
+    } as IUserBackendObject<S, I>;
   }
 
   /**
@@ -673,12 +688,12 @@ export class UserService<
    * @param newUser The user object
    * @returns The new user document
    */
-  public async makeUserDoc(newUser: TUser): Promise<IUserDocument> {
-    const UserModel = ModelRegistry.instance.getTypedModel<IUserDocument>(
+  public async makeUserDoc(newUser: TUser): Promise<IUserDocument<S, I>> {
+    const UserModel = ModelRegistry.instance.getTypedModel<IUserDocument<S, I>>(
       BaseModelName.User,
     );
 
-    const newUserDoc: IUserDocument = new UserModel(newUser);
+    const newUserDoc: IUserDocument<S, I> = new UserModel(newUser);
 
     const validationError = newUserDoc.validateSync();
     if (validationError) {
@@ -704,18 +719,18 @@ export class UserService<
   public async newUser(
     systemUser: BackendMember,
     userData: ICreateUserBasics,
-    createdBy?: Types.ObjectId,
-    newUserId?: Types.ObjectId,
+    createdBy?: I,
+    newUserId?: I,
     session?: ClientSession,
     debug = false,
     password?: string,
   ): Promise<{
-    user: IUserDocument;
+    user: IUserDocument<S, I>;
     mnemonic: string;
     backupCodes: Array<string>;
     password?: string;
   }> {
-    const _newUserId = newUserId ?? new Types.ObjectId();
+    const _newUserId = newUserId ?? this.idGenerator();
     if (!this.application.constants.UsernameRegex.test(userData.username)) {
       throw new InvalidUsernameError();
     }
@@ -723,22 +738,22 @@ export class UserService<
       throw new InvalidNewPasswordError();
     }
 
-    const UserModel = ModelRegistry.instance.getTypedModel<IUserDocument>(
+    const UserModel = ModelRegistry.instance.getTypedModel<IUserDocument<S, I>>(
       BaseModelName.User,
     );
     return await this.withTransaction<{
-      user: IUserDocument;
+      user: IUserDocument<S, I>;
       backupCodes: Array<string>;
       mnemonic: string;
     }>(
       async (sess: ClientSession | undefined) => {
-        const existingEmail: IUserDocument | null = await UserModel.findOne({
+        const existingEmail: IUserDocument<S, I> | null = await UserModel.findOne({
           email: userData.email.toLowerCase(),
         }).session(sess ?? null);
         if (existingEmail) {
           throw new EmailInUseError();
         }
-        const existingUsername: IUserDocument | null = await UserModel.findOne({
+        const existingUsername: IUserDocument<S, I> | null = await UserModel.findOne({
           username: { $regex: new RegExp(`^${userData.username}$`, 'i') },
         }).session(sess ?? null);
         if (existingUsername) {
@@ -756,7 +771,7 @@ export class UserService<
                 userData.username,
                 new EmailString(userData.email),
                 undefined,
-                createdBy,
+                createdBy ? Buffer.from(String(createdBy), 'hex') : undefined
               );
             // make sure the new mnemonic is not already in the database
 
@@ -811,7 +826,7 @@ export class UserService<
           sess,
         );
         if (newMnemonicDoc) {
-          newUserDoc.mnemonicId = newMnemonicDoc._id;
+          newUserDoc.mnemonicId = newMnemonicDoc._id as I
         }
 
         // If password provided, wrap the ECIES private key with the password (Option B)
@@ -879,9 +894,9 @@ export class UserService<
     userId: Types.ObjectId,
     session?: ClientSession,
   ): Promise<Array<IBackupCode>> {
-    const userWithCodes = await this.findUserById(userId, true, session, {
+    const userWithCodes = await this.findUserById(userId as unknown as I, true, session, {
       backupCodes: 1,
-    });
+    } as any);
     return userWithCodes.backupCodes;
   }
 
@@ -929,7 +944,7 @@ export class UserService<
    * @returns The recovered mnemonic
    */
   public recoverMnemonic(
-    user: BackendMember,
+    user: BackendMember<any>,
     encryptedMnemonic: string,
   ): SecureString {
     if (!encryptedMnemonic) {
@@ -957,13 +972,13 @@ export class UserService<
    * @returns A promise containing the created Member
    */
   public async makeUserFromUserDoc(
-    userDoc: IUserDocument,
+    userDoc: IUserDocument<S, I>,
     privateKey?: SecureBuffer,
     publicKey?: Buffer,
     mnemonic?: SecureString,
     wallet?: Wallet,
     session?: ClientSession,
-  ): Promise<BackendMember> {
+  ): Promise<BackendMember<any>> {
     const memberType = await this.roleService.getMemberType(userDoc, session);
     const user = new BackendMember(
       this.eciesService,
@@ -997,7 +1012,7 @@ export class UserService<
    * @throws AccountStatusError if the account status is invalid
    */
   public async challengeUserWithMnemonic(
-    userDoc: IUserDocument,
+    userDoc: IUserDocument<S, I>,
     mnemonic: SecureString,
     session?: ClientSession,
   ): Promise<{
@@ -1106,7 +1121,7 @@ export class UserService<
     username?: string,
     session?: ClientSession,
   ): Promise<{
-    userDoc: IUserDocument;
+    userDoc: IUserDocument<S, I>;
     userMember: BackendMember;
     adminMember: BackendMember;
   }> {
@@ -1133,7 +1148,7 @@ export class UserService<
 
     const userDoc = await this.findUser(email, username, session);
     if (!userDoc && email) {
-      throw new InvalidEmailError(InvalidEmailErrorType.Missing);
+      throw new InvalidEmailError('Missing');
     } else if (!userDoc) {
       throw new InvalidUsernameError();
     }
@@ -1173,11 +1188,11 @@ export class UserService<
     mnemonic: SecureString,
     session?: ClientSession,
   ): Promise<{
-    userDoc: IUserDocument;
+    userDoc: IUserDocument<S, I>;
     userMember: BackendMember;
     adminMember: BackendMember;
   }> {
-    const UserModel = this.application.getModel<IUserDocument>(
+    const UserModel = this.application.getModel<IUserDocument<S, I>>(
       BaseModelName.User,
     );
     const userQuery = validator.isEmail(usernameOrEmail)
@@ -1282,11 +1297,11 @@ export class UserService<
     mnemonic: SecureString,
     session?: ClientSession,
   ): Promise<{
-    userDoc: IUserDocument;
+    userDoc: IUserDocument<S, I>;
     userMember: BackendMember;
     adminMember: BackendMember;
   }> {
-    const UserModel = ModelRegistry.instance.getTypedModel<IUserDocument>(
+    const UserModel = ModelRegistry.instance.getTypedModel<IUserDocument<S, I>>(
       BaseModelName.User,
     );
     const userQuery = validator.isEmail(usernameOrEmail)
@@ -1333,11 +1348,11 @@ export class UserService<
     password: string,
     session?: ClientSession,
   ): Promise<{
-    userDoc: IUserDocument;
+    userDoc: IUserDocument<S, I>;
     userMember: BackendMember;
     adminMember: BackendMember;
   }> {
-    const UserModel = this.application.getModel<IUserDocument>(
+    const UserModel = this.application.getModel<IUserDocument<S, I>>(
       BaseModelName.User,
     );
     const query = validator.isEmail(usernameOrEmail)
@@ -1347,7 +1362,7 @@ export class UserService<
           strength: 2,
         });
 
-    const userDoc: IUserDocument | null = await query
+    const userDoc: IUserDocument<S, I> | null = await query
       .session(session ?? null)
       .exec();
 
@@ -1479,7 +1494,7 @@ export class UserService<
           ModelRegistry.instance.getTypedModel<IEmailTokenDocument>(
             BaseModelName.EmailToken,
           );
-        const UserModel = ModelRegistry.instance.getTypedModel<IUserDocument>(
+        const UserModel = ModelRegistry.instance.getTypedModel<IUserDocument<S, I>>(
           BaseModelName.User,
         );
         const token: IEmailTokenDocument | null = await this.findEmailToken(
@@ -1499,7 +1514,7 @@ export class UserService<
           throw new EmailTokenExpiredError();
         }
 
-        const user: IUserDocument | null = await UserModel.findById(
+        const user: IUserDocument<S, I> | null = await UserModel.findById(
           token.userId,
         ).session(sess ?? null);
 
@@ -1610,11 +1625,11 @@ export class UserService<
   ): Promise<IRequestUserDTO> {
     return await this.withTransaction<IRequestUserDTO>(
       async (sess: ClientSession | undefined) => {
-        const UserModel = ModelRegistry.instance.getTypedModel<IUserDocument>(
+        const UserModel = ModelRegistry.instance.getTypedModel<IUserDocument<S, I>>(
           BaseModelName.User,
         );
         const userDoc = await UserModel.findByIdAndUpdate(
-          new Types.ObjectId(userId),
+          this.idConverter(userId),
           {
             siteLanguage: newLanguage,
           },
@@ -1648,11 +1663,11 @@ export class UserService<
   ): Promise<IRequestUserDTO> {
     return await this.withTransaction<IRequestUserDTO>(
       async (sess: ClientSession | undefined) => {
-        const UserModel = ModelRegistry.instance.getTypedModel<IUserDocument>(
+        const UserModel = ModelRegistry.instance.getTypedModel<IUserDocument<S, I>>(
           BaseModelName.User,
         );
         const userDoc = await UserModel.findByIdAndUpdate(
-          new Types.ObjectId(userId),
+          this.idConverter(userId),
           {
             darkMode: newDarkMode,
           },
@@ -1693,10 +1708,10 @@ export class UserService<
   ): Promise<IRequestUserDTO> {
     return await this.withTransaction<IRequestUserDTO>(
       async (sess: ClientSession | undefined) => {
-        const UserModel = ModelRegistry.instance.getTypedModel<IUserDocument>(
+        const UserModel = ModelRegistry.instance.getTypedModel<IUserDocument<S, I>>(
           BaseModelName.User,
         );
-        const userDoc = await UserModel.findById(new Types.ObjectId(userId)).session(sess ?? null);
+        const userDoc = await UserModel.findById(this.idConverter(userId)).session(sess ?? null);
         if (!userDoc) {
           throw new UserNotFoundError();
         }
@@ -1722,7 +1737,7 @@ export class UserService<
 
         // Update other settings
         if (settings.timezone !== undefined) userDoc.timezone = settings.timezone;
-        if (settings.siteLanguage !== undefined) userDoc.siteLanguage = settings.siteLanguage;
+        if (settings.siteLanguage !== undefined) userDoc.siteLanguage = settings.siteLanguage as S;
         if (settings.darkMode !== undefined) userDoc.darkMode = settings.darkMode;
         if (settings.currency !== undefined) userDoc.currency = settings.currency;
         if (settings.directChallenge !== undefined) userDoc.directChallenge = settings.directChallenge;
@@ -1756,10 +1771,10 @@ export class UserService<
   ): Promise<void> {
     return await this.withTransaction<void>(
       async (sess: ClientSession | undefined) => {
-        const UserModel = ModelRegistry.instance.getTypedModel<IUserDocument>(
+        const UserModel = ModelRegistry.instance.getTypedModel<IUserDocument<S, I>>(
           BaseModelName.User,
         );
-        const userDoc = await UserModel.findById(userId).session(sess ?? null);
+        const userDoc = await UserModel.findById(this.idConverter(userId)).session(sess ?? null);
         if (!userDoc || !userDoc.passwordWrappedPrivateKey) {
           throw new UserNotFoundError();
         }
@@ -1880,7 +1895,7 @@ export class UserService<
           ModelRegistry.instance.getTypedModel<IEmailTokenDocument>(
             BaseModelName.EmailToken,
           );
-        const UserModel = ModelRegistry.instance.getTypedModel<IUserDocument>(
+        const UserModel = ModelRegistry.instance.getTypedModel<IUserDocument<S, I>>(
           BaseModelName.User,
         );
 
@@ -2004,13 +2019,13 @@ export class UserService<
    */
   public async verifyDirectLoginChallenge(
     serverSignedRequest: string,
-    signature: SignatureString,
+    signature: string,
     username?: string,
     email?: string,
     session?: ClientSession,
-  ): Promise<{ userDoc: IUserDocument; userMember: BackendMember }> {
+  ): Promise<{ userDoc: IUserDocument<S, I>; userMember: BackendMember }> {
     return await this.withTransaction<{
-      userDoc: IUserDocument;
+      userDoc: IUserDocument<S, I>;
       userMember: BackendMember;
     }>(
       async (sess: ClientSession | undefined) => {
@@ -2155,10 +2170,10 @@ export class UserService<
    */
   public async validateEmailLoginTokenChallenge(
     token: string,
-    signature: SignatureString,
+    signature: string,
     session?: ClientSession,
-  ): Promise<IUserDocument> {
-    return this.withTransaction<IUserDocument>(
+  ): Promise<IUserDocument<S, I>> {
+    return this.withTransaction<IUserDocument<S, I>>(
       async (sess: ClientSession | undefined) => {
         const emailToken = await this.findEmailToken(
           token,
@@ -2203,7 +2218,7 @@ export class UserService<
    * @param userId - The ID of the user
    * @returns void
    */
-  public async updateLastLogin(userId: Types.ObjectId): Promise<void> {
+  public async updateLastLogin(userId: I): Promise<void> {
     const UserModel = ModelRegistry.instance.get('User')?.model;
     try {
       // Check if the database connection is still open

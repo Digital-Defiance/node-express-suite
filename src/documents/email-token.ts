@@ -8,7 +8,7 @@ import { IBaseDocument } from './base';
 /**
  * Composite interface for email token collection documents
  */
-export type IEmailTokenDocument = IBaseDocument<
-  IEmailTokenBase<Types.ObjectId, Date, EmailTokenType>,
-  Types.ObjectId
+export type IEmailTokenDocument<I extends string | Types.ObjectId = Types.ObjectId> = IBaseDocument<
+  IEmailTokenBase<I, Date, EmailTokenType>,
+  I
 >;

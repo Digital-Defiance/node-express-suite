@@ -217,12 +217,12 @@ export class UserController<
       );
     }
 
-    const UserModel = this.application.getModel<IUserDocument>(
+    const UserModel = this.application.getModel<IUserDocument<string, I>>(
       BaseModelName.User,
     );
     const userDoc = await UserModel.findById(tokenUser.userId, {
       password: 0,
-    });
+    } as any);
     if (!userDoc || userDoc.accountStatus !== AccountStatus.Active) {
       throw new GenericValidationError(
         getSuiteCoreTranslation(SuiteCoreStringKey.Validation_UserNotFound),
@@ -238,7 +238,7 @@ export class UserController<
       statusCode: 200,
       response: {
         message: getSuiteCoreTranslation(SuiteCoreStringKey.TokenRefreshed),
-        user: RequestUserService.makeRequestUserDTO(userDoc, roles),
+        user: RequestUserService.makeRequestUserDTO(userDoc as any, roles),
         token: newToken,
         serverPublicKey: this.application.environment.systemPublicKeyHex ?? '',
       },
@@ -544,7 +544,7 @@ export class UserController<
       );
     }
 
-    const UserModel = this.application.getModel<IUserDocument>(BaseModelName.User);
+    const UserModel = this.application.getModel<IUserDocument<string, I>>(BaseModelName.User);
     const userDoc = await UserModel.findById(req.user.id);
 
     return {
@@ -659,7 +659,7 @@ export class UserController<
           {
             ...(email !== undefined && { email: email as string }),
             ...(timezone !== undefined && { timezone: timezone as string }),
-            ...(siteLanguage !== undefined && { siteLanguage: siteLanguage as string }),
+            ...(siteLanguage !== undefined && { siteLanguage: siteLanguage as S }),
             ...(currency !== undefined && { currency: currency as string }),
             ...(darkMode !== undefined && { darkMode: darkMode as boolean }),
             ...(directChallenge !== undefined && { directChallenge: directChallenge as boolean }),
@@ -695,7 +695,7 @@ export class UserController<
       );
     }
 
-    const UserModel = this.application.getModel<IUserDocument>(
+    const UserModel = this.application.getModel<IUserDocument<string, I>>(
       BaseModelName.User,
     );
     const user = await UserModel.findById(req.user.id);
@@ -838,7 +838,7 @@ export class UserController<
         }
 
         const userDoc = await this.userService.findUserById(
-          new Types.ObjectId(req.user.id),
+          this.userService.toId(req.user.id),
           true,
           sess,
         );
@@ -1054,7 +1054,7 @@ export class UserController<
         return {
           statusCode: 200,
           response: {
-            user: RequestUserService.makeRequestUserDTO(userDoc, roles),
+            user: RequestUserService.makeRequestUserDTO(userDoc as any, roles),
             token: jwtToken,
             serverPublicKey:
               this.application.environment.systemPublicKeyHex ?? '',
@@ -1225,7 +1225,7 @@ export class UserController<
         return {
           statusCode: 200,
           response: {
-            user: RequestUserService.makeRequestUserDTO(userDoc, roles),
+            user: RequestUserService.makeRequestUserDTO(userDoc as any, roles),
             token: jwtToken,
             serverPublicKey:
               this.application.environment.systemPublicKeyHex ?? '',
@@ -1274,7 +1274,7 @@ export class UserController<
       async (sess) => {
         const { username, email } = this.validatedBody;
 
-        const UserModel = this.application.getModel<IUserDocument>(
+        const UserModel = this.application.getModel<IUserDocument<string, I>>(
           BaseModelName.User,
         );
         let query: { username?: string; email?: string } = {};
@@ -1418,7 +1418,7 @@ export class UserController<
         return {
           statusCode: 200,
           response: {
-            user: RequestUserService.makeRequestUserDTO(userDoc, roles),
+            user: RequestUserService.makeRequestUserDTO(userDoc as any, roles),
             token: token,
             message: getSuiteCoreTranslation(
               SuiteCoreStringKey.BackupCodeRecovery_Success,
@@ -1460,7 +1460,7 @@ export class UserController<
       async (sess) => {
         const { email } = this.validatedBody;
 
-        const UserModel = this.application.getModel<IUserDocument>(
+        const UserModel = this.application.getModel<IUserDocument<string, I>>(
           BaseModelName.User,
         );
         if (!isString(email)) {
@@ -1487,7 +1487,7 @@ export class UserController<
         }
 
         await this.userService.createAndSendEmailToken(
-          user,
+          user as any,
           EmailTokenType.PasswordReset,
           sess,
           this.application.environment.debug,

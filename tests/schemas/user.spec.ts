@@ -46,7 +46,7 @@ describe('UserSchema', () => {
         BACKUP_CODES: { Count: 10 },
       };
       
-      const schema = createUserSchema(undefined, undefined, undefined, undefined, undefined, customConstants);
+      const schema = createUserSchema(undefined, undefined, undefined, undefined, undefined, undefined, customConstants);
       expect(schema).toBeDefined();
     });
   });

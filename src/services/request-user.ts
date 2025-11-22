@@ -4,17 +4,18 @@ import { IUserDocument } from '../documents';
 import { IRequestUserBackendObject } from '../interfaces/backend-objects/request-user';
 import { RoleService } from './role';
 
-export class RequestUserService<I, TTokenRole extends ITokenRole<I>> {
+export class RequestUserService<I extends string | Types.ObjectId, TTokenRole extends ITokenRole<I>> {
   /**
    * Given a user document and an array of role documents, create the IRequestUser
    * @param userDoc
    * @returns
    */
   public static makeRequestUserDTO<
-    I,
+    I extends string | Types.ObjectId,
+    S extends string,
     TTokenRole extends ITokenRole<I>,
     TRequestUserDTO extends IRequestUserDTO,
-  >(userDoc: IUserDocument, roles: TTokenRole[]): TRequestUserDTO {
+  >(userDoc: IUserDocument<S, I>, roles: TTokenRole[]): TRequestUserDTO {
     if (!userDoc._id) {
       throw new Error('User document is missing _id');
     }
@@ -49,15 +50,21 @@ export class RequestUserService<I, TTokenRole extends ITokenRole<I>> {
    * @returns An IRequestUserBackendObject
    */
   public static hydrateRequestUser<
+    I extends string | Types.ObjectId,
     S extends string,
     TRequestUserDTO extends IRequestUserDTO & { siteLanguage: S },
-  >(requestUser: TRequestUserDTO): IRequestUserBackendObject<S> {
+  >(
+    requestUser: TRequestUserDTO,
+    idConverter?: (id: string) => I,
+  ): IRequestUserBackendObject<S, I> {
+    const convert =
+      idConverter ?? ((id: string) => new Types.ObjectId(id) as unknown as I);
     const hydratedRoles = requestUser.roles.map((role: IRoleDTO) =>
-      RoleService.hydrateRoleDTOToBackend(role),
+      RoleService.hydrateRoleDTOToBackend<I>(role, convert),
     );
 
-    const hydratedUser: IRequestUserBackendObject<S> = {
-      id: new Types.ObjectId(requestUser.id),
+    const hydratedUser: IRequestUserBackendObject<S, I> = {
+      id: convert(requestUser.id),
       email: requestUser.email,
       roles: hydratedRoles,
       rolePrivileges: requestUser.rolePrivileges,

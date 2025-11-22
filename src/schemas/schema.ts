@@ -70,7 +70,7 @@ export function getSchemaMap(
     Mnemonic: createMnemonicSchema(undefined, options?.constants),
     Role: createRoleSchema(undefined, options?.constants),
     UsedDirectLoginToken: createUsedDirectLoginTokenSchema(undefined, options?.constants),
-    User: createUserSchema(undefined, undefined, undefined, undefined, undefined, options?.constants),
+    User: createUserSchema(undefined, undefined, undefined, undefined, undefined, undefined, options?.constants),
     UserRole: createUserRoleSchema(undefined, options?.constants),
   };
   const { modelNames = {}, collections = {} } = options;

@@ -1,3 +1,4 @@
+import { Types } from 'mongoose';
 import {
   EmailTokenType,
   getSuiteCoreTranslation,
@@ -28,6 +29,8 @@ export interface EmailTokenSchemaOptions<
   /** Custom validation error message function */
   validationMessage?: (props: { value: string }) => string;
   constants?: TConstants;
+  /** ID type for references */
+  idType?: any;
 }
 
 /**
@@ -37,10 +40,11 @@ export function createEmailTokenSchema<
   TTokenType extends string = EmailTokenType,
   TModelName extends string = BaseModelName,
   TConstants extends IConstants = IConstants,
+  I extends Types.ObjectId | string = Types.ObjectId
 >(
   options: EmailTokenSchemaOptions<TTokenType, TModelName> = {},
   constants?: TConstants,
-): Schema<IEmailTokenDocument> {
+): Schema<IEmailTokenDocument<I>> {
   const {
     tokenTypeEnum = Object.values(EmailTokenType) as TTokenType[],
     userModelName = BaseModelName.User as TModelName,
@@ -49,12 +53,13 @@ export function createEmailTokenSchema<
       getSuiteCoreTranslation(SuiteCoreStringKey.Error_InvalidEmailTemplate, {
         email: props.value,
       }),
+    idType = Schema.Types.ObjectId,
   } = options;
 
-  const schema = new Schema<IEmailTokenDocument>(
+  const schema = new Schema<IEmailTokenDocument<I>>(
     {
       userId: {
-        type: Schema.Types.ObjectId,
+        type: idType,
         required: true,
         ref: userModelName,
         immutable: true,

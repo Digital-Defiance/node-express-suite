@@ -1,4 +1,5 @@
 import { Member } from '@digitaldefiance/node-ecies-lib';
+import { Types } from 'mongoose';
 import { IRoleDocument } from '../documents/role';
 import { IUserDocument } from '../documents/user';
 import { IUserRoleDocument } from '../documents/user-role';
@@ -6,32 +7,32 @@ import { IUserRoleDocument } from '../documents/user-role';
 // Re-export essential document types
 export type { IRoleDocument, IUserDocument, IUserRoleDocument };
 
-export interface IServerInitResult {
-  adminRole: IRoleDocument;
-  adminUser: IUserDocument;
+export interface IServerInitResult<I extends Types.ObjectId | string = Types.ObjectId> {
+  adminRole: IRoleDocument<I>;
+  adminUser: IUserDocument<string, I>;
   adminUsername: string;
   adminEmail: string;
   adminMnemonic: string;
   adminPassword: string;
   adminBackupCodes: Array<string>;
-  adminMember: Member;
-  adminUserRole: IUserRoleDocument;
-  memberRole: IRoleDocument;
-  memberUser: IUserDocument;
+  adminMember: Member<I>;
+  adminUserRole: IUserRoleDocument<I>;
+  memberRole: IRoleDocument<I>;
+  memberUser: IUserDocument<string, I>;
   memberUsername: string;
   memberEmail: string;
   memberMnemonic: string;
   memberPassword: string;
   memberBackupCodes: Array<string>;
-  memberMember: Member;
-  memberUserRole: IUserRoleDocument;
-  systemRole: IRoleDocument;
-  systemUser: IUserDocument;
+  memberMember: Member<I>;
+  memberUserRole: IUserRoleDocument<I>;
+  systemRole: IRoleDocument<I>;
+  systemUser: IUserDocument<string, I>;
   systemUsername: string;
   systemEmail: string;
   systemMnemonic: string;
   systemPassword: string;
   systemBackupCodes: Array<string>;
-  systemMember: Member;
-  systemUserRole: IUserRoleDocument;
+  systemMember: Member<I>;
+  systemUserRole: IUserRoleDocument<I>;
 }

@@ -39,7 +39,7 @@ import { SystemUserService } from './system-user';
  * - Wrapping: AEAD blob wrapped with system user's asymmetric key (ECIES)
  */
 export class BackupCodeService<
-  I = Types.ObjectId,
+  I extends string | Types.ObjectId = Types.ObjectId,
   D extends Date = Date,
   TTokenRole extends ITokenRole<I, D> = ITokenRole<I, D>,
   TApplication extends IApplication = IApplication,
@@ -154,19 +154,19 @@ export class BackupCodeService<
    * v1: Recover a user's private key using a backup code.
    */
   public async recoverKeyWithBackupCodeV1(
-    userDoc: IUserDocument,
+    userDoc: IUserDocument<string, I>,
     backupCode: string,
     newPassword?: SecureString,
     session?: ClientSession,
   ): Promise<{
-    userDoc: IUserDocument;
-    user: BackendMember;
+    userDoc: IUserDocument<string, I>;
+    user: BackendMember<any>;
     codeCount: number;
   }> {
     const normalizedCode = BackupCode.normalizeCode(backupCode);
     return await this.withTransaction<{
-      userDoc: IUserDocument;
-      user: BackendMember;
+      userDoc: IUserDocument<string, I>;
+      user: BackendMember<any>;
       codeCount: number;
     }>(
       async (sess: ClientSession | undefined) => {
@@ -240,13 +240,13 @@ export class BackupCodeService<
    * Recover a user's private key using a backup code (version-dispatched).
    */
   public async recoverKeyWithBackupCode(
-    userDoc: IUserDocument,
+    userDoc: IUserDocument<string, I>,
     backupCode: string,
     newPassword?: SecureString,
     session?: ClientSession,
   ): Promise<{
-    userDoc: IUserDocument;
-    user: BackendMember;
+    userDoc: IUserDocument<string, I>;
+    user: BackendMember<any>;
     codeCount: number;
   }> {
     const version = BackupCode.detectBackupCodeVersion(
@@ -270,8 +270,8 @@ export class BackupCodeService<
    * Rewrap system-wrapped AEAD blobs from old system key to new one without touching inner AEAD.
    */
   public async rewrapAllUsersBackupCodes(
-    fetchBatch: (afterId?: string, limit?: number) => Promise<IUserDocument[]>,
-    saveUser: (user: IUserDocument) => Promise<void>,
+    fetchBatch: (afterId?: string, limit?: number) => Promise<IUserDocument<string, I>[]>,
+    saveUser: (user: IUserDocument<string, I>) => Promise<void>,
     oldSystem: BackendMember,
     newSystem: BackendMember,
     options?: { batchSize?: number; onProgress?: (count: number) => void },

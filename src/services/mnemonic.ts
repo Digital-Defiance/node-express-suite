@@ -4,7 +4,7 @@ import {
   TranslatableSuiteError,
 } from '@digitaldefiance/suite-core-lib';
 import { createHmac } from 'crypto';
-import { ClientSession, Model } from 'mongoose';
+import { ClientSession, Model, Types } from 'mongoose';
 import { IMnemonicDocument } from '../documents/mnemonic';
 import { IConstants } from '../interfaces';
 
@@ -12,13 +12,13 @@ import { IConstants } from '../interfaces';
  * Encrypts and stores mnemonics securely, using an HMAC to check for
  * uniqueness without exposing the mnemonic itself.
  */
-export class MnemonicService {
+export class MnemonicService<I extends string | Types.ObjectId = Types.ObjectId> {
   private readonly hmacSecret: SecureBuffer;
-  private readonly MnemonicModel: Model<IMnemonicDocument>;
+  private readonly MnemonicModel: Model<IMnemonicDocument<I>>;
   private readonly constants: IConstants;
 
   constructor(
-    mnemonicModel: Model<IMnemonicDocument>,
+    mnemonicModel: Model<IMnemonicDocument<I>>,
     hmacSecret: SecureBuffer,
     constants: IConstants,
   ) {
@@ -73,7 +73,7 @@ export class MnemonicService {
     _password: SecureString,
     session?: ClientSession,
   ): Promise<{
-    document: IMnemonicDocument | null;
+    document: IMnemonicDocument<I> | null;
   }> {
     if (!mnemonic.value || !this.constants.MnemonicRegex.test(mnemonic.value)) {
       throw new TranslatableSuiteError(
@@ -109,7 +109,7 @@ export class MnemonicService {
   public async addMnemonic(
     mnemonic: SecureString,
     session?: ClientSession,
-  ): Promise<IMnemonicDocument | null> {
+  ): Promise<IMnemonicDocument<I> | null> {
     if (!mnemonic.value || !this.constants.MnemonicRegex.test(mnemonic.value)) {
       throw new TranslatableSuiteError(
         SuiteCoreStringKey.Validation_MnemonicRegex,
@@ -137,9 +137,9 @@ export class MnemonicService {
    * @param session Optional Mongoose session for transaction support.
    */
   public async getMnemonicDocument(
-    mnemonicId: string,
+    mnemonicId: I,
     session?: ClientSession,
-  ): Promise<IMnemonicDocument | null> {
+  ): Promise<IMnemonicDocument<I> | null> {
     return await this.MnemonicModel.findById(mnemonicId).session(
       session ?? null,
     );
@@ -156,7 +156,7 @@ export class MnemonicService {
    * @param session Optional Mongoose session for transaction support.
    */
   public async deleteMnemonicDocument(
-    mnemonicId: string,
+    mnemonicId: I,
     session?: ClientSession,
   ): Promise<void> {
     await this.MnemonicModel.findByIdAndDelete(mnemonicId).session(

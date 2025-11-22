@@ -1,5 +1,10 @@
-import { ECIES as BaseECIES } from '@digitaldefiance/ecies-lib';
-import { Constants as NodeEciesConstants } from '@digitaldefiance/node-ecies-lib';
+import {
+  ECIES as BaseECIES,
+} from '@digitaldefiance/ecies-lib';
+import {
+  Constants as NodeEciesConstants,
+  KEYRING_ALGORITHM_CONFIGURATION,
+} from '@digitaldefiance/node-ecies-lib';
 import { Constants as CoreConstants } from '@digitaldefiance/suite-core-lib';
 import { CHECKSUM, ECIES, FEC, JWT } from './constants';
 import { IConstants } from './interfaces/constants';
@@ -9,13 +14,42 @@ export const EXPRESS_RUNTIME_CONFIGURATION_KEY = Symbol.for(
   'digitaldefiance.node.express.defaults',
 );
 
+const UINT8_SIZE = 1;
+const UINT16_SIZE = 2;
+const UINT16_MAX = 65535;
+const UINT32_SIZE = 4;
+const UINT32_MAX = 4294967295;
+const UINT64_SIZE = 8;
+const UINT64_MAX = 18446744073709551615n;
+const HEX_RADIX = 16;
+const OBJECT_ID_LENGTH = 24;
+
 const defaultConfig: IConstants = Object.freeze({
   ...CoreConstants,
   ...NodeEciesConstants,
+  UINT8_SIZE,
+  UINT16_SIZE,
+  UINT16_MAX,
+  UINT32_SIZE,
+  UINT32_MAX,
+  UINT64_SIZE,
+  UINT64_MAX,
+  HEX_RADIX,
+  OBJECT_ID_LENGTH,
+  MEMBER_ID_LENGTH: 8,
+  KEYRING_ALGORITHM_CONFIGURATION,
+  ECIES_VERSION_SIZE: 1,
+  ECIES_CIPHER_SUITE_SIZE: 1,
   CHECKSUM: CHECKSUM,
   JWT: JWT,
   ECIES: ECIES,
   FEC: FEC,
+  PBKDF2: {
+    ALGORITHM: 'sha256',
+    SALT_SIZE: 32,
+    ITERATIONS: 10000,
+    KEY_SIZE: 32,
+  },
 });
 
 const registry = new Map<symbol, IConstants>();

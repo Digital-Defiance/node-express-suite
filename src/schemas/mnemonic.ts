@@ -1,3 +1,4 @@
+import { Types } from 'mongoose';
 import {
   getSuiteCoreTranslation,
   SuiteCoreStringKey,
@@ -10,11 +11,11 @@ import { IConstants } from '../interfaces/constants';
 /**
  * Create a mnemonic schema with custom or default constants
  */
-export function createMnemonicSchema<T extends IConstants = IConstants>(
+export function createMnemonicSchema<T extends IConstants = IConstants, I extends string | Types.ObjectId = Types.ObjectId>(
   validationMessage?: () => string,
   constants: T = AppConstants as T,
-): Schema<IMnemonicDocument> {
-  return new Schema<IMnemonicDocument>({
+): Schema<IMnemonicDocument<I>> {
+  return new Schema<IMnemonicDocument<I>>({
     hmac: {
       type: String,
       required: true,

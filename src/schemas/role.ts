@@ -1,3 +1,4 @@
+import { Types } from 'mongoose';
 import {
   Role,
   SuiteCoreStringKey,
@@ -21,9 +22,11 @@ export interface RoleSchemaOptions<
   userModelName?: TModelName;
   /** Custom pre-save validation function */
   customValidation?: (
-    doc: IRoleDocument,
+    doc: IRoleDocument<any>,
     next: CallbackWithoutResultAndOptionalError,
   ) => void;
+  /** ID type for references */
+  idType?: any;
 }
 
 /**
@@ -33,14 +36,16 @@ export function createRoleSchema<
   TRole extends string = Role,
   TModelName extends string = BaseModelName,
   TConstants extends IConstants = IConstants,
->(options: RoleSchemaOptions<TRole, TModelName> = {}, constants: TConstants = {} as TConstants): Schema<IRoleDocument> {
+  I extends Types.ObjectId | string = Types.ObjectId
+>(options: RoleSchemaOptions<TRole, TModelName> = {}, constants: TConstants = {} as TConstants): Schema<IRoleDocument<I>> {
   const {
     roleEnum = Object.values(Role) as TRole[],
     userModelName = BaseModelName.User as TModelName,
     customValidation,
+    idType = Schema.Types.ObjectId,
   } = options;
 
-  const schema = new Schema<IRoleDocument>(
+  const schema = new Schema<IRoleDocument<I>>(
     {
       name: {
         type: String,
@@ -69,13 +74,13 @@ export function createRoleSchema<
         immutable: true,
       },
       createdBy: {
-        type: Schema.Types.ObjectId,
+        type: idType,
         ref: userModelName,
         required: true,
         immutable: true,
       },
       updatedBy: {
-        type: Schema.Types.ObjectId,
+        type: idType,
         ref: userModelName,
         required: true,
       },
@@ -86,7 +91,7 @@ export function createRoleSchema<
         set: (v: Date) => new Date(v.toUTCString()),
       },
       deletedBy: {
-        type: Schema.Types.ObjectId,
+        type: idType,
         ref: userModelName,
         required: false,
         optional: true,

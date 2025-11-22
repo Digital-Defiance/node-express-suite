@@ -1,3 +1,4 @@
+import { Types } from 'mongoose';
 import { Schema } from 'mongoose';
 import { IUsedDirectLoginTokenDocument } from '../documents/used-direct-login-token';
 import { BaseModelName } from '../enumerations';
@@ -11,6 +12,8 @@ export interface UsedDirectLoginTokenSchemaOptions<
 > {
   /** Model name for user reference */
   userModelName?: TModelName;
+  /** ID type for references */
+  idType?: any;
 }
 
 /**
@@ -19,14 +22,15 @@ export interface UsedDirectLoginTokenSchemaOptions<
 export function createUsedDirectLoginTokenSchema<
   TModelName extends string = BaseModelName,
   TConstants extends IConstants = IConstants,
+  I extends Types.ObjectId | string = Types.ObjectId
 >(
   options: UsedDirectLoginTokenSchemaOptions<TModelName> = {},
   constants?: TConstants,
-): Schema<IUsedDirectLoginTokenDocument> {
-  const { userModelName = BaseModelName.User as TModelName } = options;
+): Schema<IUsedDirectLoginTokenDocument<I>> {
+  const { userModelName = BaseModelName.User as TModelName, idType = Schema.Types.ObjectId } = options;
 
-  const schema = new Schema<IUsedDirectLoginTokenDocument>({
-    userId: { type: Schema.Types.ObjectId, required: true, ref: userModelName },
+  const schema = new Schema<IUsedDirectLoginTokenDocument<I>>({
+    userId: { type: idType, required: true, ref: userModelName },
     token: { type: String, required: true },
   });
 

@@ -54,7 +54,7 @@ export function findAuthToken(headers: IncomingHttpHeaders): string | null {
  * @returns The response
  */
 export async function authenticateToken<
-  I = Types.ObjectId,
+  I extends Types.ObjectId | string = Types.ObjectId,
   D extends Date = Date,
   TTokenRole extends ITokenRole<I, D> = ITokenRole<I, D>,
   TTokenUser extends ITokenUser = ITokenUser,
@@ -65,7 +65,7 @@ export async function authenticateToken<
   res: Response,
   next: NextFunction,
 ): Promise<Response> {
-  const UserModel = application.getModel<IUserDocument>(BaseModelName.User);
+  const UserModel = application.getModel<IUserDocument<string, I>>(BaseModelName.User);
   const token = findAuthToken(req.headers);
   if (token == null) {
     return res
@@ -97,7 +97,7 @@ export async function authenticateToken<
         }
         const userDoc = await UserModel.findById(user.userId, {
           password: 0,
-        })
+        } as any)
           .session(sess ?? null)
           .exec();
         if (!userDoc || userDoc.accountStatus !== AccountStatus.Active) {
@@ -106,10 +106,10 @@ export async function authenticateToken<
             getSuiteCoreTranslation(SuiteCoreStringKey.Validation_UserNotFound),
           );
         }
-        const roleService: RoleService = new RoleService(application);
-        const roles = await roleService.getUserRoles(userDoc._id, sess);
+        const roleService = new RoleService<I, D, TTokenRole>(application);
+        const roles = await roleService.getUserRoles(userDoc._id as I, sess);
         const tokenRoles = roleService.rolesToTokenRoles(roles);
-        req.user = RequestUserService.makeRequestUserDTO(userDoc, tokenRoles);
+        req.user = RequestUserService.makeRequestUserDTO(userDoc as any, tokenRoles);
         const context = GlobalActiveContext.getInstance();
         context.userLanguage = userDoc.siteLanguage ?? context.userLanguage;
         context.setLanguageContextSpace('user');

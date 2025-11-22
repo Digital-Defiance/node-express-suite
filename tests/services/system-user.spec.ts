@@ -81,7 +81,7 @@ describe('SystemUserService', () => {
 
   describe('setSystemUser', () => {
     it('should set system user when valid', () => {
-      const eciesService = new ECIESService(undefined, TestConstants.ECIES);
+      const eciesService = new ECIESService(TestConstants.ECIES);
       const mockUser = new BackendMember(
         eciesService,
         MemberType.System,
@@ -98,7 +98,7 @@ describe('SystemUserService', () => {
     });
 
     it('should throw error if user type is not System', () => {
-      const eciesService = new ECIESService(undefined, TestConstants.ECIES);
+      const eciesService = new ECIESService(TestConstants.ECIES);
       const invalidUser = new BackendMember(
         eciesService,
         MemberType.User,
@@ -114,7 +114,7 @@ describe('SystemUserService', () => {
     });
 
     it('should throw error if user name does not match SystemUser constant', () => {
-      const eciesService = new ECIESService(undefined, TestConstants.ECIES);
+      const eciesService = new ECIESService(TestConstants.ECIES);
       const invalidUser = new BackendMember(
         eciesService,
         MemberType.System,

@@ -1,10 +1,10 @@
-import { InvalidEmailError } from '@digitaldefiance/ecies-lib';
 import { I18nEngine } from '@digitaldefiance/i18n-lib';
 import { ECIESService } from '@digitaldefiance/node-ecies-lib';
 import {
   AccountLockedError,
   AccountStatus,
   AccountStatusError,
+  InvalidEmailError,
   InvalidUsernameError,
   UsernameOrEmailRequiredError,
 } from '@digitaldefiance/suite-core-lib';

@@ -110,7 +110,11 @@ export class Application<
     await super.start(mongoUri, true);
     if (this.devDatabase) {
       const result = await this.initializeDevDatabase();
-      DatabaseInitializationService.printServerInitResults(result, false);
+      DatabaseInitializationService.printServerInitResults(
+        result,
+        false,
+        (id) => this.constants.idProvider.idToString(id)
+      );
     }
     try {
       this._apiRouter = this._apiRouterFactory(this);

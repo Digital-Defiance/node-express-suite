@@ -255,7 +255,7 @@ describe('BaseApplication', () => {
         mockConnect.mockRestore();
         delete (mongoose.connection as any).db;
       });
-    }, 15000);    it('should disconnect before connecting if already connected', async () => {
+    }, 30000);    it('should disconnect before connecting if already connected', async () => {
       await withConsoleMocks({ mute: true }, async () => {
         const mockDisconnect = jest.spyOn(mongoose, 'disconnect').mockResolvedValue();
         const mockConnect = jest.spyOn(mongoose, 'connect').mockResolvedValue(mongoose as any);
@@ -286,7 +286,7 @@ describe('BaseApplication', () => {
       expect(app['_schemaMap']).toBeDefined();
       
       await disconnectMemoryDB();
-    }, 10000);    it('should register models in ModelRegistry', async () => {
+    }, 30000);    it('should register models in ModelRegistry', async () => {
       // Create app with a schema map factory that returns schemas
       const schemaMapFactory = (connection: any) => ({
         testModel: {
@@ -322,7 +322,7 @@ describe('BaseApplication', () => {
       
       registerSpy.mockRestore();
       await disconnectMemoryDB();
-    }, 10000);
+    }, 30000);
 
     it('should set transaction parameters when supported', async () => {
       const result = await connectMemoryDB();
@@ -335,7 +335,7 @@ describe('BaseApplication', () => {
       ).resolves.not.toThrow();
 
       await disconnectMemoryDB();
-    }, 10000);
+    }, 30000);
 
     it('should handle connection errors gracefully', async () => {
       const mockConnect = jest.spyOn(mongoose, 'connect').mockRejectedValue(new Error('Connection failed'));

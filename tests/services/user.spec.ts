@@ -35,8 +35,9 @@ import {
   EmailVerifiedError,
   UserNotFoundError,
   PasswordLoginNotEnabledError,
+  InvalidEmailError,
 } from '@digitaldefiance/suite-core-lib';
-import { SecureString, InvalidEmailError, InvalidEmailErrorType } from '@digitaldefiance/ecies-lib';
+import { SecureString } from '@digitaldefiance/ecies-lib';
 import { Member as BackendMember } from '@digitaldefiance/node-ecies-lib';
 import * as crypto from 'crypto';
 

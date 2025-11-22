@@ -13,9 +13,9 @@ import { IApplication } from '../interfaces/application';
 import { ModelRegistry } from '../model-registry';
 import { withTransaction } from '../utils';
 export abstract class DirectLoginTokenService {
-  public static async useToken(
+  public static async useToken<I extends string | Types.ObjectId = Types.ObjectId>(
     app: IApplication,
-    userId: Types.ObjectId,
+    userId: I,
     token: string,
     session?: ClientSession,
   ): Promise<void> {
@@ -25,8 +25,8 @@ export abstract class DirectLoginTokenService {
       session,
       async (sess) => {
         const UsedDirectLoginTokenModel = ModelRegistry.instance.get<
-          IUsedDirectLoginTokenBase<Types.ObjectId>,
-          IUsedDirectLoginTokenDocument
+          IUsedDirectLoginTokenBase<I>,
+          any
         >(BaseModelName.UsedDirectLoginToken).model;
         const tokenExists = await UsedDirectLoginTokenModel.exists({
           userId,

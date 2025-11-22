@@ -1,6 +1,7 @@
 import { LanguageRegistry, Timezone } from '@digitaldefiance/i18n-lib';
 import { existsSync, mkdirSync, rmSync, unlinkSync, writeFileSync } from 'fs';
 import { ObjectId } from 'mongodb';
+import { Types } from 'mongoose';
 import { join } from 'path';
 import { Environment } from '../src/environment';
 
@@ -232,7 +233,13 @@ describe('Environment', () => {
       process.env['MEMBER_ROLE_ID'] = memberRoleId.toString();
       process.env['SYSTEM_ROLE_ID'] = systemRoleId.toString();
 
-      const env = new Environment();
+      const env = new Environment(
+        undefined,
+        false,
+        true,
+        undefined,
+        (bytes) => new Types.ObjectId(Buffer.from(bytes)) as any
+      );
 
       expect(env.adminId?.toString()).toBe(adminId.toString());
       expect(env.memberId?.toString()).toBe(memberId.toString());

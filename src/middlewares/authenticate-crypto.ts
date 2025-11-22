@@ -23,6 +23,7 @@ import { withTransaction } from '../utils';
  * Expects mnemonic or password in request body for fresh authentication
  */
 export async function authenticateCrypto<
+  I extends Types.ObjectId | string = Types.ObjectId,
   TAccountStatus extends string = AccountStatus,
 >(
   application: IApplication,
@@ -71,7 +72,7 @@ export async function authenticateCrypto<
       ),
     });
   }
-  const UserModel = application.getModel<IUserDocument<string>>(
+  const UserModel = application.getModel<IUserDocument<string, I>>(
     BaseModelName.User,
   );
   const userService = application.services.get(ServiceKeys.USER) as any;

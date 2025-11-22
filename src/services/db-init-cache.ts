@@ -6,7 +6,7 @@ declare global {
     | Map<
         string,
         {
-          member: BackendMember;
+          member: BackendMember<any>;
           mnemonic: SecureString;
         }
       >

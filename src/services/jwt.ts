@@ -32,7 +32,7 @@ const verifyAsync = promisify<
 >(verify);
 
 export class JwtService<
-  I = Types.ObjectId,
+  I extends string | Types.ObjectId = Types.ObjectId,
   D extends Date = Date,
   TTokenRole extends ITokenRole<I, D> = ITokenRole<I, D>,
   TTokenUser extends ITokenUser = ITokenUser,
@@ -57,7 +57,7 @@ export class JwtService<
    * @returns The signed token
    */
   public async signToken(
-    userDoc: IUserDocument,
+    userDoc: IUserDocument<string, I>,
     jwtSecret: string,
     overrideLanguage?: string,
   ): Promise<IJwtSignResponse<I, D, TTokenRole>> {

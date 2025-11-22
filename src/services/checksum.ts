@@ -1,4 +1,4 @@
-import { IChecksumConsts } from '@digitaldefiance/ecies-lib';
+import { IChecksumConsts } from '../interfaces/checksum-consts';
 import {
   ChecksumBuffer,
   ChecksumString,

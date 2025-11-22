@@ -1,3 +1,4 @@
+import { Types } from 'mongoose';
 import { isValidTimezone, LanguageCodes } from '@digitaldefiance/i18n-lib';
 import {
   AccountStatus,
@@ -15,18 +16,19 @@ import { IConstants } from '../interfaces/constants';
 /**
  * Create a user schema with custom or default constants
  */
-export function createUserSchema<T extends IConstants = IConstants>(
+export function createUserSchema<T extends IConstants = IConstants, I extends string | Types.ObjectId = Types.ObjectId>(
   usernameValidationMessage?: () => string,
   emailValidationMessage?: () => string,
   timezoneValidationMessage?: () => string,
   currencyValidationMessage?: () => string,
   supportedLanguages?: readonly string[],
+  idType: any = Schema.Types.ObjectId,
   constants: T = AppConstants as T,
-): Schema<IUserDocument> {
+): Schema<IUserDocument<string, I>> {
   /**
    * Schema for users
    */
-  return new Schema<IUserDocument>(
+  return new Schema<IUserDocument<string, I>>(
     {
       /**
        * The unique identifier for the user
@@ -151,7 +153,7 @@ export function createUserSchema<T extends IConstants = IConstants>(
        * The user who created the user.
        */
       createdBy: {
-        type: Schema.Types.ObjectId,
+        type: idType,
         ref: BaseModelName.User,
         required: true,
         immutable: true,
@@ -160,7 +162,7 @@ export function createUserSchema<T extends IConstants = IConstants>(
        * The user who last updated the user.
        */
       updatedBy: {
-        type: Schema.Types.ObjectId,
+        type: idType,
         ref: BaseModelName.User,
         optional: true,
       },
@@ -172,7 +174,7 @@ export function createUserSchema<T extends IConstants = IConstants>(
        * The user who deleted the user.
        */
       deletedBy: {
-        type: Schema.Types.ObjectId,
+        type: idType,
         ref: BaseModelName.User,
         optional: true,
       },
@@ -180,7 +182,7 @@ export function createUserSchema<T extends IConstants = IConstants>(
        * Reference to the mnemonic document
        */
       mnemonicId: {
-        type: Schema.Types.ObjectId,
+        type: idType,
         ref: BaseModelName.Mnemonic,
         required: false,
       },

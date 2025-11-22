@@ -260,6 +260,7 @@ describe('DatabaseInitializationService', () => {
         systemRoleId: undefined,
         systemUserRoleId: undefined,
         systemBackupCodes: undefined,
+        idAdapter: (bytes: Uint8Array) => new Types.ObjectId(Buffer.from(bytes)),
       },
       db: {
         connection: mockConnection,

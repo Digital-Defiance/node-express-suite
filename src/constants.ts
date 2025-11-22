@@ -62,8 +62,10 @@ export const createExpressConstants = (
     JWT: JWT,
     FEC: FEC,
     ECIES: ECIES,
+    ECIES_VERSION_SIZE: 1,
+    ECIES_CIPHER_SUITE_SIZE: 1,
     ...createConstants(siteDomain, siteHostname, overrides),
-  } as const);
+  } as unknown as IConstants);
 };
 
 export const LocalhostConstants: IConstants =

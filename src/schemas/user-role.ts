@@ -1,3 +1,4 @@
+import { Types } from 'mongoose';
 import { Schema } from 'mongoose';
 import { IUserRoleDocument } from '../documents/user-role';
 import { BaseModelName } from '../enumerations';
@@ -13,40 +14,43 @@ export interface UserRoleSchemaOptions<
   userModelName?: TModelName;
   /** Model name for role reference */
   roleModelName?: TModelName;
+  /** ID type for references */
+  idType?: any;
 }
 
 /**
  * Factory function to create an extensible user-role schema
  */
-export function createUserRoleSchema<TModelName extends string = BaseModelName, TConstants extends IConstants = IConstants>(
+export function createUserRoleSchema<TModelName extends string = BaseModelName, TConstants extends IConstants = IConstants, I extends string | Types.ObjectId = Types.ObjectId>(
   options: UserRoleSchemaOptions<TModelName> = {},
   constants?: TConstants
-): Schema<IUserRoleDocument> {
+): Schema<IUserRoleDocument<I>> {
   const {
     userModelName = BaseModelName.User as TModelName,
     roleModelName = BaseModelName.Role as TModelName,
+    idType = Schema.Types.ObjectId,
   } = options;
 
-  const schema = new Schema<IUserRoleDocument>(
+  const schema = new Schema<IUserRoleDocument<I>>(
     {
       userId: {
-        type: Schema.Types.ObjectId,
+        type: idType,
         ref: userModelName,
         required: true,
       },
       roleId: {
-        type: Schema.Types.ObjectId,
+        type: idType,
         ref: roleModelName,
         required: true,
       },
       createdBy: {
-        type: Schema.Types.ObjectId,
+        type: idType,
         ref: userModelName,
         required: true,
         immutable: true,
       },
       updatedBy: {
-        type: Schema.Types.ObjectId,
+        type: idType,
         ref: userModelName,
         required: true,
       },
@@ -55,7 +59,7 @@ export function createUserRoleSchema<TModelName extends string = BaseModelName, 
         optional: true,
       },
       deletedBy: {
-        type: Schema.Types.ObjectId,
+        type: idType,
         ref: userModelName,
         required: false,
         optional: true,

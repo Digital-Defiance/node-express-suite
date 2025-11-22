@@ -97,4 +97,7 @@ export interface IConstants extends IBaseConstants {
    * Algorithm configuration string for keyring operations
    */
   KEYRING_ALGORITHM_CONFIGURATION: CipherGCMTypes;
+  ECIES_VERSION_SIZE: number;
+  ECIES_CIPHER_SUITE_SIZE: number;
+  MEMBER_ID_LENGTH: number;
 }

@@ -24,8 +24,8 @@ import {
   parseBackupCodes,
 } from './utils';
 
-export class Environment implements IEnvironment {
-  private readonly _environment: IEnvironment;
+export class Environment<I = Types.ObjectId> implements IEnvironment<I> {
+  private readonly _environment: IEnvironment<I>;
   private readonly _envObject: object;
   public static requireEnv<T>(key: string, obj: object): T {
     if (!Object.prototype.hasOwnProperty.call(obj, key)) {
@@ -47,6 +47,8 @@ export class Environment implements IEnvironment {
     initialization = false,
     override = true,
     constants: IConstants = LocalhostConstants,
+    idAdapter: (bytes: Uint8Array) => I = (bytes) =>
+      new Types.ObjectId(Buffer.from(bytes)) as unknown as I,
   ) {
     let envObj = process.env;
     let debug = envObj['DEBUG'] === 'true' || envObj['DEBUG'] === '1';
@@ -103,6 +105,7 @@ export class Environment implements IEnvironment {
     const isDevDatabase = devDatabase !== undefined && devDatabase !== '';
 
     this._environment = {
+      idAdapter,
       debug: debug,
       devDatabase: devDatabase,
       detailedDebug: detailedDebug,
@@ -198,16 +201,16 @@ export class Environment implements IEnvironment {
         ? new Date(envObj['ADMIN_CREATED_AT'])
         : new Date(),
       adminId: envObj['ADMIN_ID']
-        ? new ObjectId(envObj['ADMIN_ID'])
-        : new ObjectId(),
+        ? idAdapter(constants.idProvider.idFromString(envObj['ADMIN_ID']))
+        : idAdapter(constants.idProvider.generate()),
       adminPassword: envObj['ADMIN_PASSWORD']
         ? new SecureString(envObj['ADMIN_PASSWORD'])
         : undefined,
       adminRoleId: envObj['ADMIN_ROLE_ID']
-        ? new ObjectId(envObj['ADMIN_ROLE_ID'])
+        ? idAdapter(constants.idProvider.idFromString(envObj['ADMIN_ROLE_ID']))
         : undefined,
       adminUserRoleId: envObj['ADMIN_ROLE_ID']
-        ? new ObjectId(envObj['ADMIN_ROLE_ID'])
+        ? idAdapter(constants.idProvider.idFromString(envObj['ADMIN_ROLE_ID']))
         : undefined,
       adminBackupCodes: envObj['ADMIN_BACKUP_CODES']
         ? parseBackupCodes('admin', envObj)
@@ -217,16 +220,16 @@ export class Environment implements IEnvironment {
         ? new Date(envObj['MEMBER_CREATED_AT'])
         : new Date(),
       memberId: envObj['MEMBER_ID']
-        ? new ObjectId(envObj['MEMBER_ID'])
-        : new ObjectId(),
+        ? idAdapter(constants.idProvider.idFromString(envObj['MEMBER_ID']))
+        : idAdapter(constants.idProvider.generate()),
       memberPassword: envObj['MEMBER_PASSWORD']
         ? new SecureString(envObj['MEMBER_PASSWORD'])
         : undefined,
       memberRoleId: envObj['MEMBER_ROLE_ID']
-        ? new ObjectId(envObj['MEMBER_ROLE_ID'])
+        ? idAdapter(constants.idProvider.idFromString(envObj['MEMBER_ROLE_ID']))
         : undefined,
       memberUserRoleId: envObj['MEMBER_USER_ROLE_ID']
-        ? new ObjectId(envObj['MEMBER_USER_ROLE_ID'])
+        ? idAdapter(constants.idProvider.idFromString(envObj['MEMBER_USER_ROLE_ID']))
         : undefined,
       memberBackupCodes: envObj['MEMBER_BACKUP_CODES']
         ? parseBackupCodes('member', envObj)
@@ -236,17 +239,17 @@ export class Environment implements IEnvironment {
         ? new Date(envObj['SYSTEM_CREATED_AT'])
         : new Date(),
       systemId: envObj['SYSTEM_ID']
-        ? new ObjectId(envObj['SYSTEM_ID'])
-        : new ObjectId(),
+        ? idAdapter(constants.idProvider.idFromString(envObj['SYSTEM_ID']))
+        : idAdapter(constants.idProvider.generate()),
       systemPublicKeyHex: envObj['SYSTEM_PUBLIC_KEY'] ?? undefined,
       systemPassword: envObj['SYSTEM_PASSWORD']
         ? new SecureString(envObj['SYSTEM_PASSWORD'])
         : undefined,
       systemRoleId: envObj['SYSTEM_ROLE_ID']
-        ? new ObjectId(envObj['SYSTEM_ROLE_ID'])
+        ? idAdapter(constants.idProvider.idFromString(envObj['SYSTEM_ROLE_ID']))
         : undefined,
       systemUserRoleId: envObj['SYSTEM_ROLE_ID']
-        ? new ObjectId(envObj['SYSTEM_ROLE_ID'])
+        ? idAdapter(constants.idProvider.idFromString(envObj['SYSTEM_ROLE_ID']))
         : undefined,
       systemBackupCodes: envObj['SYSTEM_BACKUP_CODES']
         ? parseBackupCodes('system', envObj)
@@ -417,6 +420,10 @@ export class Environment implements IEnvironment {
     return this._envObject;
   }
 
+  public get idAdapter(): (bytes: Uint8Array) => I {
+    return this._environment.idAdapter;
+  }
+
   /**
    * Whether to print certain console debug messages and enable certain debug features
    */
@@ -536,7 +543,7 @@ export class Environment implements IEnvironment {
   /**
    * The ID of the admin user
    */
-  public get adminId(): Types.ObjectId | undefined {
+  public get adminId(): I | undefined {
     return this._environment.adminId;
   }
 
@@ -550,14 +557,14 @@ export class Environment implements IEnvironment {
   /**
    * The role ID of the admin user
    */
-  public get adminRoleId(): Types.ObjectId | undefined {
+  public get adminRoleId(): I | undefined {
     return this._environment.adminRoleId;
   }
 
   /**
    * The user role ID of the admin user
    */
-  public get adminUserRoleId(): Types.ObjectId | undefined {
+  public get adminUserRoleId(): I | undefined {
     return this._environment.adminUserRoleId;
   }
 
@@ -585,7 +592,7 @@ export class Environment implements IEnvironment {
   /**
    * The date the member user was created
    */
-  public get memberId(): Types.ObjectId | undefined {
+  public get memberId(): I | undefined {
     return this._environment.memberId;
   }
 
@@ -599,14 +606,14 @@ export class Environment implements IEnvironment {
   /**
    * The role ID of the member user
    */
-  public get memberRoleId(): Types.ObjectId | undefined {
+  public get memberRoleId(): I | undefined {
     return this._environment.memberRoleId;
   }
 
   /**
    * The user role ID of the member user
    */
-  public get memberUserRoleId(): Types.ObjectId | undefined {
+  public get memberUserRoleId(): I | undefined {
     return this._environment.memberUserRoleId;
   }
 
@@ -634,7 +641,7 @@ export class Environment implements IEnvironment {
   /**
    * The ID of the system user
    */
-  public get systemId(): Types.ObjectId | undefined {
+  public get systemId(): I | undefined {
     return this._environment.systemId;
   }
 
@@ -655,14 +662,14 @@ export class Environment implements IEnvironment {
   /**
    * The role ID of the system user
    */
-  public get systemRoleId(): Types.ObjectId | undefined {
+  public get systemRoleId(): I | undefined {
     return this._environment.systemRoleId;
   }
 
   /**
    * The user role ID of the system user
    */
-  public get systemUserRoleId(): Types.ObjectId | undefined {
+  public get systemUserRoleId(): I | undefined {
     return this._environment.systemUserRoleId;
   }
 

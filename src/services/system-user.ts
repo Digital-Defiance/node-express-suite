@@ -39,7 +39,7 @@ export class SystemUserService {
         );
       }
       const mnemonic: SecureString = environment.systemMnemonic;
-      const eciesService = new ECIESService(undefined, constants.ECIES);
+      const eciesService = new ECIESService(constants.ECIES);
       const { wallet } =
         eciesService.walletAndSeedFromMnemonic(mnemonic);
       const keyPair =

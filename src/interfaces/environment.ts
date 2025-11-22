@@ -3,7 +3,7 @@ import { Types } from 'mongoose';
 import { BackupCode } from '../backup-code';
 import { IMongoEnvironment } from './environment-mongo';
 
-export interface IEnvironment {
+export interface IEnvironment<I = Types.ObjectId> {
   /**
    * Whether to use a memory database for local development (eg with MongoMemoryServer)
    * If set, this will create a new in-memory database instance on application start with the given database name
@@ -72,7 +72,7 @@ export interface IEnvironment {
   /**
    * The ID of the admin user
    */
-  adminId?: Types.ObjectId;
+  adminId?: I;
   /**
    * The creation date of the admin user
    */
@@ -84,11 +84,11 @@ export interface IEnvironment {
   /**
    * The ID of the admin user role object
    */
-  adminRoleId?: Types.ObjectId;
+  adminRoleId?: I;
   /**
    * The ID of the admin user's user role object
    */
-  adminUserRoleId?: Types.ObjectId;
+  adminUserRoleId?: I;
   /**
    * Backup codes for the admin user
    */
@@ -100,7 +100,7 @@ export interface IEnvironment {
   /**
    * The ID of the member user
    */
-  memberId?: Types.ObjectId;
+  memberId?: I;
   /**
    * The creation date of the member user
    */
@@ -112,11 +112,11 @@ export interface IEnvironment {
   /**
    * The ID of the member user role object
    */
-  memberRoleId?: Types.ObjectId;
+  memberRoleId?: I;
   /**
    * The ID of the member user's user role object
    */
-  memberUserRoleId?: Types.ObjectId;
+  memberUserRoleId?: I;
   /**
    * Backup codes for the member user
    */
@@ -128,7 +128,7 @@ export interface IEnvironment {
   /**
    * The ID of the system user
    */
-  systemId?: Types.ObjectId;
+  systemId?: I;
   /**
    * The creation date of the system user
    */
@@ -144,11 +144,11 @@ export interface IEnvironment {
   /**
    * The ID of the system user role object
    */
-  systemRoleId?: Types.ObjectId;
+  systemRoleId?: I;
   /**
    * The ID of the system user's user role object
    */
-  systemUserRoleId?: Types.ObjectId;
+  systemUserRoleId?: I;
   /**
    * Backup codes for the system user
    */
@@ -177,4 +177,9 @@ export interface IEnvironment {
    * Whether this is a production environment
    */
   production: boolean;
+
+  /**
+   * Adapter to convert raw ID bytes to the application ID type I
+   */
+  idAdapter: (bytes: Uint8Array) => I;
 }

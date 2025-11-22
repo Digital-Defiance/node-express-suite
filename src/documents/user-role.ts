@@ -5,7 +5,7 @@ import { IBaseDocument } from './base';
 /**
  * Composite interface for user-role collection documents
  */
-export type IUserRoleDocument = IBaseDocument<
-  IUserRoleBase<Types.ObjectId, Date>,
-  Types.ObjectId
+export type IUserRoleDocument<I extends string | Types.ObjectId = Types.ObjectId> = IBaseDocument<
+  IUserRoleBase<I, Date>,
+  I
 >;

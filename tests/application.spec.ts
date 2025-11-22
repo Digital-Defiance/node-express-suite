@@ -305,7 +305,8 @@ describe('Application', () => {
       expect(initDevDbSpy).toHaveBeenCalled();
       expect(DatabaseInitializationService.printServerInitResults).toHaveBeenCalledWith(
         mockInitResults,
-        false
+        false,
+        expect.any(Function)
       );
       expect(application.ready).toBe(true);
 
@@ -364,7 +365,8 @@ describe('Application', () => {
       expect(DatabaseInitializationService.printServerInitResults).toHaveBeenCalledTimes(1);
       expect(DatabaseInitializationService.printServerInitResults).toHaveBeenCalledWith(
         mockInitResults,
-        false
+        false,
+        expect.any(Function)
       );
 
       listenSpy.mockRestore();

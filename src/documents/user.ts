@@ -5,6 +5,7 @@ import { IBaseDocument } from './base';
 /**
  * Composite interface for user collection documents
  */
-export type IUserDocument<S extends string = string> = IBaseDocument<
-  IUserBase<Types.ObjectId, Date, S, AccountStatus>
+export type IUserDocument<S extends string = string, I extends string | Types.ObjectId = Types.ObjectId> = IBaseDocument<
+  IUserBase<I, Date, S, AccountStatus>,
+  I
 >;
