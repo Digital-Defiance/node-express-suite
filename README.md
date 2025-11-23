@@ -1128,6 +1128,10 @@ The following v1.x patterns still work in v2.0:
 
 ## ChangeLog
 
+### Version 3.5.7
+
+- Library updates
+
 ### Version 3.5.0
 
 **Type Safety Improvements**
