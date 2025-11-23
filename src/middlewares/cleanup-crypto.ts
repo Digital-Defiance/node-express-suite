@@ -27,12 +27,9 @@ export function cleanupCrypto(
     // Do not dispose system user here; it may be a process-wide singleton
 
     // Call original end function
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (originalEnd as unknown as (...a: any[]) => Response).apply(
-      this,
-      args,
-    );
-  } as unknown as typeof res.end;
+    // Type assertion needed because we're wrapping the end function
+    return originalEnd.apply(this, args as Parameters<typeof originalEnd>);
+  } as typeof res.end;
 
   res.end = wrappedEnd;
 

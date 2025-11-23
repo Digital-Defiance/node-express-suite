@@ -1,13 +1,17 @@
-import { UserController } from '../../src/controllers/user';
-import { JwtService } from '../../src/services/jwt';
-import { UserService } from '../../src/services/user';
-import { BackupCodeService } from '../../src/services/backup-code';
-import { RoleService } from '../../src/services/role';
 import { ECIESService } from '@digitaldefiance/node-ecies-lib';
-import { Types } from 'mongoose';
-import { AccountStatus, IRoleDTO, ITokenRole } from '@digitaldefiance/suite-core-lib';
-import { IUserDocument } from '../../src/documents';
+import {
+  AccountStatus,
+  IRoleDTO,
+  ITokenRole,
+} from '@digitaldefiance/suite-core-lib';
 import { Request, Response } from 'express';
+import { Types } from 'mongoose';
+import { UserController } from '../../src/controllers/user';
+import { IUserDocument } from '../../src/documents';
+import { BackupCodeService } from '../../src/services/backup-code';
+import { JwtService } from '../../src/services/jwt';
+import { RoleService } from '../../src/services/role';
+import { UserService } from '../../src/services/user';
 
 // Mock SystemUserService before importing UserController
 jest.mock('../../src/services/system-user', () => ({
@@ -23,7 +27,7 @@ jest.mock('../../src/services/system-user', () => ({
 /**
  * Test suite to verify that login endpoints return properly formatted IRequestUserDTO objects
  * with roles array instead of raw MongoDB documents.
- * 
+ *
  * This addresses a bug where direct-challenge and email-challenge endpoints were returning
  * raw userDoc objects (with roles as ObjectIds) instead of using RequestUserService.makeRequestUserDTO
  * which properly formats the roles as IRoleDTO objects.
@@ -32,7 +36,9 @@ describe('UserController - Login DTO Validation', () => {
   let controller: UserController;
   let mockApp: any;
   let mockJwtService: jest.Mocked<JwtService<any, any, any, any, any>>;
-  let mockUserService: jest.Mocked<UserService<any, any, any, any, any, any, any, any, any, any, any>>;
+  let mockUserService: jest.Mocked<
+    UserService<any, any, any, any, any, any, any, any, any, any, any>
+  >;
   let mockBackupCodeService: jest.Mocked<BackupCodeService<any, any, any, any>>;
   let mockRoleService: jest.Mocked<RoleService<any, any, any>>;
   let mockEciesService: jest.Mocked<ECIESService>;
@@ -112,7 +118,9 @@ describe('UserController - Login DTO Validation', () => {
         MnemonicRegex: /^[a-z ]{1,200}$/,
       },
       getModel: jest.fn().mockReturnValue({
-        findById: jest.fn(),
+        findById: jest.fn().mockReturnValue({
+          select: jest.fn().mockResolvedValue(null),
+        }),
         findOne: jest.fn(),
       }),
     };
@@ -134,7 +142,9 @@ describe('UserController - Login DTO Validation', () => {
       verifyDirectLoginChallenge: jest.fn().mockResolvedValue({
         userDoc: mockUserDoc,
       }),
-      validateEmailLoginTokenChallenge: jest.fn().mockResolvedValue(mockUserDoc),
+      validateEmailLoginTokenChallenge: jest
+        .fn()
+        .mockResolvedValue(mockUserDoc),
       findUser: jest.fn().mockResolvedValue(mockUserDoc),
       updateLastLogin: jest.fn().mockResolvedValue(undefined),
     } as any;
@@ -200,7 +210,11 @@ describe('UserController - Login DTO Validation', () => {
       (controller as any).activeRequest = mockReq;
       (controller as any).activeResponse = mockRes;
 
-      const result = await controller.directLoginChallenge(mockReq, mockRes, mockNext);
+      const result = await controller.directLoginChallenge(
+        mockReq,
+        mockRes,
+        mockNext,
+      );
 
       // Clear the active request context
       (controller as any).activeRequest = null;
@@ -222,7 +236,7 @@ describe('UserController - Login DTO Validation', () => {
       expect(user.roles).toBeDefined();
       expect(Array.isArray(user.roles)).toBe(true);
       expect(user.roles.length).toBeGreaterThan(0);
-      
+
       const role = user.roles[0];
       expect(typeof role._id).toBe('string'); // DTO has _id as string
       expect(role._id).toBe(mockRoleId.toString()); // Verify it's the expected role
@@ -231,7 +245,7 @@ describe('UserController - Login DTO Validation', () => {
       expect(role.member).toBe(true);
       expect(role.child).toBe(false);
       expect(role.system).toBe(false);
-      
+
       // Verify rolePrivileges are properly set
       expect(user.rolePrivileges).toBeDefined();
       expect(user.rolePrivileges.admin).toBe(false);
@@ -263,7 +277,11 @@ describe('UserController - Login DTO Validation', () => {
       (controller as any).activeRequest = mockReq;
       (controller as any).activeResponse = mockRes;
 
-      const result = await controller.emailLoginChallenge(mockReq, mockRes, mockNext);
+      const result = await controller.emailLoginChallenge(
+        mockReq,
+        mockRes,
+        mockNext,
+      );
 
       // Clear the active request context
       (controller as any).activeRequest = null;
@@ -285,7 +303,7 @@ describe('UserController - Login DTO Validation', () => {
       expect(user.roles).toBeDefined();
       expect(Array.isArray(user.roles)).toBe(true);
       expect(user.roles.length).toBeGreaterThan(0);
-      
+
       const role = user.roles[0];
       expect(typeof role._id).toBe('string'); // DTO has _id as string
       expect(role._id).toBe(mockRoleId.toString()); // Verify it's the expected role
@@ -294,7 +312,7 @@ describe('UserController - Login DTO Validation', () => {
       expect(role.member).toBe(true);
       expect(role.child).toBe(false);
       expect(role.system).toBe(false);
-      
+
       // Verify rolePrivileges are properly set
       expect(user.rolePrivileges).toBeDefined();
       expect(user.rolePrivileges.admin).toBe(false);
@@ -330,7 +348,11 @@ describe('UserController - Login DTO Validation', () => {
       (controller as any).activeRequest = mockReq;
       (controller as any).activeResponse = mockRes;
 
-      const result = await controller.useBackupCodeLogin(mockReq, mockRes, mockNext);
+      const result = await controller.useBackupCodeLogin(
+        mockReq,
+        mockRes,
+        mockNext,
+      );
 
       // Clear the active request context
       (controller as any).activeRequest = null;
@@ -352,7 +374,7 @@ describe('UserController - Login DTO Validation', () => {
       expect(user.roles).toBeDefined();
       expect(Array.isArray(user.roles)).toBe(true);
       expect(user.roles.length).toBeGreaterThan(0);
-      
+
       const role = user.roles[0];
       expect(typeof role._id).toBe('string'); // DTO has _id as string
       expect(role._id).toBe(mockRoleId.toString()); // Verify it's the expected role
@@ -361,7 +383,7 @@ describe('UserController - Login DTO Validation', () => {
       expect(role.member).toBe(true);
       expect(role.child).toBe(false);
       expect(role.system).toBe(false);
-      
+
       // Verify rolePrivileges are properly set
       expect(user.rolePrivileges).toBeDefined();
       expect(user.rolePrivileges.admin).toBe(false);
@@ -405,7 +427,11 @@ describe('UserController - Login DTO Validation', () => {
       (controller as any).activeRequest = mockReq;
       (controller as any).activeResponse = mockRes;
 
-      const result = await controller.tokenVerifiedResponse(mockReq, mockRes, mockNext);
+      const result = await controller.tokenVerifiedResponse(
+        mockReq,
+        mockRes,
+        mockNext,
+      );
 
       // Clear the active request context
       (controller as any).activeRequest = null;
@@ -426,7 +452,7 @@ describe('UserController - Login DTO Validation', () => {
       expect(user.roles).toBeDefined();
       expect(Array.isArray(user.roles)).toBe(true);
       expect(user.roles.length).toBeGreaterThan(0);
-      
+
       const role = user.roles[0];
       expect(typeof role._id).toBe('string'); // DTO has _id as string
       expect(role._id).toBe(mockRoleId.toString()); // Verify it's the expected role
@@ -435,14 +461,14 @@ describe('UserController - Login DTO Validation', () => {
       expect(role.member).toBe(true);
       expect(role.child).toBe(false);
       expect(role.system).toBe(false);
-      
+
       // Verify rolePrivileges are properly set
       expect(user.rolePrivileges).toBeDefined();
       expect(user.rolePrivileges.admin).toBe(false);
       expect(user.rolePrivileges.member).toBe(true);
       expect(user.rolePrivileges.child).toBe(false);
       expect(user.rolePrivileges.system).toBe(false);
-      
+
       // Verify all role properties are preserved from req.user.roles
       expect(role).toEqual(mockRoleDTO);
     });
@@ -492,7 +518,11 @@ describe('UserController - Login DTO Validation', () => {
       (controller as any).activeRequest = mockReq;
       (controller as any).activeResponse = mockRes;
 
-      const result = await controller.tokenVerifiedResponse(mockReq, mockRes, mockNext);
+      const result = await controller.tokenVerifiedResponse(
+        mockReq,
+        mockRes,
+        mockNext,
+      );
 
       // Clear the active request context
       (controller as any).activeRequest = null;
@@ -500,7 +530,7 @@ describe('UserController - Login DTO Validation', () => {
 
       const user = (result.response as any).user;
       const role = user.roles[0];
-      
+
       // Verify all properties are preserved, not just admin
       expect(role.name).toBe('member');
       expect(role.admin).toBe(false);
@@ -542,7 +572,9 @@ describe('UserController - Login DTO Validation', () => {
         accountStatus: AccountStatus.Active,
       };
       mockApp.getModel.mockReturnValue({
-        findById: jest.fn().mockResolvedValue(activeUserDoc),
+        findById: jest.fn().mockReturnValue({
+          select: jest.fn().mockResolvedValue(activeUserDoc),
+        }),
       });
 
       // Set the active request context
@@ -571,11 +603,11 @@ describe('UserController - Login DTO Validation', () => {
       expect(user.roles).toBeDefined();
       expect(Array.isArray(user.roles)).toBe(true);
       expect(user.roles.length).toBeGreaterThan(0);
-      
+
       const role = user.roles[0];
       expect(typeof role._id).toBe('string'); // DTO has _id as string
       expect(role._id).toBe(mockRoleId.toString()); // Verify it's the expected role
-      
+
       // Verify rolePrivileges are properly set
       expect(user.rolePrivileges).toBeDefined();
       expect(user.rolePrivileges.admin).toBe(false);
@@ -650,7 +682,12 @@ describe('UserController - Login DTO Validation', () => {
       // Test with invalid structures
       expect(validateUserDTO({ ...validUserDTO, id: mockUserId })).toBe(false); // id is ObjectId
       expect(validateUserDTO({ ...validUserDTO, _id: mockUserId })).toBe(false); // has _id
-      expect(validateUserDTO({ ...validUserDTO, roles: [{ ...mockRoleDTO, _id: mockRoleId }] })).toBe(false); // role._id is ObjectId
+      expect(
+        validateUserDTO({
+          ...validUserDTO,
+          roles: [{ ...mockRoleDTO, _id: mockRoleId }],
+        }),
+      ).toBe(false); // role._id is ObjectId
     });
   });
 });

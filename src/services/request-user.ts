@@ -1,10 +1,18 @@
-import { IRequestUserDTO, IRoleDTO, ITokenRole } from '@digitaldefiance/suite-core-lib';
+import {
+  IRequestUserDTO,
+  IRoleDTO,
+  ITokenRole,
+} from '@digitaldefiance/suite-core-lib';
 import { Types } from 'mongoose';
 import { IUserDocument } from '../documents';
 import { IRequestUserBackendObject } from '../interfaces/backend-objects/request-user';
+import { convertStringToGenericId } from '../types/id-converters';
 import { RoleService } from './role';
 
-export class RequestUserService<I extends string | Types.ObjectId, TTokenRole extends ITokenRole<I>> {
+export class RequestUserService<
+  I extends string | Types.ObjectId,
+  TTokenRole extends ITokenRole<I>,
+> {
   /**
    * Given a user document and an array of role documents, create the IRequestUser
    * @param userDoc
@@ -15,11 +23,16 @@ export class RequestUserService<I extends string | Types.ObjectId, TTokenRole ex
     S extends string,
     TTokenRole extends ITokenRole<I>,
     TRequestUserDTO extends IRequestUserDTO,
-  >(userDoc: IUserDocument<S, I>, roles: TTokenRole[]): TRequestUserDTO {
+  >(
+    userDoc:
+      | IUserDocument<S, I>
+      | (Pick<IUserDocument<S, I>, keyof IUserDocument<S, I>> & { _id: any }),
+    roles: TTokenRole[],
+  ): TRequestUserDTO {
     if (!userDoc._id) {
       throw new Error('User document is missing _id');
     }
-    
+
     // Calculate combined role privileges across all roles
     const rolePrivileges = {
       admin: roles.some((r) => r.admin),
@@ -27,7 +40,7 @@ export class RequestUserService<I extends string | Types.ObjectId, TTokenRole ex
       child: roles.some((r) => r.child),
       system: roles.some((r) => r.system),
     };
-    
+
     return {
       id: userDoc._id.toString(),
       email: userDoc.email,
@@ -58,7 +71,7 @@ export class RequestUserService<I extends string | Types.ObjectId, TTokenRole ex
     idConverter?: (id: string) => I,
   ): IRequestUserBackendObject<S, I> {
     const convert =
-      idConverter ?? ((id: string) => new Types.ObjectId(id) as unknown as I);
+      idConverter ?? ((id: string) => convertStringToGenericId<I>(id));
     const hydratedRoles = requestUser.roles.map((role: IRoleDTO) =>
       RoleService.hydrateRoleDTOToBackend<I>(role, convert),
     );

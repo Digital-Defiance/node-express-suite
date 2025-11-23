@@ -1,5 +1,8 @@
-import { getSuiteCoreTranslation, SuiteCoreStringKey } from '@digitaldefiance/suite-core-lib';
 import { CoreLanguageCode } from '@digitaldefiance/i18n-lib';
+import {
+  getSuiteCoreTranslation,
+  SuiteCoreStringKey,
+} from '@digitaldefiance/suite-core-lib';
 import { IStatusCodeResponse } from '../interfaces';
 import { ApiResponse } from '../types';
 
@@ -28,7 +31,9 @@ export class ResponseBuilder<T extends ApiResponse = ApiResponse> {
     return new ResponseBuilder<T>().status(400);
   }
 
-  static unauthorized<T extends ApiResponse = ApiResponse>(): ResponseBuilder<T> {
+  static unauthorized<
+    T extends ApiResponse = ApiResponse,
+  >(): ResponseBuilder<T> {
     return new ResponseBuilder<T>().status(401);
   }
 
@@ -49,8 +54,13 @@ export class ResponseBuilder<T extends ApiResponse = ApiResponse> {
     return this;
   }
 
-  message(key: SuiteCoreStringKey, params?: Record<string, string>, language?: string): this {
-    (this.responseData as any).message = getSuiteCoreTranslation(key, params, language as CoreLanguageCode);
+  message(
+    key: SuiteCoreStringKey,
+    params?: Record<string, string>,
+    language?: string,
+  ): this {
+    (this.responseData as T & { message?: string }).message =
+      getSuiteCoreTranslation(key, params, language as CoreLanguageCode);
     return this;
   }
 

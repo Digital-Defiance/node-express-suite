@@ -49,16 +49,18 @@ export function directLog(
   ...args: any[]
 ): void {
   if (!debug) return;
-  
+
   // Format the message
-  const message = args.map(arg => 
-    typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
-  ).join(' ');
-  
+  const message = args
+    .map((arg) =>
+      typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg),
+    )
+    .join(' ');
+
   // Use fs.writeSync to write directly to the file descriptors
   // This bypasses Node's stream handling and Nx's interception
   const buffer = Buffer.from(message + '\n', 'utf8');
-  
+
   if (type === 'error' || type === 'warn') {
     // File descriptor 2 is stderr
     writeSync(2, buffer);
@@ -69,11 +71,21 @@ export function directLog(
 }
 
 // Helper: get value at a dotted path from an object
-export function getValueAtPath(obj: unknown, path: (string | number)[]) {
-  return path.reduce<any>((acc, key) => {
+export function getValueAtPath(
+  obj: unknown,
+  path: (string | number)[],
+): unknown {
+  return path.reduce<unknown>((acc, key) => {
     if (acc == null) return undefined;
     try {
-      return (acc as any)[key as any];
+      if (
+        typeof acc === 'object' &&
+        acc !== null &&
+        (typeof key === 'string' || typeof key === 'number')
+      ) {
+        return (acc as Record<string | number, unknown>)[key];
+      }
+      return undefined;
     } catch {
       return undefined;
     }
@@ -249,7 +261,11 @@ export async function withTransaction<T>(
   options: TransactionOptions = {},
   ...args: any
 ): Promise<T> {
-  const engine = getSuiteCoreI18nEngine(options.application ? { constants: options.application.constants } : undefined);
+  const engine = getSuiteCoreI18nEngine(
+    options.application
+      ? { constants: options.application.constants }
+      : undefined,
+  );
   const isTestEnvironment = process.env['NODE_ENV'] === 'test';
   const {
     timeoutMs = DEFAULT_TRANSACTION_TIMEOUT,
@@ -423,7 +439,9 @@ export function sendApiExpressValidationErrorResponse(
   res: Response,
   application?: IApplication,
 ): void {
-  const engine = getSuiteCoreI18nEngine(application ? { constants: application.constants } : undefined);
+  const engine = getSuiteCoreI18nEngine(
+    application ? { constants: application.constants } : undefined,
+  );
   sendApiMessageResponse<IApiExpressValidationErrorResponse>(
     status,
     {
@@ -476,7 +494,7 @@ function isRecursiveError(error: unknown): boolean {
     error !== null &&
     typeof error === 'object' &&
     '_handlingInProgress' in error &&
-    !!(error as any)._handlingInProgress
+    !!(error as { _handlingInProgress?: boolean })._handlingInProgress
   );
 }
 
@@ -486,11 +504,16 @@ function markErrorAsHandling(error: unknown): void {
   }
 }
 
-function getSafeErrorMessage(message?: string, application?: IApplication): string {
+function getSafeErrorMessage(
+  message?: string,
+  application?: IApplication,
+): string {
   if (message && typeof message === 'string' && message.trim() !== '') {
     return message;
   }
-  const engine = getSuiteCoreI18nEngine(application ? { constants: application.constants } : undefined);
+  const engine = getSuiteCoreI18nEngine(
+    application ? { constants: application.constants } : undefined,
+  );
   try {
     const translated = engine.translate(
       SuiteCoreComponentId,
@@ -774,7 +797,6 @@ import moment from 'moment-timezone';
 import { BackupCode } from './backup-code';
 import { LengthEncodingType } from './enumerations/length-encoding-type';
 import { MissingValidatedDataError } from './errors';
-import { debuglog } from 'util';
 
 export function isValidTimezone(timezone: string): boolean {
   return moment.tz.zone(timezone) !== null;
@@ -1043,7 +1065,7 @@ export function getLengthForLengthType(type: LengthEncodingType): number {
 
 export function parseBackupCodes(
   user: 'admin' | 'member' | 'system',
-  environment: object,
+  environment: Record<string, string | undefined>,
 ): BackupCode[] {
   const envVarMap: Record<'admin' | 'member' | 'system', string> = {
     admin: 'ADMIN_BACKUP_CODES',
@@ -1051,9 +1073,9 @@ export function parseBackupCodes(
     system: 'SYSTEM_BACKUP_CODES',
   };
   const envVar = envVarMap[user];
+  const envValue = environment[envVar];
   const backupCodes =
-    (environment as any)[envVar]
-      ?.split(',')
-      .map((code: string) => new BackupCode(code.trim())) || [];
+    envValue?.split(',').map((code: string) => new BackupCode(code.trim())) ||
+    [];
   return backupCodes;
 }

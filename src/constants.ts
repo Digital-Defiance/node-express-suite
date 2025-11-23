@@ -65,11 +65,13 @@ export const createExpressConstants = (
     ECIES_VERSION_SIZE: 1,
     ECIES_CIPHER_SUITE_SIZE: 1,
     ...createConstants(siteDomain, siteHostname, overrides),
-  } as unknown as IConstants);
+  } as IConstants);
 };
 
-export const LocalhostConstants: IConstants =
-  createExpressConstants('localhost', 'localhost' );
+export const LocalhostConstants: IConstants = createExpressConstants(
+  'localhost',
+  'localhost',
+);
 
 if (
   CHECKSUM.SHA3_BUFFER_LENGTH !== CHECKSUM.SHA3_DEFAULT_HASH_BITS / 8 ||

@@ -1,6 +1,5 @@
 import {
   EmailString,
-  getEciesI18nEngine,
   IECIESConfig,
   MemberType,
   SecureBuffer,
@@ -16,7 +15,6 @@ import {
   AccountStatus,
   AccountStatusError,
   DirectChallengeNotEnabledError,
-  PasswordLoginNotEnabledError,
   EmailInUseError,
   EmailTokenExpiredError,
   EmailTokenFailedToSendError,
@@ -29,13 +27,13 @@ import {
   InvalidChallengeResponseError,
   InvalidCredentialsError,
   InvalidEmailError,
-  InvalidTokenError,
   InvalidUsernameError,
   IRequestUserDTO,
   ITokenRole,
   IUserBase,
   IUserDTO,
   LoginChallengeExpiredError,
+  PasswordLoginNotEnabledError,
   PendingEmailVerificationError,
   PrivateKeyRequiredError,
   Role,
@@ -48,7 +46,6 @@ import {
 } from '@digitaldefiance/suite-core-lib';
 import { Wallet } from '@ethereumjs/wallet';
 import { randomBytes } from 'crypto';
-import { ObjectId } from 'mongodb';
 import { ClientSession, Document, ProjectionType, Types } from 'mongoose';
 import validator from 'validator';
 import { BackupCode } from '../backup-code';
@@ -66,6 +63,7 @@ import { IUserBackendObject } from '../interfaces/backend-objects/user';
 import { IConstants } from '../interfaces/constants';
 import { IEmailService } from '../interfaces/email-service';
 import { ModelRegistry } from '../model-registry';
+import { convertObjectIdToGenericId } from '../types/id-converters';
 import { debugLog } from '../utils';
 import { BackupCodeService } from './backup-code';
 import { BaseService } from './base';
@@ -125,8 +123,7 @@ export class UserService<
     this.disableEmailSend = application.environment.disableEmailSend;
     this.idConverter =
       idConverter ?? ((id: string) => new Types.ObjectId(id) as I);
-    this.idGenerator =
-      idGenerator ?? (() => new Types.ObjectId() as I);
+    this.idGenerator = idGenerator ?? (() => new Types.ObjectId() as I);
     const config: IECIESConfig = {
       curveName: this.application.constants.ECIES.CURVE_NAME,
       primaryKeyDerivationPath:
@@ -162,9 +159,10 @@ export class UserService<
    * @param user a User Document
    * @returns An IUserDTO
    */
-  public static userToUserDTO<S extends string, I extends string | Types.ObjectId = Types.ObjectId>(
-    user: IUserDocument<S, I> | Record<string, unknown>,
-  ): IUserDTO {
+  public static userToUserDTO<
+    S extends string,
+    I extends string | Types.ObjectId = Types.ObjectId,
+  >(user: IUserDocument<S, I> | Record<string, unknown>): IUserDTO {
     return {
       ...(user instanceof Document ? user.toObject() : user),
       _id: (user._id instanceof Types.ObjectId
@@ -332,7 +330,9 @@ export class UserService<
    * @returns The email token document
    */
   public async createAndSendEmailToken(
-    user: IUserDocument<S, I>,
+    user:
+      | IUserDocument<S, I>
+      | (Pick<IUserDocument<S, I>, keyof IUserDocument<S, I>> & { _id: any }),
     type: EmailTokenType = EmailTokenType.AccountVerification,
     session?: ClientSession,
     debug = false,
@@ -747,15 +747,17 @@ export class UserService<
       mnemonic: string;
     }>(
       async (sess: ClientSession | undefined) => {
-        const existingEmail: IUserDocument<S, I> | null = await UserModel.findOne({
-          email: userData.email.toLowerCase(),
-        }).session(sess ?? null);
+        const existingEmail: IUserDocument<S, I> | null =
+          await UserModel.findOne({
+            email: userData.email.toLowerCase(),
+          }).session(sess ?? null);
         if (existingEmail) {
           throw new EmailInUseError();
         }
-        const existingUsername: IUserDocument<S, I> | null = await UserModel.findOne({
-          username: { $regex: new RegExp(`^${userData.username}$`, 'i') },
-        }).session(sess ?? null);
+        const existingUsername: IUserDocument<S, I> | null =
+          await UserModel.findOne({
+            username: { $regex: new RegExp(`^${userData.username}$`, 'i') },
+          }).session(sess ?? null);
         if (existingUsername) {
           throw new UsernameInUseError();
         }
@@ -771,7 +773,7 @@ export class UserService<
                 userData.username,
                 new EmailString(userData.email),
                 undefined,
-                createdBy ? Buffer.from(String(createdBy), 'hex') : undefined
+                createdBy ? Buffer.from(String(createdBy), 'hex') : undefined,
               );
             // make sure the new mnemonic is not already in the database
 
@@ -826,7 +828,7 @@ export class UserService<
           sess,
         );
         if (newMnemonicDoc) {
-          newUserDoc.mnemonicId = newMnemonicDoc._id as I
+          newUserDoc.mnemonicId = newMnemonicDoc._id as I;
         }
 
         // If password provided, wrap the ECIES private key with the password (Option B)
@@ -894,9 +896,11 @@ export class UserService<
     userId: Types.ObjectId,
     session?: ClientSession,
   ): Promise<Array<IBackupCode>> {
-    const userWithCodes = await this.findUserById(userId as unknown as I, true, session, {
-      backupCodes: 1,
-    } as any);
+    const userWithCodes = await this.findUserById(
+      convertObjectIdToGenericId<I>(userId),
+      true,
+      session,
+    );
     return userWithCodes.backupCodes;
   }
 
@@ -993,7 +997,11 @@ export class UserService<
       new Date(userDoc.updatedAt),
       userDoc.createdBy,
     );
-    if ((privateKey?.originalLength ?? -1) > 0 && user.hasPrivateKey && !wallet) {
+    if (
+      (privateKey?.originalLength ?? -1) > 0 &&
+      user.hasPrivateKey &&
+      !wallet
+    ) {
       user.loadWallet(
         mnemonic ?? this.recoverMnemonic(user, userDoc.mnemonicRecovery),
       );
@@ -1088,7 +1096,6 @@ export class UserService<
       if (!isSignatureValid || !nonce.equals(decryptedNonce)) {
         throw new InvalidCredentialsError();
       }
-
 
       return {
         userMember,
@@ -1494,9 +1501,9 @@ export class UserService<
           ModelRegistry.instance.getTypedModel<IEmailTokenDocument>(
             BaseModelName.EmailToken,
           );
-        const UserModel = ModelRegistry.instance.getTypedModel<IUserDocument<S, I>>(
-          BaseModelName.User,
-        );
+        const UserModel = ModelRegistry.instance.getTypedModel<
+          IUserDocument<S, I>
+        >(BaseModelName.User);
         const token: IEmailTokenDocument | null = await this.findEmailToken(
           emailToken,
           EmailTokenType.AccountVerification,
@@ -1625,9 +1632,9 @@ export class UserService<
   ): Promise<IRequestUserDTO> {
     return await this.withTransaction<IRequestUserDTO>(
       async (sess: ClientSession | undefined) => {
-        const UserModel = ModelRegistry.instance.getTypedModel<IUserDocument<S, I>>(
-          BaseModelName.User,
-        );
+        const UserModel = ModelRegistry.instance.getTypedModel<
+          IUserDocument<S, I>
+        >(BaseModelName.User);
         const userDoc = await UserModel.findByIdAndUpdate(
           this.idConverter(userId),
           {
@@ -1663,9 +1670,9 @@ export class UserService<
   ): Promise<IRequestUserDTO> {
     return await this.withTransaction<IRequestUserDTO>(
       async (sess: ClientSession | undefined) => {
-        const UserModel = ModelRegistry.instance.getTypedModel<IUserDocument<S, I>>(
-          BaseModelName.User,
-        );
+        const UserModel = ModelRegistry.instance.getTypedModel<
+          IUserDocument<S, I>
+        >(BaseModelName.User);
         const userDoc = await UserModel.findByIdAndUpdate(
           this.idConverter(userId),
           {
@@ -1708,16 +1715,21 @@ export class UserService<
   ): Promise<IRequestUserDTO> {
     return await this.withTransaction<IRequestUserDTO>(
       async (sess: ClientSession | undefined) => {
-        const UserModel = ModelRegistry.instance.getTypedModel<IUserDocument<S, I>>(
-          BaseModelName.User,
-        );
-        const userDoc = await UserModel.findById(this.idConverter(userId)).session(sess ?? null);
+        const UserModel = ModelRegistry.instance.getTypedModel<
+          IUserDocument<S, I>
+        >(BaseModelName.User);
+        const userDoc = await UserModel.findById(
+          this.idConverter(userId),
+        ).session(sess ?? null);
         if (!userDoc) {
           throw new UserNotFoundError();
         }
 
         // Check if email is changing and if it's already in use
-        if (settings.email && settings.email.toLowerCase() !== userDoc.email.toLowerCase()) {
+        if (
+          settings.email &&
+          settings.email.toLowerCase() !== userDoc.email.toLowerCase()
+        ) {
           const existingUser = await UserModel.findOne({
             email: settings.email.toLowerCase(),
             _id: { $ne: userDoc._id },
@@ -1736,11 +1748,16 @@ export class UserService<
         }
 
         // Update other settings
-        if (settings.timezone !== undefined) userDoc.timezone = settings.timezone;
-        if (settings.siteLanguage !== undefined) userDoc.siteLanguage = settings.siteLanguage as S;
-        if (settings.darkMode !== undefined) userDoc.darkMode = settings.darkMode;
-        if (settings.currency !== undefined) userDoc.currency = settings.currency;
-        if (settings.directChallenge !== undefined) userDoc.directChallenge = settings.directChallenge;
+        if (settings.timezone !== undefined)
+          userDoc.timezone = settings.timezone;
+        if (settings.siteLanguage !== undefined)
+          userDoc.siteLanguage = settings.siteLanguage as S;
+        if (settings.darkMode !== undefined)
+          userDoc.darkMode = settings.darkMode;
+        if (settings.currency !== undefined)
+          userDoc.currency = settings.currency;
+        if (settings.directChallenge !== undefined)
+          userDoc.directChallenge = settings.directChallenge;
 
         await userDoc.save({ session: sess });
 
@@ -1771,10 +1788,12 @@ export class UserService<
   ): Promise<void> {
     return await this.withTransaction<void>(
       async (sess: ClientSession | undefined) => {
-        const UserModel = ModelRegistry.instance.getTypedModel<IUserDocument<S, I>>(
-          BaseModelName.User,
-        );
-        const userDoc = await UserModel.findById(this.idConverter(userId)).session(sess ?? null);
+        const UserModel = ModelRegistry.instance.getTypedModel<
+          IUserDocument<S, I>
+        >(BaseModelName.User);
+        const userDoc = await UserModel.findById(
+          this.idConverter(userId),
+        ).session(sess ?? null);
         if (!userDoc || !userDoc.passwordWrappedPrivateKey) {
           throw new UserNotFoundError();
         }
@@ -1895,9 +1914,9 @@ export class UserService<
           ModelRegistry.instance.getTypedModel<IEmailTokenDocument>(
             BaseModelName.EmailToken,
           );
-        const UserModel = ModelRegistry.instance.getTypedModel<IUserDocument<S, I>>(
-          BaseModelName.User,
-        );
+        const UserModel = ModelRegistry.instance.getTypedModel<
+          IUserDocument<S, I>
+        >(BaseModelName.User);
 
         // Find and validate the token
         const emailToken = await this.findEmailToken(

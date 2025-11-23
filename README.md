@@ -1128,6 +1128,25 @@ The following v1.x patterns still work in v2.0:
 
 ## ChangeLog
 
+### Version 3.5.0
+
+**Type Safety Improvements**
+
+- **ELIMINATED**: All unsafe `as any` type casts from production code
+- **IMPROVED**: Mongoose query patterns - replaced projection objects with `.select()` method
+- **ENHANCED**: Generic type handling in `SystemUserService` and `BackupCodeService`
+- **FIXED**: Type compatibility between Mongoose documents and service interfaces
+- **ADDED**: Explanatory comments for necessary type assertions
+- **VERIFIED**: All 1164 tests passing with full type safety
+- **VERIFIED**: Build successful with strict TypeScript checking
+
+**Technical Details**
+
+- Replaced `{ password: 0 } as any` with `.select('-password')` in authentication middleware
+- Made `SystemUserService.setSystemUser` generic to accept different ID types
+- Updated test mocks to support new query method chains
+- Documented remaining `as unknown` casts (2 instances, both necessary for generic compatibility)
+
 ### Version 3.0.0
 
 - Upgrade to `@digitaldefiance/suite-core-lib` v3.0.0

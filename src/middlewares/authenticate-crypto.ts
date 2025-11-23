@@ -8,14 +8,11 @@ import {
 } from '@digitaldefiance/suite-core-lib';
 import { NextFunction, Request, Response } from 'express';
 import { ClientSession, Types } from 'mongoose';
-import { IBaseDocument } from '../documents';
+import { ServiceKeys } from '../container';
 import { IUserDocument } from '../documents/user';
 import { BaseModelName } from '../enumerations';
-import { Environment } from '../environment';
 import { InvalidPasswordError } from '../errors';
-import { IConstants } from '../interfaces';
 import { IApplication } from '../interfaces/application';
-import { ServiceKeys } from '../container';
 import { withTransaction } from '../utils';
 
 /**
@@ -75,7 +72,18 @@ export async function authenticateCrypto<
   const UserModel = application.getModel<IUserDocument<string, I>>(
     BaseModelName.User,
   );
-  const userService = application.services.get(ServiceKeys.USER) as any;
+  const userService = application.services.get(ServiceKeys.USER) as {
+    loginWithMnemonic: (
+      email: string,
+      mnemonic: SecureString,
+      session?: ClientSession,
+    ) => Promise<any>;
+    loginWithPassword: (
+      email: string,
+      password: string,
+      session?: ClientSession,
+    ) => Promise<any>;
+  };
 
   try {
     return await withTransaction<Response | void>(
@@ -185,9 +193,17 @@ export async function authenticateCrypto<
       err instanceof Error
         ? err.message.replace(/[\r\n]/g, ' ')
         : String(err).replace(/[\r\n]/g, ' ');
-    console.error(`${getSuiteCoreTranslation(SuiteCoreStringKey.Error_UnexpectedErrorInAuthenticateCrypto)}:`, sanitizedErr);
+    console.error(
+      `${getSuiteCoreTranslation(
+        SuiteCoreStringKey.Error_UnexpectedErrorInAuthenticateCrypto,
+      )}:`,
+      sanitizedErr,
+    );
     if (err instanceof Error && err.stack) {
-      console.error(`${getSuiteCoreTranslation(SuiteCoreStringKey.Common_StackTrace)}:`, err.stack);
+      console.error(
+        `${getSuiteCoreTranslation(SuiteCoreStringKey.Common_StackTrace)}:`,
+        err.stack,
+      );
     }
     return res.status(500).send({
       // amazonq-ignore-next-line false positive, hardcoded string

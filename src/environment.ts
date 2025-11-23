@@ -6,7 +6,6 @@ import {
 } from '@digitaldefiance/suite-core-lib';
 import { config } from 'dotenv';
 import { existsSync } from 'fs';
-import { ObjectId } from 'mongodb';
 import { Types } from 'mongoose';
 import { BackupCode } from './backup-code';
 import { LocalhostConstants } from './constants';
@@ -15,6 +14,7 @@ import { setGlobalActiveContextAdminTimezoneFromProcessArgvOrEnv } from './get-t
 import { IConstants } from './interfaces/constants';
 import { IEnvironment } from './interfaces/environment';
 import { IMongoEnvironment } from './interfaces/environment-mongo';
+import type { EnvironmentVariables } from './types/environment-variables';
 import {
   DEBUG_TYPE,
   debugLog,
@@ -26,21 +26,22 @@ import {
 
 export class Environment<I = Types.ObjectId> implements IEnvironment<I> {
   private readonly _environment: IEnvironment<I>;
-  private readonly _envObject: object;
-  public static requireEnv<T>(key: string, obj: object): T {
+  private readonly _envObject: EnvironmentVariables;
+  public static requireEnv<T>(key: string, obj: EnvironmentVariables): T {
     if (!Object.prototype.hasOwnProperty.call(obj, key)) {
       throw new TranslatableSuiteError(
         SuiteCoreStringKey.Error_MissingRequiredEnvironmentVariableTemplate,
         { key },
       );
     }
-    if (!(obj as any)[key] || String((obj as any)[key]).trim() === '') {
+    const value = obj[key];
+    if (!value || String(value).trim() === '') {
       throw new TranslatableSuiteError(
         SuiteCoreStringKey.Error_EmptyEnvironmentVariableTemplate,
         { key },
       );
     }
-    return (obj as any)[key] as T;
+    return value as T;
   }
   constructor(
     path?: string,
@@ -48,7 +49,7 @@ export class Environment<I = Types.ObjectId> implements IEnvironment<I> {
     override = true,
     constants: IConstants = LocalhostConstants,
     idAdapter: (bytes: Uint8Array) => I = (bytes) =>
-      new Types.ObjectId(Buffer.from(bytes)) as unknown as I,
+      new Types.ObjectId(Buffer.from(bytes)) as I,
   ) {
     let envObj = process.env;
     let debug = envObj['DEBUG'] === 'true' || envObj['DEBUG'] === '1';
@@ -99,9 +100,10 @@ export class Environment<I = Types.ObjectId> implements IEnvironment<I> {
       ? parseInt(process.env['HTTPS_DEV_PORT'] ?? '3443')
       : 443;
 
-    const devDatabase = envObj['DEV_DATABASE'] !== undefined && envObj['DEV_DATABASE'] !== ''
-          ? envObj['DEV_DATABASE']
-          : undefined;
+    const devDatabase =
+      envObj['DEV_DATABASE'] !== undefined && envObj['DEV_DATABASE'] !== ''
+        ? envObj['DEV_DATABASE']
+        : undefined;
     const isDevDatabase = devDatabase !== undefined && devDatabase !== '';
 
     this._environment = {
@@ -118,8 +120,8 @@ export class Environment<I = Types.ObjectId> implements IEnvironment<I> {
         envObj['NODE_ENV'] === 'production'
           ? 'https://localhost'
           : httpsDevCertRoot
-            ? `https://localhost:${httpsDevPort}`
-            : 'http://localhost:3000',
+          ? `https://localhost:${httpsDevPort}`
+          : 'http://localhost:3000',
       // Avoid importing Application here to prevent circular deps
       // Compute dist dir from process.cwd() directly
       apiDistDir: Environment.requireEnv<string>('API_DIST_DIR', envObj),
@@ -193,8 +195,8 @@ export class Environment<I = Types.ObjectId> implements IEnvironment<I> {
         transactionRetryBaseDelay: envObj['MONGO_TRANSACTION_RETRY_BASE_DELAY']
           ? parseInt(envObj['MONGO_TRANSACTION_RETRY_BASE_DELAY'])
           : envObj['NODE_ENV'] === 'test'
-            ? 25
-            : 100,
+          ? 25
+          : 100,
       },
       adminMnemonic: new SecureString(envObj['ADMIN_MNEMONIC'] ?? null),
       adminCreatedAt: envObj['ADMIN_CREATED_AT']
@@ -229,7 +231,9 @@ export class Environment<I = Types.ObjectId> implements IEnvironment<I> {
         ? idAdapter(constants.idProvider.idFromString(envObj['MEMBER_ROLE_ID']))
         : undefined,
       memberUserRoleId: envObj['MEMBER_USER_ROLE_ID']
-        ? idAdapter(constants.idProvider.idFromString(envObj['MEMBER_USER_ROLE_ID']))
+        ? idAdapter(
+            constants.idProvider.idFromString(envObj['MEMBER_USER_ROLE_ID']),
+          )
         : undefined,
       memberBackupCodes: envObj['MEMBER_BACKUP_CODES']
         ? parseBackupCodes('member', envObj)
@@ -298,13 +302,30 @@ export class Environment<I = Types.ObjectId> implements IEnvironment<I> {
       );
     }
     if (!constants.JwtSecretRegex.test(this._environment.jwtSecret)) {
-      throw new TranslatableSuiteError(SuiteCoreStringKey.Error_MustMatchRegexTemplate, { value: 'JWT_SECRET' });
+      throw new TranslatableSuiteError(
+        SuiteCoreStringKey.Error_MustMatchRegexTemplate,
+        { value: 'JWT_SECRET' },
+      );
     }
-    if (!constants.MnemonicHmacRegex.test(this._environment.mnemonicHmacSecret.valueAsHexString)) {
-      throw new TranslatableSuiteError(SuiteCoreStringKey.Error_MustMatchRegexTemplate, { value: 'MNEMONIC_HMAC_SECRET' });
+    if (
+      !constants.MnemonicHmacRegex.test(
+        this._environment.mnemonicHmacSecret.valueAsHexString,
+      )
+    ) {
+      throw new TranslatableSuiteError(
+        SuiteCoreStringKey.Error_MustMatchRegexTemplate,
+        { value: 'MNEMONIC_HMAC_SECRET' },
+      );
     }
-    if (!constants.MnemonicEncryptionKeyRegex.test(this._environment.mnemonicEncryptionKey.valueAsHexString)) {
-      throw new TranslatableSuiteError(SuiteCoreStringKey.Error_MustMatchRegexTemplate, { value: 'MNEMONIC_ENCRYPTION_KEY' });
+    if (
+      !constants.MnemonicEncryptionKeyRegex.test(
+        this._environment.mnemonicEncryptionKey.valueAsHexString,
+      )
+    ) {
+      throw new TranslatableSuiteError(
+        SuiteCoreStringKey.Error_MustMatchRegexTemplate,
+        { value: 'MNEMONIC_ENCRYPTION_KEY' },
+      );
     }
     if (!this._environment.mongo.uri) {
       throw new Error(
@@ -320,7 +341,11 @@ export class Environment<I = Types.ObjectId> implements IEnvironment<I> {
         }),
       );
     }
-    if (!initialization && !isDevDatabase && !this._environment.systemPublicKeyHex) {
+    if (
+      !initialization &&
+      !isDevDatabase &&
+      !this._environment.systemPublicKeyHex
+    ) {
       throw new Error(
         getSuiteCoreTranslation(SuiteCoreStringKey.Admin_EnvNotSetTemplate, {
           variable: 'SYSTEM_PUBLIC_KEY',
@@ -328,10 +353,14 @@ export class Environment<I = Types.ObjectId> implements IEnvironment<I> {
       );
     }
     if (this._environment.mnemonicHmacSecret.length !== 32) {
-      throw new TranslatableSuiteError(SuiteCoreStringKey.Error_MnemonicHmacSecretMustBe64CharHexString);
+      throw new TranslatableSuiteError(
+        SuiteCoreStringKey.Error_MnemonicHmacSecretMustBe64CharHexString,
+      );
     }
     if (!/^[0-9a-f]{64}$/i.test(envObj['MNEMONIC_HMAC_SECRET'] ?? '')) {
-      throw new TranslatableSuiteError(SuiteCoreStringKey.Error_MnemonicHmacSecretMustBe64CharHexString);
+      throw new TranslatableSuiteError(
+        SuiteCoreStringKey.Error_MnemonicHmacSecretMustBe64CharHexString,
+      );
     }
     if (this._environment.mnemonicEncryptionKey.length !== 32) {
       throw new TranslatableSuiteError(
@@ -348,7 +377,9 @@ export class Environment<I = Types.ObjectId> implements IEnvironment<I> {
       this._environment.adminMnemonic?.value &&
       !constants.MnemonicRegex.test(this._environment.adminMnemonic.value ?? '')
     ) {
-      throw new TranslatableSuiteError(SuiteCoreStringKey.Error_AdminMnemonicMustBeValidMnemonicPhrase);
+      throw new TranslatableSuiteError(
+        SuiteCoreStringKey.Error_AdminMnemonicMustBeValidMnemonicPhrase,
+      );
     }
     if (
       !isDevDatabase &&
@@ -357,7 +388,9 @@ export class Environment<I = Types.ObjectId> implements IEnvironment<I> {
         this._environment.memberMnemonic.value ?? '',
       )
     ) {
-      throw new TranslatableSuiteError(SuiteCoreStringKey.Error_MemberMnemonicMustBeValidMnemonicPhrase);
+      throw new TranslatableSuiteError(
+        SuiteCoreStringKey.Error_MemberMnemonicMustBeValidMnemonicPhrase,
+      );
     }
     if (!this._environment.apiDistDir) {
       throw new Error(
@@ -394,7 +427,9 @@ export class Environment<I = Types.ObjectId> implements IEnvironment<I> {
       );
     }
     if (this.pbkdf2Iterations < 1) {
-      throw new TranslatableSuiteError(SuiteCoreStringKey.Error_Pbkdf2IterationsMustBeGreaterThanZero);
+      throw new TranslatableSuiteError(
+        SuiteCoreStringKey.Error_Pbkdf2IterationsMustBeGreaterThanZero,
+      );
     }
   }
 
@@ -403,7 +438,7 @@ export class Environment<I = Types.ObjectId> implements IEnvironment<I> {
   }
 
   public get(key: string): string | undefined {
-    return this.has(key) ? String((this._envObject as any)[key]) : undefined;
+    return this.has(key) ? String(this._envObject[key]) : undefined;
   }
 
   public setEnvironment(key: string, value: any): void {

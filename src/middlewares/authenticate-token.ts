@@ -1,3 +1,5 @@
+import type { Timezone as TimezoneType } from '@digitaldefiance/i18n-lib';
+import { GlobalActiveContext } from '@digitaldefiance/i18n-lib';
 import {
   AccountStatus,
   getSuiteCoreTranslation,
@@ -5,29 +7,28 @@ import {
   ITokenUser,
   SuiteCoreStringKey,
 } from '@digitaldefiance/suite-core-lib';
-import { GlobalActiveContext } from '@digitaldefiance/i18n-lib';
-import type { Timezone as TimezoneType } from '@digitaldefiance/i18n-lib';
-
-// Helper to create Timezone from the same module instance as GlobalActiveContext
-function createTimezone(tz: string): TimezoneType {
-  const context = GlobalActiveContext.getInstance();
-  const TimezoneConstructor = context.adminTimezone.constructor as any;
-  return new TimezoneConstructor(tz);
-}
 import { NextFunction, Request, Response } from 'express';
 import { IncomingHttpHeaders } from 'http';
 import { ClientSession, Types } from 'mongoose';
-import { IBaseDocument } from '../documents';
 import { IUserDocument } from '../documents/user';
 import { BaseModelName } from '../enumerations/base-model-name';
-import { Environment } from '../environment';
 import { TokenExpiredError } from '../errors/token-expired';
-import { IConstants } from '../interfaces';
 import { IApplication } from '../interfaces/application';
 import { JwtService } from '../services/jwt';
 import { RequestUserService } from '../services/request-user';
 import { RoleService } from '../services/role';
 import { withTransaction } from '../utils';
+
+// Type for Timezone constructor
+type TimezoneConstructor = new (tz: string) => TimezoneType;
+
+// Helper to create Timezone from the same module instance as GlobalActiveContext
+function createTimezone(tz: string): TimezoneType {
+  const context = GlobalActiveContext.getInstance();
+  const TimezoneConstructor = context.adminTimezone
+    .constructor as TimezoneConstructor;
+  return new TimezoneConstructor(tz);
+}
 
 /**
  * Find the auth token in the headers
@@ -65,7 +66,9 @@ export async function authenticateToken<
   res: Response,
   next: NextFunction,
 ): Promise<Response> {
-  const UserModel = application.getModel<IUserDocument<string, I>>(BaseModelName.User);
+  const UserModel = application.getModel<IUserDocument<string, I>>(
+    BaseModelName.User,
+  );
   const token = findAuthToken(req.headers);
   if (token == null) {
     return res
@@ -95,9 +98,8 @@ export async function authenticateToken<
             getSuiteCoreTranslation(SuiteCoreStringKey.Validation_UserNotFound),
           );
         }
-        const userDoc = await UserModel.findById(user.userId, {
-          password: 0,
-        } as any)
+        const userDoc = await UserModel.findById(user.userId)
+          .select('-password')
           .session(sess ?? null)
           .exec();
         if (!userDoc || userDoc.accountStatus !== AccountStatus.Active) {
@@ -109,7 +111,7 @@ export async function authenticateToken<
         const roleService = new RoleService<I, D, TTokenRole>(application);
         const roles = await roleService.getUserRoles(userDoc._id as I, sess);
         const tokenRoles = roleService.rolesToTokenRoles(roles);
-        req.user = RequestUserService.makeRequestUserDTO(userDoc as any, tokenRoles);
+        req.user = RequestUserService.makeRequestUserDTO(userDoc, tokenRoles);
         const context = GlobalActiveContext.getInstance();
         context.userLanguage = userDoc.siteLanguage ?? context.userLanguage;
         context.setLanguageContextSpace('user');

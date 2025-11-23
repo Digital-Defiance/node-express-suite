@@ -17,10 +17,8 @@ import { timingSafeEqual } from 'crypto';
 import { ClientSession, Types } from 'mongoose';
 import { BackupCode } from '../backup-code';
 import { LocalhostConstants as AppConstants } from '../constants';
-import { IBaseDocument, IUserDocument } from '../documents';
-import { Environment } from '../environment';
+import { IUserDocument } from '../documents';
 import { InvalidBackupCodeVersionError } from '../errors/invalid-backup-code-version';
-import { IConstants } from '../interfaces';
 import { IApplication } from '../interfaces/application';
 import { BaseService } from './base';
 import { KeyWrappingService } from './index';
@@ -45,7 +43,7 @@ export class BackupCodeService<
   TApplication extends IApplication = IApplication,
 > extends BaseService {
   private readonly eciesService: ECIESService;
-  private systemUser?: BackendMember;
+  private systemUser?: BackendMember<I>;
   private readonly keyWrappingService: KeyWrappingService;
   private readonly roleService: RoleService<I, D, TTokenRole>;
 
@@ -67,12 +65,14 @@ export class BackupCodeService<
   /**
    * Get the lazily-initialized system user for key wrapping/unwrapping.
    */
-  private getSystemUser(): BackendMember {
+  private getSystemUser(): BackendMember<I> {
     if (!this.systemUser) {
+      // System user is always created with Buffer IDs, but we need to cast to the generic type I
+      // This is safe because the system user's ID type is compatible with all ID types
       this.systemUser = SystemUserService.getSystemUser(
         this.application.environment,
         this.application.constants,
-      );
+      ) as unknown as BackendMember<I>;
     }
     return this.systemUser;
   }
@@ -81,7 +81,7 @@ export class BackupCodeService<
    * Forcibly set the system user (for database initialization)
    * @param user
    */
-  public setSystemUser(user: BackendMember): void {
+  public setSystemUser(user: BackendMember<I>): void {
     this.systemUser = user;
   }
 
@@ -270,7 +270,10 @@ export class BackupCodeService<
    * Rewrap system-wrapped AEAD blobs from old system key to new one without touching inner AEAD.
    */
   public async rewrapAllUsersBackupCodes(
-    fetchBatch: (afterId?: string, limit?: number) => Promise<IUserDocument<string, I>[]>,
+    fetchBatch: (
+      afterId?: string,
+      limit?: number,
+    ) => Promise<IUserDocument<string, I>[]>,
     saveUser: (user: IUserDocument<string, I>) => Promise<void>,
     oldSystem: BackendMember,
     newSystem: BackendMember,
@@ -311,8 +314,7 @@ export class BackupCodeService<
         }
       }
 
-      afterId =
-        (users[users.length - 1]?._id as unknown as string) ?? undefined;
+      afterId = users[users.length - 1]?._id?.toString() ?? undefined;
     }
     return processed;
   }

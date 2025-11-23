@@ -1,28 +1,26 @@
 import { MemberType } from '@digitaldefiance/ecies-lib';
 import {
   GlobalActiveContext,
-  IActiveContext,
   I18nEngine,
+  IActiveContext,
 } from '@digitaldefiance/i18n-lib';
 import {
   IRoleBase,
   IRoleDTO,
   ITokenRole,
   ITokenRoleDTO,
-  IUserRoleBase,
   LastAdminError,
   Role,
 } from '@digitaldefiance/suite-core-lib';
 import { ClientSession, Document, Types } from 'mongoose';
-import { IBaseDocument, IUserDocument } from '../documents';
+import { IUserDocument } from '../documents';
 import { IRoleDocument } from '../documents/role';
 import { IUserRoleDocument } from '../documents/user-role';
 import { BaseModelName } from '../enumerations/base-model-name';
-import { Environment } from '../environment';
-import { IConstants } from '../interfaces';
 import { IApplication } from '../interfaces/application';
 import { IRoleBackendObject } from '../interfaces/backend-objects/role';
 import { ModelRegistry } from '../model-registry';
+import { convertStringToGenericId } from '../types/id-converters';
 import { omit } from '../utils';
 import { BaseService } from './base';
 
@@ -42,7 +40,10 @@ export class RoleService<
     super(application);
   }
 
-  public static roleToRoleDTO<I extends string | Types.ObjectId = Types.ObjectId, D extends Date = Date>(
+  public static roleToRoleDTO<
+    I extends string | Types.ObjectId = Types.ObjectId,
+    D extends Date = Date,
+  >(
     role: ITokenRole<I, D> | IRoleDocument<I> | Partial<IRoleBase<I>>,
   ): ITokenRoleDTO {
     const roleObj = role instanceof Document ? role.toObject() : role;
@@ -91,12 +92,14 @@ export class RoleService<
    * @param role The Role DTO
    * @returns An IRoleBackendObject
    */
-  public static hydrateRoleDTOToBackend<I extends string | Types.ObjectId = Types.ObjectId>(
+  public static hydrateRoleDTOToBackend<
+    I extends string | Types.ObjectId = Types.ObjectId,
+  >(
     role: ITokenRoleDTO,
     idConverter?: (id: string) => I,
   ): IRoleBackendObject<I> {
     const convert =
-      idConverter ?? ((id: string) => new Types.ObjectId(id) as unknown as I);
+      idConverter ?? ((id: string) => convertStringToGenericId<I>(id));
     return {
       ...(omit<ITokenRoleDTO, 'translatedName'>(role, [
         'translatedName',
@@ -125,10 +128,9 @@ export class RoleService<
     roleName: Role,
     session?: ClientSession,
   ): Promise<I | null> {
-    const RoleModel = ModelRegistry.instance.get<
-      any,
-      any
-    >(BaseModelName.Role).model;
+    const RoleModel = ModelRegistry.instance.get<any, any>(
+      BaseModelName.Role,
+    ).model;
     const role = await RoleModel.findOne({ name: roleName }, undefined, {
       session,
     }).select('_id');
@@ -148,13 +150,12 @@ export class RoleService<
     roleData: IRoleBase<I, D, Role>,
     session?: ClientSession | null,
   ): Promise<IRoleDocument<I>> {
-    const RoleModel = ModelRegistry.instance.get<
-      any,
-      any
-    >(BaseModelName.Role).model;
+    const RoleModel = ModelRegistry.instance.get<any, any>(
+      BaseModelName.Role,
+    ).model;
     const role = new RoleModel(roleData);
     const savedRole = await role.save(session ? { session } : {});
-    return savedRole as unknown as IRoleDocument<I>;
+    return savedRole as IRoleDocument<I>;
   }
 
   /**
@@ -171,10 +172,9 @@ export class RoleService<
     session?: ClientSession,
     overrideId?: I,
   ): Promise<IUserRoleDocument<I>> {
-    const UserRoleModel = ModelRegistry.instance.get<
-      any,
-      any
-    >(BaseModelName.UserRole).model;
+    const UserRoleModel = ModelRegistry.instance.get<any, any>(
+      BaseModelName.UserRole,
+    ).model;
 
     // Check if the user-role relationship already exists (and is not deleted)
     const existingUserRole = await UserRoleModel.findOne({
@@ -213,14 +213,12 @@ export class RoleService<
     deletedBy: I,
     session?: ClientSession,
   ): Promise<void> {
-    const RoleModel = ModelRegistry.instance.get<
-      any,
-      any
-    >(BaseModelName.Role).model;
-    const UserRoleModel = ModelRegistry.instance.get<
-      any,
-      any
-    >(BaseModelName.UserRole).model;
+    const RoleModel = ModelRegistry.instance.get<any, any>(
+      BaseModelName.Role,
+    ).model;
+    const UserRoleModel = ModelRegistry.instance.get<any, any>(
+      BaseModelName.UserRole,
+    ).model;
 
     const role = await RoleModel.findById(roleId).session(session ?? null);
     if (role?.admin) {
@@ -253,10 +251,9 @@ export class RoleService<
     hardDelete: boolean,
     session?: ClientSession,
   ): Promise<void> {
-    const RoleModel = ModelRegistry.instance.get<
-      any,
-      any
-    >(BaseModelName.Role).model;
+    const RoleModel = ModelRegistry.instance.get<any, any>(
+      BaseModelName.Role,
+    ).model;
     if (hardDelete) {
       await RoleModel.findByIdAndDelete(roleId).session(session ?? null);
     } else {
@@ -277,14 +274,12 @@ export class RoleService<
     userId: I,
     session?: ClientSession,
   ): Promise<IRoleDocument<I>[]> {
-    const UserRoleModel = ModelRegistry.instance.get<
-      any,
-      any
-    >(BaseModelName.UserRole).model;
-    const RoleModel = ModelRegistry.instance.get<
-      any,
-      any
-    >(BaseModelName.Role).model;
+    const UserRoleModel = ModelRegistry.instance.get<any, any>(
+      BaseModelName.UserRole,
+    ).model;
+    const RoleModel = ModelRegistry.instance.get<any, any>(
+      BaseModelName.Role,
+    ).model;
     if (!UserRoleModel || !RoleModel) throw new Error('Model not registered');
 
     // Return full documents
@@ -299,7 +294,7 @@ export class RoleService<
     return (await RoleModel.find({
       _id: { $in: roleIds },
       deletedAt: { $exists: false },
-    }).session(session ?? null)) as unknown as IRoleDocument<I>[];
+    }).session(session ?? null)) as IRoleDocument<I>[];
   }
 
   /**
@@ -308,14 +303,10 @@ export class RoleService<
    * @param session Optional mongoose session
    * @returns The user IDs that are members of the role
    */
-  public async getRoleUsers(
-    roleId: I,
-    session?: ClientSession,
-  ): Promise<I[]> {
-    const UserRoleModel = ModelRegistry.instance.get<
-      any,
-      any
-    >(BaseModelName.UserRole).model;
+  public async getRoleUsers(roleId: I, session?: ClientSession): Promise<I[]> {
+    const UserRoleModel = ModelRegistry.instance.get<any, any>(
+      BaseModelName.UserRole,
+    ).model;
 
     // Return full documents
     const userRoles = await UserRoleModel.find({

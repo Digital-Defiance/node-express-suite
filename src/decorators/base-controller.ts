@@ -3,7 +3,11 @@ import 'reflect-metadata';
 import { BaseController } from '../controllers/base';
 import { IApplication } from '../interfaces/application';
 import { ApiResponse } from '../types';
-import { ROUTES_METADATA, RouteMetadata, ValidationContext } from './controller';
+import {
+  ROUTES_METADATA,
+  RouteMetadata,
+  ValidationContext,
+} from './controller';
 import { zodToExpressValidator } from './zod-validation';
 
 export abstract class DecoratorBaseController<
@@ -26,7 +30,12 @@ export abstract class DecoratorBaseController<
         const context: ValidationContext = { constants };
         const originalValidation = validation;
         validation = ((lang: TLanguage) => {
-          return (originalValidation as (this: ValidationContext, lang: TLanguage) => any).call(context, lang);
+          return (
+            originalValidation as (
+              this: ValidationContext,
+              lang: TLanguage,
+            ) => any
+          ).call(context, lang);
         }) as typeof validation;
       }
 
@@ -38,8 +47,7 @@ export abstract class DecoratorBaseController<
         if (Array.isArray(schemaValidation)) {
           validation = schemaValidation;
         } else {
-          validation = ((lang: TLanguage) =>
-            schemaValidation(lang)) as typeof route.options.validation;
+          validation = (lang: TLanguage) => schemaValidation(lang);
         }
       }
 
@@ -49,7 +57,7 @@ export abstract class DecoratorBaseController<
         handlerKey: route.handlerName,
         useAuthentication: route.options.auth ?? false,
         useCryptoAuthentication: route.options.cryptoAuth ?? false,
-        validation: validation as any,
+        validation: validation,
         middleware: route.options.middleware,
         rawJsonHandler: route.options.rawJson ?? false,
         useTransaction: route.options.transaction ?? false,
@@ -60,7 +68,7 @@ export abstract class DecoratorBaseController<
     // Create handlers object from decorated methods
     this.handlers = {};
     routes.forEach((route) => {
-      const handler = (this as any)[route.handlerName];
+      const handler = (this as Record<string, unknown>)[route.handlerName];
       if (typeof handler === 'function') {
         this.handlers[route.handlerName] = handler.bind(this);
       }

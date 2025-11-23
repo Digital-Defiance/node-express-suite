@@ -1,10 +1,6 @@
 /// <reference path="../types.d.ts" />
 
-import {
-  ECIES,
-  SecureString,
-  UINT64_SIZE,
-} from '@digitaldefiance/ecies-lib';
+import { ECIES, SecureString, UINT64_SIZE } from '@digitaldefiance/ecies-lib';
 import {
   CoreLanguageCode,
   HandleableError,
@@ -220,9 +216,9 @@ export class UserController<
     const UserModel = this.application.getModel<IUserDocument<string, I>>(
       BaseModelName.User,
     );
-    const userDoc = await UserModel.findById(tokenUser.userId, {
-      password: 0,
-    } as any);
+    const userDoc = await UserModel.findById(tokenUser.userId).select(
+      '-password',
+    );
     if (!userDoc || userDoc.accountStatus !== AccountStatus.Active) {
       throw new GenericValidationError(
         getSuiteCoreTranslation(SuiteCoreStringKey.Validation_UserNotFound),
@@ -238,7 +234,7 @@ export class UserController<
       statusCode: 200,
       response: {
         message: getSuiteCoreTranslation(SuiteCoreStringKey.TokenRefreshed),
-        user: RequestUserService.makeRequestUserDTO(userDoc as any, roles),
+        user: RequestUserService.makeRequestUserDTO(userDoc, roles),
         token: newToken,
         serverPublicKey: this.application.environment.systemPublicKeyHex ?? '',
       },
@@ -250,46 +246,47 @@ export class UserController<
 
   @Post('/register', {
     schema: RegisterSchema,
-    validation: function(validationLanguage: TLanguage) {
+    validation: function (validationLanguage: TLanguage) {
       const constants = this.constants;
       return [
-      body('username')
-        .matches(constants.UsernameRegex)
-        .withMessage(
-          getSuiteCoreTranslation(
-            SuiteCoreStringKey.Validation_UsernameRegexErrorTemplate,
-            undefined,
-            validationLanguage,
+        body('username')
+          .matches(constants.UsernameRegex)
+          .withMessage(
+            getSuiteCoreTranslation(
+              SuiteCoreStringKey.Validation_UsernameRegexErrorTemplate,
+              undefined,
+              validationLanguage,
+            ),
           ),
-        ),
-      body('email')
-        .isEmail()
-        .withMessage(
-          getSuiteCoreTranslation(
-            SuiteCoreStringKey.Validation_InvalidEmail,
-            undefined,
-            validationLanguage,
+        body('email')
+          .isEmail()
+          .withMessage(
+            getSuiteCoreTranslation(
+              SuiteCoreStringKey.Validation_InvalidEmail,
+              undefined,
+              validationLanguage,
+            ),
           ),
-        ),
-      body('timezone')
-        .isString()
-        .custom((value) => isValidTimezone(value))
-        .withMessage(
-          getSuiteCoreTranslation(
-            SuiteCoreStringKey.Validation_TimezoneInvalid,
-            undefined,
-            validationLanguage,
+        body('timezone')
+          .isString()
+          .custom((value) => isValidTimezone(value))
+          .withMessage(
+            getSuiteCoreTranslation(
+              SuiteCoreStringKey.Validation_TimezoneInvalid,
+              undefined,
+              validationLanguage,
+            ),
           ),
-        ),
-      body('password')
-        .optional()
-        .matches(constants.PasswordRegex)
-        .withMessage(
-          getSuiteCoreTranslation(
-            SuiteCoreStringKey.Validation_PasswordRegexErrorTemplate,
+        body('password')
+          .optional()
+          .matches(constants.PasswordRegex)
+          .withMessage(
+            getSuiteCoreTranslation(
+              SuiteCoreStringKey.Validation_PasswordRegexErrorTemplate,
+            ),
           ),
-        ),
-    ]; },
+      ];
+    },
   })
   async register(
     req: Request,
@@ -360,28 +357,29 @@ export class UserController<
   }
 
   @Post('/account-verification', {
-    validation: function(validationLanguage: TLanguage) {
+    validation: function (validationLanguage: TLanguage) {
       const constants = this.constants;
       return [
-      body('token')
-        .not()
-        .isEmpty()
-        .withMessage(
-          getSuiteCoreTranslation(
-            SuiteCoreStringKey.Validation_TokenRequired,
-            undefined,
-            validationLanguage,
+        body('token')
+          .not()
+          .isEmpty()
+          .withMessage(
+            getSuiteCoreTranslation(
+              SuiteCoreStringKey.Validation_TokenRequired,
+              undefined,
+              validationLanguage,
+            ),
+          )
+          .matches(new RegExp(`^[a-f0-9]{${constants.EmailTokenLength * 2}}$`))
+          .withMessage(
+            getSuiteCoreTranslation(
+              SuiteCoreStringKey.Validation_InvalidToken,
+              undefined,
+              validationLanguage,
+            ),
           ),
-        )
-        .matches(new RegExp(`^[a-f0-9]{${constants.EmailTokenLength * 2}}$`))
-        .withMessage(
-          getSuiteCoreTranslation(
-            SuiteCoreStringKey.Validation_InvalidToken,
-            undefined,
-            validationLanguage,
-          ),
-        ),
-    ]; },
+      ];
+    },
   })
   async completeAccountVerification(
     req: Request,
@@ -413,25 +411,27 @@ export class UserController<
 
   @Post('/language', {
     auth: true,
-    validation: function(validationLanguage: TLanguage) { return [
-      body('language')
-        .isString()
-        .withMessage(
-          getSuiteCoreTranslation(
-            SuiteCoreStringKey.Validation_InvalidLanguage,
-            undefined,
-            validationLanguage,
+    validation: function (validationLanguage: TLanguage) {
+      return [
+        body('language')
+          .isString()
+          .withMessage(
+            getSuiteCoreTranslation(
+              SuiteCoreStringKey.Validation_InvalidLanguage,
+              undefined,
+              validationLanguage,
+            ),
+          )
+          .isIn(Object.values(LanguageCodes))
+          .withMessage(
+            getSuiteCoreTranslation(
+              SuiteCoreStringKey.Validation_InvalidLanguage,
+              undefined,
+              validationLanguage,
+            ),
           ),
-        )
-        .isIn(Object.values(LanguageCodes))
-        .withMessage(
-          getSuiteCoreTranslation(
-            SuiteCoreStringKey.Validation_InvalidLanguage,
-            undefined,
-            validationLanguage,
-          ),
-        ),
-    ]; },
+      ];
+    },
   })
   async setLanguage(
     req: Request,
@@ -476,17 +476,19 @@ export class UserController<
 
   @Post('/dark-mode', {
     auth: true,
-    validation: function(validationLanguage: TLanguage) { return [
-      body('darkMode')
-        .isBoolean()
-        .withMessage(
-          getSuiteCoreTranslation(
-            SuiteCoreStringKey.Validation_Required,
-            undefined,
-            validationLanguage,
+    validation: function (validationLanguage: TLanguage) {
+      return [
+        body('darkMode')
+          .isBoolean()
+          .withMessage(
+            getSuiteCoreTranslation(
+              SuiteCoreStringKey.Validation_Required,
+              undefined,
+              validationLanguage,
+            ),
           ),
-        ),
-    ]; },
+      ];
+    },
   })
   async setDarkMode(
     req: Request,
@@ -519,7 +521,9 @@ export class UserController<
         return {
           statusCode: 200,
           response: {
-            message: getSuiteCoreTranslation(SuiteCoreStringKey.Settings_DarkModeSuccess),
+            message: getSuiteCoreTranslation(
+              SuiteCoreStringKey.Settings_DarkModeSuccess,
+            ),
             user,
           },
         };
@@ -536,15 +540,15 @@ export class UserController<
     if (!req.user) {
       throw new HandleableError(
         new Error(
-          getSuiteCoreTranslation(
-            SuiteCoreStringKey.Common_NoUserOnRequest,
-          ),
+          getSuiteCoreTranslation(SuiteCoreStringKey.Common_NoUserOnRequest),
         ),
         { statusCode: 401 },
       );
     }
 
-    const UserModel = this.application.getModel<IUserDocument<string, I>>(BaseModelName.User);
+    const UserModel = this.application.getModel<IUserDocument<string, I>>(
+      BaseModelName.User,
+    );
     const userDoc = await UserModel.findById(req.user.id);
 
     return {
@@ -567,70 +571,72 @@ export class UserController<
 
   @Post('/settings', {
     auth: true,
-    validation: function(validationLanguage: TLanguage) { return [
-      body('email')
-        .optional()
-        .isEmail()
-        .withMessage(
-          getSuiteCoreTranslation(
-            SuiteCoreStringKey.Validation_InvalidEmail,
-            undefined,
-            validationLanguage,
+    validation: function (validationLanguage: TLanguage) {
+      return [
+        body('email')
+          .optional()
+          .isEmail()
+          .withMessage(
+            getSuiteCoreTranslation(
+              SuiteCoreStringKey.Validation_InvalidEmail,
+              undefined,
+              validationLanguage,
+            ),
           ),
-        ),
-      body('timezone')
-        .optional()
-        .isString()
-        .custom((value) => isValidTimezone(value))
-        .withMessage(
-          getSuiteCoreTranslation(
-            SuiteCoreStringKey.Validation_TimezoneInvalid,
-            undefined,
-            validationLanguage,
+        body('timezone')
+          .optional()
+          .isString()
+          .custom((value) => isValidTimezone(value))
+          .withMessage(
+            getSuiteCoreTranslation(
+              SuiteCoreStringKey.Validation_TimezoneInvalid,
+              undefined,
+              validationLanguage,
+            ),
           ),
-        ),
-      body('siteLanguage')
-        .optional()
-        .isString()
-        .isIn(Object.values(LanguageCodes))
-        .withMessage(
-          getSuiteCoreTranslation(
-            SuiteCoreStringKey.Validation_InvalidLanguage,
-            undefined,
-            validationLanguage,
+        body('siteLanguage')
+          .optional()
+          .isString()
+          .isIn(Object.values(LanguageCodes))
+          .withMessage(
+            getSuiteCoreTranslation(
+              SuiteCoreStringKey.Validation_InvalidLanguage,
+              undefined,
+              validationLanguage,
+            ),
           ),
-        ),
-      body('currency')
-        .optional()
-        .isString()
-        .withMessage(
-          getSuiteCoreTranslation(
-            SuiteCoreStringKey.Validation_CurrencyCodeRequired,
-            undefined,
-            validationLanguage,
+        body('currency')
+          .optional()
+          .isString()
+          .withMessage(
+            getSuiteCoreTranslation(
+              SuiteCoreStringKey.Validation_CurrencyCodeRequired,
+              undefined,
+              validationLanguage,
+            ),
           ),
-        ),
-      body('darkMode')
-        .optional()
-        .isBoolean()
-        .withMessage(
-          getSuiteCoreTranslation(
-            SuiteCoreStringKey.Validation_Required,
-            undefined,
-            validationLanguage,
+        body('darkMode')
+          .optional()
+          .isBoolean()
+          .withMessage(
+            getSuiteCoreTranslation(
+              SuiteCoreStringKey.Validation_Required,
+              undefined,
+              validationLanguage,
+            ),
           ),
-        ),
-      body('directChallenge')
-        .optional()
-        .isBoolean()
-        .withMessage(
-          getSuiteCoreTranslation(
-            SuiteCoreStringKey.Validation_Required,
-            undefined,
-            validationLanguage,
+        body('directChallenge')
+          .optional()
+          .isBoolean()
+          .withMessage(
+            getSuiteCoreTranslation(
+              SuiteCoreStringKey.Validation_Required,
+              undefined,
+              validationLanguage,
+            ),
           ),
-        ),
-    ]; },
+      ];
+    },
   })
   async updateSettings(
     req: Request,
@@ -642,7 +648,14 @@ export class UserController<
       this.application.environment.mongo.useTransactions,
       undefined,
       async (sess) => {
-        const { email, timezone, siteLanguage, currency, darkMode, directChallenge } = this.validatedBody;
+        const {
+          email,
+          timezone,
+          siteLanguage,
+          currency,
+          darkMode,
+          directChallenge,
+        } = this.validatedBody;
         if (!req.user) {
           throw new HandleableError(
             new Error(
@@ -659,10 +672,14 @@ export class UserController<
           {
             ...(email !== undefined && { email: email as string }),
             ...(timezone !== undefined && { timezone: timezone as string }),
-            ...(siteLanguage !== undefined && { siteLanguage: siteLanguage as S }),
+            ...(siteLanguage !== undefined && {
+              siteLanguage: siteLanguage as S,
+            }),
             ...(currency !== undefined && { currency: currency as string }),
             ...(darkMode !== undefined && { darkMode: darkMode as boolean }),
-            ...(directChallenge !== undefined && { directChallenge: directChallenge as boolean }),
+            ...(directChallenge !== undefined && {
+              directChallenge: directChallenge as boolean,
+            }),
           },
           sess,
         );
@@ -712,44 +729,45 @@ export class UserController<
   @Post('/backup-codes', {
     auth: true,
     cryptoAuth: true,
-    validation: function(validationLanguage: TLanguage) {
+    validation: function (validationLanguage: TLanguage) {
       const constants = this.constants;
       return [
-      body().custom((value, { req }) => {
-        if (!req.body?.password && !req.body?.mnemonic) {
-          throw new MnemonicOrPasswordRequiredError();
-        }
-        return true;
-      }),
-      body('password')
-        .optional()
-        .notEmpty()
-        .withMessage(
-          getSuiteCoreTranslation(
-            SuiteCoreStringKey.Validation_CurrentPasswordRequired,
-            undefined,
-            validationLanguage,
+        body().custom((value, { req }) => {
+          if (!req.body?.password && !req.body?.mnemonic) {
+            throw new MnemonicOrPasswordRequiredError();
+          }
+          return true;
+        }),
+        body('password')
+          .optional()
+          .notEmpty()
+          .withMessage(
+            getSuiteCoreTranslation(
+              SuiteCoreStringKey.Validation_CurrentPasswordRequired,
+              undefined,
+              validationLanguage,
+            ),
           ),
-        ),
-      body('mnemonic')
-        .optional()
-        .notEmpty()
-        .withMessage(
-          getSuiteCoreTranslation(
-            SuiteCoreStringKey.Validation_MnemonicRequired,
-            undefined,
-            validationLanguage,
+        body('mnemonic')
+          .optional()
+          .notEmpty()
+          .withMessage(
+            getSuiteCoreTranslation(
+              SuiteCoreStringKey.Validation_MnemonicRequired,
+              undefined,
+              validationLanguage,
+            ),
+          )
+          .matches(constants.MnemonicRegex)
+          .withMessage(
+            getSuiteCoreTranslation(
+              SuiteCoreStringKey.Validation_MnemonicRegex,
+              undefined,
+              validationLanguage,
+            ),
           ),
-        )
-        .matches(constants.MnemonicRegex)
-        .withMessage(
-          getSuiteCoreTranslation(
-            SuiteCoreStringKey.Validation_MnemonicRegex,
-            undefined,
-            validationLanguage,
-          ),
-        ),
-    ]; },
+      ];
+    },
   })
   async resetBackupCodes(
     req: Request,
@@ -786,17 +804,19 @@ export class UserController<
   @Post('/recover-mnemonic', {
     auth: true,
     cryptoAuth: true,
-    validation: function(validationLanguage: TLanguage) { return [
-      body('password')
-        .isString()
-        .withMessage(
-          getSuiteCoreTranslation(
-            SuiteCoreStringKey.Validation_CurrentPasswordRequired,
-            undefined,
-            validationLanguage,
+    validation: function (validationLanguage: TLanguage) {
+      return [
+        body('password')
+          .isString()
+          .withMessage(
+            getSuiteCoreTranslation(
+              SuiteCoreStringKey.Validation_CurrentPasswordRequired,
+              undefined,
+              validationLanguage,
+            ),
           ),
-        ),
-    ]; },
+      ];
+    },
   })
   async recoverMnemonic(
     req: Request,
@@ -863,34 +883,35 @@ export class UserController<
 
   @Post('/change-password', {
     auth: true,
-    validation: function(validationLanguage: TLanguage) {
+    validation: function (validationLanguage: TLanguage) {
       const constants = this.constants;
       return [
-      body('currentPassword')
-        .notEmpty()
-        .withMessage(
-          getSuiteCoreTranslation(
-            SuiteCoreStringKey.Validation_Required,
-            undefined,
-            validationLanguage,
+        body('currentPassword')
+          .notEmpty()
+          .withMessage(
+            getSuiteCoreTranslation(
+              SuiteCoreStringKey.Validation_Required,
+              undefined,
+              validationLanguage,
+            ),
           ),
-        ),
-      body('newPassword')
-        .matches(constants.PasswordRegex)
-        .withMessage(
-          getSuiteCoreTranslation(
-            SuiteCoreStringKey.Validation_PasswordRegexErrorTemplate,
+        body('newPassword')
+          .matches(constants.PasswordRegex)
+          .withMessage(
+            getSuiteCoreTranslation(
+              SuiteCoreStringKey.Validation_PasswordRegexErrorTemplate,
+            ),
+          )
+          .notEmpty()
+          .withMessage(
+            getSuiteCoreTranslation(
+              SuiteCoreStringKey.Validation_Required,
+              undefined,
+              validationLanguage,
+            ),
           ),
-        )
-        .notEmpty()
-        .withMessage(
-          getSuiteCoreTranslation(
-            SuiteCoreStringKey.Validation_Required,
-            undefined,
-            validationLanguage,
-          ),
-        ),
-    ]; },
+      ];
+    },
   })
   async changePassword(
     req: Request,
@@ -962,68 +983,69 @@ export class UserController<
 
   @Post('/direct-challenge', {
     schema: DirectLoginChallengeSchema,
-    validation: function(validationLanguage: TLanguage) {
+    validation: function (validationLanguage: TLanguage) {
       const constants = this.constants;
       return [
-      body('challenge')
-        .not()
-        .isEmpty()
-        .withMessage(
-          getSuiteCoreTranslation(
-            SuiteCoreStringKey.Validation_InvalidChallenge,
-            undefined,
-            validationLanguage,
+        body('challenge')
+          .not()
+          .isEmpty()
+          .withMessage(
+            getSuiteCoreTranslation(
+              SuiteCoreStringKey.Validation_InvalidChallenge,
+              undefined,
+              validationLanguage,
+            ),
+          )
+          .matches(
+            new RegExp(
+              `^[a-f0-9]{${(UINT64_SIZE + 32 + ECIES.SIGNATURE_SIZE) * 2}}$`,
+            ),
+          )
+          .withMessage(
+            getSuiteCoreTranslation(
+              SuiteCoreStringKey.Validation_InvalidChallenge,
+              undefined,
+              validationLanguage,
+            ),
           ),
-        )
-        .matches(
-          new RegExp(
-            `^[a-f0-9]{${(UINT64_SIZE + 32 + ECIES.SIGNATURE_SIZE) * 2}}$`,
+        body('signature')
+          .not()
+          .isEmpty()
+          .withMessage(
+            getSuiteCoreTranslation(
+              SuiteCoreStringKey.Validation_InvalidSignature,
+            ),
+          )
+          .matches(new RegExp(`^[a-f0-9]{${ECIES.SIGNATURE_SIZE * 2}}$`))
+          .withMessage(SuiteCoreStringKey.Validation_InvalidSignature),
+        body().custom((value, { req }) => {
+          if (!req.body.username && !req.body.email) {
+            throw new UsernameOrEmailRequiredError();
+          }
+          return true;
+        }),
+        body('username')
+          .optional()
+          .matches(constants.UsernameRegex)
+          .withMessage(
+            getSuiteCoreTranslation(
+              SuiteCoreStringKey.Validation_UsernameRegexErrorTemplate,
+              undefined,
+              validationLanguage,
+            ),
           ),
-        )
-        .withMessage(
-          getSuiteCoreTranslation(
-            SuiteCoreStringKey.Validation_InvalidChallenge,
-            undefined,
-            validationLanguage,
+        body('email')
+          .optional()
+          .isEmail()
+          .withMessage(
+            getSuiteCoreTranslation(
+              SuiteCoreStringKey.Validation_InvalidEmail,
+              undefined,
+              validationLanguage,
+            ),
           ),
-        ),
-      body('signature')
-        .not()
-        .isEmpty()
-        .withMessage(
-          getSuiteCoreTranslation(
-            SuiteCoreStringKey.Validation_InvalidSignature,
-          ),
-        )
-        .matches(new RegExp(`^[a-f0-9]{${ECIES.SIGNATURE_SIZE * 2}}$`))
-        .withMessage(SuiteCoreStringKey.Validation_InvalidSignature),
-      body().custom((value, { req }) => {
-        if (!req.body.username && !req.body.email) {
-          throw new UsernameOrEmailRequiredError();
-        }
-        return true;
-      }),
-      body('username')
-        .optional()
-        .matches(constants.UsernameRegex)
-        .withMessage(
-          getSuiteCoreTranslation(
-            SuiteCoreStringKey.Validation_UsernameRegexErrorTemplate,
-            undefined,
-            validationLanguage,
-          ),
-        ),
-      body('email')
-        .optional()
-        .isEmail()
-        .withMessage(
-          getSuiteCoreTranslation(
-            SuiteCoreStringKey.Validation_InvalidEmail,
-            undefined,
-            validationLanguage,
-          ),
-        ),
-    ]; },
+      ];
+    },
   })
   async directLoginChallenge(
     req: Request,
@@ -1039,7 +1061,7 @@ export class UserController<
 
         const { userDoc } = await this.userService.verifyDirectLoginChallenge(
           String(challenge),
-          String(signature) as any,
+          String(signature),
           username ? String(username) : undefined,
           email ? String(email) : undefined,
           sess,
@@ -1054,7 +1076,7 @@ export class UserController<
         return {
           statusCode: 200,
           response: {
-            user: RequestUserService.makeRequestUserDTO(userDoc as any, roles),
+            user: RequestUserService.makeRequestUserDTO(userDoc, roles),
             token: jwtToken,
             serverPublicKey:
               this.application.environment.systemPublicKeyHex ?? '',
@@ -1068,36 +1090,37 @@ export class UserController<
   }
 
   @Post('/request-email-login', {
-    validation: function(validationLanguage: TLanguage) {
+    validation: function (validationLanguage: TLanguage) {
       const constants = this.constants;
       return [
-      body().custom((value, { req }) => {
-        if (!req.body.username && !req.body.email) {
-          throw new UsernameOrEmailRequiredError();
-        }
-        return true;
-      }),
-      body('username')
-        .optional()
-        .matches(constants.UsernameRegex)
-        .withMessage(
-          getSuiteCoreTranslation(
-            SuiteCoreStringKey.Validation_UsernameRegexErrorTemplate,
-            undefined,
-            validationLanguage,
+        body().custom((value, { req }) => {
+          if (!req.body.username && !req.body.email) {
+            throw new UsernameOrEmailRequiredError();
+          }
+          return true;
+        }),
+        body('username')
+          .optional()
+          .matches(constants.UsernameRegex)
+          .withMessage(
+            getSuiteCoreTranslation(
+              SuiteCoreStringKey.Validation_UsernameRegexErrorTemplate,
+              undefined,
+              validationLanguage,
+            ),
           ),
-        ),
-      body('email')
-        .optional()
-        .isEmail()
-        .withMessage(
-          getSuiteCoreTranslation(
-            SuiteCoreStringKey.Validation_InvalidEmail,
-            undefined,
-            validationLanguage,
+        body('email')
+          .optional()
+          .isEmail()
+          .withMessage(
+            getSuiteCoreTranslation(
+              SuiteCoreStringKey.Validation_InvalidEmail,
+              undefined,
+              validationLanguage,
+            ),
           ),
-        ),
-    ]; },
+      ];
+    },
   })
   async requestEmailLogin(
     req: Request,
@@ -1139,64 +1162,65 @@ export class UserController<
 
   @Post('/email-challenge', {
     schema: EmailLoginChallengeSchema,
-    validation: function(validationLanguage: TLanguage) {
+    validation: function (validationLanguage: TLanguage) {
       const constants = this.constants;
       return [
-      body('token')
-        .not()
-        .isEmpty()
-        .withMessage(
-          getSuiteCoreTranslation(
-            SuiteCoreStringKey.Validation_TokenRequired,
-            undefined,
-            validationLanguage,
+        body('token')
+          .not()
+          .isEmpty()
+          .withMessage(
+            getSuiteCoreTranslation(
+              SuiteCoreStringKey.Validation_TokenRequired,
+              undefined,
+              validationLanguage,
+            ),
+          )
+          .matches(new RegExp(`^[a-f0-9]{${constants.EmailTokenLength * 2}}$`))
+          .withMessage(
+            getSuiteCoreTranslation(
+              SuiteCoreStringKey.Validation_InvalidToken,
+              undefined,
+              validationLanguage,
+            ),
           ),
-        )
-        .matches(new RegExp(`^[a-f0-9]{${constants.EmailTokenLength * 2}}$`))
-        .withMessage(
-          getSuiteCoreTranslation(
-            SuiteCoreStringKey.Validation_InvalidToken,
-            undefined,
-            validationLanguage,
+        body('signature')
+          .not()
+          .isEmpty()
+          .withMessage(
+            getSuiteCoreTranslation(
+              SuiteCoreStringKey.Validation_InvalidSignature,
+            ),
+          )
+          .matches(new RegExp(`^[a-f0-9]{${ECIES.SIGNATURE_SIZE * 2}}$`))
+          .withMessage(SuiteCoreStringKey.Validation_InvalidSignature),
+        body().custom((value, { req }) => {
+          if (!req.body.username && !req.body.email) {
+            throw new UsernameOrEmailRequiredError();
+          }
+          return true;
+        }),
+        body('username')
+          .optional()
+          .matches(constants.UsernameRegex)
+          .withMessage(
+            getSuiteCoreTranslation(
+              SuiteCoreStringKey.Validation_UsernameRegexErrorTemplate,
+              undefined,
+              validationLanguage,
+            ),
           ),
-        ),
-      body('signature')
-        .not()
-        .isEmpty()
-        .withMessage(
-          getSuiteCoreTranslation(
-            SuiteCoreStringKey.Validation_InvalidSignature,
+        body('email')
+          .optional()
+          .isEmail()
+          .withMessage(
+            getSuiteCoreTranslation(
+              SuiteCoreStringKey.Validation_InvalidEmail,
+              undefined,
+              validationLanguage,
+            ),
           ),
-        )
-        .matches(new RegExp(`^[a-f0-9]{${ECIES.SIGNATURE_SIZE * 2}}$`))
-        .withMessage(SuiteCoreStringKey.Validation_InvalidSignature),
-      body().custom((value, { req }) => {
-        if (!req.body.username && !req.body.email) {
-          throw new UsernameOrEmailRequiredError();
-        }
-        return true;
-      }),
-      body('username')
-        .optional()
-        .matches(constants.UsernameRegex)
-        .withMessage(
-          getSuiteCoreTranslation(
-            SuiteCoreStringKey.Validation_UsernameRegexErrorTemplate,
-            undefined,
-            validationLanguage,
-          ),
-        ),
-      body('email')
-        .optional()
-        .isEmail()
-        .withMessage(
-          getSuiteCoreTranslation(
-            SuiteCoreStringKey.Validation_InvalidEmail,
-            undefined,
-            validationLanguage,
-          ),
-        ),
-    ]; },
+      ];
+    },
   })
   async emailLoginChallenge(
     req: Request,
@@ -1212,7 +1236,7 @@ export class UserController<
 
         const userDoc = await this.userService.validateEmailLoginTokenChallenge(
           String(token),
-          String(signature) as any,
+          String(signature),
           sess,
         );
 
@@ -1225,7 +1249,7 @@ export class UserController<
         return {
           statusCode: 200,
           response: {
-            user: RequestUserService.makeRequestUserDTO(userDoc as any, roles),
+            user: RequestUserService.makeRequestUserDTO(userDoc, roles),
             token: jwtToken,
             serverPublicKey:
               this.application.environment.systemPublicKeyHex ?? '',
@@ -1239,28 +1263,29 @@ export class UserController<
   }
 
   @Post('/resend-verification', {
-    validation: function(validationLanguage: TLanguage) {
+    validation: function (validationLanguage: TLanguage) {
       const constants = this.constants;
       return [
-      body().custom((value, { req }) => {
-        if (!req.body.username && !req.body.email) {
-          throw new UsernameOrEmailRequiredError();
-        }
-        return true;
-      }),
-      body('username')
-        .optional()
-        .isString()
-        .matches(constants.UsernameRegex)
-        .withMessage(
-          getSuiteCoreTranslation(
-            SuiteCoreStringKey.Validation_UsernameRegexErrorTemplate,
-            undefined,
-            validationLanguage,
+        body().custom((value, { req }) => {
+          if (!req.body.username && !req.body.email) {
+            throw new UsernameOrEmailRequiredError();
+          }
+          return true;
+        }),
+        body('username')
+          .optional()
+          .isString()
+          .matches(constants.UsernameRegex)
+          .withMessage(
+            getSuiteCoreTranslation(
+              SuiteCoreStringKey.Validation_UsernameRegexErrorTemplate,
+              undefined,
+              validationLanguage,
+            ),
           ),
-        ),
-      body('email').optional().isEmail(),
-    ]; },
+        body('email').optional().isEmail(),
+      ];
+    },
   })
   async resendVerification(
     req: Request,
@@ -1316,47 +1341,48 @@ export class UserController<
   }
 
   @Post('/backup-code', {
-    validation: function(validationLanguage: TLanguage) {
+    validation: function (validationLanguage: TLanguage) {
       const constants = this.constants;
       return [
-      body('email').optional().isEmail(),
-      body('username')
-        .optional()
-        .matches(constants.UsernameRegex)
-        .withMessage(
-          getSuiteCoreTranslation(
-            SuiteCoreStringKey.Validation_UsernameRegexErrorTemplate,
-            undefined,
-            validationLanguage,
+        body('email').optional().isEmail(),
+        body('username')
+          .optional()
+          .matches(constants.UsernameRegex)
+          .withMessage(
+            getSuiteCoreTranslation(
+              SuiteCoreStringKey.Validation_UsernameRegexErrorTemplate,
+              undefined,
+              validationLanguage,
+            ),
           ),
-        ),
-      body('code')
-        .custom((value) => {
-          const normalized = BackupCode.normalizeCode(value);
-          return (
-            constants.BACKUP_CODES.DisplayRegex.test(value) ||
-            constants.BACKUP_CODES.NormalizedHexRegex.test(normalized)
-          );
-        })
-        .withMessage(
-          getSuiteCoreTranslation(
-            SuiteCoreStringKey.Validation_InvalidBackupCode,
-            undefined,
-            validationLanguage,
+        body('code')
+          .custom((value) => {
+            const normalized = BackupCode.normalizeCode(value);
+            return (
+              constants.BACKUP_CODES.DisplayRegex.test(value) ||
+              constants.BACKUP_CODES.NormalizedHexRegex.test(normalized)
+            );
+          })
+          .withMessage(
+            getSuiteCoreTranslation(
+              SuiteCoreStringKey.Validation_InvalidBackupCode,
+              undefined,
+              validationLanguage,
+            ),
           ),
-        ),
-      body('recoverMnemonic').isBoolean().optional(),
-      body('newPassword')
-        .optional()
-        .matches(constants.PasswordRegex)
-        .withMessage(
-          getSuiteCoreTranslation(
-            SuiteCoreStringKey.Validation_PasswordRegexErrorTemplate,
-            undefined,
-            validationLanguage,
+        body('recoverMnemonic').isBoolean().optional(),
+        body('newPassword')
+          .optional()
+          .matches(constants.PasswordRegex)
+          .withMessage(
+            getSuiteCoreTranslation(
+              SuiteCoreStringKey.Validation_PasswordRegexErrorTemplate,
+              undefined,
+              validationLanguage,
+            ),
           ),
-        ),
-    ]; },
+      ];
+    },
   })
   async useBackupCodeLogin(
     req: Request,
@@ -1418,7 +1444,7 @@ export class UserController<
         return {
           statusCode: 200,
           response: {
-            user: RequestUserService.makeRequestUserDTO(userDoc as any, roles),
+            user: RequestUserService.makeRequestUserDTO(userDoc, roles),
             token: token,
             message: getSuiteCoreTranslation(
               SuiteCoreStringKey.BackupCodeRecovery_Success,
@@ -1436,17 +1462,19 @@ export class UserController<
   }
 
   @Post('/forgot-password', {
-    validation: function(validationLanguage: TLanguage) { return [
-      body('email')
-        .isEmail()
-        .withMessage(
-          getSuiteCoreTranslation(
-            SuiteCoreStringKey.Validation_InvalidEmail,
-            undefined,
-            validationLanguage,
+    validation: function (validationLanguage: TLanguage) {
+      return [
+        body('email')
+          .isEmail()
+          .withMessage(
+            getSuiteCoreTranslation(
+              SuiteCoreStringKey.Validation_InvalidEmail,
+              undefined,
+              validationLanguage,
+            ),
           ),
-        ),
-    ]; },
+      ];
+    },
   })
   async forgotPassword(
     req: Request,
@@ -1486,8 +1514,10 @@ export class UserController<
           };
         }
 
+        // Mongoose document type doesn't exactly match IUserDocument generic signature
+        // but the document has all required properties
         await this.userService.createAndSendEmailToken(
-          user as any,
+          user as unknown as IUserDocument<S, I>,
           EmailTokenType.PasswordReset,
           sess,
           this.application.environment.debug,
@@ -1539,66 +1569,67 @@ export class UserController<
   }
 
   @Post('/reset-password', {
-    validation: function(validationLanguage: TLanguage) {
+    validation: function (validationLanguage: TLanguage) {
       const constants = this.constants;
       return [
-      body('token')
-        .not()
-        .isEmpty()
-        .withMessage(
-          getSuiteCoreTranslation(
-            SuiteCoreStringKey.Validation_TokenRequired,
-            undefined,
-            validationLanguage,
+        body('token')
+          .not()
+          .isEmpty()
+          .withMessage(
+            getSuiteCoreTranslation(
+              SuiteCoreStringKey.Validation_TokenRequired,
+              undefined,
+              validationLanguage,
+            ),
+          )
+          .matches(new RegExp(`^[a-f0-9]{${constants.EmailTokenLength * 2}}$`))
+          .withMessage(
+            getSuiteCoreTranslation(
+              SuiteCoreStringKey.Validation_InvalidToken,
+              undefined,
+              validationLanguage,
+            ),
           ),
-        )
-        .matches(new RegExp(`^[a-f0-9]{${constants.EmailTokenLength * 2}}$`))
-        .withMessage(
-          getSuiteCoreTranslation(
-            SuiteCoreStringKey.Validation_InvalidToken,
-            undefined,
-            validationLanguage,
+        body('newPassword')
+          .optional()
+          .isLength({ min: 8 })
+          .withMessage(
+            getSuiteCoreTranslation(
+              SuiteCoreStringKey.Validation_PasswordMinLengthTemplate,
+              undefined,
+              validationLanguage,
+            ),
+          )
+          .matches(constants.PasswordRegex)
+          .withMessage(
+            getSuiteCoreTranslation(
+              SuiteCoreStringKey.Validation_PasswordRegexErrorTemplate,
+              undefined,
+              validationLanguage,
+            ),
           ),
-        ),
-      body('newPassword')
-        .optional()
-        .isLength({ min: 8 })
-        .withMessage(
-          getSuiteCoreTranslation(
-            SuiteCoreStringKey.Validation_PasswordMinLengthTemplate,
-            undefined,
-            validationLanguage,
+        body('password')
+          .optional()
+          .isLength({ min: 8 })
+          .withMessage(
+            getSuiteCoreTranslation(
+              SuiteCoreStringKey.Validation_PasswordMinLengthTemplate,
+              undefined,
+              validationLanguage,
+            ),
+          )
+          .matches(constants.PasswordRegex)
+          .withMessage(
+            getSuiteCoreTranslation(
+              SuiteCoreStringKey.Validation_PasswordRegexErrorTemplate,
+              undefined,
+              validationLanguage,
+            ),
           ),
-        )
-        .matches(constants.PasswordRegex)
-        .withMessage(
-          getSuiteCoreTranslation(
-            SuiteCoreStringKey.Validation_PasswordRegexErrorTemplate,
-            undefined,
-            validationLanguage,
-          ),
-        ),
-      body('password')
-        .optional()
-        .isLength({ min: 8 })
-        .withMessage(
-          getSuiteCoreTranslation(
-            SuiteCoreStringKey.Validation_PasswordMinLengthTemplate,
-            undefined,
-            validationLanguage,
-          ),
-        )
-        .matches(constants.PasswordRegex)
-        .withMessage(
-          getSuiteCoreTranslation(
-            SuiteCoreStringKey.Validation_PasswordRegexErrorTemplate,
-            undefined,
-            validationLanguage,
-          ),
-        ),
-      body('currentPassword').optional().isString(),
-      body('mnemonic').optional().isString(),
-    ]; },
+        body('currentPassword').optional().isString(),
+        body('mnemonic').optional().isString(),
+      ];
+    },
   })
   async resetPassword(
     req: Request,

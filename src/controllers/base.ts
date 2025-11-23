@@ -29,11 +29,8 @@ import {
   validationResult,
 } from 'express-validator';
 import { ClientSession, Types } from 'mongoose';
-import { TransactionManager } from '../transactions';
-import { IBaseDocument } from '../documents';
 import { IUserDocument } from '../documents/user';
 import { BaseModelName } from '../enumerations/base-model-name';
-import { Environment } from '../environment';
 import { ExpressValidationError } from '../errors/express-validation';
 import { MissingValidatedDataError } from '../errors/missing-validated-data';
 import { IConstants } from '../interfaces';
@@ -42,6 +39,7 @@ import { authenticateCrypto } from '../middlewares/authenticate-crypto';
 import { authenticateToken } from '../middlewares/authenticate-token';
 import { setGlobalContextLanguageFromRequest } from '../middlewares/set-global-context-language';
 import { ModelRegistry } from '../model-registry';
+import { TransactionManager } from '../transactions';
 import {
   ApiErrorResponse,
   ApiResponse,
@@ -89,7 +87,7 @@ export abstract class BaseController<
     this.handlers = {} as H;
     this.transactionManager = new TransactionManager(
       application.db.connection,
-      application.environment.mongo.useTransactions
+      application.environment.mongo.useTransactions,
     );
     this.initRouteDefinitions();
     this.registerValidationFunctions();
@@ -218,7 +216,12 @@ export abstract class BaseController<
         handleError(
           new HandleableError(
             new Error(
-              getSuiteCoreTranslation(SuiteCoreStringKey.Common_Unauthorized, undefined, undefined, { constants: this.application.constants }),
+              getSuiteCoreTranslation(
+                SuiteCoreStringKey.Common_Unauthorized,
+                undefined,
+                undefined,
+                { constants: this.application.constants },
+              ),
             ),
             {
               statusCode: 401,
@@ -238,24 +241,35 @@ export abstract class BaseController<
           : sendApiMessageResponse.bind(this);
 
         const handlerArgs = config.handlerArgs ?? [];
-        
-        let result;
+
+        type HandlerResult = {
+          statusCode: number;
+          response: T;
+          headers?: Record<string, string>;
+        };
+        type HandlerFunction = (
+          req: Request,
+          ...args: unknown[]
+        ) => Promise<HandlerResult>;
+        const typedHandler = handler as HandlerFunction;
+
+        let result: HandlerResult;
         if (config.useTransaction) {
           result = await this.transactionManager.execute(
             async (session) => {
               this.activeSession = session;
               try {
-                return await (handler as any)(req, ...handlerArgs);
+                return await typedHandler(req, ...handlerArgs);
               } finally {
                 this.activeSession = undefined;
               }
             },
-            { timeoutMs: config.transactionTimeout }
+            { timeoutMs: config.transactionTimeout },
           );
         } else {
-          result = await (handler as any)(req, ...handlerArgs);
+          result = await typedHandler(req, ...handlerArgs);
         }
-        
+
         const { statusCode, response, headers } = result;
         if (headers) {
           res.set(headers);
@@ -445,7 +459,12 @@ export abstract class BaseController<
     if (!req.user) {
       throw new HandleableError(
         new Error(
-          getSuiteCoreTranslation(SuiteCoreStringKey.Common_Unauthorized, undefined, undefined, { constants: this.application.constants }),
+          getSuiteCoreTranslation(
+            SuiteCoreStringKey.Common_Unauthorized,
+            undefined,
+            undefined,
+            { constants: this.application.constants },
+          ),
         ),
         {
           statusCode: 401,

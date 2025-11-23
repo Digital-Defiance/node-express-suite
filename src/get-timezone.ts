@@ -1,16 +1,23 @@
+import type { Timezone as TimezoneType } from '@digitaldefiance/i18n-lib';
 import {
   GlobalActiveContext,
   IActiveContext,
   isValidTimezone,
 } from '@digitaldefiance/i18n-lib';
 import { existsSync, readFileSync } from 'fs';
-import type { Timezone as TimezoneType } from '@digitaldefiance/i18n-lib';
+
+// Type for Timezone constructor
+type TimezoneConstructor = new (tz: string) => TimezoneType;
 
 // Helper to create Timezone from the same module instance as GlobalActiveContext
 function createTimezone(tz: string): TimezoneType {
-  const context = GlobalActiveContext.getInstance<string, IActiveContext<string>>();
+  const context = GlobalActiveContext.getInstance<
+    string,
+    IActiveContext<string>
+  >();
   // Get the Timezone constructor from the existing timezone object
-  const TimezoneConstructor = context.adminTimezone.constructor as any;
+  const TimezoneConstructor = context.adminTimezone
+    .constructor as TimezoneConstructor;
   return new TimezoneConstructor(tz);
 }
 

@@ -8,12 +8,12 @@ export interface TransactionOptions {
 export class TransactionManager {
   constructor(
     private connection: Connection,
-    private useTransactions: boolean
+    private useTransactions: boolean,
   ) {}
 
   async execute<T>(
     callback: (session: ClientSession | undefined) => Promise<T>,
-    options?: TransactionOptions
+    options?: TransactionOptions,
   ): Promise<T> {
     if (!this.useTransactions) {
       return callback(undefined);
@@ -21,12 +21,15 @@ export class TransactionManager {
 
     const session = await this.connection.startSession();
     try {
-      return await session.withTransaction(callback as any, {
-        readConcern: { level: 'snapshot' },
-        writeConcern: { w: 'majority' },
-        readPreference: 'primary',
-        maxCommitTimeMS: options?.timeoutMs,
-      });
+      return await session.withTransaction(
+        (sess: ClientSession) => callback(sess),
+        {
+          readConcern: { level: 'snapshot' },
+          writeConcern: { w: 'majority' },
+          readPreference: 'primary',
+          maxCommitTimeMS: options?.timeoutMs,
+        },
+      );
     } finally {
       await session.endSession();
     }

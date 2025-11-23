@@ -13,6 +13,7 @@ import express, {
   Response,
 } from 'express';
 import { readFileSync } from 'fs';
+import { HelmetOptions } from 'helmet';
 import { Server } from 'http';
 import { createServer } from 'https';
 import mongoose from 'mongoose';
@@ -20,16 +21,21 @@ import { isAbsolute, normalize, resolve } from 'path';
 import { BaseApplication } from './application-base';
 import { IBaseDocument } from './documents/base';
 import { Environment } from './environment';
-import { IApplication, ICSPConfig, IFailableResult, isCSPConfig, IServerInitResult } from './interfaces';
+import {
+  IApplication,
+  ICSPConfig,
+  IFailableResult,
+  isCSPConfig,
+  IServerInitResult,
+} from './interfaces';
 import { IConstants } from './interfaces/constants';
+import { IFlexibleCSP, isFlexibleCSP } from './interfaces/flexible-csp';
 import { initMiddleware, isHelmetOptions } from './middlewares';
 import { AppRouter } from './routers/app';
 import { BaseRouter } from './routers/base';
+import { DatabaseInitializationService } from './services';
 import { SchemaMap } from './types';
 import { debugLog, handleError, sendApiMessageResponse } from './utils';
-import { HelmetOptions } from 'helmet';
-import { IFlexibleCSP, isFlexibleCSP } from './interfaces/flexible-csp';
-import { DatabaseInitializationService } from './services';
 
 /**
  * Application class
@@ -86,7 +92,8 @@ export class Application<
       },
     },
     constants: TConstants = Constants as TConstants,
-    appRouterFactory: (apiRouter: BaseRouter) => TAppRouter = (apiRouter) => new AppRouter(apiRouter) as TAppRouter,
+    appRouterFactory: (apiRouter: BaseRouter) => TAppRouter = (apiRouter) =>
+      new AppRouter(apiRouter) as TAppRouter,
     customInitMiddleware: typeof initMiddleware = initMiddleware,
   ) {
     super(
@@ -113,17 +120,17 @@ export class Application<
       DatabaseInitializationService.printServerInitResults(
         result,
         false,
-        (id) => this.constants.idProvider.idToString(id)
+        (id) => this.constants.idProvider.idToString(id),
       );
     }
     try {
       this._apiRouter = this._apiRouterFactory(this);
       if (isFlexibleCSP(this._cspConfig) || isCSPConfig(this._cspConfig)) {
-          this._initMiddleware(
-            this.expressApp,
-            this._cspConfig.corsWhitelist,
-            this._cspConfig.csp,
-          );
+        this._initMiddleware(
+          this.expressApp,
+          this._cspConfig.corsWhitelist,
+          this._cspConfig.csp,
+        );
       } else if (isHelmetOptions(this._cspConfig)) {
         this._initMiddleware(this.expressApp, [], this._cspConfig);
       }
@@ -137,32 +144,51 @@ export class Application<
           res: Response,
           next: NextFunction,
         ) => {
-          if (res.headersSent || (err as any)._errorHandlerProcessing) {
+          if (
+            res.headersSent ||
+            (err as { _errorHandlerProcessing?: boolean })
+              ._errorHandlerProcessing
+          ) {
             return;
           }
-          (err as any)._errorHandlerProcessing = true;
-          
+          (
+            err as { _errorHandlerProcessing?: boolean }
+          )._errorHandlerProcessing = true;
+
           const safeHandle = () => {
             try {
               const handleableError =
                 err instanceof HandleableError
                   ? err
-                  : new HandleableError(err instanceof Error ? err : new Error(String(err)), { cause: err });
-              handleError(handleableError, res, sendApiMessageResponse, () => {});
+                  : new HandleableError(
+                      err instanceof Error ? err : new Error(String(err)),
+                      { cause: err },
+                    );
+              handleError(
+                handleableError,
+                res,
+                sendApiMessageResponse,
+                () => {},
+              );
             } catch {
               res.status(500).json({
                 message: engine.translate(
                   SuiteCoreComponentId,
                   SuiteCoreStringKey.Error_RecursiveErrorHandlingDetected,
                 ),
-                error: { message: err instanceof Error ? err.message : engine.translate(
-                  SuiteCoreComponentId,
-                  SuiteCoreStringKey.Common_UnexpectedError,
-                ) },
+                error: {
+                  message:
+                    err instanceof Error
+                      ? err.message
+                      : engine.translate(
+                          SuiteCoreComponentId,
+                          SuiteCoreStringKey.Common_UnexpectedError,
+                        ),
+                },
               });
             }
           };
-          
+
           setImmediate(safeHandle);
         },
       );

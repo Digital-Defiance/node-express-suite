@@ -12,14 +12,15 @@ import {
   SuiteCoreStringKey,
   TranslatableSuiteError,
 } from '@digitaldefiance/suite-core-lib';
-import { IConstants } from '../interfaces/constants';
+import { Types } from 'mongoose';
 import { Environment } from '../environment';
+import { IConstants } from '../interfaces/constants';
 
 /**
  * Service to manage the system member's wallet.
  */
 export class SystemUserService {
-  private static systemUser: BackendMember | null = null;
+  private static systemUser: BackendMember<Buffer> | null = null;
 
   /**
    * Initializes and returns the system member's Member instance.
@@ -28,7 +29,7 @@ export class SystemUserService {
   public static getSystemUser(
     environment: Environment,
     constants: IConstants,
-  ): BackendMember {
+  ): BackendMember<Buffer> {
     if (!SystemUserService.systemUser) {
       if (!environment.systemMnemonic) {
         throw new TranslatableSuiteError(
@@ -40,10 +41,8 @@ export class SystemUserService {
       }
       const mnemonic: SecureString = environment.systemMnemonic;
       const eciesService = new ECIESService(constants.ECIES);
-      const { wallet } =
-        eciesService.walletAndSeedFromMnemonic(mnemonic);
-      const keyPair =
-        eciesService.walletToSimpleKeyPairBuffer(wallet);
+      const { wallet } = eciesService.walletAndSeedFromMnemonic(mnemonic);
+      const keyPair = eciesService.walletToSimpleKeyPairBuffer(wallet);
 
       SystemUserService.systemUser = new BackendMember(
         eciesService,
@@ -67,15 +66,14 @@ export class SystemUserService {
     return SystemUserService.systemUser;
   }
 
-  public static setSystemUser(
-    user: BackendMember,
-    constants: IConstants,
-  ): void {
+  public static setSystemUser<
+    TID extends string | Types.ObjectId | Buffer | Uint8Array = Buffer,
+  >(user: BackendMember<TID>, constants: IConstants): void {
     if (user.type !== MemberType.System || user.name !== constants.SystemUser) {
       throw new Error(
         'setSystemUser can only be called with a MemberType.System user',
       );
     }
-    SystemUserService.systemUser = user;
+    SystemUserService.systemUser = user as BackendMember<Buffer>;
   }
 }

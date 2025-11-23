@@ -1,10 +1,10 @@
+import { AccountStatus } from '@digitaldefiance/suite-core-lib';
 import express from 'express';
 import request from 'supertest';
-import { AccountStatus } from '@digitaldefiance/suite-core-lib';
 import { authenticateToken } from '../../src/middlewares/authenticate-token';
-import { createApplicationMock } from '../__tests__/helpers/application.mock';
 import { JwtService } from '../../src/services/jwt';
 import { RoleService } from '../../src/services/role';
+import { createApplicationMock } from '../__tests__/helpers/application.mock';
 
 jest.mock('../../src/services/jwt');
 jest.mock('../../src/services/role');
@@ -28,12 +28,17 @@ describe('authenticateToken success paths', () => {
 
     mockUserModel = {
       findById: jest.fn().mockReturnThis(),
+      select: jest.fn().mockReturnThis(),
       session: jest.fn().mockReturnThis(),
       exec: jest.fn(),
     };
 
-    (JwtService as jest.MockedClass<typeof JwtService>).mockImplementation(() => mockJwtService);
-    (RoleService as jest.MockedClass<typeof RoleService>).mockImplementation(() => mockRoleService);
+    (JwtService as jest.MockedClass<typeof JwtService>).mockImplementation(
+      () => mockJwtService,
+    );
+    (RoleService as jest.MockedClass<typeof RoleService>).mockImplementation(
+      () => mockRoleService,
+    );
   });
 
   function makeApp() {
@@ -44,8 +49,8 @@ describe('authenticateToken success paths', () => {
         getModel: () => mockUserModel as any,
       },
       {
-        mongo: { 
-          uri: 'mongodb://localhost:27017', 
+        mongo: {
+          uri: 'mongodb://localhost:27017',
           transactionTimeout: 60000,
           useTransactions: false,
         },
@@ -61,24 +66,24 @@ describe('authenticateToken success paths', () => {
 
   it('403 when verifyToken returns null', async () => {
     mockJwtService.verifyToken.mockResolvedValue(null);
-    
+
     const app = makeApp();
     const res = await request(app)
       .get('/protected')
       .set('Authorization', 'Bearer valid-token');
-    
+
     expect(res.status).toBe(403);
   });
 
   it('403 when user document not found', async () => {
     mockJwtService.verifyToken.mockResolvedValue({ userId: 'user-123' });
     mockUserModel.exec.mockResolvedValue(null);
-    
+
     const app = makeApp();
     const res = await request(app)
       .get('/protected')
       .set('Authorization', 'Bearer valid-token');
-    
+
     expect(res.status).toBe(403);
   });
 
@@ -90,12 +95,12 @@ describe('authenticateToken success paths', () => {
       siteLanguage: 'en',
       timezone: 'America/New_York',
     });
-    
+
     const app = makeApp();
     const res = await request(app)
       .get('/protected')
       .set('Authorization', 'Bearer valid-token');
-    
+
     expect(res.status).toBe(403);
   });
 
@@ -109,26 +114,30 @@ describe('authenticateToken success paths', () => {
       username: 'testuser',
       email: 'test@example.com',
     });
-    
+
     const app = makeApp();
     const res = await request(app)
       .get('/protected')
       .set('Authorization', 'Bearer valid-token');
-    
+
     expect(res.status).toBe(200);
     expect(mockJwtService.verifyToken).toHaveBeenCalledWith('valid-token');
-    expect(mockUserModel.findById).toHaveBeenCalledWith('user-123', { password: 0 });
-    expect(mockRoleService.getUserRoles).toHaveBeenCalledWith('user-123', undefined);
+    expect(mockUserModel.findById).toHaveBeenCalledWith('user-123');
+    expect(mockUserModel.select).toHaveBeenCalledWith('-password');
+    expect(mockRoleService.getUserRoles).toHaveBeenCalledWith(
+      'user-123',
+      undefined,
+    );
   });
 
   it('handles generic errors with 500', async () => {
     mockJwtService.verifyToken.mockRejectedValue(new Error('Unexpected error'));
-    
+
     const app = makeApp();
     const res = await request(app)
       .get('/protected')
       .set('Authorization', 'Bearer valid-token');
-    
+
     expect(res.status).toBe(500);
     expect(res.body.message).toBeTruthy();
   });
@@ -143,12 +152,12 @@ describe('authenticateToken success paths', () => {
       username: 'spainuser',
       email: 'spain@example.com',
     });
-    
+
     const app = makeApp();
     const res = await request(app)
       .get('/protected')
       .set('Authorization', 'Bearer spanish-token');
-    
+
     expect(res.status).toBe(200);
     expect(res.body.user).toBeDefined();
   });

@@ -13,6 +13,7 @@ import {
 } from '@digitaldefiance/suite-core-lib';
 import * as argon2 from 'argon2';
 import { createHmac, randomBytes, timingSafeEqual } from 'crypto';
+import { Types } from 'mongoose';
 import { LocalhostConstants } from './constants';
 import { InvalidBackupCodeVersionError } from './errors/invalid-backup-code-version';
 import { IConstants } from './interfaces';
@@ -117,7 +118,7 @@ export class BackupCode extends BackupCodeString {
       const key = (await argon2.hash(codeBytes, {
         ...BackupCode.Argon2Params,
         salt: checksumSalt,
-      })) as unknown as Buffer;
+      })) as Buffer;
       return key; // 32-byte Buffer
     } finally {
       codeBytes.fill(0);
@@ -144,16 +145,20 @@ export class BackupCode extends BackupCodeString {
     }
   }
 
-  public async encrypt(
-    backupUser: BackendMember,
-    systemUser: BackendMember,
+  public async encrypt<
+    TID extends string | Types.ObjectId | Buffer | Uint8Array = Buffer,
+  >(
+    backupUser: BackendMember<TID>,
+    systemUser: BackendMember<TID>,
     constants: IConstants = LocalhostConstants,
   ): Promise<IBackupCode> {
     if (!backupUser.hasPrivateKey) {
       throw new PrivateKeyRequiredError();
     }
     if (systemUser.type !== MemberType.System) {
-      throw new TranslatableSuiteError(SuiteCoreStringKey.Error_SystemUserMustBeSystemMemberType);
+      throw new TranslatableSuiteError(
+        SuiteCoreStringKey.Error_SystemUserMustBeSystemMemberType,
+      );
     }
     const raw = this.value ?? '';
     const normalized = BackupCode.normalizeCode(raw);
@@ -202,9 +207,11 @@ export class BackupCode extends BackupCodeString {
    * - Derives Argon2id encryption key (32 bytes) from UTF-8 code
    * - Encrypts the private key with AEAD and wraps with system user
    */
-  public static async encryptBackupCodesV1(
-    backupUser: BackendMember,
-    systemUser: BackendMember,
+  public static async encryptBackupCodesV1<
+    TID extends string | Types.ObjectId | Buffer | Uint8Array = Buffer,
+  >(
+    backupUser: BackendMember<TID>,
+    systemUser: BackendMember<TID>,
     codes: Array<BackupCode>,
   ): Promise<Array<IBackupCode>> {
     const encryptedCodes: Array<IBackupCode> = [];
@@ -215,9 +222,11 @@ export class BackupCode extends BackupCodeString {
   }
 
   /** Delegate to current version. */
-  public static encryptBackupCodes(
-    backupUser: BackendMember,
-    systemUser: BackendMember,
+  public static encryptBackupCodes<
+    TID extends string | Types.ObjectId | Buffer | Uint8Array = Buffer,
+  >(
+    backupUser: BackendMember<TID>,
+    systemUser: BackendMember<TID>,
     codes: Array<BackupCode>,
   ): Promise<Array<IBackupCode>> {
     return BackupCode.encryptBackupCodesV1(backupUser, systemUser, codes);
