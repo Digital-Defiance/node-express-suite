@@ -1,10 +1,10 @@
-import { Types } from 'mongoose';
+import { CallbackWithoutResultAndOptionalError, Schema, Types } from 'mongoose';
 import {
+  IRoleBase,
   Role,
   SuiteCoreStringKey,
   TranslatableSuiteError,
 } from '@digitaldefiance/suite-core-lib';
-import { CallbackWithoutResultAndOptionalError, Schema } from 'mongoose';
 import { IRoleDocument } from '../documents/role';
 import { BaseModelName } from '../enumerations';
 import { IConstants } from '../interfaces';
@@ -37,7 +37,7 @@ export function createRoleSchema<
   TModelName extends string = BaseModelName,
   TConstants extends IConstants = IConstants,
   I extends Types.ObjectId | string = Types.ObjectId
->(options: RoleSchemaOptions<TRole, TModelName> = {}, constants: TConstants = {} as TConstants): Schema<IRoleDocument<I>> {
+>(options: RoleSchemaOptions<TRole, TModelName> = {}, constants: TConstants = {} as TConstants): Schema {
   const {
     roleEnum = Object.values(Role) as TRole[],
     userModelName = BaseModelName.User as TModelName,
@@ -45,76 +45,75 @@ export function createRoleSchema<
     idType = Schema.Types.ObjectId,
   } = options;
 
-  const schema = new Schema<IRoleDocument<I>>(
-    {
-      name: {
-        type: String,
-        enum: roleEnum,
-        required: true,
-        immutable: true,
-      },
-      admin: {
-        type: Boolean,
-        default: false,
-        immutable: true,
-      },
-      member: {
-        type: Boolean,
-        default: false,
-        immutable: true,
-      },
-      child: {
-        type: Boolean,
-        default: false,
-        immutable: true,
-      },
-      system: {
-        type: Boolean,
-        default: false,
-        immutable: true,
-      },
-      createdBy: {
-        type: idType,
-        ref: userModelName,
-        required: true,
-        immutable: true,
-      },
-      updatedBy: {
-        type: idType,
-        ref: userModelName,
-        required: true,
-      },
-      deletedAt: {
-        type: Date,
-        optional: true,
-        get: (v: Date) => v,
-        set: (v: Date) => new Date(v.toUTCString()),
-      },
-      deletedBy: {
-        type: idType,
-        ref: userModelName,
-        required: false,
-        optional: true,
-      },
+  const definition = {
+    name: {
+      type: String,
+      enum: roleEnum,
+      required: true,
+      immutable: true,
     },
-    { timestamps: true },
-  );
+    admin: {
+      type: Boolean,
+      default: false,
+      immutable: true,
+    },
+    member: {
+      type: Boolean,
+      default: false,
+      immutable: true,
+    },
+    child: {
+      type: Boolean,
+      default: false,
+      immutable: true,
+    },
+    system: {
+      type: Boolean,
+      default: false,
+      immutable: true,
+    },
+    createdBy: {
+      type: idType,
+      ref: userModelName,
+      required: true,
+      immutable: true,
+    },
+    updatedBy: {
+      type: idType,
+      ref: userModelName,
+      required: true,
+    },
+    deletedAt: {
+      type: Date,
+      optional: true,
+      get: (v: Date) => v,
+      set: (v: Date) => new Date(v.toUTCString()),
+    },
+    deletedBy: {
+      type: idType,
+      ref: userModelName,
+      required: false,
+      optional: true,
+    },
+  };
 
+  const schema = new Schema(definition, { timestamps: true });
   schema.index({ name: 1 }, { unique: true });
 
   schema.pre('save', function (next: CallbackWithoutResultAndOptionalError) {
+    const doc = this;
     if (customValidation) {
-      customValidation(this, next);
+      customValidation(doc, next);
     } else {
       // Default validation
-      if (this.admin && this.child) {
+      if (doc.admin && doc.child) {
         return next(
           new TranslatableSuiteError(
             SuiteCoreStringKey.Error_ChildRoleCannotBeAnAdminRole,
           ),
         );
       }
-      if (this.system && this.child) {
+      if (doc.system && doc.child) {
         return next(
           new TranslatableSuiteError(
             SuiteCoreStringKey.Error_ChildRoleCannotBeASystemRole,
@@ -125,7 +124,7 @@ export function createRoleSchema<
     }
   });
 
-  return schema;
+  return schema as Schema<IRoleBase<I, Date>, IRoleDocument<I>>;
 }
 
 /**

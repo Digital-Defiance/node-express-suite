@@ -27,7 +27,13 @@
             "glob": "README.md",
             "output": "."
           }
-        ]
+        ],
+        "maxWorkers": 1
+      },
+      "configurations": {
+        "production": {
+          "maxWorkers": 2
+        }
       }
     },
     "test": {

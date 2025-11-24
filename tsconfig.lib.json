@@ -20,7 +20,9 @@
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "experimentalDecorators": true,
-    "emitDecoratorMetadata": true
+    "emitDecoratorMetadata": true,
+    "incremental": true,
+    "tsBuildInfoFile": "../../dist/out-tsc/packages/digitaldefiance-node-express-suite/.tsbuildinfo"
   },
   "include": [
     "src/**/*.ts"

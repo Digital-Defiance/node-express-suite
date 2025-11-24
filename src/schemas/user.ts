@@ -1,12 +1,12 @@
-import { Types } from 'mongoose';
+import { Schema, Types } from 'mongoose';
 import { isValidTimezone, LanguageCodes } from '@digitaldefiance/i18n-lib';
 import {
   AccountStatus,
   getSuiteCoreTranslation,
+  IUserBase,
   SuiteCoreStringKey,
 } from '@digitaldefiance/suite-core-lib';
 import { codes } from 'currency-codes';
-import { Schema } from 'mongoose';
 import validator from 'validator';
 import { LocalhostConstants as AppConstants } from '../constants';
 import { IUserDocument } from '../documents/user';
@@ -16,7 +16,10 @@ import { IConstants } from '../interfaces/constants';
 /**
  * Create a user schema with custom or default constants
  */
-export function createUserSchema<T extends IConstants = IConstants, I extends string | Types.ObjectId = Types.ObjectId>(
+export function createUserSchema<
+  T extends IConstants = IConstants,
+  I extends string | Types.ObjectId = Types.ObjectId
+>(
   usernameValidationMessage?: () => string,
   emailValidationMessage?: () => string,
   timezoneValidationMessage?: () => string,
@@ -24,16 +27,12 @@ export function createUserSchema<T extends IConstants = IConstants, I extends st
   supportedLanguages?: readonly string[],
   idType: any = Schema.Types.ObjectId,
   constants: T = AppConstants as T,
-): Schema<IUserDocument<string, I>> {
-  /**
-   * Schema for users
-   */
-  return new Schema<IUserDocument<string, I>>(
-    {
-      /**
-       * The unique identifier for the user
-       */
-      username: {
+): Schema {
+  const definition = {
+    /**
+     * The unique identifier for the user
+     */
+    username: {
         type: String,
         required: true,
         unique: true,
@@ -220,9 +219,10 @@ export function createUserSchema<T extends IConstants = IConstants, I extends st
         ],
         default: [],
       },
-    },
-    { timestamps: true },
-  );
+    };
+
+  const schema = new Schema(definition, { timestamps: true });
+  return schema as Schema<IUserBase<I, Date, string, AccountStatus>, IUserDocument<string, I>>;
 }
 
 /**

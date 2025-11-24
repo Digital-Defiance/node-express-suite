@@ -1,5 +1,5 @@
-import { Types } from 'mongoose';
-import { Schema } from 'mongoose';
+import { Schema, Types } from 'mongoose';
+import { IUserRoleBase } from '@digitaldefiance/suite-core-lib';
 import { IUserRoleDocument } from '../documents/user-role';
 import { BaseModelName } from '../enumerations';
 import { IConstants } from '../interfaces';
@@ -21,58 +21,59 @@ export interface UserRoleSchemaOptions<
 /**
  * Factory function to create an extensible user-role schema
  */
-export function createUserRoleSchema<TModelName extends string = BaseModelName, TConstants extends IConstants = IConstants, I extends string | Types.ObjectId = Types.ObjectId>(
+export function createUserRoleSchema<
+  TModelName extends string = BaseModelName,
+  TConstants extends IConstants = IConstants,
+  I extends string | Types.ObjectId = Types.ObjectId
+>(
   options: UserRoleSchemaOptions<TModelName> = {},
   constants?: TConstants
-): Schema<IUserRoleDocument<I>> {
+): Schema {
   const {
     userModelName = BaseModelName.User as TModelName,
     roleModelName = BaseModelName.Role as TModelName,
     idType = Schema.Types.ObjectId,
   } = options;
 
-  const schema = new Schema<IUserRoleDocument<I>>(
-    {
-      userId: {
-        type: idType,
-        ref: userModelName,
-        required: true,
-      },
-      roleId: {
-        type: idType,
-        ref: roleModelName,
-        required: true,
-      },
-      createdBy: {
-        type: idType,
-        ref: userModelName,
-        required: true,
-        immutable: true,
-      },
-      updatedBy: {
-        type: idType,
-        ref: userModelName,
-        required: true,
-      },
-      deletedAt: {
-        type: Date,
-        optional: true,
-      },
-      deletedBy: {
-        type: idType,
-        ref: userModelName,
-        required: false,
-        optional: true,
-      },
+  const definition = {
+    userId: {
+      type: idType,
+      ref: userModelName,
+      required: true,
     },
-    { timestamps: true },
-  );
+    roleId: {
+      type: idType,
+      ref: roleModelName,
+      required: true,
+    },
+    createdBy: {
+      type: idType,
+      ref: userModelName,
+      required: true,
+      immutable: true,
+    },
+    updatedBy: {
+      type: idType,
+      ref: userModelName,
+      required: true,
+    },
+    deletedAt: {
+      type: Date,
+      optional: true,
+    },
+    deletedBy: {
+      type: idType,
+      ref: userModelName,
+      required: false,
+      optional: true,
+    },
+  };
 
+  const schema = new Schema(definition, { timestamps: true });
   schema.index({ userId: 1, roleId: 1 }, { unique: true });
   schema.index({ userId: 1 });
   schema.index({ roleId: 1 });
-
-  return schema;
+  return schema as Schema<IUserRoleBase<I, Date>, IUserRoleDocument<I>>;
 }
 
 /**

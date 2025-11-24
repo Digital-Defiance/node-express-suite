@@ -1,5 +1,5 @@
-import { Types } from 'mongoose';
-import { Schema } from 'mongoose';
+import { Schema, Types } from 'mongoose';
+import { IUsedDirectLoginTokenBase } from '@digitaldefiance/suite-core-lib';
 import { IUsedDirectLoginTokenDocument } from '../documents/used-direct-login-token';
 import { BaseModelName } from '../enumerations';
 import { IConstants } from '../interfaces';
@@ -26,17 +26,17 @@ export function createUsedDirectLoginTokenSchema<
 >(
   options: UsedDirectLoginTokenSchemaOptions<TModelName> = {},
   constants?: TConstants,
-): Schema<IUsedDirectLoginTokenDocument<I>> {
+): Schema {
   const { userModelName = BaseModelName.User as TModelName, idType = Schema.Types.ObjectId } = options;
 
-  const schema = new Schema<IUsedDirectLoginTokenDocument<I>>({
+  const definition = {
     userId: { type: idType, required: true, ref: userModelName },
     token: { type: String, required: true },
-  });
+  };
 
+  const schema = new Schema(definition);
   schema.index({ userId: 1, token: 1 }, { unique: true });
-
-  return schema;
+  return schema as Schema<IUsedDirectLoginTokenBase<I>, IUsedDirectLoginTokenDocument<I>>;
 }
 
 /**

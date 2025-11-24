@@ -1,10 +1,10 @@
-import { Types } from 'mongoose';
+import { Schema, Types } from 'mongoose';
 import {
   EmailTokenType,
   getSuiteCoreTranslation,
+  IEmailTokenBase,
   SuiteCoreStringKey,
 } from '@digitaldefiance/suite-core-lib';
-import { Schema } from 'mongoose';
 import validator from 'validator';
 import { IEmailTokenDocument } from '../documents/email-token';
 import { BaseModelName } from '../enumerations';
@@ -40,11 +40,11 @@ export function createEmailTokenSchema<
   TTokenType extends string = EmailTokenType,
   TModelName extends string = BaseModelName,
   TConstants extends IConstants = IConstants,
-  I extends Types.ObjectId | string = Types.ObjectId
+  I extends Types.ObjectId | string = Types.ObjectId,
 >(
   options: EmailTokenSchemaOptions<TTokenType, TModelName> = {},
   constants?: TConstants,
-): Schema<IEmailTokenDocument<I>> {
+): Schema {
   const {
     tokenTypeEnum = Object.values(EmailTokenType) as TTokenType[],
     userModelName = BaseModelName.User as TModelName,
@@ -56,43 +56,40 @@ export function createEmailTokenSchema<
     idType = Schema.Types.ObjectId,
   } = options;
 
-  const schema = new Schema<IEmailTokenDocument<I>>(
-    {
-      userId: {
-        type: idType,
-        required: true,
-        ref: userModelName,
-        immutable: true,
-      },
-      type: {
-        type: String,
-        enum: tokenTypeEnum,
-        required: true,
-        immutable: true,
-      },
-      token: { type: String, required: true, immutable: true, unique: true },
-      email: {
-        type: String,
-        required: true,
-        immutable: true,
-        validate: {
-          validator: (v: string) => validator.isEmail(v),
-          message: validationMessage,
-        },
-      },
-      lastSent: { type: Date, required: false },
-      expiresAt: {
-        type: Date,
-        default: Date.now,
-        index: { expires: expiresIn },
+  const definition = {
+    userId: {
+      type: idType,
+      required: true,
+      ref: userModelName,
+      immutable: true,
+    },
+    type: {
+      type: String,
+      enum: tokenTypeEnum,
+      required: true,
+      immutable: true,
+    },
+    token: { type: String, required: true, immutable: true, unique: true },
+    email: {
+      type: String,
+      required: true,
+      immutable: true,
+      validate: {
+        validator: (v: string) => validator.isEmail(v),
+        message: validationMessage,
       },
     },
-    { timestamps: true },
-  );
+    lastSent: { type: Date, required: false },
+    expiresAt: {
+      type: Date,
+      default: Date.now,
+      index: { expires: expiresIn },
+    },
+  };
 
+  const schema = new Schema(definition, { timestamps: true });
   schema.index({ userId: 1, email: 1, type: 1 }, { unique: true });
-
-  return schema;
+  return schema as Schema<IEmailTokenBase<I, Date, TTokenType>, IEmailTokenDocument<I>>;
 }
 
 /**

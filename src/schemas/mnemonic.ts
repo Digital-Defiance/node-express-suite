@@ -1,9 +1,9 @@
-import { Types } from 'mongoose';
+import { Schema, Types } from 'mongoose';
 import {
   getSuiteCoreTranslation,
+  IMnemonicBase,
   SuiteCoreStringKey,
 } from '@digitaldefiance/suite-core-lib';
-import { Schema } from 'mongoose';
 import { LocalhostConstants as AppConstants } from '../constants';
 import { IMnemonicDocument } from '../documents/mnemonic';
 import { IConstants } from '../interfaces/constants';
@@ -11,11 +11,14 @@ import { IConstants } from '../interfaces/constants';
 /**
  * Create a mnemonic schema with custom or default constants
  */
-export function createMnemonicSchema<T extends IConstants = IConstants, I extends string | Types.ObjectId = Types.ObjectId>(
+export function createMnemonicSchema<
+  T extends IConstants = IConstants,
+  I extends string | Types.ObjectId = Types.ObjectId
+>(
   validationMessage?: () => string,
   constants: T = AppConstants as T,
-): Schema<IMnemonicDocument<I>> {
-  return new Schema<IMnemonicDocument<I>>({
+): Schema {
+  const definition = {
     hmac: {
       type: String,
       required: true,
@@ -29,7 +32,8 @@ export function createMnemonicSchema<T extends IConstants = IConstants, I extend
             getSuiteCoreTranslation(SuiteCoreStringKey.Validation_HmacRegex)),
       },
     },
-  });
+  };
+  return new Schema(definition) as Schema<IMnemonicBase<I>, IMnemonicDocument<I>>;
 }
 
 /**
