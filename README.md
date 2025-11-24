@@ -1128,6 +1128,10 @@ The following v1.x patterns still work in v2.0:
 
 ## ChangeLog
 
+### Version 3.6.0
+
+- Version updates to reduce circular dependency
+
 ### Version 3.5.8
 
 - Library updates
