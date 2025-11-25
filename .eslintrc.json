@@ -10,11 +10,11 @@
     "prettier"
   ],
   "parserOptions": {
-    "project": "./tsconfig.eslint.json"
+    "project": "packages/digitaldefiance-node-express-suite/tsconfig.eslint.json"
   },
   "extends": [
     "eslint:recommended",
-    "@typescript-eslint/recommended",
+    "plugin:@typescript-eslint/recommended",
     "plugin:prettier/recommended"
   ],
   "rules": {
