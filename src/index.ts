@@ -1,3 +1,4 @@
+/// <reference path="./types/mongoose-override.d.ts" />
 import 'reflect-metadata';
 
 export * from './application';

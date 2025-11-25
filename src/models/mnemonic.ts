@@ -4,17 +4,13 @@ import { BaseModelName } from '../enumerations';
 import { SchemaCollection } from '../enumerations/schema-collection';
 import { MnemonicSchema } from '../schemas/mnemonic';
 
-export function MnemonicModel<
-  TModelName extends string = BaseModelName,
-  TCollection extends string = SchemaCollection,
-  I extends string | Types.ObjectId = Types.ObjectId,
->(
+export function MnemonicModel(
   connection: Connection,
-  modelName: TModelName = BaseModelName.Mnemonic as TModelName,
-  collection: TCollection = SchemaCollection.Mnemonic as TCollection,
+  modelName: string = BaseModelName.Mnemonic,
+  collection: string = SchemaCollection.Mnemonic,
   schema: Schema = MnemonicSchema,
 ) {
-  return connection.model<IMnemonicDocument<I>>(modelName, schema, collection);
+  return connection.model(modelName, schema, collection);
 }
 
 export default MnemonicModel;

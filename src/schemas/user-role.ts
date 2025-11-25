@@ -23,8 +23,7 @@ export interface UserRoleSchemaOptions<
  */
 export function createUserRoleSchema<
   TModelName extends string = BaseModelName,
-  TConstants extends IConstants = IConstants,
-  I extends string | Types.ObjectId = Types.ObjectId
+  TConstants extends IConstants = IConstants
 >(
   options: UserRoleSchemaOptions<TModelName> = {},
   constants?: TConstants
@@ -73,7 +72,7 @@ export function createUserRoleSchema<
   schema.index({ userId: 1, roleId: 1 }, { unique: true });
   schema.index({ userId: 1 });
   schema.index({ roleId: 1 });
-  return schema as Schema<IUserRoleBase<I, Date>, IUserRoleDocument<I>>;
+  return schema;
 }
 
 /**

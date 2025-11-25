@@ -13,13 +13,7 @@ import { IUserDocument } from '../documents/user';
 import { BaseModelName } from '../enumerations';
 import { IConstants } from '../interfaces/constants';
 
-/**
- * Create a user schema with custom or default constants
- */
-export function createUserSchema<
-  T extends IConstants = IConstants,
-  I extends string | Types.ObjectId = Types.ObjectId
->(
+export function createUserSchema<T extends IConstants = IConstants>(
   usernameValidationMessage?: () => string,
   emailValidationMessage?: () => string,
   timezoneValidationMessage?: () => string,
@@ -221,8 +215,7 @@ export function createUserSchema<
       },
     };
 
-  const schema = new Schema(definition, { timestamps: true });
-  return schema as Schema<IUserBase<I, Date, string, AccountStatus>, IUserDocument<string, I>>;
+  return new Schema(definition, { timestamps: true });
 }
 
 /**

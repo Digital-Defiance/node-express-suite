@@ -34,6 +34,7 @@
   "dependencies": {
     "@digitaldefiance/ecies-lib": "4.4.0",
     "@digitaldefiance/i18n-lib": "3.8.0",
+    "@digitaldefiance/mongoose-types": "8.20.1",
     "@digitaldefiance/node-ecies-lib": "4.4.0",
     "@digitaldefiance/suite-core-lib": "3.6.0",
     "@noble/curves": "^2.0.1",

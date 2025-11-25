@@ -11,10 +11,7 @@ import { IConstants } from '../interfaces/constants';
 /**
  * Create a mnemonic schema with custom or default constants
  */
-export function createMnemonicSchema<
-  T extends IConstants = IConstants,
-  I extends string | Types.ObjectId = Types.ObjectId
->(
+export function createMnemonicSchema<T extends IConstants = IConstants>(
   validationMessage?: () => string,
   constants: T = AppConstants as T,
 ): Schema {
@@ -33,7 +30,7 @@ export function createMnemonicSchema<
       },
     },
   };
-  return new Schema(definition) as Schema<IMnemonicBase<I>, IMnemonicDocument<I>>;
+  return new Schema(definition);
 }
 
 /**

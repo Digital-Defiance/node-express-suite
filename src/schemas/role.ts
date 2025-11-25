@@ -21,8 +21,8 @@ export interface RoleSchemaOptions<
   /** Model name for user reference */
   userModelName?: TModelName;
   /** Custom pre-save validation function */
-  customValidation?: (
-    doc: IRoleDocument<any>,
+  customValidation?: <T = any>(
+    doc: T,
     next: CallbackWithoutResultAndOptionalError,
   ) => void;
   /** ID type for references */
@@ -35,8 +35,7 @@ export interface RoleSchemaOptions<
 export function createRoleSchema<
   TRole extends string = Role,
   TModelName extends string = BaseModelName,
-  TConstants extends IConstants = IConstants,
-  I extends Types.ObjectId | string = Types.ObjectId
+  TConstants extends IConstants = IConstants
 >(options: RoleSchemaOptions<TRole, TModelName> = {}, constants: TConstants = {} as TConstants): Schema {
   const {
     roleEnum = Object.values(Role) as TRole[],
@@ -124,7 +123,7 @@ export function createRoleSchema<
     }
   });
 
-  return schema as Schema<IRoleBase<I, Date>, IRoleDocument<I>>;
+  return schema;
 }
 
 /**

@@ -4,21 +4,13 @@ import { BaseModelName } from '../enumerations';
 import { SchemaCollection } from '../enumerations/schema-collection';
 import { UsedDirectLoginTokenSchema } from '../schemas/used-direct-login-token';
 
-export function UsedDirectLoginTokenModel<
-  TModelName extends string = BaseModelName,
-  TCollection extends string = SchemaCollection,
-  I extends string | Types.ObjectId = Types.ObjectId,
->(
+export function UsedDirectLoginTokenModel(
   connection: Connection,
-  modelName: TModelName = BaseModelName.UsedDirectLoginToken as TModelName,
-  collection: TCollection = SchemaCollection.UsedDirectLoginToken as TCollection,
+  modelName: string = BaseModelName.UsedDirectLoginToken,
+  collection: string = SchemaCollection.UsedDirectLoginToken,
   schema: Schema = UsedDirectLoginTokenSchema,
 ) {
-  return connection.model<IUsedDirectLoginTokenDocument<I>>(
-    modelName,
-    schema,
-    collection,
-  );
+  return connection.model(modelName, schema, collection);
 }
 
 export default UsedDirectLoginTokenModel;

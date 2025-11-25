@@ -146,5 +146,5 @@ export function getSchemaMap(
       modelName: modelNames.UserRole ?? BaseModelName.UserRole,
       schema: schemas.UserRole ?? UserRoleSchema,
     },
-  } as SchemaMap<BaseModelDocs>;
+  } as unknown as SchemaMap<BaseModelDocs>;
 }

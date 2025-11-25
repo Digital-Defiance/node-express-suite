@@ -39,8 +39,7 @@ export interface EmailTokenSchemaOptions<
 export function createEmailTokenSchema<
   TTokenType extends string = EmailTokenType,
   TModelName extends string = BaseModelName,
-  TConstants extends IConstants = IConstants,
-  I extends Types.ObjectId | string = Types.ObjectId,
+  TConstants extends IConstants = IConstants
 >(
   options: EmailTokenSchemaOptions<TTokenType, TModelName> = {},
   constants?: TConstants,
@@ -89,7 +88,7 @@ export function createEmailTokenSchema<
 
   const schema = new Schema(definition, { timestamps: true });
   schema.index({ userId: 1, email: 1, type: 1 }, { unique: true });
-  return schema as Schema<IEmailTokenBase<I, Date, TTokenType>, IEmailTokenDocument<I>>;
+  return schema;
 }
 
 /**

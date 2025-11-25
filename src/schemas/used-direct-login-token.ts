@@ -21,8 +21,7 @@ export interface UsedDirectLoginTokenSchemaOptions<
  */
 export function createUsedDirectLoginTokenSchema<
   TModelName extends string = BaseModelName,
-  TConstants extends IConstants = IConstants,
-  I extends Types.ObjectId | string = Types.ObjectId
+  TConstants extends IConstants = IConstants
 >(
   options: UsedDirectLoginTokenSchemaOptions<TModelName> = {},
   constants?: TConstants,
@@ -36,7 +35,7 @@ export function createUsedDirectLoginTokenSchema<
 
   const schema = new Schema(definition);
   schema.index({ userId: 1, token: 1 }, { unique: true });
-  return schema as Schema<IUsedDirectLoginTokenBase<I>, IUsedDirectLoginTokenDocument<I>>;
+  return schema;
 }
 
 /**

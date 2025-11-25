@@ -4,15 +4,11 @@ import { BaseModelName } from '../enumerations';
 import { SchemaCollection } from '../enumerations/schema-collection';
 import { UserRoleSchema } from '../schemas/user-role';
 
-export default function UserRoleModel<
-  TModelName extends string = BaseModelName,
-  TCollection extends string = SchemaCollection,
-  I extends string | Types.ObjectId = Types.ObjectId,
->(
+export default function UserRoleModel(
   connection: Connection,
-  modelName: TModelName = BaseModelName.UserRole as TModelName,
-  collection: TCollection = SchemaCollection.UserRole as TCollection,
+  modelName: string = BaseModelName.UserRole,
+  collection: string = SchemaCollection.UserRole,
   schema: Schema = UserRoleSchema,
-): Model<IUserRoleDocument<I>> {
-  return connection.model<IUserRoleDocument<I>>(modelName, schema, collection);
+): Model<any> {
+  return connection.model(modelName, schema, collection);
 }
