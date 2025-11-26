@@ -1,7 +1,7 @@
 import { LanguageRegistry, Timezone } from '@digitaldefiance/i18n-lib';
 import { existsSync, mkdirSync, rmSync, unlinkSync, writeFileSync } from 'fs';
 import { ObjectId } from 'mongodb';
-import { Types } from 'mongoose';
+import { Types } from '@digitaldefiance/mongoose-types';
 import { join } from 'path';
 import { Environment } from '../src/environment';
 

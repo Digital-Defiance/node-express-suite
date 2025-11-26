@@ -1,5 +1,5 @@
 import { Member } from '@digitaldefiance/node-ecies-lib';
-import { Types } from 'mongoose';
+import { Types } from '@digitaldefiance/mongoose-types';
 import { IRoleDocument } from '../documents/role';
 import { IUserDocument } from '../documents/user';
 import { IUserRoleDocument } from '../documents/user-role';

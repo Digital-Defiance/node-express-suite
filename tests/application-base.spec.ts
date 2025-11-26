@@ -3,7 +3,7 @@ import { SuiteCoreStringKey, TranslatableSuiteError } from '@digitaldefiance/sui
 import { BaseApplication } from '../src/application-base';
 import { Environment } from '../src/environment';
 import { ModelRegistry } from '../src/model-registry';
-import mongoose from 'mongoose';
+import mongoose from '@digitaldefiance/mongoose-types';
 import { connectMemoryDB, disconnectMemoryDB, clearMemoryDB, withConsoleMocks } from '@digitaldefiance/express-suite-test-utils';
 
 describe('BaseApplication', () => {

@@ -1,5 +1,5 @@
 import { TransactionManager } from '../../src/transactions/transaction-manager';
-import { Connection, ClientSession } from 'mongoose';
+import { Connection, ClientSession } from '@digitaldefiance/mongoose-types';
 
 describe('TransactionManager', () => {
   let mockConnection: jest.Mocked<Connection>;

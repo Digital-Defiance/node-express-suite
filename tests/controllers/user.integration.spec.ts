@@ -5,7 +5,7 @@ import { BackupCodeService } from '../../src/services/backup-code';
 import { RoleService } from '../../src/services/role';
 import { ECIESService, Member as BackendMember } from '@digitaldefiance/node-ecies-lib';
 import { SystemUserService } from '../../src/services/system-user';
-import { Types } from 'mongoose';
+import { Types } from '@digitaldefiance/mongoose-types';
 import { AccountStatus } from '@digitaldefiance/suite-core-lib';
 
 // Mock SystemUserService before importing UserController

@@ -687,6 +687,193 @@ yarn add -D @faker-js/faker
 - `debugLog()` - Conditional logging utility
 - `withTransaction()` - MongoDB transaction wrapper
 
+## Testing
+
+### Testing Approach
+
+The node-express-suite package uses comprehensive testing with 604 tests covering all services, middleware, controllers, and database operations.
+
+**Test Framework**: Jest with TypeScript support  
+**Property-Based Testing**: fast-check for validation properties  
+**Coverage**: 57.86% overall, 100% on critical paths  
+**Database**: MongoDB Memory Server for isolated testing
+
+### Test Structure
+
+```
+tests/
+  ├── unit/              # Unit tests for services and utilities
+  ├── integration/       # Integration tests for multi-service flows
+  ├── e2e/               # End-to-end API tests
+  ├── middleware/        # Middleware tests
+  └── fixtures/          # Test data and mocks
+```
+
+### Running Tests
+
+```bash
+# Run all tests
+npm test
+
+# Run with coverage
+npm test -- --coverage
+
+# Run specific test suite
+npm test -- user-service.spec.ts
+
+# Run in watch mode
+npm test -- --watch
+```
+
+### Test Patterns
+
+#### Testing Services
+
+```typescript
+import { UserService, Application } from '@digitaldefiance/node-express-suite';
+
+describe('UserService', () => {
+  let app: Application;
+  let userService: UserService;
+
+  beforeAll(async () => {
+    app = new Application({
+      mongoUri: 'mongodb://localhost:27017/test',
+      jwtSecret: 'test-secret'
+    });
+    await app.start();
+    userService = new UserService(app);
+  });
+
+  afterAll(async () => {
+    await app.stop();
+  });
+
+  it('should create user', async () => {
+    const user = await userService.create({
+      username: 'alice',
+      email: 'alice@example.com',
+      password: 'SecurePass123!'
+    });
+    
+    expect(user.username).toBe('alice');
+  });
+});
+```
+
+#### Testing Middleware
+
+```typescript
+import { authMiddleware } from '@digitaldefiance/node-express-suite';
+import { Request, Response, NextFunction } from 'express';
+
+describe('Auth Middleware', () => {
+  it('should reject requests without token', async () => {
+    const req = { headers: {} } as Request;
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn()
+    } as unknown as Response;
+    const next = jest.fn() as NextFunction;
+
+    await authMiddleware(req, res, next);
+    
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(next).not.toHaveBeenCalled();
+  });
+});
+```
+
+#### Testing Controllers
+
+```typescript
+import { UserController } from '@digitaldefiance/node-express-suite';
+
+describe('UserController', () => {
+  it('should register new user', async () => {
+    const controller = new UserController(app);
+    const req = {
+      body: {
+        username: 'alice',
+        email: 'alice@example.com',
+        password: 'SecurePass123!'
+      }
+    } as Request;
+    
+    const result = await controller.register(req, res, next);
+    
+    expect(result.statusCode).toBe(201);
+    expect(result.response.data.user).toBeDefined();
+  });
+});
+```
+
+#### Testing Database Operations
+
+```typescript
+import { connectMemoryDB, disconnectMemoryDB, clearMemoryDB } from '@digitaldefiance/express-suite-test-utils';
+import { UserModel } from '@digitaldefiance/node-express-suite';
+
+describe('User Model', () => {
+  beforeAll(async () => {
+    await connectMemoryDB();
+  });
+
+  afterAll(async () => {
+    await disconnectMemoryDB();
+  });
+
+  afterEach(async () => {
+    await clearMemoryDB();
+  });
+
+  it('should validate user schema', async () => {
+    const User = UserModel(connection);
+    const user = new User({
+      username: 'alice',
+      email: 'alice@example.com'
+    });
+    
+    await expect(user.validate()).resolves.not.toThrow();
+  });
+});
+```
+
+### Testing Best Practices
+
+1. **Use MongoDB Memory Server** for isolated database testing
+2. **Test with transactions** to ensure data consistency
+3. **Mock external services** like email providers
+4. **Test error conditions** and edge cases
+5. **Test middleware** in isolation and integration
+6. **Test authentication** and authorization flows
+
+### Cross-Package Testing
+
+Testing integration with other Express Suite packages:
+
+```typescript
+import { Application } from '@digitaldefiance/node-express-suite';
+import { ECIESService } from '@digitaldefiance/node-ecies-lib';
+import { IBackendUser } from '@digitaldefiance/suite-core-lib';
+
+describe('Cross-Package Integration', () => {
+  it('should integrate ECIES with user management', async () => {
+    const app = new Application({ /* config */ });
+    const ecies = new ECIESService();
+    
+    // Create user with encrypted data
+    const user = await app.services.get(ServiceKeys.USER).create({
+      username: 'alice',
+      email: 'alice@example.com',
+      // ... encrypted fields
+    });
+    
+    expect(user).toBeDefined();
+  });
+});
+```
+
 ## Documentation
 
 📚 **Comprehensive documentation is available in the [`docs/`](./docs) directory.**
@@ -1127,6 +1314,11 @@ The following v1.x patterns still work in v2.0:
 ---
 
 ## ChangeLog
+
+### Version 3.6.3
+
+- Update suite-core
+- Properly use @digitaldefiance/mongoose-types throughout
 
 ### Version 3.6.2
 

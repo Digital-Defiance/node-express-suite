@@ -5,7 +5,7 @@ import {
   ITokenUser,
   IUserBase,
 } from '@digitaldefiance/suite-core-lib';
-import { Types } from 'mongoose';
+import { Types } from '@digitaldefiance/mongoose-types';
 import { UserController } from '../controllers/user';
 import { IBaseDocument } from '../documents';
 import { Environment } from '../environment';

@@ -6,7 +6,7 @@ import { IServerInitResult, IConstants } from '../src/interfaces';
 import { LocalhostConstants } from '../src/constants';
 import { BaseRouter } from '../src/routers/base';
 import { AppRouter } from '../src/routers/app';
-import { Connection } from 'mongoose';
+import { Connection } from '@digitaldefiance/mongoose-types';
 import { SchemaMap } from '../src/types';
 import { IBaseDocument } from '../src/documents/base';
 

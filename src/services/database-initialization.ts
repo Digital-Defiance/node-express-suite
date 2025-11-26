@@ -26,7 +26,7 @@ import {
 import { crc32 } from 'crc';
 import { createHash, randomBytes } from 'crypto';
 import { ObjectId as MongoObjectId } from 'mongodb';
-import { Connection, Types } from 'mongoose';
+import { Connection, Types } from '@digitaldefiance/mongoose-types';
 import { BackupCode } from '../backup-code';
 import { IMnemonicDocument } from '../documents/mnemonic';
 import { IRoleDocument } from '../documents/role';

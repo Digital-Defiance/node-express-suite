@@ -1,4 +1,4 @@
-import { ClientSession, Connection } from 'mongoose';
+import { ClientSession, Connection } from '@digitaldefiance/mongoose-types';
 
 export interface TransactionOptions {
   timeoutMs?: number;

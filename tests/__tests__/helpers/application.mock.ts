@@ -1,5 +1,5 @@
 import { SecureString } from '@digitaldefiance/ecies-lib';
-import { Document, Model } from 'mongoose';
+import { Document, Model } from '@digitaldefiance/mongoose-types';
 import { LocalhostConstants } from '../../../src/constants';
 import { ServiceContainer } from '../../../src/container';
 import { Environment } from '../../../src/environment';

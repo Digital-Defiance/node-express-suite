@@ -16,7 +16,7 @@ import {
   NextFunction,
 } from 'express';
 import { existsSync, readdirSync } from 'fs';
-import { Types } from 'mongoose';
+import { Types } from '@digitaldefiance/mongoose-types';
 import { basename, resolve, sep } from 'path';
 import { IBaseDocument } from '../documents';
 import { Environment } from '../environment';

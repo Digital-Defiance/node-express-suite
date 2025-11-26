@@ -13,7 +13,7 @@ import {
 } from '@digitaldefiance/suite-core-lib';
 import * as argon2 from 'argon2';
 import { createHmac, randomBytes, timingSafeEqual } from 'crypto';
-import { Types } from 'mongoose';
+import { Types } from '@digitaldefiance/mongoose-types';
 import { LocalhostConstants } from './constants';
 import { InvalidBackupCodeVersionError } from './errors/invalid-backup-code-version';
 import { IConstants } from './interfaces';

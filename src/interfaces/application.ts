@@ -1,4 +1,4 @@
-import mongoose, { Model } from 'mongoose';
+import mongoose, { Model } from '@digitaldefiance/mongoose-types';
 import { IBaseDocument } from '../documents';
 import { Environment } from '../environment';
 import { IConstants } from './constants';

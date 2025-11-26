@@ -1,4 +1,4 @@
-import { Model, Schema } from 'mongoose';
+import { Model, Schema } from '@digitaldefiance/mongoose-types';
 import { IBaseDocument } from '../documents/base';
 import { IDiscriminatorCollections } from '../interfaces/discriminator-collections';
 

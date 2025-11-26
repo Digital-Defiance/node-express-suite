@@ -7,7 +7,7 @@ import {
   SuiteCoreStringKey,
 } from '@digitaldefiance/suite-core-lib';
 import { NextFunction, Request, Response } from 'express';
-import { ClientSession, Types } from 'mongoose';
+import { ClientSession, Types } from '@digitaldefiance/mongoose-types';
 import { ServiceKeys } from '../container';
 import { IUserDocument } from '../documents/user';
 import { BaseModelName } from '../enumerations';

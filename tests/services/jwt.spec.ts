@@ -1,6 +1,6 @@
 import { LanguageCodes } from '@digitaldefiance/i18n-lib';
 import { Role } from '@digitaldefiance/suite-core-lib';
-import { Types } from 'mongoose';
+import { Types } from '@digitaldefiance/mongoose-types';
 import { IUserDocument } from '../../src/documents/user';
 import { IApplication } from '../../src/interfaces/application';
 import { IEnvironment } from '../../src/interfaces/environment';

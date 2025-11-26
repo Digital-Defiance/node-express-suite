@@ -4,7 +4,7 @@ import {
   SuiteCoreComponentId,
   SuiteCoreStringKey,
 } from '@digitaldefiance/suite-core-lib';
-import { Error } from 'mongoose';
+import { Error } from '@digitaldefiance/mongoose-types';
 import { IApplication } from '../interfaces';
 
 export class MongooseValidationError extends HandleableError {

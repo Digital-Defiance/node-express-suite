@@ -3,7 +3,7 @@ import { I18nEngine } from '@digitaldefiance/i18n-lib';
 import { NextFunction, Request, Response } from 'express';
 import { Result, ValidationError } from 'express-validator';
 import { existsSync, readdirSync, writeSync } from 'fs';
-import { ClientSession, Connection, Types } from 'mongoose';
+import { ClientSession, Connection, Types } from '@digitaldefiance/mongoose-types';
 import { resolve } from 'path';
 import { z, ZodType } from 'zod';
 import { ExpressValidationError } from './errors/express-validation';

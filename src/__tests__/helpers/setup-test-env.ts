@@ -1,4 +1,4 @@
-import { Connection } from 'mongoose';
+import { Connection } from '@digitaldefiance/mongoose-types';
 import { Application } from '../../application';
 import { IBaseDocument } from '../../documents';
 import { Environment } from '../../environment';

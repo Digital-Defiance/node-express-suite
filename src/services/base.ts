@@ -1,4 +1,4 @@
-import { ClientSession, Types } from 'mongoose';
+import { ClientSession, Types } from '@digitaldefiance/mongoose-types';
 import { IBaseDocument } from '../documents';
 import { Environment } from '../environment';
 import { IConstants } from '../interfaces';

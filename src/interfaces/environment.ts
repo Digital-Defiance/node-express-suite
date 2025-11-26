@@ -1,5 +1,5 @@
 import { SecureBuffer, SecureString } from '@digitaldefiance/ecies-lib';
-import { Types } from 'mongoose';
+import { Types } from '@digitaldefiance/mongoose-types';
 import { BackupCode } from '../backup-code';
 import { IMongoEnvironment } from './environment-mongo';
 

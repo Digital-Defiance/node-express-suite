@@ -1,4 +1,4 @@
-import { Types } from 'mongoose';
+import { Types } from '@digitaldefiance/mongoose-types';
 import { RequestUserService } from '../../src/services/request-user';
 import { Role } from '@digitaldefiance/suite-core-lib';
 

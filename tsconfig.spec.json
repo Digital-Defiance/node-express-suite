@@ -4,7 +4,8 @@
     "outDir": "../../dist/out-tsc/packages/digitaldefiance-node-express-suite/spec",
     "types": [
       "jest",
-      "node"
+      "node",
+      "@digitaldefiance/mongoose-types"
     ],
     "emitDeclarationOnly": false,
     "experimentalDecorators": true,

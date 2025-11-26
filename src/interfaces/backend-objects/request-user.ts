@@ -1,4 +1,4 @@
-import { Types } from 'mongoose';
+import { Types } from '@digitaldefiance/mongoose-types';
 import { IRequestUser } from '../request-user';
 import { IRoleBackendObject } from './role';
 

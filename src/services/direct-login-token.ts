@@ -3,7 +3,7 @@ import {
   FailedToUseDirectTokenError,
   IUsedDirectLoginTokenBase,
 } from '@digitaldefiance/suite-core-lib';
-import { ClientSession, Types } from 'mongoose';
+import { ClientSession, Types } from '@digitaldefiance/mongoose-types';
 import { IBaseDocument } from '../documents';
 import { IUsedDirectLoginTokenDocument } from '../documents/used-direct-login-token';
 import { BaseModelName } from '../enumerations/base-model-name';

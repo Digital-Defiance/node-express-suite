@@ -1,4 +1,4 @@
-import { Model } from 'mongoose';
+import { Model } from '@digitaldefiance/mongoose-types';
 import { IBaseDocument } from '../documents/base';
 
 export interface IDiscriminatorCollections<T extends IBaseDocument<any>> {

@@ -7,7 +7,7 @@ import { BackupCodeService } from '../../src/services/backup-code';
 import { RoleService } from '../../src/services/role';
 import { ECIESService } from '@digitaldefiance/node-ecies-lib';
 import { SystemUserService } from '../../src/services/system-user';
-import { Types } from 'mongoose';
+import { Types } from '@digitaldefiance/mongoose-types';
 import { getSuiteCoreTranslation, SuiteCoreStringKey } from '@digitaldefiance/suite-core-lib';
 import jwt from 'jsonwebtoken';
 import * as authenticateTokenModule from '../../src/middlewares/authenticate-token';

@@ -1,6 +1,6 @@
-import { Connection } from 'mongoose';
+import { Connection } from '@digitaldefiance/mongoose-types';
 import { MongoMemoryServer } from 'mongodb-memory-server';
-import mongoose from 'mongoose';
+import mongoose from '@digitaldefiance/mongoose-types';
 import { EmailTokenModel } from '../../src/models/email-token';
 import { MnemonicModel } from '../../src/models/mnemonic';
 import { UsedDirectLoginTokenModel } from '../../src/models/used-direct-login-token';

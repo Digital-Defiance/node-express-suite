@@ -1,5 +1,5 @@
 import { Role, SuiteCoreStringKey, TranslatableSuiteError } from '@digitaldefiance/suite-core-lib';
-import { Schema } from 'mongoose';
+import { Schema } from '@digitaldefiance/mongoose-types';
 import { createRoleSchema, RoleSchema } from '../../src/schemas/role';
 import { IRoleDocument } from '../../src/documents/role';
 

@@ -1,4 +1,4 @@
-import { Connection, Model, Schema, Types } from 'mongoose';
+import { Connection, Model, Schema, Types } from '@digitaldefiance/mongoose-types';
 import { IEmailTokenDocument } from '../documents/email-token';
 import { BaseModelName } from '../enumerations';
 import { SchemaCollection } from '../enumerations/schema-collection';

@@ -1,4 +1,4 @@
-import { Schema, Types } from 'mongoose';
+import { Schema, Types } from '@digitaldefiance/mongoose-types';
 import { IUsedDirectLoginTokenBase } from '@digitaldefiance/suite-core-lib';
 import { IUsedDirectLoginTokenDocument } from '../documents/used-direct-login-token';
 import { BaseModelName } from '../enumerations';

@@ -1,4 +1,4 @@
-import { Schema, Types } from 'mongoose';
+import { Schema, Types } from '@digitaldefiance/mongoose-types';
 import { IRoleBase, Role } from '@digitaldefiance/suite-core-lib';
 import { IRoleDocument } from '../documents/role';
 import { BaseModelName } from '../enumerations';

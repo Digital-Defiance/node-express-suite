@@ -1,4 +1,4 @@
-import { Types } from 'mongoose';
+import { Types } from '@digitaldefiance/mongoose-types';
 import { UserService } from '../../src/services/user';
 import { RoleService } from '../../src/services/role';
 import { BackupCodeService } from '../../src/services/backup-code';

@@ -1,4 +1,4 @@
-import mongoose, { Types } from 'mongoose';
+import mongoose, { Types } from '@digitaldefiance/mongoose-types';
 import { Application } from '../application';
 import { BaseRouter } from '../routers/base';
 import { AppRouter } from '../routers/app';

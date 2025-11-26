@@ -3,7 +3,7 @@ import {
   IRoleDTO,
   ITokenRole,
 } from '@digitaldefiance/suite-core-lib';
-import { Types } from 'mongoose';
+import { Types } from '@digitaldefiance/mongoose-types';
 import { IUserDocument } from '../documents';
 import { IRequestUserBackendObject } from '../interfaces/backend-objects/request-user';
 import { convertStringToGenericId } from '../types/id-converters';

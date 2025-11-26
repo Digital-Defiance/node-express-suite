@@ -16,7 +16,7 @@ import { readFileSync } from 'fs';
 import { HelmetOptions } from 'helmet';
 import { Server } from 'http';
 import { createServer } from 'https';
-import mongoose from 'mongoose';
+import mongoose from '@digitaldefiance/mongoose-types';
 import { isAbsolute, normalize, resolve } from 'path';
 import { BaseApplication } from './application-base';
 import { IBaseDocument } from './documents/base';

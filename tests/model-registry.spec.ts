@@ -1,4 +1,4 @@
-import { Schema, model } from 'mongoose';
+import { Schema, model } from '@digitaldefiance/mongoose-types';
 import { ModelRegistry } from '../src/model-registry';
 import { InvalidModelError } from '../src/errors';
 

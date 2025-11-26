@@ -1,5 +1,5 @@
 import { MongoMemoryServer } from 'mongodb-memory-server';
-import mongoose, { Connection } from 'mongoose';
+import mongoose, { Connection } from '@digitaldefiance/mongoose-types';
 
 let mongoServer: MongoMemoryServer | undefined;
 let connection: Connection | undefined;

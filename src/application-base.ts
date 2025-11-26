@@ -8,7 +8,7 @@ import {
   TranslatableSuiteError,
 } from '@digitaldefiance/suite-core-lib';
 import { MongoMemoryReplSet } from 'mongodb-memory-server';
-import mongoose, { Model, Types } from 'mongoose';
+import mongoose, { Model, Types } from '@digitaldefiance/mongoose-types';
 import { join } from 'path';
 import { IBaseDocument } from './documents/base';
 import { Environment } from './environment';

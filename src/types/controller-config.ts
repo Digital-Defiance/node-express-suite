@@ -1,4 +1,4 @@
-import { Types } from 'mongoose';
+import { Types } from '@digitaldefiance/mongoose-types';
 import { IConstants } from '../interfaces';
 import { Environment } from '../environment';
 

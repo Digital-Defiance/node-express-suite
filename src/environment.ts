@@ -6,7 +6,7 @@ import {
 } from '@digitaldefiance/suite-core-lib';
 import { config } from 'dotenv';
 import { existsSync } from 'fs';
-import { Types } from 'mongoose';
+import { Types } from '@digitaldefiance/mongoose-types';
 import { BackupCode } from './backup-code';
 import { LocalhostConstants } from './constants';
 import { setGlobalActiveContextAdminLanguageFromProcessArgvOrEnv } from './get-language';

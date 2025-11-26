@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import mongoose from 'mongoose';
+import mongoose from '@digitaldefiance/mongoose-types';
 import { SecureString } from '@digitaldefiance/ecies-lib';
-import { Document, Model } from 'mongoose';
+import { Document, Model } from '@digitaldefiance/mongoose-types';
 import { LocalhostConstants } from '../../../src/constants';
 import { ServiceContainer } from '../../../src/container';
 import { Environment } from '../../../src/environment';

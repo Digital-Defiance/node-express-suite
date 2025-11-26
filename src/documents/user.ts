@@ -1,5 +1,5 @@
 import { AccountStatus, IUserBase } from '@digitaldefiance/suite-core-lib';
-import { Types } from 'mongoose';
+import { Types } from '@digitaldefiance/mongoose-types';
 import { IBaseDocument } from './base';
 
 /**

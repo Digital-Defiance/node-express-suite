@@ -14,7 +14,7 @@ import {
   ITokenRole,
 } from '@digitaldefiance/suite-core-lib';
 import { timingSafeEqual } from 'crypto';
-import { ClientSession, Types } from 'mongoose';
+import { ClientSession, Types } from '@digitaldefiance/mongoose-types';
 import { BackupCode } from '../backup-code';
 import { LocalhostConstants as AppConstants } from '../constants';
 import { IUserDocument } from '../documents';

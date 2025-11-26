@@ -1,4 +1,4 @@
-import { Schema, Types } from 'mongoose';
+import { Schema, Types } from '@digitaldefiance/mongoose-types';
 import { AccountStatus, IUserBase } from '@digitaldefiance/suite-core-lib';
 import { IUserDocument } from '../documents/user';
 import { IConstants } from '../interfaces/constants';

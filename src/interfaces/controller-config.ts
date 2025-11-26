@@ -1,4 +1,4 @@
-import { Types } from 'mongoose';
+import { Types } from '@digitaldefiance/mongoose-types';
 import { ITokenRole, ITokenUser, IUserBase } from '@digitaldefiance/suite-core-lib';
 import { IBaseDocument } from '../documents';
 import { Environment } from '../environment';

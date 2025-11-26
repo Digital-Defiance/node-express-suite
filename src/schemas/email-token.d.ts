@@ -1,4 +1,4 @@
-import { Schema, Types } from 'mongoose';
+import { Schema, Types } from '@digitaldefiance/mongoose-types';
 import { EmailTokenType, IEmailTokenBase } from '@digitaldefiance/suite-core-lib';
 import { IEmailTokenDocument } from '../documents/email-token';
 import { BaseModelName } from '../enumerations';

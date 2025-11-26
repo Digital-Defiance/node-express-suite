@@ -5,7 +5,7 @@ import {
 } from '@digitaldefiance/suite-core-lib';
 import { randomBytes } from 'crypto';
 import { MongoMemoryServer } from 'mongodb-memory-server';
-import { connect, Connection, Model } from 'mongoose';
+import { connect, Connection, Model } from '@digitaldefiance/mongoose-types';
 import { LocalhostConstants } from '../../src/constants';
 import { IMnemonicDocument } from '../../src/documents/mnemonic';
 import { BaseModelName } from '../../src/enumerations/base-model-name';

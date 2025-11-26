@@ -11,7 +11,7 @@ import {
   verify,
   VerifyOptions,
 } from 'jsonwebtoken';
-import { Types } from 'mongoose';
+import { Types } from '@digitaldefiance/mongoose-types';
 import { promisify } from 'util';
 import { IBaseDocument } from '../documents';
 import { IUserDocument } from '../documents/user';

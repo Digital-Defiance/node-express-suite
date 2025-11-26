@@ -1,4 +1,4 @@
-import { CallbackWithoutResultAndOptionalError, Schema, Types } from 'mongoose';
+import { CallbackWithoutResultAndOptionalError, Schema, Types } from '@digitaldefiance/mongoose-types';
 import {
   IRoleBase,
   Role,

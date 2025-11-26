@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import mongoose from '@digitaldefiance/mongoose-types';
 import { RoleModel } from '../../src/models/role';
 import { BaseModelName } from '../../src/enumerations';
 

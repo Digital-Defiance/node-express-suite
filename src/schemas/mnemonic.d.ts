@@ -1,4 +1,4 @@
-import { Schema, Types } from 'mongoose';
+import { Schema, Types } from '@digitaldefiance/mongoose-types';
 import { IMnemonicBase } from '@digitaldefiance/suite-core-lib';
 import { IMnemonicDocument } from '../documents/mnemonic';
 import { IConstants } from '../interfaces/constants';

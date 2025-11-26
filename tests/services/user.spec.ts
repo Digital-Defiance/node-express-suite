@@ -1,4 +1,4 @@
-import { Types, Document } from 'mongoose';
+import { Types, Document } from '@digitaldefiance/mongoose-types';
 import { withConsoleMocks } from '@digitaldefiance/express-suite-test-utils';
 import { UserService } from '../../src/services/user';
 import { RoleService } from '../../src/services/role';

@@ -1,6 +1,6 @@
-import { Connection } from 'mongoose';
+import { Connection } from '@digitaldefiance/mongoose-types';
 import { MongoMemoryServer } from 'mongodb-memory-server';
-import mongoose from 'mongoose';
+import mongoose from '@digitaldefiance/mongoose-types';
 import { getSchemaMap } from '../../src/schemas/schema';
 import { LocalhostConstants } from '../../src/constants';
 

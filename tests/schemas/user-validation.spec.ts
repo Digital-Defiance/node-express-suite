@@ -1,10 +1,10 @@
 import { LanguageCodes } from '@digitaldefiance/i18n-lib';
 import { AccountStatus } from '@digitaldefiance/suite-core-lib';
 import { connectMemoryDB, disconnectMemoryDB, clearMemoryDB } from '@digitaldefiance/express-suite-test-utils';
-import mongoose, { Model } from 'mongoose';
+import mongoose, { Model } from '@digitaldefiance/mongoose-types';
 import { createUserSchema } from '../../src/schemas/user';
 import { IUserDocument } from '../../src/documents/user';
-import { Types } from 'mongoose';
+import { Types } from '@digitaldefiance/mongoose-types';
 
 describe('UserSchema validation with Mongoose', () => {
   let UserModel: Model<IUserDocument>;

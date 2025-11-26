@@ -1,4 +1,4 @@
-import { Connection, Schema } from 'mongoose';
+import { Connection, Schema } from '@digitaldefiance/mongoose-types';
 import {
   IEmailTokenDocument,
   IMnemonicDocument,

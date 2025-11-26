@@ -4,7 +4,7 @@ import { BaseRouter } from '../../src/routers/base';
 import { AppRouter } from '../../src/routers/app';
 import { IConstants } from '../../src/interfaces';
 import { TranslatableSuiteError } from '@digitaldefiance/suite-core-lib';
-import mongoose from 'mongoose';
+import mongoose from '@digitaldefiance/mongoose-types';
 
 describe('ApplicationBuilder', () => {
   let builder: ApplicationBuilder<any, any>;

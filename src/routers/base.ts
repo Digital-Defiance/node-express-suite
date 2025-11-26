@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { Types } from 'mongoose';
+import { Types } from '@digitaldefiance/mongoose-types';
 import { IBaseDocument } from '../documents';
 import { Environment } from '../environment';
 import { IConstants } from '../interfaces';

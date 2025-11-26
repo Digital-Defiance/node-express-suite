@@ -1,7 +1,7 @@
 /**
  * Type-safe ID conversion utilities for node-express-suite
  */
-import { Types } from 'mongoose';
+import { Types } from '@digitaldefiance/mongoose-types';
 
 /**
  * Type constraint for valid ID types

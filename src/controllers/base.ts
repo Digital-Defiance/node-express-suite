@@ -28,7 +28,7 @@ import {
   ValidationChain,
   validationResult,
 } from 'express-validator';
-import { ClientSession, Types } from 'mongoose';
+import { ClientSession, Types } from '@digitaldefiance/mongoose-types';
 import { IUserDocument } from '../documents/user';
 import { BaseModelName } from '../enumerations/base-model-name';
 import { ExpressValidationError } from '../errors/express-validation';

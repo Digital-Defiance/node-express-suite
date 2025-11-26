@@ -12,7 +12,7 @@ import {
   SuiteCoreStringKey,
   TranslatableSuiteError,
 } from '@digitaldefiance/suite-core-lib';
-import { Types } from 'mongoose';
+import { Types } from '@digitaldefiance/mongoose-types';
 import { Environment } from '../environment';
 import { IConstants } from '../interfaces/constants';
 

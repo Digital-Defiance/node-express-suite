@@ -46,7 +46,7 @@ import {
 } from '@digitaldefiance/suite-core-lib';
 import { Wallet } from '@ethereumjs/wallet';
 import { randomBytes } from 'crypto';
-import { ClientSession, Document, ProjectionType, Types } from 'mongoose';
+import { ClientSession, Document, ProjectionType, Types } from '@digitaldefiance/mongoose-types';
 import validator from 'validator';
 import { BackupCode } from '../backup-code';
 import { IBaseDocument } from '../documents';

@@ -5,7 +5,7 @@ import {
   ITokenRole,
 } from '@digitaldefiance/suite-core-lib';
 import { Request, Response } from 'express';
-import { Types } from 'mongoose';
+import { Types } from '@digitaldefiance/mongoose-types';
 import { UserController } from '../../src/controllers/user';
 import { IUserDocument } from '../../src/documents';
 import { BackupCodeService } from '../../src/services/backup-code';

@@ -1,4 +1,4 @@
-import { Schema, Types } from 'mongoose';
+import { Schema, Types } from '@digitaldefiance/mongoose-types';
 import { isValidTimezone, LanguageCodes } from '@digitaldefiance/i18n-lib';
 import {
   AccountStatus,

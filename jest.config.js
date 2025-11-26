@@ -10,7 +10,7 @@ module.exports = {
   collectCoverageFrom: ['src/**/*.ts'],
   moduleFileExtensions: ['js', 'ts'],
   transform: {
-    '^.+.[tj]s$': [
+    '^.+\\.[tj]s$': [
       'ts-jest',
       {
         tsconfig: '<rootDir>/tsconfig.spec.json',
@@ -20,8 +20,12 @@ module.exports = {
   transformIgnorePatterns: [
     'node_modules/(?!([^/]*/)*((@faker-js|@scure|@noble|@ethereumjs)))',
   ],
-  modulePathIgnorePatterns: ['<rootDir>/tests/__mocks__'],
-  moduleNameMapper: pathsToModuleNameMapper(compilerOptions.paths, {
-    prefix: '<rootDir>/../../',
-  }),
+
+  moduleNameMapper: {
+    ...pathsToModuleNameMapper(compilerOptions.paths, {
+      prefix: '<rootDir>/../../',
+    }),
+    // Override the mongoose-types mapping to use mongoose directly
+    '^@digitaldefiance/mongoose-types$': 'mongoose',
+  },
 };

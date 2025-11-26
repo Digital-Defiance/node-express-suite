@@ -14,7 +14,7 @@ import {
   InvalidCredentialsError,
   PasswordLoginNotEnabledError,
 } from '@digitaldefiance/suite-core-lib';
-import { Document, Model } from 'mongoose';
+import { Document, Model } from '@digitaldefiance/mongoose-types';
 import { BaseModelName } from '../../src/enumerations/base-model-name';
 import { ModelRegistry } from '../../src/model-registry';
 import { BackupCodeService } from '../../src/services/backup-code';

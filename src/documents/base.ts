@@ -1,4 +1,4 @@
-import { Document, Types } from 'mongoose';
+import { Document, Types } from '@digitaldefiance/mongoose-types';
 
 // Supported ID types for documents
 export type SupportedIdType = Types.ObjectId | string;

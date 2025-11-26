@@ -14,7 +14,7 @@ import {
 } from '@digitaldefiance/suite-core-lib';
 import { withDirectLogMocks } from '@digitaldefiance/express-suite-test-utils';
 import { ObjectId as MongoObjectId } from 'mongodb';
-import { Connection, Types } from 'mongoose';
+import { Connection, Types } from '@digitaldefiance/mongoose-types';
 import { BackupCode } from '../../src/backup-code';
 import { LocalhostConstants as AppConstants } from '../../src/constants';
 import {

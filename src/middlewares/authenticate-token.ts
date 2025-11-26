@@ -9,7 +9,7 @@ import {
 } from '@digitaldefiance/suite-core-lib';
 import { NextFunction, Request, Response } from 'express';
 import { IncomingHttpHeaders } from 'http';
-import { ClientSession, Types } from 'mongoose';
+import { ClientSession, Types } from '@digitaldefiance/mongoose-types';
 import { IUserDocument } from '../documents/user';
 import { BaseModelName } from '../enumerations/base-model-name';
 import { TokenExpiredError } from '../errors/token-expired';

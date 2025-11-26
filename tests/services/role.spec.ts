@@ -1,14 +1,13 @@
 import { MemberType } from '@digitaldefiance/ecies-lib';
-import {
-  Role,
-  LastAdminError,
-  IRoleBase,
-  IUserRoleBase,
-} from '@digitaldefiance/suite-core-lib';
-import { Types, Document } from 'mongoose';
 import { I18nEngine } from '@digitaldefiance/i18n-lib';
-import { RoleService } from '../../src/services/role';
+import { Document, Types } from '@digitaldefiance/mongoose-types';
+import {
+  IRoleBase,
+  LastAdminError,
+  Role,
+} from '@digitaldefiance/suite-core-lib';
 import { ModelRegistry } from '../../src/model-registry';
+import { RoleService } from '../../src/services/role';
 
 describe('RoleService', () => {
   let service: RoleService;
@@ -47,18 +46,20 @@ describe('RoleService', () => {
       findById: jest.fn(),
     };
 
-    jest.spyOn(ModelRegistry.instance, 'get').mockImplementation((modelName: string) => {
-      if (modelName === 'Role') {
-        return { model: mockRoleModel } as any;
-      }
-      if (modelName === 'UserRole') {
-        return { model: mockUserRoleModel } as any;
-      }
-      if (modelName === 'User') {
-        return { model: mockUserModel } as any;
-      }
-      return { model: {} } as any;
-    });
+    jest
+      .spyOn(ModelRegistry.instance, 'get')
+      .mockImplementation((modelName: string) => {
+        if (modelName === 'Role') {
+          return { model: mockRoleModel } as any;
+        }
+        if (modelName === 'UserRole') {
+          return { model: mockUserRoleModel } as any;
+        }
+        if (modelName === 'User') {
+          return { model: mockUserModel } as any;
+        }
+        return { model: {} } as any;
+      });
 
     // Mock i18n
     jest.spyOn(I18nEngine, 'getInstance').mockReturnValue({
@@ -233,7 +234,11 @@ describe('RoleService', () => {
       const deletedBy = new Types.ObjectId();
 
       mockRoleModel.findById.mockReturnValue({
-        session: jest.fn().mockResolvedValue({ _id: adminRoleId, name: Role.Admin, admin: true }),
+        session: jest.fn().mockResolvedValue({
+          _id: adminRoleId,
+          name: Role.Admin,
+          admin: true,
+        }),
       });
 
       mockUserRoleModel.countDocuments.mockReturnValue({
@@ -251,7 +256,9 @@ describe('RoleService', () => {
       const deletedBy = new Types.ObjectId();
 
       mockRoleModel.findById.mockReturnValue({
-        session: jest.fn().mockResolvedValue({ _id: roleId, name: Role.Member, admin: false }),
+        session: jest
+          .fn()
+          .mockResolvedValue({ _id: roleId, name: Role.Member, admin: false }),
       });
 
       mockUserRoleModel.findOneAndUpdate.mockResolvedValue({
@@ -295,13 +302,10 @@ describe('RoleService', () => {
 
       await service.deleteRole(roleId, deleterId, false);
 
-      expect(mockRoleModel.findByIdAndUpdate).toHaveBeenCalledWith(
-        roleId,
-        {
-          deletedAt: expect.any(Date),
-          deletedBy: deleterId,
-        },
-      );
+      expect(mockRoleModel.findByIdAndUpdate).toHaveBeenCalledWith(roleId, {
+        deletedAt: expect.any(Date),
+        deletedBy: deleterId,
+      });
     });
   });
 
@@ -313,10 +317,9 @@ describe('RoleService', () => {
 
       mockUserRoleModel.find.mockReturnValue({
         select: jest.fn().mockReturnValue({
-          session: jest.fn().mockResolvedValue([
-            { roleId: roleId1 },
-            { roleId: roleId2 },
-          ]),
+          session: jest
+            .fn()
+            .mockResolvedValue([{ roleId: roleId1 }, { roleId: roleId2 }]),
         }),
       });
 
@@ -355,10 +358,9 @@ describe('RoleService', () => {
 
       mockUserRoleModel.find.mockReturnValue({
         select: jest.fn().mockReturnValue({
-          session: jest.fn().mockResolvedValue([
-            { userId: userId1 },
-            { userId: userId2 },
-          ]),
+          session: jest
+            .fn()
+            .mockResolvedValue([{ userId: userId1 }, { userId: userId2 }]),
         }),
       });
 
@@ -413,7 +415,9 @@ describe('RoleService', () => {
       });
 
       mockRoleModel.find = jest.fn().mockReturnValue({
-        session: jest.fn().mockResolvedValue([{ name: Role.Admin, admin: true }]),
+        session: jest
+          .fn()
+          .mockResolvedValue([{ name: Role.Admin, admin: true }]),
       });
 
       const result = await service.isUserAdmin(userDoc);
@@ -454,7 +458,9 @@ describe('RoleService', () => {
       });
 
       mockRoleModel.find = jest.fn().mockReturnValue({
-        session: jest.fn().mockResolvedValue([{ name: Role.Member, member: true }]),
+        session: jest
+          .fn()
+          .mockResolvedValue([{ name: Role.Member, member: true }]),
       });
 
       const result = await service.isUserMember(userDoc);
@@ -476,7 +482,9 @@ describe('RoleService', () => {
       });
 
       mockRoleModel.find = jest.fn().mockReturnValue({
-        session: jest.fn().mockResolvedValue([{ name: Role.Child, child: true }]),
+        session: jest
+          .fn()
+          .mockResolvedValue([{ name: Role.Child, child: true }]),
       });
 
       const result = await service.isUserChild(userDoc);
@@ -498,7 +506,9 @@ describe('RoleService', () => {
       });
 
       mockRoleModel.find = jest.fn().mockReturnValue({
-        session: jest.fn().mockResolvedValue([{ name: Role.Admin, system: true }]),
+        session: jest
+          .fn()
+          .mockResolvedValue([{ name: Role.Admin, system: true }]),
       });
 
       const result = await service.isSystemUser(userDoc);
@@ -543,11 +553,15 @@ describe('RoleService', () => {
       const userDoc = { _id: userId } as any;
       mockUserRoleModel.find = jest.fn().mockReturnValue({
         select: jest.fn().mockReturnValue({
-          session: jest.fn().mockResolvedValue([{ roleId: new Types.ObjectId() }]),
+          session: jest
+            .fn()
+            .mockResolvedValue([{ roleId: new Types.ObjectId() }]),
         }),
       });
       mockRoleModel.find = jest.fn().mockReturnValue({
-        session: jest.fn().mockResolvedValue([{ name: Role.Admin, admin: true }]),
+        session: jest
+          .fn()
+          .mockResolvedValue([{ name: Role.Admin, admin: true }]),
       });
 
       const result = await service.getMemberType(userDoc);
@@ -560,11 +574,15 @@ describe('RoleService', () => {
       const userDoc = { _id: userId } as any;
       mockUserRoleModel.find = jest.fn().mockReturnValue({
         select: jest.fn().mockReturnValue({
-          session: jest.fn().mockResolvedValue([{ roleId: new Types.ObjectId() }]),
+          session: jest
+            .fn()
+            .mockResolvedValue([{ roleId: new Types.ObjectId() }]),
         }),
       });
       mockRoleModel.find = jest.fn().mockReturnValue({
-        session: jest.fn().mockResolvedValue([{ name: Role.Member, member: true }]),
+        session: jest
+          .fn()
+          .mockResolvedValue([{ name: Role.Member, member: true }]),
       });
 
       const result = await service.getMemberType(userDoc);

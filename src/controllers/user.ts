@@ -24,7 +24,7 @@ import {
 } from '@digitaldefiance/suite-core-lib';
 import type { NextFunction, Request, Response } from 'express';
 import { body } from 'express-validator';
-import { Types } from 'mongoose';
+import { Types } from '@digitaldefiance/mongoose-types';
 import { z } from 'zod';
 import { BackupCode } from '../backup-code';
 import { DecoratorBaseController } from '../decorators/base-controller';

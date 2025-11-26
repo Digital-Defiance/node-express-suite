@@ -20,7 +20,7 @@ import {
   decodeLengthEncodedData,
 } from '../../src/utils';
 import { LengthEncodingType } from '../../src/enumerations/length-encoding-type';
-import { Types } from 'mongoose';
+import { Types } from '@digitaldefiance/mongoose-types';
 import * as fs from 'fs';
 
 describe('utils', () => {

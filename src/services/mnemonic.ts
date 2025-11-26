@@ -4,7 +4,7 @@ import {
   TranslatableSuiteError,
 } from '@digitaldefiance/suite-core-lib';
 import { createHmac } from 'crypto';
-import { ClientSession, Model, Types } from 'mongoose';
+import { ClientSession, Model, Types } from '@digitaldefiance/mongoose-types';
 import { IMnemonicDocument } from '../documents/mnemonic';
 import { IConstants } from '../interfaces';
 

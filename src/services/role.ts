@@ -12,7 +12,7 @@ import {
   LastAdminError,
   Role,
 } from '@digitaldefiance/suite-core-lib';
-import { ClientSession, Document, Types } from 'mongoose';
+import { ClientSession, Document, Types } from '@digitaldefiance/mongoose-types';
 import { IUserDocument } from '../documents';
 import { IRoleDocument } from '../documents/role';
 import { IUserRoleDocument } from '../documents/user-role';
