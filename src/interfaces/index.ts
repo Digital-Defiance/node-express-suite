@@ -12,7 +12,7 @@ export * from './controller-config';
 export * from './create-user-basics';
 export * from './csp-config';
 export * from './csp-definition';
-export * from './db-init-result'
+export * from './db-init-result';
 export * from './discriminator-collections';
 export * from './email-service';
 export * from './environment';
@@ -23,6 +23,7 @@ export * from './flexible-csp';
 export * from './handleable-error-options';
 export * from './jwt-consts';
 export * from './jwt-sign-response';
+export * from './models';
 export * from './mongo-errors';
 export * from './request-user';
 export * from './required-string-keys';

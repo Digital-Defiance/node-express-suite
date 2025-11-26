@@ -19,13 +19,14 @@ module.exports = {
   },
   transformIgnorePatterns: [
     'node_modules/(?!([^/]*/)*((@faker-js|@scure|@noble|@ethereumjs)))',
+    'node_modules/@digitaldefiance/mongoose-types',
   ],
 
   moduleNameMapper: {
+    '^@digitaldefiance/mongoose-types$':
+      '<rootDir>/../../packages/digitaldefiance-mongoose-types/src/index.js',
     ...pathsToModuleNameMapper(compilerOptions.paths, {
       prefix: '<rootDir>/../../',
     }),
-    // Override the mongoose-types mapping to use mongoose directly
-    '^@digitaldefiance/mongoose-types$': 'mongoose',
   },
 };

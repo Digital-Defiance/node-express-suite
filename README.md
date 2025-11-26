@@ -1315,10 +1315,11 @@ The following v1.x patterns still work in v2.0:
 
 ## ChangeLog
 
-### Version 3.6.3
+### Version 3.6.6
 
 - Update suite-core
 - Properly use @digitaldefiance/mongoose-types throughout
+- Add models from suite-core-lib
 
 ### Version 3.6.2
 
