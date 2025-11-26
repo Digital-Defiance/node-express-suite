@@ -1315,6 +1315,10 @@ The following v1.x patterns still work in v2.0:
 
 ## ChangeLog
 
+### Version 3.6.7
+
+- Update mongoose-types
+
 ### Version 3.6.6
 
 - Update suite-core
