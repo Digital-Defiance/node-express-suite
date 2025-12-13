@@ -414,14 +414,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@digitaldefiance/mongoose-types@npm:8.20.6":
-  version: 8.20.6
-  resolution: "@digitaldefiance/mongoose-types@npm:8.20.6"
+"@digitaldefiance/mongoose-types@npm:8.20.7":
+  version: 8.20.7
+  resolution: "@digitaldefiance/mongoose-types@npm:8.20.7"
   dependencies:
     mongoose: "npm:^8.20.0"
   peerDependencies:
     mongoose: ^8.20.0
-  checksum: 10c0/a8d33eb1ab993f5718337301ff96d982f2ab91bf3847f0cda8d02d7e7f71d6245989a38ec13f79ae51eb2058b35b704235cfcf8137f858b1b1e14758d4a53e13
+  checksum: 10c0/71633aa15c2ae5e68f17e43b5a57f34201b9fd4c4134a98303fc1e49c8d7edd8fabf1d307397ecb7a0696c6613b2833b4704695719e84afc63c00ff12a210a11
   languageName: node
   linkType: hard
 
@@ -449,7 +449,7 @@ __metadata:
     "@digitaldefiance/ecies-lib": "npm:4.4.10"
     "@digitaldefiance/express-suite-test-utils": "npm:1.0.12"
     "@digitaldefiance/i18n-lib": "npm:3.8.5"
-    "@digitaldefiance/mongoose-types": "npm:8.20.6"
+    "@digitaldefiance/mongoose-types": "npm:8.20.7"
     "@digitaldefiance/node-ecies-lib": "npm:4.4.7"
     "@digitaldefiance/suite-core-lib": "npm:3.6.10"
     "@noble/curves": "npm:^2.0.1"
