@@ -1,9 +1,7 @@
+import { ECIES as BaseECIES, IIdProvider } from '@digitaldefiance/ecies-lib';
 import {
-  ECIES as BaseECIES,
-} from '@digitaldefiance/ecies-lib';
-import {
-  Constants as NodeEciesConstants,
   KEYRING_ALGORITHM_CONFIGURATION,
+  Constants as NodeEciesConstants,
 } from '@digitaldefiance/node-ecies-lib';
 import { Constants as CoreConstants } from '@digitaldefiance/suite-core-lib';
 import { CHECKSUM, ECIES, FEC, JWT } from './constants';
@@ -46,9 +44,8 @@ const defaultConfig: IConstants = Object.freeze({
   FEC: FEC,
   PBKDF2: {
     ALGORITHM: 'sha256',
-    SALT_SIZE: 32,
-    ITERATIONS: 10000,
-    KEY_SIZE: 32,
+    SALT_BYTES: 32,
+    ITERATIONS_PER_SECOND: 10000,
   },
 });
 
@@ -62,13 +59,16 @@ export function createExpressRuntimeConfiguration(
   const merged: IConstants = {
     ...base,
     ...(overrides ?? {}),
+    idProvider: (overrides?.idProvider ?? base.idProvider) as IIdProvider,
     UsernameRegex: (overrides?.UsernameRegex ?? base.UsernameRegex) as RegExp,
     PasswordRegex: (overrides?.PasswordRegex ?? base.PasswordRegex) as RegExp,
     MnemonicRegex: (overrides?.MnemonicRegex ?? base.MnemonicRegex) as RegExp,
-    JwtSecretRegex: (overrides?.JwtSecretRegex ?? base.JwtSecretRegex) as RegExp,
+    JwtSecretRegex: (overrides?.JwtSecretRegex ??
+      base.JwtSecretRegex) as RegExp,
     MnemonicEncryptionKeyRegex: (overrides?.MnemonicEncryptionKeyRegex ??
       base.MnemonicEncryptionKeyRegex) as RegExp,
-    MnemonicHmacRegex: (overrides?.MnemonicHmacRegex ?? base.MnemonicHmacRegex) as RegExp,
+    MnemonicHmacRegex: (overrides?.MnemonicHmacRegex ??
+      base.MnemonicHmacRegex) as RegExp,
     KEYRING: {
       ALGORITHM: overrides?.KEYRING?.ALGORITHM ?? base.KEYRING.ALGORITHM,
       KEY_BITS: overrides?.KEYRING?.KEY_BITS ?? base.KEYRING.KEY_BITS,

@@ -4,6 +4,7 @@ import {
   SecureBuffer,
   SecureString,
 } from '@digitaldefiance/ecies-lib';
+import { Types } from '@digitaldefiance/mongoose-types';
 import {
   Member as BackendMember,
   ECIESService,
@@ -12,7 +13,6 @@ import {
   SuiteCoreStringKey,
   TranslatableSuiteError,
 } from '@digitaldefiance/suite-core-lib';
-import { Types } from '@digitaldefiance/mongoose-types';
 import { Environment } from '../environment';
 import { IConstants } from '../interfaces/constants';
 
@@ -40,7 +40,7 @@ export class SystemUserService {
         );
       }
       const mnemonic: SecureString = environment.systemMnemonic;
-      const eciesService = new ECIESService(constants.ECIES);
+      const eciesService = new ECIESService(undefined, constants.ECIES);
       const { wallet } = eciesService.walletAndSeedFromMnemonic(mnemonic);
       const keyPair = eciesService.walletToSimpleKeyPairBuffer(wallet);
 

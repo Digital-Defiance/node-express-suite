@@ -374,9 +374,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@digitaldefiance/ecies-lib@npm:4.4.14":
-  version: 4.4.14
-  resolution: "@digitaldefiance/ecies-lib@npm:4.4.14"
+"@digitaldefiance/ecies-lib@npm:4.4.15":
+  version: 4.4.15
+  resolution: "@digitaldefiance/ecies-lib@npm:4.4.15"
   dependencies:
     "@digitaldefiance/i18n-lib": "npm:3.8.6"
     "@ethereumjs/wallet": "npm:^10.0.0"
@@ -385,7 +385,7 @@ __metadata:
     "@scure/bip32": "npm:^2.0.0"
     bson: "npm:^6.10.4"
     ts-brand: "npm:^0.2.0"
-  checksum: 10c0/12254f5d8337f6a76735f72eb2cb06b20205e32287806b59adaab16cdf7c1082328aecb905c8044137c4f4d31d08bef79cff8d7ec1838c457ecf613a4060556d
+  checksum: 10c0/f2ec3b0de3fb12961a1784f3a28cf87d9bf630ada2270a5a87cd85d8a07d13347c7a677610870f93d03a16ab1243cfcfaf70893b0577aa51f04a3eed536a080f
   languageName: node
   linkType: hard
 
@@ -414,22 +414,22 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@digitaldefiance/mongoose-types@npm:8.20.8":
-  version: 8.20.8
-  resolution: "@digitaldefiance/mongoose-types@npm:8.20.8"
+"@digitaldefiance/mongoose-types@npm:8.20.9":
+  version: 8.20.9
+  resolution: "@digitaldefiance/mongoose-types@npm:8.20.9"
   dependencies:
     mongoose: "npm:^8.20.0"
   peerDependencies:
     mongoose: ^8.20.0
-  checksum: 10c0/cc0776c22f223b57228ad4d73a0fc1c65243e91e8cac86743232956de0cdcc9029f34828f6ee3bb2cfbc98a6217cd35a239b6d448e62dd8d142ea3e9f84675b8
+  checksum: 10c0/f9ead09930cc573ae1a3ca30c1bf2774ac8b0c7002cae5089fdf20680452742c10850abff5b443e0524f9f67c0a6b0f1bdf308b48cc304b5cab08ba075bc98fa
   languageName: node
   linkType: hard
 
-"@digitaldefiance/node-ecies-lib@npm:4.4.10":
-  version: 4.4.10
-  resolution: "@digitaldefiance/node-ecies-lib@npm:4.4.10"
+"@digitaldefiance/node-ecies-lib@npm:4.4.12":
+  version: 4.4.12
+  resolution: "@digitaldefiance/node-ecies-lib@npm:4.4.12"
   dependencies:
-    "@digitaldefiance/ecies-lib": "npm:4.4.14"
+    "@digitaldefiance/ecies-lib": "npm:4.4.15"
     "@digitaldefiance/i18n-lib": "npm:3.8.6"
     "@ethereumjs/wallet": "npm:^10.0.0"
     "@noble/curves": "npm:^2.0.1"
@@ -438,7 +438,7 @@ __metadata:
     bson: "npm:^6.10.4"
     ethereum-cryptography: "npm:^3.2.0"
     ts-brand: "npm:^0.2.0"
-  checksum: 10c0/44d11f8e5d1adc3049a8fda324465f9b7c6f933bc1990804155078b9dbc9de1d7055d29d0b5ee9e7fc3abd7229bc3e032b7dfacc7341b5f25304f0c580fef73a
+  checksum: 10c0/88743dc5d94a94837695963848ede8cb2b9a29688dccdd77a03981e0a3538cf8316cbadd3c5bf7b88647b70171cbe61380ceccb4ba104686060c53ebf94ea189
   languageName: node
   linkType: hard
 
@@ -446,12 +446,12 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@digitaldefiance/node-express-suite@workspace:."
   dependencies:
-    "@digitaldefiance/ecies-lib": "npm:4.4.14"
+    "@digitaldefiance/ecies-lib": "npm:4.4.15"
     "@digitaldefiance/express-suite-test-utils": "npm:1.0.12"
     "@digitaldefiance/i18n-lib": "npm:3.8.6"
-    "@digitaldefiance/mongoose-types": "npm:8.20.8"
-    "@digitaldefiance/node-ecies-lib": "npm:4.4.10"
-    "@digitaldefiance/suite-core-lib": "npm:3.6.13"
+    "@digitaldefiance/mongoose-types": "npm:8.20.9"
+    "@digitaldefiance/node-ecies-lib": "npm:4.4.12"
+    "@digitaldefiance/suite-core-lib": "npm:3.6.14"
     "@noble/curves": "npm:^2.0.1"
     "@noble/hashes": "npm:^2.0.1"
     "@subspace/reed-solomon-erasure.wasm": "npm:^0.2.5"
@@ -476,13 +476,13 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@digitaldefiance/suite-core-lib@npm:3.6.13":
-  version: 3.6.13
-  resolution: "@digitaldefiance/suite-core-lib@npm:3.6.13"
+"@digitaldefiance/suite-core-lib@npm:3.6.14":
+  version: 3.6.14
+  resolution: "@digitaldefiance/suite-core-lib@npm:3.6.14"
   dependencies:
-    "@digitaldefiance/ecies-lib": "npm:4.4.14"
+    "@digitaldefiance/ecies-lib": "npm:4.4.15"
     "@digitaldefiance/i18n-lib": "npm:3.8.6"
-  checksum: 10c0/0207fcae7be2ac53f453ad46dcdafd8d6c05e00e428502449392575d2ff26c7b99945b5f436468765e3661e8cabf30916a146574d03fe23a4362712d76037333
+  checksum: 10c0/6247511fa2b6427e4f818f5a78a13c26e47a9cf36eaf7407588674deb4e64beee27aaf0ffbdbf4f0c381511f7203873b334ca01de460b5e60974297b025983bf
   languageName: node
   linkType: hard
 

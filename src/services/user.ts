@@ -1,10 +1,17 @@
 import {
   EmailString,
   IECIESConfig,
+  InvalidEmailErrorType,
   MemberType,
   SecureBuffer,
   SecureString,
 } from '@digitaldefiance/ecies-lib';
+import {
+  ClientSession,
+  Document,
+  ProjectionType,
+  Types,
+} from '@digitaldefiance/mongoose-types';
 import {
   Member as BackendMember,
   ECIESService,
@@ -46,7 +53,6 @@ import {
 } from '@digitaldefiance/suite-core-lib';
 import { Wallet } from '@ethereumjs/wallet';
 import { randomBytes } from 'crypto';
-import { ClientSession, Document, ProjectionType, Types } from '@digitaldefiance/mongoose-types';
 import validator from 'validator';
 import { BackupCode } from '../backup-code';
 import { IBaseDocument } from '../documents';
@@ -538,7 +544,7 @@ export class UserService<
 
     if (!userDoc || userDoc.deletedAt) {
       if (email) {
-        throw new InvalidEmailError('Missing');
+        throw new InvalidEmailError(InvalidEmailErrorType.Missing);
       }
       throw new InvalidUsernameError();
     }
@@ -1155,7 +1161,7 @@ export class UserService<
 
     const userDoc = await this.findUser(email, username, session);
     if (!userDoc && email) {
-      throw new InvalidEmailError('Missing');
+      throw new InvalidEmailError(InvalidEmailErrorType.Missing);
     } else if (!userDoc) {
       throw new InvalidUsernameError();
     }
