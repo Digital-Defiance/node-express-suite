@@ -1451,4 +1451,163 @@ describe('DatabaseInitializationService', () => {
       expect(true).toBe(true); // Test passes if no error is thrown
     });
   });
+
+  describe('writeEnvFile', () => {
+    let mockServerInitResult: IServerInitResult;
+    let tempEnvPath: string;
+    const fs = require('fs');
+    const path = require('path');
+    const os = require('os');
+
+    beforeEach(() => {
+      // Create a temporary directory for test .env files
+      const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'env-test-'));
+      tempEnvPath = path.join(tempDir, '.env');
+
+      mockServerInitResult = {
+        adminUser: {
+          _id: new Types.ObjectId(),
+          publicKey: 'admin-public-key-hex',
+        } as IUserDocument,
+        adminRole: { _id: new Types.ObjectId() } as IRoleDocument,
+        adminUserRole: { _id: new Types.ObjectId() } as IUserRoleDocument,
+        adminUsername: 'admin',
+        adminEmail: 'admin@example.com',
+        adminMnemonic: 'admin mnemonic phrase',
+        adminPassword: 'AdminPass123!',
+        adminBackupCodes: ['code1', 'code2'],
+        adminMember: {} as BackendMember,
+        memberUser: {
+          _id: new Types.ObjectId(),
+          publicKey: 'member-public-key-hex',
+        } as IUserDocument,
+        memberRole: { _id: new Types.ObjectId() } as IRoleDocument,
+        memberUserRole: { _id: new Types.ObjectId() } as IUserRoleDocument,
+        memberUsername: 'member',
+        memberEmail: 'member@example.com',
+        memberMnemonic: 'member mnemonic phrase',
+        memberPassword: 'MemberPass123!',
+        memberBackupCodes: ['code3', 'code4'],
+        memberMember: {} as BackendMember,
+        systemUser: {
+          _id: new Types.ObjectId(),
+          publicKey: 'system-public-key-hex',
+        } as IUserDocument,
+        systemRole: { _id: new Types.ObjectId() } as IRoleDocument,
+        systemUserRole: { _id: new Types.ObjectId() } as IUserRoleDocument,
+        systemUsername: 'system',
+        systemEmail: 'system@example.com',
+        systemMnemonic: 'system mnemonic phrase',
+        systemPassword: 'SystemPass123!',
+        systemBackupCodes: ['code5', 'code6'],
+        systemMember: {} as BackendMember,
+      };
+    });
+
+    afterEach(() => {
+      // Clean up temp files
+      if (fs.existsSync(tempEnvPath)) {
+        const dir = path.dirname(tempEnvPath);
+        fs.rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
+    it('should create new .env file with credentials', () => {
+      DatabaseInitializationService.writeEnvFile(
+        tempEnvPath,
+        mockServerInitResult,
+      );
+
+      expect(fs.existsSync(tempEnvPath)).toBe(true);
+      const content = fs.readFileSync(tempEnvPath, 'utf-8');
+
+      // Check that all required credentials are present
+      expect(content).toContain('ADMIN_ID=');
+      expect(content).toContain('ADMIN_MNEMONIC="admin mnemonic phrase"');
+      expect(content).toContain('ADMIN_PASSWORD="AdminPass123!"');
+      expect(content).toContain('MEMBER_ID=');
+      expect(content).toContain('MEMBER_MNEMONIC="member mnemonic phrase"');
+      expect(content).toContain('SYSTEM_ID=');
+      expect(content).toContain('SYSTEM_PUBLIC_KEY="system-public-key-hex"');
+    });
+
+    it('should update existing .env file credentials', () => {
+      // Create initial .env file with some existing content
+      const initialContent = `# Existing config
+DATABASE_URL="mongodb://localhost:27017"
+ADMIN_ID="old-admin-id"
+ADMIN_PASSWORD="old-password"
+PORT=3000
+`;
+      fs.writeFileSync(tempEnvPath, initialContent, 'utf-8');
+
+      DatabaseInitializationService.writeEnvFile(
+        tempEnvPath,
+        mockServerInitResult,
+      );
+
+      const content = fs.readFileSync(tempEnvPath, 'utf-8');
+
+      // Check that existing non-credential config is preserved
+      expect(content).toContain('DATABASE_URL="mongodb://localhost:27017"');
+      expect(content).toContain('PORT=3000');
+
+      // Check that credentials were updated
+      expect(content).toContain('ADMIN_PASSWORD="AdminPass123!"');
+      expect(content).not.toContain('old-password');
+      expect(content).not.toContain('old-admin-id');
+
+      // Check new credentials were added
+      expect(content).toContain('MEMBER_MNEMONIC=');
+      expect(content).toContain('SYSTEM_MNEMONIC=');
+    });
+
+    it('should handle non-existent directory by creating it', () => {
+      const deepPath = path.join(
+        path.dirname(tempEnvPath),
+        'nested',
+        'deep',
+        '.env',
+      );
+
+      DatabaseInitializationService.writeEnvFile(
+        deepPath,
+        mockServerInitResult,
+      );
+
+      expect(fs.existsSync(deepPath)).toBe(true);
+      const content = fs.readFileSync(deepPath, 'utf-8');
+      expect(content).toContain('ADMIN_ID=');
+    });
+
+    it('should properly quote values with special characters', () => {
+      DatabaseInitializationService.writeEnvFile(
+        tempEnvPath,
+        mockServerInitResult,
+      );
+
+      const content = fs.readFileSync(tempEnvPath, 'utf-8');
+
+      // All values should be quoted
+      expect(content).toMatch(/ADMIN_MNEMONIC="[^"]+"/);
+      expect(content).toMatch(/ADMIN_PASSWORD="[^"]+"/);
+      expect(content).toMatch(/SYSTEM_PUBLIC_KEY="[^"]+"/);
+    });
+
+    it('should preserve line endings when updating', () => {
+      const initialContent = `ADMIN_ID="old-id"\nPORT=3000\n`;
+      fs.writeFileSync(tempEnvPath, initialContent, 'utf-8');
+
+      DatabaseInitializationService.writeEnvFile(
+        tempEnvPath,
+        mockServerInitResult,
+      );
+
+      const content = fs.readFileSync(tempEnvPath, 'utf-8');
+
+      // Should have proper line endings
+      expect(content.split('\n').length).toBeGreaterThan(10);
+      expect(content).toContain('PORT=3000');
+    });
+  });
 });

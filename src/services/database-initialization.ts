@@ -1510,6 +1510,84 @@ SYSTEM_PASSWORD="${serverInitResult.systemPassword}"
   }
 
   /**
+   * Write initialization results to a .env file
+   * Updates or adds the credential variables in the specified .env file
+   * @param envFilePath Path to the .env file to update
+   * @param result The initialization results containing credentials
+   * @param idToString Function to convert IDs to strings
+   */
+  public static writeEnvFile<
+    I extends Types.ObjectId | string = Types.ObjectId,
+  >(
+    envFilePath: string,
+    result: IServerInitResult<I>,
+    idToString: (id: I) => string = (id) => String(id),
+  ): void {
+    const fs = require('fs');
+    const path = require('path');
+
+    // Ensure the directory exists
+    const dir = path.dirname(envFilePath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+
+    // Read existing .env file or create empty content
+    let envContent = '';
+    if (fs.existsSync(envFilePath)) {
+      envContent = fs.readFileSync(envFilePath, 'utf-8');
+    }
+
+    // Define the credentials to update
+    const credentials = {
+      ADMIN_ID: idToString(result.adminUser._id as I),
+      ADMIN_MNEMONIC: result.adminMnemonic,
+      ADMIN_ROLE_ID: idToString(result.adminRole._id as I),
+      ADMIN_USER_ROLE_ID: idToString(result.adminUserRole._id as I),
+      ADMIN_PASSWORD: result.adminPassword,
+      MEMBER_ID: idToString(result.memberUser._id as I),
+      MEMBER_MNEMONIC: result.memberMnemonic,
+      MEMBER_ROLE_ID: idToString(result.memberRole._id as I),
+      MEMBER_USER_ROLE_ID: idToString(result.memberUserRole._id as I),
+      MEMBER_PASSWORD: result.memberPassword,
+      SYSTEM_ID: idToString(result.systemUser._id as I),
+      SYSTEM_MNEMONIC: result.systemMnemonic,
+      SYSTEM_PUBLIC_KEY: result.systemUser.publicKey,
+      SYSTEM_ROLE_ID: idToString(result.systemRole._id as I),
+      SYSTEM_USER_ROLE_ID: idToString(result.systemUserRole._id as I),
+      SYSTEM_PASSWORD: result.systemPassword,
+    };
+
+    // Update or add each credential
+    for (const [key, value] of Object.entries(credentials)) {
+      const regex = new RegExp(`^${key}=.*$`, 'm');
+      const newLine = `${key}="${value}"`;
+
+      if (regex.test(envContent)) {
+        // Update existing line
+        envContent = envContent.replace(regex, newLine);
+      } else {
+        // Add new line (append to end)
+        if (envContent && !envContent.endsWith('\n')) {
+          envContent += '\n';
+        }
+        envContent += newLine + '\n';
+      }
+    }
+
+    // Write back to file
+    fs.writeFileSync(envFilePath, envContent, 'utf-8');
+    debugLog(
+      true,
+      'log',
+      this.defaultI18nTFunc(
+        '{{SuiteCoreStringKey.Admin_CredentialsWrittenToEnv}}',
+        { path: envFilePath },
+      ),
+    );
+  }
+
+  /**
    * Initialize the user database with default users and roles (convenience method)
    * This method creates the necessary services and calls initUserDbWithServices
    * @param application The application
