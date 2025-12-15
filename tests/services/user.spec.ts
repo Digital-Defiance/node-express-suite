@@ -1,45 +1,43 @@
-import { Types, Document } from '@digitaldefiance/mongoose-types';
+import { SecureString } from '@digitaldefiance/ecies-lib';
 import { withConsoleMocks } from '@digitaldefiance/express-suite-test-utils';
-import { UserService } from '../../src/services/user';
-import { RoleService } from '../../src/services/role';
-import { BackupCodeService } from '../../src/services/backup-code';
-import { KeyWrappingService } from '../../src/services/key-wrapping';
-import { MnemonicService } from '../../src/services/mnemonic';
-import { ECIESService } from '../../src/services/ecies';
-import { SystemUserService } from '../../src/services/system-user';
-import { DirectLoginTokenService } from '../../src/services/direct-login-token';
-import { BackupCode } from '../../src/backup-code';
-import { IApplication } from '../../src/interfaces/application';
-import { IEmailService } from '../../src/interfaces/email-service';
-import { ModelRegistry } from '../../src/model-registry';
-import { BaseModelName } from '../../src/enumerations/base-model-name';
-import { RequestUserService } from '../../src/services/request-user';
-import { IUserDocument } from '../../src/documents/user';
+import { Types } from '@digitaldefiance/mongoose-types';
+import { Member as BackendMember } from '@digitaldefiance/node-ecies-lib';
 import {
-  InvalidCredentialsError,
-  UsernameOrEmailRequiredError,
-  AccountStatus,
-  InvalidUsernameError,
-  InvalidNewPasswordError,
-  EmailInUseError,
-  UsernameInUseError,
-  PendingEmailVerificationError,
   AccountLockedError,
-  InvalidChallengeResponseError,
-  LoginChallengeExpiredError,
-  EmailTokenType,
-  EmailTokenUsedOrInvalidError,
+  AccountStatus,
+  EmailInUseError,
   EmailTokenExpiredError,
   EmailTokenFailedToSendError,
   EmailTokenSentTooRecentlyError,
+  EmailTokenType,
+  EmailTokenUsedOrInvalidError,
   EmailVerifiedError,
-  UserNotFoundError,
-  PasswordLoginNotEnabledError,
+  InvalidChallengeResponseError,
+  InvalidCredentialsError,
   InvalidEmailError,
+  InvalidNewPasswordError,
+  InvalidUsernameError,
+  LoginChallengeExpiredError,
+  PasswordLoginNotEnabledError,
+  UsernameInUseError,
+  UsernameOrEmailRequiredError,
+  UserNotFoundError,
 } from '@digitaldefiance/suite-core-lib';
-import { SecureString } from '@digitaldefiance/ecies-lib';
-import { Member as BackendMember } from '@digitaldefiance/node-ecies-lib';
-import * as crypto from 'crypto';
+import { BackupCode } from '../../src/backup-code';
+import { IUserDocument } from '../../src/documents/user';
+import { BaseModelName } from '../../src/enumerations/base-model-name';
+import { IApplication } from '../../src/interfaces/application';
+import { IEmailService } from '../../src/interfaces/email-service';
+import { ModelRegistry } from '../../src/model-registry';
+import { BackupCodeService } from '../../src/services/backup-code';
+import { DirectLoginTokenService } from '../../src/services/direct-login-token';
+import { ECIESService } from '../../src/services/ecies';
+import { KeyWrappingService } from '../../src/services/key-wrapping';
+import { MnemonicService } from '../../src/services/mnemonic';
+import { RequestUserService } from '../../src/services/request-user';
+import { RoleService } from '../../src/services/role';
+import { SystemUserService } from '../../src/services/system-user';
+import { UserService } from '../../src/services/user';
 
 describe('UserService', () => {
   let service: UserService<any, Types.ObjectId, Date, string, string>;
@@ -47,8 +45,12 @@ describe('UserService', () => {
   let mockRoleService: jest.Mocked<RoleService<Types.ObjectId, Date, any>>;
   let mockEmailService: jest.Mocked<IEmailService>;
   let mockKeyWrappingService: jest.Mocked<KeyWrappingService>;
-  let mockBackupCodeService: jest.Mocked<BackupCodeService<Types.ObjectId, Date, any, any>>;
-  let mockMnemonicService: jest.Mocked<MnemonicService<Types.ObjectId, Date, any>>;
+  let mockBackupCodeService: jest.Mocked<
+    BackupCodeService<Types.ObjectId, Date, any, any>
+  >;
+  let mockMnemonicService: jest.Mocked<
+    MnemonicService<Types.ObjectId, Date, any>
+  >;
   let mockEciesService: jest.Mocked<ECIESService>;
   let mockUserModel: any;
   let mockEmailTokenModel: any;
@@ -77,27 +79,31 @@ describe('UserService', () => {
       constructor: jest.fn(),
     };
 
-    jest.spyOn(ModelRegistry.instance, 'getTypedModel').mockImplementation((modelName: string) => {
-      switch (modelName) {
-        case BaseModelName.User:
-          return mockUserModel;
-        case BaseModelName.EmailToken:
-          return mockEmailTokenModel;
-        case BaseModelName.Mnemonic:
-          return mockMnemonicModel;
-        default:
-          return {};
-      }
-    });
+    jest
+      .spyOn(ModelRegistry.instance, 'getTypedModel')
+      .mockImplementation((modelName: string) => {
+        switch (modelName) {
+          case BaseModelName.User:
+            return mockUserModel;
+          case BaseModelName.EmailToken:
+            return mockEmailTokenModel;
+          case BaseModelName.Mnemonic:
+            return mockMnemonicModel;
+          default:
+            return {};
+        }
+      });
 
-    jest.spyOn(ModelRegistry.instance, 'get').mockImplementation((modelName: string) => {
-      switch (modelName) {
-        case 'User':
-          return { model: mockUserModel } as any;
-        default:
-          return undefined;
-      }
-    });
+    jest
+      .spyOn(ModelRegistry.instance, 'get')
+      .mockImplementation((modelName: string) => {
+        switch (modelName) {
+          case 'User':
+            return { model: mockUserModel } as any;
+          default:
+            return undefined;
+        }
+      });
 
     mockApplication = {
       environment: {
@@ -162,7 +168,7 @@ describe('UserService', () => {
       unwrapSecretAsync: jest.fn(),
       unwrapSecret: jest.fn(),
     } as any;
-    
+
     mockBackupCodeService = {} as any;
 
     service = new UserService(
@@ -172,7 +178,7 @@ describe('UserService', () => {
       mockKeyWrappingService,
       mockBackupCodeService,
     );
-    
+
     // Mock the internal services
     (service as any).mnemonicService = {
       mnemonicExists: jest.fn(),
@@ -182,6 +188,9 @@ describe('UserService', () => {
     (service as any).eciesService = {
       generateKeyPair: jest.fn(),
       walletAndSeedFromMnemonic: jest.fn(),
+      getPublicKey: jest
+        .fn()
+        .mockReturnValue(Buffer.from([0x02, ...Array(32).fill(1)])),
     };
   });
 
@@ -320,7 +329,9 @@ describe('UserService', () => {
 
       expect(result).toBeDefined();
       expect(result._id).toEqual(userId);
-      expect(mockUserModel.findOne).toHaveBeenCalledWith({ username: 'testuser' });
+      expect(mockUserModel.findOne).toHaveBeenCalledWith({
+        username: 'testuser',
+      });
     });
 
     it('should find user by email', async () => {
@@ -343,7 +354,9 @@ describe('UserService', () => {
 
       expect(result).toBeDefined();
       expect(result.email).toBe('test@example.com');
-      expect(mockUserModel.findOne).toHaveBeenCalledWith({ email: 'test@example.com' });
+      expect(mockUserModel.findOne).toHaveBeenCalledWith({
+        email: 'test@example.com',
+      });
     });
 
     it('should throw InvalidEmailError when user not found by email', async () => {
@@ -354,11 +367,15 @@ describe('UserService', () => {
         session: sessionMock,
       });
 
-      await expect(service.findUser('nonexistent@example.com')).rejects.toThrow();
+      await expect(
+        service.findUser('nonexistent@example.com'),
+      ).rejects.toThrow();
     });
 
     it('should throw UsernameOrEmailRequiredError when neither provided', async () => {
-      await expect(service.findUser()).rejects.toThrow(UsernameOrEmailRequiredError);
+      await expect(service.findUser()).rejects.toThrow(
+        UsernameOrEmailRequiredError,
+      );
     });
 
     it('should throw InvalidCredentialsError on database error', async () => {
@@ -406,7 +423,9 @@ describe('UserService', () => {
         session: sessionMock,
       });
 
-      await expect(service.findUserById(new Types.ObjectId(), false)).rejects.toThrow();
+      await expect(
+        service.findUserById(new Types.ObjectId(), false),
+      ).rejects.toThrow();
     });
 
     it('should respect projection parameter', async () => {
@@ -444,7 +463,12 @@ describe('UserService', () => {
       const backupCodes = [];
       const encryptedMnemonic = 'encrypted';
 
-      const result = service.fillUserDefaults(newUser, createdBy, backupCodes, encryptedMnemonic);
+      const result = service.fillUserDefaults(
+        newUser,
+        createdBy,
+        backupCodes,
+        encryptedMnemonic,
+      );
 
       expect(result.accountStatus).toBe(AccountStatus.PendingEmailVerification);
       expect(result.timezone).toBe('UTC');
@@ -462,7 +486,12 @@ describe('UserService', () => {
         password: 'hashedpassword',
       } as any;
 
-      const result = service.fillUserDefaults(newUser, createdBy, [], 'encrypted');
+      const result = service.fillUserDefaults(
+        newUser,
+        createdBy,
+        [],
+        'encrypted',
+      );
 
       expect(result.email).toBe('test@example.com');
     });
@@ -476,7 +505,13 @@ describe('UserService', () => {
         password: 'hashedpassword',
       } as any;
 
-      const result = service.fillUserDefaults(newUser, createdBy, [], 'encrypted', userId);
+      const result = service.fillUserDefaults(
+        newUser,
+        createdBy,
+        [],
+        'encrypted',
+        userId,
+      );
 
       expect(result._id).toEqual(userId);
     });
@@ -506,7 +541,7 @@ describe('UserService', () => {
 
     it('should return silently if database connection is not open', async () => {
       const userId = new Types.ObjectId();
-      
+
       // Mock closed connection
       mockApplication.db.connection.readyState = 0;
 
@@ -533,12 +568,14 @@ describe('UserService', () => {
 
       // Replace the model with a constructor mock
       const UserModelConstructor = jest.fn().mockImplementation(() => mockDoc);
-      jest.spyOn(ModelRegistry.instance, 'getTypedModel').mockImplementation((modelName: string) => {
-        if (modelName === BaseModelName.User) {
-          return UserModelConstructor as any;
-        }
-        return mockUserModel;
-      });
+      jest
+        .spyOn(ModelRegistry.instance, 'getTypedModel')
+        .mockImplementation((modelName: string) => {
+          if (modelName === BaseModelName.User) {
+            return UserModelConstructor as any;
+          }
+          return mockUserModel;
+        });
 
       const result = await service.makeUserDoc(newUser);
 
@@ -569,9 +606,15 @@ describe('UserService', () => {
         expiresAt: new Date(),
       };
 
-      mockEmailTokenModel.findOneAndUpdate = jest.fn().mockResolvedValue(mockToken);
+      mockEmailTokenModel.findOneAndUpdate = jest
+        .fn()
+        .mockResolvedValue(mockToken);
 
-      const result = await service.createEmailToken(userDoc, 'verification' as any, {} as any);
+      const result = await service.createEmailToken(
+        userDoc,
+        'verification' as any,
+        {} as any,
+      );
 
       expect(result).toBeDefined();
       expect(mockEmailTokenModel.findOneAndUpdate).toHaveBeenCalled();
@@ -628,7 +671,11 @@ describe('UserService', () => {
         EmailTokenType.AccountVerification,
         undefined,
       );
-      expect(sendEmailTokenSpy).toHaveBeenCalledWith(emailToken, undefined, true);
+      expect(sendEmailTokenSpy).toHaveBeenCalledWith(
+        emailToken,
+        undefined,
+        true,
+      );
       expect(result).toBe(emailToken);
     });
 
@@ -659,9 +706,14 @@ describe('UserService', () => {
     });
 
     it('should upsert token inside session and send email', async () => {
-      const userDoc = { _id: new Types.ObjectId(), email: 'direct@example.com' } as any;
+      const userDoc = {
+        _id: new Types.ObjectId(),
+        email: 'direct@example.com',
+      } as any;
       const tokenDoc = { token: 'direct-token' } as any;
-      mockEmailTokenModel.findOneAndUpdate = jest.fn().mockResolvedValue(tokenDoc);
+      mockEmailTokenModel.findOneAndUpdate = jest
+        .fn()
+        .mockResolvedValue(tokenDoc);
 
       const result = await service.createAndSendEmailTokenDirect(
         userDoc,
@@ -684,9 +736,14 @@ describe('UserService', () => {
     });
 
     it('should ignore email send failures', async () => {
-      const userDoc = { _id: new Types.ObjectId(), email: 'direct@example.com' } as any;
+      const userDoc = {
+        _id: new Types.ObjectId(),
+        email: 'direct@example.com',
+      } as any;
       const tokenDoc = { token: 'direct-token' } as any;
-      mockEmailTokenModel.findOneAndUpdate = jest.fn().mockResolvedValue(tokenDoc);
+      mockEmailTokenModel.findOneAndUpdate = jest
+        .fn()
+        .mockResolvedValue(tokenDoc);
       sendEmailTokenSpy.mockRejectedValue(new Error('email offline'));
 
       const result = await service.createAndSendEmailTokenDirect(
@@ -699,7 +756,10 @@ describe('UserService', () => {
     });
 
     it('should throw when token creation fails', async () => {
-      const userDoc = { _id: new Types.ObjectId(), email: 'direct@example.com' } as any;
+      const userDoc = {
+        _id: new Types.ObjectId(),
+        email: 'direct@example.com',
+      } as any;
       mockEmailTokenModel.findOneAndUpdate = jest.fn().mockResolvedValue(null);
 
       await expect(
@@ -715,9 +775,10 @@ describe('UserService', () => {
   describe('ensureRequiredFieldsInProjection', () => {
     it('should handle string projection with inclusions', () => {
       const service_any = service as any;
-      const result = service_any.ensureRequiredFieldsInProjection('username email', [
-        'accountStatus',
-      ]);
+      const result = service_any.ensureRequiredFieldsInProjection(
+        'username email',
+        ['accountStatus'],
+      );
 
       expect(result).toContain('username');
       expect(result).toContain('email');
@@ -726,9 +787,10 @@ describe('UserService', () => {
 
     it('should handle string projection with exclusions', () => {
       const service_any = service as any;
-      const result = service_any.ensureRequiredFieldsInProjection('-password -secret', [
-        'password',
-      ]);
+      const result = service_any.ensureRequiredFieldsInProjection(
+        '-password -secret',
+        ['password'],
+      );
 
       // Required field 'password' should not be excluded
       expect(result).toContain('password');
@@ -776,7 +838,9 @@ describe('UserService', () => {
   describe('recoverMnemonic', () => {
     it('should recover mnemonic from encrypted data', () => {
       const mockUser = {
-        decryptData: jest.fn().mockReturnValue(Buffer.from('test mnemonic words')),
+        decryptData: jest
+          .fn()
+          .mockReturnValue(Buffer.from('test mnemonic words')),
       } as any;
 
       const encryptedMnemonic = Buffer.from('encrypted').toString('hex');
@@ -809,7 +873,9 @@ describe('UserService', () => {
 
       const execMock = jest.fn().mockResolvedValue(mockUser);
       const selectMock = jest.fn().mockReturnValue({ exec: execMock });
-      const sessionMock = jest.fn().mockReturnValue({ select: selectMock, exec: execMock });
+      const sessionMock = jest
+        .fn()
+        .mockReturnValue({ select: selectMock, exec: execMock });
 
       mockUserModel.findById = jest.fn().mockReturnValue({
         session: sessionMock,
@@ -834,7 +900,10 @@ describe('UserService', () => {
         session: jest.fn().mockResolvedValue(mockToken),
       });
 
-      const result = await service.findEmailToken('abc123', 'verification' as any);
+      const result = await service.findEmailToken(
+        'abc123',
+        'verification' as any,
+      );
 
       expect(result).toEqual(mockToken);
       expect(mockEmailTokenModel.findOne).toHaveBeenCalledWith(
@@ -928,7 +997,9 @@ describe('UserService', () => {
         collation: collationMock,
       });
 
-      await expect(service.findUser(undefined, 'pendinguser')).rejects.toThrow();
+      await expect(
+        service.findUser(undefined, 'pendinguser'),
+      ).rejects.toThrow();
     });
 
     it('should reject AdminLock users in findUser', async () => {
@@ -974,9 +1045,9 @@ describe('UserService', () => {
         email: 'test@example.com',
       };
 
-      await expect(
-        service.newUser(mockSystemUser, userData),
-      ).rejects.toThrow(InvalidUsernameError);
+      await expect(service.newUser(mockSystemUser, userData)).rejects.toThrow(
+        InvalidUsernameError,
+      );
     });
 
     it('should reject invalid password', async () => {
@@ -986,7 +1057,15 @@ describe('UserService', () => {
       };
 
       await expect(
-        service.newUser(mockSystemUser, userData, undefined, undefined, undefined, false, 'weak'),
+        service.newUser(
+          mockSystemUser,
+          userData,
+          undefined,
+          undefined,
+          undefined,
+          false,
+          'weak',
+        ),
       ).rejects.toThrow(InvalidNewPasswordError);
     });
 
@@ -1003,15 +1082,17 @@ describe('UserService', () => {
 
       mockUserModel.findOne = jest.fn().mockImplementation((query: any) => {
         return {
-          session: jest.fn().mockReturnValue(
-            Promise.resolve(query.email ? existingUser : null),
-          ),
+          session: jest
+            .fn()
+            .mockReturnValue(
+              Promise.resolve(query.email ? existingUser : null),
+            ),
         };
       });
 
-      await expect(
-        service.newUser(mockSystemUser, userData),
-      ).rejects.toThrow(EmailInUseError);
+      await expect(service.newUser(mockSystemUser, userData)).rejects.toThrow(
+        EmailInUseError,
+      );
     });
 
     it('should reject duplicate username', async () => {
@@ -1027,15 +1108,17 @@ describe('UserService', () => {
 
       mockUserModel.findOne = jest.fn().mockImplementation((query: any) => {
         return {
-          session: jest.fn().mockReturnValue(
-            Promise.resolve(query.username ? existingUser : null),
-          ),
+          session: jest
+            .fn()
+            .mockReturnValue(
+              Promise.resolve(query.username ? existingUser : null),
+            ),
         };
       });
 
-      await expect(
-        service.newUser(mockSystemUser, userData),
-      ).rejects.toThrow(UsernameInUseError);
+      await expect(service.newUser(mockSystemUser, userData)).rejects.toThrow(
+        UsernameInUseError,
+      );
     });
 
     it('should create a new user with encrypted secrets and role assignment', async () => {
@@ -1050,7 +1133,9 @@ describe('UserService', () => {
 
       const generatedCodes = [{ value: 'code1' }, { value: 'code2' }] as any;
       const encryptedCodes = [{ value: 'enc1' }, { value: 'enc2' }] as any;
-      jest.spyOn(BackupCode, 'generateBackupCodes').mockReturnValue(generatedCodes);
+      jest
+        .spyOn(BackupCode, 'generateBackupCodes')
+        .mockReturnValue(generatedCodes);
       jest
         .spyOn(BackupCode, 'encryptBackupCodes')
         .mockResolvedValue(encryptedCodes);
@@ -1063,7 +1148,9 @@ describe('UserService', () => {
 
       const backendMember = {
         publicKey: Buffer.from('abcd', 'hex'),
-        encryptData: jest.fn().mockReturnValue(Buffer.from('encrypted-mnemonic')),
+        encryptData: jest
+          .fn()
+          .mockReturnValue(Buffer.from('encrypted-mnemonic')),
       } as any;
       const mnemonic = { value: 'test mnemonic', dispose: jest.fn() } as any;
       jest.spyOn(BackendMember, 'newMember').mockReturnValue({
@@ -1117,7 +1204,9 @@ describe('UserService', () => {
       const leanMock = jest.fn().mockReturnValue({ exec: execMock });
       const sessionMock = jest.fn().mockReturnValue({ lean: leanMock });
       const selectMock = jest.fn().mockReturnValue({ session: sessionMock });
-      mockMnemonicModel.findById = jest.fn().mockReturnValue({ select: selectMock });
+      mockMnemonicModel.findById = jest
+        .fn()
+        .mockReturnValue({ select: selectMock });
       return { execMock, leanMock, sessionMock, selectMock };
     };
 
@@ -1135,13 +1224,21 @@ describe('UserService', () => {
         createdBy: new Types.ObjectId(),
       } as any;
 
-      mnemonic = new SecureString('legal winner thank year wave sausage worth useful legal winner thank yellow');
+      mnemonic = new SecureString(
+        'legal winner thank year wave sausage worth useful legal winner thank yellow',
+      );
 
       const wallet = {
         getPrivateKey: jest.fn().mockReturnValue(Buffer.alloc(32, 1)),
-        getPublicKey: jest.fn().mockReturnValue(Buffer.concat([Buffer.from([0x02]), Buffer.alloc(32, 2)])),
+        getPublicKey: jest
+          .fn()
+          .mockReturnValue(
+            Buffer.concat([Buffer.from([0x02]), Buffer.alloc(32, 2)]),
+          ),
       };
-      (service as any).eciesService.walletAndSeedFromMnemonic.mockReturnValue({ wallet });
+      (service as any).eciesService.walletAndSeedFromMnemonic.mockReturnValue({
+        wallet,
+      });
 
       const userMember = {
         publicKey: Buffer.from(userDoc.publicKey, 'hex'),
@@ -1157,11 +1254,15 @@ describe('UserService', () => {
       systemUserSpy = jest
         .spyOn(SystemUserService, 'getSystemUser')
         .mockReturnValue({
-          sign: jest.fn((nonce: Buffer) => Buffer.concat([nonce, Buffer.alloc(32, 3)])),
+          sign: jest.fn((nonce: Buffer) =>
+            Buffer.concat([nonce, Buffer.alloc(32, 3)]),
+          ),
           verify: jest.fn().mockReturnValue(true),
         } as any);
 
-      (service as any).mnemonicService.getMnemonicHmac.mockReturnValue('expected-hmac');
+      (service as any).mnemonicService.getMnemonicHmac.mockReturnValue(
+        'expected-hmac',
+      );
     });
 
     afterEach(() => {
@@ -1174,7 +1275,10 @@ describe('UserService', () => {
       await withConsoleMocks({ mute: true }, async () => {
         setupMnemonicDoc({ _id: userDoc.mnemonicId, hmac: 'expected-hmac' });
 
-        const result = await service.challengeUserWithMnemonic(userDoc, mnemonic);
+        const result = await service.challengeUserWithMnemonic(
+          userDoc,
+          mnemonic,
+        );
 
         expect(result.userMember).toBeDefined();
         expect(result.adminMember).toBeDefined();
@@ -1185,7 +1289,9 @@ describe('UserService', () => {
     it('should throw InvalidCredentialsError when mnemonic mismatches', async () => {
       await withConsoleMocks({ mute: true }, async () => {
         setupMnemonicDoc({ _id: userDoc.mnemonicId, hmac: 'stored-hmac' });
-        (service as any).mnemonicService.getMnemonicHmac.mockReturnValue('different-hmac');
+        (service as any).mnemonicService.getMnemonicHmac.mockReturnValue(
+          'different-hmac',
+        );
 
         await expect(
           service.challengeUserWithMnemonic(userDoc, mnemonic),
@@ -1244,7 +1350,10 @@ describe('UserService', () => {
         return { select, collation: jest.fn().mockReturnValue({ select }) };
       });
 
-      const result = await service.loginWithMnemonic('user@example.com', mnemonic);
+      const result = await service.loginWithMnemonic(
+        'user@example.com',
+        mnemonic,
+      );
 
       expect(sessionMock).toHaveBeenCalledWith(null);
       expect(challengeSpy).toHaveBeenCalledWith(userDoc, mnemonic, undefined);
@@ -1307,7 +1416,9 @@ describe('UserService', () => {
       const sessionMock = jest.fn().mockResolvedValue(result);
       const selectMock = jest.fn().mockReturnValue({ session: sessionMock });
       const collationMock = jest.fn().mockReturnValue({ select: selectMock });
-      mockUserModel.findOne = jest.fn().mockReturnValue({ collation: collationMock });
+      mockUserModel.findOne = jest
+        .fn()
+        .mockReturnValue({ collation: collationMock });
       return { collationMock };
     };
 
@@ -1316,12 +1427,16 @@ describe('UserService', () => {
       const leanMock = jest.fn().mockReturnValue({ exec: execMock });
       const sessionMock = jest.fn().mockReturnValue({ lean: leanMock });
       const selectMock = jest.fn().mockReturnValue({ session: sessionMock });
-      mnemonicModelViaApplication.findById.mockReturnValue({ select: selectMock });
+      mnemonicModelViaApplication.findById.mockReturnValue({
+        select: selectMock,
+      });
       return { execMock };
     };
 
     beforeEach(() => {
-      mnemonic = new SecureString('orange tiger worry gym honor practice secure idea portion maple prize gaze');
+      mnemonic = new SecureString(
+        'orange tiger worry gym honor practice secure idea portion maple prize gaze',
+      );
       mnemonicModelViaApplication = { findById: jest.fn() } as any;
       mockApplication.getModel.mockImplementation((modelName: string) => {
         if (modelName === BaseModelName.Mnemonic) {
@@ -1351,8 +1466,12 @@ describe('UserService', () => {
         getPrivateKey: jest.fn().mockReturnValue(Buffer.alloc(32, 5)),
         getPublicKey: jest.fn().mockReturnValue(rawPublicKey),
       };
-      (service as any).eciesService.walletAndSeedFromMnemonic.mockReturnValue({ wallet });
-      (service as any).mnemonicService.getMnemonicHmac.mockReturnValue('expected-hmac');
+      (service as any).eciesService.walletAndSeedFromMnemonic.mockReturnValue({
+        wallet,
+      });
+      (service as any).mnemonicService.getMnemonicHmac.mockReturnValue(
+        'expected-hmac',
+      );
 
       const userMember = {
         publicKey: prefixedPublicKey,
@@ -1395,7 +1514,9 @@ describe('UserService', () => {
     it('should throw InvalidCredentialsError when mnemonic hash mismatches for username input', async () => {
       wireUsernameQuery(userDoc);
       wireMnemonicDoc({ _id: userDoc.mnemonicId, hmac: 'stored-hmac' });
-      (service as any).mnemonicService.getMnemonicHmac.mockReturnValue('different-hmac');
+      (service as any).mnemonicService.getMnemonicHmac.mockReturnValue(
+        'different-hmac',
+      );
 
       await expect(
         service.loginWithClientVerifiedChallenge('clientuser', mnemonic),
@@ -1407,7 +1528,10 @@ describe('UserService', () => {
       wireEmailQuery(userDoc);
 
       await expect(
-        service.loginWithClientVerifiedChallenge('client@example.com', mnemonic),
+        service.loginWithClientVerifiedChallenge(
+          'client@example.com',
+          mnemonic,
+        ),
       ).rejects.toThrow(AccountLockedError);
     });
 
@@ -1415,7 +1539,10 @@ describe('UserService', () => {
       wireEmailQuery(null);
 
       await expect(
-        service.loginWithClientVerifiedChallenge('missing@example.com', mnemonic),
+        service.loginWithClientVerifiedChallenge(
+          'missing@example.com',
+          mnemonic,
+        ),
       ).rejects.toThrow(InvalidCredentialsError);
     });
   });
@@ -1474,7 +1601,10 @@ describe('UserService', () => {
     it('should authenticate user with password-wrapped key', async () => {
       setupPasswordQuery(userDoc);
 
-      const result = await service.loginWithPassword('pw@example.com', 'StrongPass123!');
+      const result = await service.loginWithPassword(
+        'pw@example.com',
+        'StrongPass123!',
+      );
 
       expect(mockKeyWrappingService.unwrapSecretAsync).toHaveBeenCalledWith(
         userDoc.passwordWrappedPrivateKey,
@@ -1529,7 +1659,9 @@ describe('UserService', () => {
       const timeBuffer = Buffer.alloc(8);
       timeBuffer.writeBigUInt64BE(BigInt(timeMs));
       const signatureBuffer = signature ?? Buffer.alloc(64, 6);
-      return Buffer.concat([timeBuffer, nonce, signatureBuffer]).toString('hex');
+      return Buffer.concat([timeBuffer, nonce, signatureBuffer]).toString(
+        'hex',
+      );
     };
 
     beforeEach(() => {
@@ -1539,9 +1671,7 @@ describe('UserService', () => {
         username: 'challenge-user',
       } as IUserDocument;
 
-      findUserSpy = jest
-        .spyOn(service, 'findUser')
-        .mockResolvedValue(userDoc);
+      findUserSpy = jest.spyOn(service, 'findUser').mockResolvedValue(userDoc);
 
       makeUserSpy = jest
         .spyOn(service as any, 'makeUserFromUserDoc')
@@ -1571,8 +1701,19 @@ describe('UserService', () => {
         'challenge@example.com',
       );
 
-      expect(findUserSpy).toHaveBeenCalledWith('challenge@example.com', undefined, undefined);
-      expect(makeUserSpy).toHaveBeenCalledWith(userDoc, undefined, undefined, undefined, undefined, undefined);
+      expect(findUserSpy).toHaveBeenCalledWith(
+        'challenge@example.com',
+        undefined,
+        undefined,
+      );
+      expect(makeUserSpy).toHaveBeenCalledWith(
+        userDoc,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+      );
       expect(result.userDoc).toBe(userDoc);
       expect(result.userMember).toEqual({ user: true });
     });
@@ -1591,7 +1732,10 @@ describe('UserService', () => {
       const challengeHex = buildChallengeHex(expiredTime, signature);
 
       await expect(
-        service.loginWithChallengeResponse(challengeHex, 'challenge@example.com'),
+        service.loginWithChallengeResponse(
+          challengeHex,
+          'challenge@example.com',
+        ),
       ).rejects.toThrow(LoginChallengeExpiredError);
     });
 
@@ -1601,7 +1745,10 @@ describe('UserService', () => {
       const challengeHex = buildChallengeHex(Date.now(), providedSignature);
 
       await expect(
-        service.loginWithChallengeResponse(challengeHex, 'challenge@example.com'),
+        service.loginWithChallengeResponse(
+          challengeHex,
+          'challenge@example.com',
+        ),
       ).rejects.toThrow(InvalidChallengeResponseError);
     });
 
@@ -1623,7 +1770,11 @@ describe('UserService', () => {
       const challengeHex = buildChallengeHex(Date.now(), signature);
 
       await expect(
-        service.loginWithChallengeResponse(challengeHex, undefined, 'missing-user'),
+        service.loginWithChallengeResponse(
+          challengeHex,
+          undefined,
+          'missing-user',
+        ),
       ).rejects.toThrow(InvalidUsernameError);
     });
   });
@@ -1717,7 +1868,9 @@ describe('UserService', () => {
         .mockResolvedValue(emailToken as any);
 
       const userSessionMock = jest.fn().mockResolvedValue(userDoc);
-      mockUserModel.findById = jest.fn().mockReturnValue({ session: userSessionMock });
+      mockUserModel.findById = jest
+        .fn()
+        .mockReturnValue({ session: userSessionMock });
 
       deleteSessionMock = jest.fn().mockResolvedValue(undefined);
       mockEmailTokenModel.deleteOne = jest
@@ -1739,7 +1892,9 @@ describe('UserService', () => {
       expect(userDoc.accountStatus).toBe(AccountStatus.Active);
       expect(userDoc.save).toHaveBeenCalled();
       expect(mockRoleService.addUserToRole).toHaveBeenCalled();
-      expect(mockEmailTokenModel.deleteOne).toHaveBeenCalledWith({ _id: emailToken._id });
+      expect(mockEmailTokenModel.deleteOne).toHaveBeenCalledWith({
+        _id: emailToken._id,
+      });
     });
 
     it('should throw EmailTokenExpiredError when token expired', async () => {
@@ -1748,7 +1903,9 @@ describe('UserService', () => {
       await expect(
         service.verifyAccountTokenAndComplete('token'),
       ).rejects.toThrow(EmailTokenExpiredError);
-      expect(mockEmailTokenModel.deleteOne).toHaveBeenCalledWith({ _id: emailToken._id });
+      expect(mockEmailTokenModel.deleteOne).toHaveBeenCalledWith({
+        _id: emailToken._id,
+      });
     });
 
     it('should throw EmailVerifiedError when user already verified', async () => {
@@ -1805,7 +1962,9 @@ describe('UserService', () => {
         .mockResolvedValue(emailToken as any);
 
       userSessionMock = jest.fn().mockResolvedValue(userDoc);
-      mockUserModel.findById = jest.fn().mockReturnValue({ session: userSessionMock });
+      mockUserModel.findById = jest
+        .fn()
+        .mockReturnValue({ session: userSessionMock });
 
       deleteSessionMock = jest.fn().mockResolvedValue(undefined);
       mockEmailTokenModel.deleteOne = jest
@@ -1819,7 +1978,19 @@ describe('UserService', () => {
         },
       });
 
-      mockKeyWrappingService.wrapSecret.mockReturnValue(Buffer.from('newwrapped'));
+      // Mock eciesService.getPublicKey to return the full 33-byte compressed key
+      (service as any).eciesService.getPublicKey = jest
+        .fn()
+        .mockReturnValue(
+          Buffer.concat([
+            Buffer.from([mockApplication.constants.ECIES.PUBLIC_KEY_MAGIC]),
+            publicKeyTail,
+          ]),
+        );
+
+      mockKeyWrappingService.wrapSecret.mockReturnValue(
+        Buffer.from('newwrapped'),
+      );
       mockKeyWrappingService.unwrapSecretAsync.mockResolvedValue({
         dispose: jest.fn(),
       } as any);
@@ -1831,17 +2002,27 @@ describe('UserService', () => {
     });
 
     it('should rewrap password using mnemonic credential', async () => {
-      await service.resetPasswordWithToken('token', 'StrongPass123!', mnemonicCredential);
+      await service.resetPasswordWithToken(
+        'token',
+        'StrongPass123!',
+        mnemonicCredential,
+      );
 
       expect(mockKeyWrappingService.wrapSecret).toHaveBeenCalled();
       expect(mockKeyWrappingService.unwrapSecretAsync).not.toHaveBeenCalled();
       expect(userDoc.save).toHaveBeenCalled();
-      expect(mockEmailTokenModel.deleteOne).toHaveBeenCalledWith({ _id: emailToken._id });
+      expect(mockEmailTokenModel.deleteOne).toHaveBeenCalledWith({
+        _id: emailToken._id,
+      });
     });
 
     it('should rewrap password using current password credential', async () => {
       const originalWrappedKey = userDoc.passwordWrappedPrivateKey;
-      await service.resetPasswordWithToken('token', 'StrongPass123!', 'CurrentPass123!');
+      await service.resetPasswordWithToken(
+        'token',
+        'StrongPass123!',
+        'CurrentPass123!',
+      );
 
       expect(mockKeyWrappingService.unwrapSecretAsync).toHaveBeenCalledWith(
         originalWrappedKey,
@@ -1933,7 +2114,10 @@ describe('UserService', () => {
     });
 
     it('should resolve when token exists and is unexpired', async () => {
-      const emailToken = { _id: new Types.ObjectId(), expiresAt: new Date(Date.now() + 10_000) };
+      const emailToken = {
+        _id: new Types.ObjectId(),
+        expiresAt: new Date(Date.now() + 10_000),
+      };
       const sessionMock = jest.fn().mockResolvedValue(emailToken as any);
       mockEmailTokenModel.findOne.mockReturnValue({ session: sessionMock });
 
@@ -1944,16 +2128,23 @@ describe('UserService', () => {
     });
 
     it('should delete and throw when token expired', async () => {
-      const emailToken = { _id: new Types.ObjectId(), expiresAt: new Date(Date.now() - 10_000) };
+      const emailToken = {
+        _id: new Types.ObjectId(),
+        expiresAt: new Date(Date.now() - 10_000),
+      };
       const sessionMock = jest.fn().mockResolvedValue(emailToken as any);
       mockEmailTokenModel.findOne.mockReturnValue({ session: sessionMock });
       const deleteSessionMock = jest.fn().mockResolvedValue(undefined);
-      mockEmailTokenModel.deleteOne.mockReturnValue({ session: deleteSessionMock });
+      mockEmailTokenModel.deleteOne.mockReturnValue({
+        session: deleteSessionMock,
+      });
 
       await expect(
         service.validateEmailToken('token', EmailTokenType.PasswordReset),
       ).rejects.toThrow(EmailTokenExpiredError);
-      expect(mockEmailTokenModel.deleteOne).toHaveBeenCalledWith({ _id: emailToken._id });
+      expect(mockEmailTokenModel.deleteOne).toHaveBeenCalledWith({
+        _id: emailToken._id,
+      });
     });
 
     it('should throw when token not found', async () => {
@@ -1991,7 +2182,10 @@ describe('UserService', () => {
       const sessionMock = jest.fn().mockResolvedValue(userDoc);
       mockUserModel.findByIdAndUpdate.mockReturnValue({ session: sessionMock });
 
-      const result = await service.updateSiteLanguage(userDoc._id.toString(), 'fr');
+      const result = await service.updateSiteLanguage(
+        userDoc._id.toString(),
+        'fr',
+      );
 
       expect(mockUserModel.findByIdAndUpdate).toHaveBeenCalledWith(
         expect.any(Types.ObjectId),
@@ -2036,7 +2230,7 @@ describe('UserService', () => {
       mockUserModel.findById.mockReturnValue({ session: sessionMock });
       const privMock = { dispose: jest.fn() } as any;
       mockKeyWrappingService.unwrapSecret.mockReturnValue(privMock);
-      mockKeyWrappingService.wrapSecret.mockReturnValue(Buffer.from('new')); 
+      mockKeyWrappingService.wrapSecret.mockReturnValue(Buffer.from('new'));
 
       await service.changePassword(
         userDoc._id.toString(),
@@ -2064,7 +2258,11 @@ describe('UserService', () => {
       mockUserModel.findById.mockReturnValue({ session: sessionMock });
 
       await expect(
-        service.changePassword(userDoc._id.toString(), 'CurrentPass123!', 'weak'),
+        service.changePassword(
+          userDoc._id.toString(),
+          'CurrentPass123!',
+          'weak',
+        ),
       ).rejects.toThrow(InvalidNewPasswordError);
     });
 
@@ -2073,7 +2271,11 @@ describe('UserService', () => {
       mockUserModel.findById.mockReturnValue({ session: sessionMock });
 
       await expect(
-        service.changePassword(new Types.ObjectId().toString(), 'CurrentPass123!', 'NewPass123!'),
+        service.changePassword(
+          new Types.ObjectId().toString(),
+          'CurrentPass123!',
+          'NewPass123!',
+        ),
       ).rejects.toThrow(UserNotFoundError);
     });
   });
@@ -2099,12 +2301,19 @@ describe('UserService', () => {
     });
 
     it('should create login token when user found', async () => {
-      const userDoc = { _id: new Types.ObjectId(), email: 'user@example.com' } as any;
+      const userDoc = {
+        _id: new Types.ObjectId(),
+        email: 'user@example.com',
+      } as any;
       findUserSpy = jest.spyOn(service, 'findUser').mockResolvedValue(userDoc);
 
       await service.requestEmailLogin('user@example.com');
 
-      expect(findUserSpy).toHaveBeenCalledWith('user@example.com', undefined, undefined);
+      expect(findUserSpy).toHaveBeenCalledWith(
+        'user@example.com',
+        undefined,
+        undefined,
+      );
       expect(createTokenSpy).toHaveBeenCalledWith(
         userDoc,
         EmailTokenType.LoginRequest,
@@ -2166,7 +2375,10 @@ describe('UserService', () => {
       const token = 'abcd';
       const signature = 'ef12';
 
-      const result = await service.validateEmailLoginTokenChallenge(token, signature);
+      const result = await service.validateEmailLoginTokenChallenge(
+        token,
+        signature,
+      );
 
       expect(userMember.verify).toHaveBeenCalled();
       expect(emailToken.deleteOne).toHaveBeenCalledWith({ session: null });
@@ -2207,9 +2419,11 @@ describe('UserService', () => {
     let systemUserSpy: jest.SpyInstance;
 
     beforeEach(() => {
-      systemUserSpy = jest.spyOn(SystemUserService, 'getSystemUser').mockReturnValue({
-        sign: jest.fn(() => Buffer.alloc(64, 0xee)),
-      } as any);
+      systemUserSpy = jest
+        .spyOn(SystemUserService, 'getSystemUser')
+        .mockReturnValue({
+          sign: jest.fn(() => Buffer.alloc(64, 0xee)),
+        } as any);
     });
 
     afterEach(() => {
@@ -2219,7 +2433,9 @@ describe('UserService', () => {
     it('should produce challenge with expected length', () => {
       const challenge = service.generateDirectLoginChallenge();
 
-      expect(challenge).toHaveLength((8 + 32 + mockApplication.constants.ECIES.SIGNATURE_SIZE) * 2);
+      expect(challenge).toHaveLength(
+        (8 + 32 + mockApplication.constants.ECIES.SIGNATURE_SIZE) * 2,
+      );
     });
   });
 
@@ -2259,11 +2475,19 @@ describe('UserService', () => {
       const timeBuf = Buffer.alloc(8);
       timeBuf.writeBigUInt64BE(BigInt(now));
       const nonce = Buffer.alloc(32, 0x11);
-      const serverSignature = Buffer.alloc(mockApplication.constants.ECIES.SIGNATURE_SIZE, 0x22);
+      const serverSignature = Buffer.alloc(
+        mockApplication.constants.ECIES.SIGNATURE_SIZE,
+        0x22,
+      );
       const signedPayload = Buffer.concat([timeBuf, nonce]);
-      systemUserSpy = jest.spyOn(SystemUserService, 'getSystemUser').mockReturnValue({
-        verify: jest.fn((sig: Buffer, data: Buffer) => sig.equals(serverSignature) && data.equals(signedPayload)),
-      } as any);
+      systemUserSpy = jest
+        .spyOn(SystemUserService, 'getSystemUser')
+        .mockReturnValue({
+          verify: jest.fn(
+            (sig: Buffer, data: Buffer) =>
+              sig.equals(serverSignature) && data.equals(signedPayload),
+          ),
+        } as any);
       const serverSignedRequestHex = Buffer.concat([
         timeBuf,
         nonce,
@@ -2274,10 +2498,15 @@ describe('UserService', () => {
         _id: new Types.ObjectId(),
         directChallenge: true,
       } as any;
-      const clientSignature = Buffer.alloc(mockApplication.constants.ECIES.SIGNATURE_SIZE, 0x33);
+      const clientSignature = Buffer.alloc(
+        mockApplication.constants.ECIES.SIGNATURE_SIZE,
+        0x33,
+      );
       const userMember = {
-        verify: jest.fn((sig: Buffer, data: Buffer) =>
-          sig.equals(clientSignature) && data.equals(Buffer.from(serverSignedRequestHex, 'hex')),
+        verify: jest.fn(
+          (sig: Buffer, data: Buffer) =>
+            sig.equals(clientSignature) &&
+            data.equals(Buffer.from(serverSignedRequestHex, 'hex')),
         ),
       } as any;
 
@@ -2298,7 +2527,11 @@ describe('UserService', () => {
       );
       expect(updateLastLoginSpy).toHaveBeenCalledWith(userDoc._id);
       expect(result).toEqual({ userDoc, userMember });
-      expect(findUserSpy).toHaveBeenCalledWith(undefined, 'directuser', undefined);
+      expect(findUserSpy).toHaveBeenCalledWith(
+        undefined,
+        'directuser',
+        undefined,
+      );
     });
   });
 

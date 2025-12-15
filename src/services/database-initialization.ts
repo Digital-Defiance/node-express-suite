@@ -10,6 +10,7 @@ import {
   TranslatableGenericError,
   TranslatableHandleableGenericError,
 } from '@digitaldefiance/i18n-lib';
+import { Connection, Types } from '@digitaldefiance/mongoose-types';
 import {
   Member as BackendMember,
   ECIESService,
@@ -26,7 +27,6 @@ import {
 import { crc32 } from 'crc';
 import { createHash, randomBytes } from 'crypto';
 import { ObjectId as MongoObjectId } from 'mongodb';
-import { Connection, Types } from '@digitaldefiance/mongoose-types';
 import { BackupCode } from '../backup-code';
 import { IMnemonicDocument } from '../documents/mnemonic';
 import { IRoleDocument } from '../documents/role';
@@ -154,11 +154,10 @@ export abstract class DatabaseInitializationService {
 
       // Get private key from wallet
       const privateKey = wallet.getPrivateKey();
-      // Get public key with 0x04 prefix
-      const publicKeyWithPrefix = Buffer.concat([
-        Buffer.from([ECIES.PUBLIC_KEY_MAGIC]),
-        wallet.getPublicKey(),
-      ]) as Buffer;
+      // Get compressed public key (already includes prefix)
+      const publicKeyWithPrefix = eciesService.getPublicKey(
+        Buffer.from(privateKey),
+      );
 
       const user: BackendMember<I> = new BackendMember<I>(
         eciesService,

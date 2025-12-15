@@ -1,6 +1,6 @@
 {
   "name": "@digitaldefiance/node-express-suite",
-  "version": "3.6.17",
+  "version": "3.6.18",
   "homepage": "https://github.com/Digital-Defiance/node-express-suite",
   "repository": {
     "type": "git",
@@ -40,7 +40,7 @@
     "@digitaldefiance/ecies-lib": "4.4.16",
     "@digitaldefiance/i18n-lib": "3.8.6",
     "@digitaldefiance/mongoose-types": "8.20.9",
-    "@digitaldefiance/node-ecies-lib": "4.4.13",
+    "@digitaldefiance/node-ecies-lib": "4.4.15",
     "@digitaldefiance/suite-core-lib": "3.6.15",
     "@noble/curves": "^2.0.1",
     "@noble/hashes": "^2.0.1",

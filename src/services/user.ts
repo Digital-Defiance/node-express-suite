@@ -1059,11 +1059,10 @@ export class UserService<
       // Create a Member from the provided mnemonic to get the keys
       const { wallet } = this.eciesService.walletAndSeedFromMnemonic(mnemonic);
       const privateKey = wallet.getPrivateKey();
-      const publicKey = wallet.getPublicKey();
-      const publicKeyWithPrefix = Buffer.concat([
-        Buffer.from([this.application.constants.ECIES.PUBLIC_KEY_MAGIC]),
-        publicKey,
-      ]);
+      // Get compressed public key (already includes prefix)
+      const publicKeyWithPrefix = this.eciesService.getPublicKey(
+        Buffer.from(privateKey),
+      );
       const userMember = await this.makeUserFromUserDoc(
         userDoc,
         new SecureBuffer(privateKey),
@@ -1259,11 +1258,10 @@ export class UserService<
       // Create Member from mnemonic
       const { wallet } = this.eciesService.walletAndSeedFromMnemonic(mnemonic);
       const privateKey = wallet.getPrivateKey();
-      const publicKey = wallet.getPublicKey();
-      const publicKeyWithPrefix = Buffer.concat([
-        Buffer.from([this.application.constants.ECIES.PUBLIC_KEY_MAGIC]),
-        publicKey,
-      ]);
+      // Get compressed public key (already includes prefix)
+      const publicKeyWithPrefix = this.eciesService.getPublicKey(
+        Buffer.from(privateKey),
+      );
       const userMember = await this.makeUserFromUserDoc(
         userDoc,
         new SecureBuffer(privateKey),
@@ -1951,18 +1949,16 @@ export class UserService<
             try {
               const { wallet } =
                 this.eciesService.walletAndSeedFromMnemonic(providedMnemonic);
-              const pub = Buffer.concat([
-                Buffer.from([
-                  this.application.constants.ECIES.PUBLIC_KEY_MAGIC,
-                ]),
-                wallet.getPublicKey(),
-              ]);
+              const privateKey = wallet.getPrivateKey();
+              // Get compressed public key (already includes prefix)
+              const pub = this.eciesService.getPublicKey(
+                Buffer.from(privateKey),
+              );
               if (pub.toString('hex') !== userDoc.publicKey) {
                 throw new InvalidCredentialsError();
               }
 
-              // Derive private key from mnemonic and wrap it with new password
-              const privateKey = wallet.getPrivateKey();
+              // Wrap private key with new password
               const priv = new SecureBuffer(privateKey);
               try {
                 const wrappedPriv = this.keyWrappingService.wrapSecret(

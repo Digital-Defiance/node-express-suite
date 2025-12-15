@@ -5,6 +5,11 @@ import {
   SecureString,
 } from '@digitaldefiance/ecies-lib';
 import {
+  withConsoleMocks,
+  withDirectLogMocks,
+} from '@digitaldefiance/express-suite-test-utils';
+import { Connection, Types } from '@digitaldefiance/mongoose-types';
+import {
   Member as BackendMember,
   ECIESService,
 } from '@digitaldefiance/node-ecies-lib';
@@ -12,9 +17,7 @@ import {
   SuiteCoreStringKey,
   TranslatableSuiteError,
 } from '@digitaldefiance/suite-core-lib';
-import { withDirectLogMocks } from '@digitaldefiance/express-suite-test-utils';
 import { ObjectId as MongoObjectId } from 'mongodb';
-import { Connection, Types } from '@digitaldefiance/mongoose-types';
 import { BackupCode } from '../../src/backup-code';
 import { LocalhostConstants as AppConstants } from '../../src/constants';
 import {
@@ -32,8 +35,7 @@ import { DatabaseInitializationService } from '../../src/services/database-initi
 import { KeyWrappingService } from '../../src/services/key-wrapping';
 import { MnemonicService } from '../../src/services/mnemonic';
 import { RoleService } from '../../src/services/role';
-import { debugLog, withTransaction } from '../../src/utils';
-import { withConsoleMocks } from '@digitaldefiance/express-suite-test-utils';
+import { withTransaction } from '../../src/utils';
 
 // Mock fs module to allow spying on writeSync
 jest.mock('fs', () => ({
@@ -75,39 +77,38 @@ describe('DatabaseInitializationService', () => {
 
   beforeEach(() => {
     // Mock the translation function to return actual English strings
-    defaultI18nTFuncSpy = jest.spyOn(
-      DatabaseInitializationService as any,
-      'defaultI18nTFunc'
-    ).mockImplementation((
-      key: string,
-      variables?: Record<string, any>,
-      _language?: string,
-      application?: IApplication,
-    ): string => {
-      // Map keys to English translations - handle both enum values and string keys
-      const translations: Record<string, string> = {
-        [SuiteCoreStringKey.Admin_AccountCredentials]: 'Account Credentials',
-        [SuiteCoreStringKey.Admin_EndCredentials]: 'End Credentials',
-        [SuiteCoreStringKey.Common_System]: 'System',
-        [SuiteCoreStringKey.Common_Admin]: 'Admin',
-        [SuiteCoreStringKey.Common_Member]: 'Member',
-        [SuiteCoreStringKey.Common_UserID]: 'User ID',
-        [SuiteCoreStringKey.Common_Username]: 'Username',
-        [SuiteCoreStringKey.Common_Email]: 'Email',
-        [SuiteCoreStringKey.Common_Password]: 'Password',
-        [SuiteCoreStringKey.Common_Mnemonic]: 'Mnemonic',
-        [SuiteCoreStringKey.Common_BackupCodes]: 'Backup Codes',
-        [SuiteCoreStringKey.Common_PublicKey]: 'Public Key',
-      };
-      const template = translations[key] || key;
-      if (!variables) return template;
-      return Object.entries(variables).reduce(
-        (current, [token, value]) => {
-          return current.split(`{${token}}`).join(String(value));
+    defaultI18nTFuncSpy = jest
+      .spyOn(DatabaseInitializationService as any, 'defaultI18nTFunc')
+      .mockImplementation(
+        (
+          key: string,
+          variables?: Record<string, any>,
+          _language?: string,
+          application?: IApplication,
+        ): string => {
+          // Map keys to English translations - handle both enum values and string keys
+          const translations: Record<string, string> = {
+            [SuiteCoreStringKey.Admin_AccountCredentials]:
+              'Account Credentials',
+            [SuiteCoreStringKey.Admin_EndCredentials]: 'End Credentials',
+            [SuiteCoreStringKey.Common_System]: 'System',
+            [SuiteCoreStringKey.Common_Admin]: 'Admin',
+            [SuiteCoreStringKey.Common_Member]: 'Member',
+            [SuiteCoreStringKey.Common_UserID]: 'User ID',
+            [SuiteCoreStringKey.Common_Username]: 'Username',
+            [SuiteCoreStringKey.Common_Email]: 'Email',
+            [SuiteCoreStringKey.Common_Password]: 'Password',
+            [SuiteCoreStringKey.Common_Mnemonic]: 'Mnemonic',
+            [SuiteCoreStringKey.Common_BackupCodes]: 'Backup Codes',
+            [SuiteCoreStringKey.Common_PublicKey]: 'Public Key',
+          };
+          const template = translations[key] || key;
+          if (!variables) return template;
+          return Object.entries(variables).reduce((current, [token, value]) => {
+            return current.split(`{${token}}`).join(String(value));
+          }, template);
         },
-        template
       );
-    });
     // Mock console.warn to suppress i18n warnings in tests
     jest.spyOn(console, 'warn').mockImplementation(() => {});
 
@@ -161,6 +162,9 @@ describe('DatabaseInitializationService', () => {
         wallet: mockWallet,
         seed: Buffer.from('seed-data', 'utf-8'),
       }),
+      getPublicKey: jest
+        .fn()
+        .mockReturnValue(Buffer.from([0x02, ...Array(32).fill(1)])),
     } as any;
 
     // Mock BackendMember
@@ -260,7 +264,8 @@ describe('DatabaseInitializationService', () => {
         systemRoleId: undefined,
         systemUserRoleId: undefined,
         systemBackupCodes: undefined,
-        idAdapter: (bytes: Uint8Array) => new Types.ObjectId(Buffer.from(bytes)),
+        idAdapter: (bytes: Uint8Array) =>
+          new Types.ObjectId(Buffer.from(bytes)),
       },
       db: {
         connection: mockConnection,
@@ -527,6 +532,37 @@ describe('DatabaseInitializationService', () => {
       global.__MEMBER_CACHE__ = new Map();
     });
 
+    it('should generate compressed public keys (33 bytes) with real ECIES service', () => {
+      // Temporarily restore the real BackendMember implementation for this test
+      const RealBackendMember = jest.requireActual(
+        '@digitaldefiance/node-ecies-lib',
+      ).Member;
+      (
+        BackendMember as jest.MockedClass<typeof BackendMember>
+      ).mockImplementation((...args: any[]) => new RealBackendMember(...args));
+
+      const realEciesService = new ECIESService();
+      const username = 'testuser';
+      const email = new EmailString('test@example.com');
+      const mnemonic = realEciesService.generateNewMnemonic();
+      const memberType = MemberType.User;
+      const memberId = new Types.ObjectId();
+
+      const result = DatabaseInitializationService.cacheOrNew(
+        username,
+        email,
+        mnemonic,
+        memberType,
+        realEciesService,
+        memberId,
+      );
+
+      // Verify the public key is compressed (33 bytes)
+      expect(result.member.publicKey.length).toBe(33);
+      // Should start with 0x02 or 0x03
+      expect([0x02, 0x03]).toContain(result.member.publicKey[0]);
+    });
+
     it('should create new member when cache is empty', () => {
       const username = 'testuser';
       const email = new EmailString('test@example.com');
@@ -671,7 +707,7 @@ describe('DatabaseInitializationService', () => {
       const tFunc = (DatabaseInitializationService as any).defaultI18nTFunc;
       const result = tFunc(
         '{{suite-core.Common_System}} {{suite-core.Common_ID}}: {id}',
-        { id: '12345' }
+        { id: '12345' },
       );
 
       expect(result).toBeDefined();
@@ -682,8 +718,9 @@ describe('DatabaseInitializationService', () => {
 
   describe('dropDatabase', () => {
     it('should drop database when connection has db', async () => {
-      const result =
-        await DatabaseInitializationService.dropDatabase(mockConnection);
+      const result = await DatabaseInitializationService.dropDatabase(
+        mockConnection,
+      );
 
       expect(result).toBe(true);
       expect(mockConnection.db!.dropDatabase).toHaveBeenCalled();
@@ -692,8 +729,9 @@ describe('DatabaseInitializationService', () => {
     it('should return false when connection has no db', async () => {
       const connectionWithoutDb = { db: null } as unknown as Connection;
 
-      const result =
-        await DatabaseInitializationService.dropDatabase(connectionWithoutDb);
+      const result = await DatabaseInitializationService.dropDatabase(
+        connectionWithoutDb,
+      );
 
       expect(result).toBe(false);
     });
@@ -878,13 +916,15 @@ describe('DatabaseInitializationService', () => {
 
           // Verify that directLog was called (writeSync calls will be captured)
           expect(spies.writeSync).toHaveBeenCalled();
-          
+
           // Check that output contains expected user types
           const allCalls = spies.writeSync.mock.calls
             .filter((call) => call[0] === 1) // stdout only
             .map((call) => {
               const buffer = call[1];
-              return buffer instanceof Buffer ? buffer.toString('utf8') : String(buffer);
+              return buffer instanceof Buffer
+                ? buffer.toString('utf8')
+                : String(buffer);
             })
             .join(' ');
 
@@ -908,11 +948,15 @@ describe('DatabaseInitializationService', () => {
             .filter((call) => call[0] === 1) // stdout only
             .map((call) => {
               const buffer = call[1];
-              return buffer instanceof Buffer ? buffer.toString('utf8') : String(buffer);
+              return buffer instanceof Buffer
+                ? buffer.toString('utf8')
+                : String(buffer);
             })
             .join(' ');
 
-          expect(allCalls).toContain(mockServerInitResult.adminUser._id.toHexString());
+          expect(allCalls).toContain(
+            mockServerInitResult.adminUser._id.toHexString(),
+          );
           expect(allCalls).toContain(mockServerInitResult.adminUsername);
           expect(allCalls).toContain(mockServerInitResult.adminEmail);
         });
@@ -932,7 +976,9 @@ describe('DatabaseInitializationService', () => {
             .filter((call) => call[0] === 1) // stdout only
             .map((call) => {
               const buffer = call[1];
-              return buffer instanceof Buffer ? buffer.toString('utf8') : String(buffer);
+              return buffer instanceof Buffer
+                ? buffer.toString('utf8')
+                : String(buffer);
             })
             .join(' ');
 
@@ -1351,8 +1397,9 @@ describe('DatabaseInitializationService', () => {
       const connectionError = new Error('Database connection failed');
       (mockConnection as any).db = null;
 
-      const dropResult =
-        await DatabaseInitializationService.dropDatabase(mockConnection);
+      const dropResult = await DatabaseInitializationService.dropDatabase(
+        mockConnection,
+      );
       expect(dropResult).toBe(false);
     });
 
