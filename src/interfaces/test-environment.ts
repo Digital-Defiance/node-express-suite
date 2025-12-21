@@ -1,6 +1,6 @@
 import { MongoMemoryReplSet } from 'mongodb-memory-server';
-import { IServerInitResult } from './server-init-result';
 import { IApplication } from './application';
+import { IServerInitResult } from './server-init-result';
 
 export interface ITestEnvironment {
   application: IApplication;

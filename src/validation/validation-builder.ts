@@ -1,9 +1,15 @@
-import { body, ValidationChain } from 'express-validator';
-import { getSuiteCoreTranslation, SuiteCoreStringKey } from '@digitaldefiance/suite-core-lib';
 import { CoreLanguageCode } from '@digitaldefiance/i18n-lib';
+import {
+  getSuiteCoreTranslation,
+  SuiteCoreStringKey,
+} from '@digitaldefiance/suite-core-lib';
+import { body, ValidationChain } from 'express-validator';
 import { IConstants } from '../interfaces';
 
-export class FieldValidator<TLanguage extends string, TConstants extends IConstants = IConstants> {
+export class FieldValidator<
+  TLanguage extends string,
+  TConstants extends IConstants = IConstants,
+> {
   private chain: ValidationChain;
   private language?: TLanguage;
   private constants?: TConstants;
@@ -15,9 +21,10 @@ export class FieldValidator<TLanguage extends string, TConstants extends IConsta
   }
 
   matches(regex: RegExp | ((constants: TConstants) => RegExp)): this {
-    const actualRegex = typeof regex === 'function' && this.constants
-      ? regex(this.constants)
-      : regex as RegExp;
+    const actualRegex =
+      typeof regex === 'function' && this.constants
+        ? regex(this.constants)
+        : (regex as RegExp);
     this.chain = this.chain.matches(actualRegex);
     return this;
   }
@@ -42,7 +49,7 @@ export class FieldValidator<TLanguage extends string, TConstants extends IConsta
     return this;
   }
 
-  custom(validator: (value: any) => boolean): this {
+  custom(validator: (value: unknown) => boolean): this {
     this.chain = this.chain.custom(validator);
     return this;
   }
@@ -52,13 +59,17 @@ export class FieldValidator<TLanguage extends string, TConstants extends IConsta
     return this;
   }
 
-  isIn(values: any[]): this {
+  isIn(values: unknown[]): this {
     this.chain = this.chain.isIn(values);
     return this;
   }
 
   withMessage(key: SuiteCoreStringKey, params?: Record<string, string>): this {
-    const message = getSuiteCoreTranslation(key, params, this.language as CoreLanguageCode);
+    const message = getSuiteCoreTranslation(
+      key,
+      params,
+      this.language as CoreLanguageCode,
+    );
     this.chain = this.chain.withMessage(message);
     return this;
   }
@@ -68,12 +79,18 @@ export class FieldValidator<TLanguage extends string, TConstants extends IConsta
   }
 }
 
-export class ValidationBuilder<TLanguage extends string, TConstants extends IConstants = IConstants> {
+export class ValidationBuilder<
+  TLanguage extends string,
+  TConstants extends IConstants = IConstants,
+> {
   private validators: FieldValidator<TLanguage, TConstants>[] = [];
   private language?: TLanguage;
   private constants?: TConstants;
 
-  static create<T extends string, C extends IConstants = IConstants>(language?: T, constants?: C): ValidationBuilder<T, C> {
+  static create<T extends string, C extends IConstants = IConstants>(
+    language?: T,
+    constants?: C,
+  ): ValidationBuilder<T, C> {
     return new ValidationBuilder<T, C>(language, constants);
   }
 
@@ -83,12 +100,16 @@ export class ValidationBuilder<TLanguage extends string, TConstants extends ICon
   }
 
   for(field: string): FieldValidator<TLanguage, TConstants> {
-    const validator = new FieldValidator<TLanguage, TConstants>(field, this.language, this.constants);
+    const validator = new FieldValidator<TLanguage, TConstants>(
+      field,
+      this.language,
+      this.constants,
+    );
     this.validators.push(validator);
     return validator;
   }
 
   build(): ValidationChain[] {
-    return this.validators.map(v => v.build());
+    return this.validators.map((v) => v.build());
   }
 }

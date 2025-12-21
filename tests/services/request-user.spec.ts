@@ -1,6 +1,6 @@
 import { Types } from '@digitaldefiance/mongoose-types';
-import { RequestUserService } from '../../src/services/request-user';
 import { Role } from '@digitaldefiance/suite-core-lib';
+import { RequestUserService } from '../../src/services/request-user';
 
 describe('RequestUserService', () => {
   describe('makeRequestUserDTO', () => {
@@ -44,7 +44,9 @@ describe('RequestUserService', () => {
 
     it('should throw if user document missing _id', () => {
       const userDoc = { email: 'test@example.com' } as any;
-      expect(() => RequestUserService.makeRequestUserDTO(userDoc, [])).toThrow();
+      expect(() =>
+        RequestUserService.makeRequestUserDTO(userDoc, []),
+      ).toThrow();
     });
 
     it('should combine role privileges across multiple roles', () => {

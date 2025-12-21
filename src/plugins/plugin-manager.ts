@@ -7,7 +7,9 @@ export class PluginManager {
 
   register(plugin: IApplicationPlugin): void {
     if (this.initialized) {
-      throw new Error(`Cannot register plugin ${plugin.name} after initialization`);
+      throw new Error(
+        `Cannot register plugin ${plugin.name} after initialization`,
+      );
     }
     if (this.plugins.has(plugin.name)) {
       throw new Error(`Plugin ${plugin.name} already registered`);

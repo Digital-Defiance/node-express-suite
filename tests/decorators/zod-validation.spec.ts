@@ -1,6 +1,9 @@
-import { z } from 'zod';
-import { zodToExpressValidator, ZodValidate } from '../../src/decorators/zod-validation';
 import 'reflect-metadata';
+import { z } from 'zod';
+import {
+  zodToExpressValidator,
+  ZodValidate,
+} from '../../src/decorators/zod-validation';
 
 describe('Zod Validation', () => {
   describe('zodToExpressValidator', () => {
@@ -53,7 +56,11 @@ describe('Zod Validation', () => {
         testMethod() {}
       }
 
-      const metadata = Reflect.getMetadata('zodSchema', TestClass.prototype, 'testMethod');
+      const metadata = Reflect.getMetadata(
+        'zodSchema',
+        TestClass.prototype,
+        'testMethod',
+      );
       expect(metadata).toBe(schema);
     });
   });

@@ -1,5 +1,4 @@
-import { Connection, Schema, Types } from '@digitaldefiance/mongoose-types';
-import { IUsedDirectLoginTokenDocument } from '../documents/used-direct-login-token';
+import { Connection, Schema } from '@digitaldefiance/mongoose-types';
 import { BaseModelName } from '../enumerations';
 import { SchemaCollection } from '../enumerations/schema-collection';
 import { UsedDirectLoginTokenSchema } from '../schemas/used-direct-login-token';

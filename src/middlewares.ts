@@ -1,3 +1,7 @@
+import {
+  SuiteCoreStringKey,
+  TranslatableSuiteError,
+} from '@digitaldefiance/suite-core-lib';
 import cors from 'cors';
 import { randomBytes } from 'crypto';
 import {
@@ -11,7 +15,6 @@ import {
 import helmet, { HelmetOptions } from 'helmet';
 import { IncomingMessage, ServerResponse } from 'http';
 import { ISimpleCSPDef, isSimpleCSPDef } from './interfaces/csp-definition';
-import { SuiteCoreStringKey, TranslatableSuiteError } from '@digitaldefiance/suite-core-lib';
 
 export const corsOptionsDelegate = (corsWhitelist: string[]) => {
   return (
@@ -41,65 +44,69 @@ export const corsOptionsDelegate = (corsWhitelist: string[]) => {
   };
 };
 
-
 export const isHelmetOptions = (obj: any): boolean => {
   // A very basic check; in real scenarios, you might want to be more thorough
-  return obj && typeof obj === 'object' && (
-    ('contentSecurityPolicy' in obj) ||
-    ('crossOriginEmbedderPolicy' in obj) ||
-    ('crossOriginOpenerPolicy' in obj) ||
-    ('crossOriginResourcePolicy' in obj) ||
-    ('originAgentCluster' in obj) ||
-    ('referrerPolicy' in obj));
-}
+  return (
+    obj &&
+    typeof obj === 'object' &&
+    ('contentSecurityPolicy' in obj ||
+      'crossOriginEmbedderPolicy' in obj ||
+      'crossOriginOpenerPolicy' in obj ||
+      'crossOriginResourcePolicy' in obj ||
+      'originAgentCluster' in obj ||
+      'referrerPolicy' in obj)
+  );
+};
 
 export const initMiddleware = (
-    app: Application,
-    corsWhitelist: string[],
-    csp: ISimpleCSPDef | HelmetOptions,
-  ): void => {
-    // Helmet helps you secure your Express apps by setting various HTTP headers
-    // CSP nonce
-    app.use((req: Request, res: Response, next: NextFunction) => {
-      res.locals['cspNonce'] = randomBytes(32).toString('hex');
-      next();
-    });
-    if (isSimpleCSPDef(csp)) {
-      app.use(
-        helmet({
-          contentSecurityPolicy: {
-            directives: {
-              defaultSrc: ["'self'", ...csp.defaultSrc],
-              imgSrc: ["'self'", 'data:', 'blob:', ...csp.imgSrc],
-              connectSrc: ["'self'", ...csp.connectSrc],
-              scriptSrc: [
-                "'self'",
-                //"'unsafe-inline'",
-                "'strict-dynamic'",
-                (req: IncomingMessage, res: ServerResponse) =>
-                  `'nonce-${(res as Response).locals['cspNonce']}'`,
-                ...csp.scriptSrc,
-              ],
-              styleSrc: [
-                "'self'",
-                // "'unsafe-inline'",
-                ...csp.styleSrc,
-              ],
-              fontSrc: ["'self'", ...csp.fontSrc],
-              frameSrc: ["'self'", ...csp.frameSrc],
-            },
+  app: Application,
+  corsWhitelist: string[],
+  csp: ISimpleCSPDef | HelmetOptions,
+): void => {
+  // Helmet helps you secure your Express apps by setting various HTTP headers
+  // CSP nonce
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    res.locals['cspNonce'] = randomBytes(32).toString('hex');
+    next();
+  });
+  if (isSimpleCSPDef(csp)) {
+    app.use(
+      helmet({
+        contentSecurityPolicy: {
+          directives: {
+            defaultSrc: ["'self'", ...csp.defaultSrc],
+            imgSrc: ["'self'", 'data:', 'blob:', ...csp.imgSrc],
+            connectSrc: ["'self'", ...csp.connectSrc],
+            scriptSrc: [
+              "'self'",
+              //"'unsafe-inline'",
+              "'strict-dynamic'",
+              (req: IncomingMessage, res: ServerResponse) =>
+                `'nonce-${(res as Response).locals['cspNonce']}'`,
+              ...csp.scriptSrc,
+            ],
+            styleSrc: [
+              "'self'",
+              // "'unsafe-inline'",
+              ...csp.styleSrc,
+            ],
+            fontSrc: ["'self'", ...csp.fontSrc],
+            frameSrc: ["'self'", ...csp.frameSrc],
           },
-        }),
-      );
-    } else if (isHelmetOptions(csp)) {
-      app.use(helmet(csp));
-    } else {
-      throw new TranslatableSuiteError(SuiteCoreStringKey.Error_InvalidCspOrHelmetOptionsProvided);
-    }
-    // Enable CORS
-    app.use(cors(corsOptionsDelegate(corsWhitelist)));
-    // Parse incoming requests with JSON payloads
-    app.use(json());
-    // Parse incoming requests with urlencoded payloads
-    app.use(urlencoded({ extended: true }));
-  };
+        },
+      }),
+    );
+  } else if (isHelmetOptions(csp)) {
+    app.use(helmet(csp));
+  } else {
+    throw new TranslatableSuiteError(
+      SuiteCoreStringKey.Error_InvalidCspOrHelmetOptionsProvided,
+    );
+  }
+  // Enable CORS
+  app.use(cors(corsOptionsDelegate(corsWhitelist)));
+  // Parse incoming requests with JSON payloads
+  app.use(json());
+  // Parse incoming requests with urlencoded payloads
+  app.use(urlencoded({ extended: true }));
+};

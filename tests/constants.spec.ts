@@ -1,4 +1,10 @@
-import { CHECKSUM, JWT, FEC, ECIES, createExpressConstants } from '../src/constants';
+import {
+  CHECKSUM,
+  ECIES,
+  FEC,
+  JWT,
+  createExpressConstants,
+} from '../src/constants';
 
 describe('constants', () => {
   describe('CHECKSUM', () => {

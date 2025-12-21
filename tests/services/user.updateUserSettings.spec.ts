@@ -1,16 +1,19 @@
 import { Types } from '@digitaldefiance/mongoose-types';
-import { UserService } from '../../src/services/user';
-import { RoleService } from '../../src/services/role';
-import { BackupCodeService } from '../../src/services/backup-code';
-import { KeyWrappingService } from '../../src/services/key-wrapping';
+import {
+  EmailInUseError,
+  EmailTokenType,
+  UserNotFoundError,
+} from '@digitaldefiance/suite-core-lib';
+import { LocalhostConstants } from '../../src/constants';
+import { BaseModelName } from '../../src/enumerations/base-model-name';
 import { IApplication } from '../../src/interfaces/application';
 import { IEmailService } from '../../src/interfaces/email-service';
 import { ModelRegistry } from '../../src/model-registry';
-import { BaseModelName } from '../../src/enumerations/base-model-name';
+import { BackupCodeService } from '../../src/services/backup-code';
+import { KeyWrappingService } from '../../src/services/key-wrapping';
 import { RequestUserService } from '../../src/services/request-user';
-import { IUserDocument } from '../../src/documents/user';
-import { EmailInUseError, UserNotFoundError, EmailTokenType } from '@digitaldefiance/suite-core-lib';
-import { LocalhostConstants } from '../../src/constants';
+import { RoleService } from '../../src/services/role';
+import { UserService } from '../../src/services/user';
 
 describe('UserService - updateUserSettings', () => {
   let service: UserService<any, Types.ObjectId, Date, string, string>;
@@ -18,7 +21,9 @@ describe('UserService - updateUserSettings', () => {
   let mockRoleService: jest.Mocked<RoleService<Types.ObjectId, Date, any>>;
   let mockEmailService: jest.Mocked<IEmailService>;
   let mockKeyWrappingService: jest.Mocked<KeyWrappingService>;
-  let mockBackupCodeService: jest.Mocked<BackupCodeService<Types.ObjectId, Date, any, any>>;
+  let mockBackupCodeService: jest.Mocked<
+    BackupCodeService<Types.ObjectId, Date, any, any>
+  >;
   let mockUserModel: any;
   let mockEmailTokenModel: any;
   let createAndSendEmailTokenDirectSpy: jest.SpyInstance;
@@ -33,11 +38,13 @@ describe('UserService - updateUserSettings', () => {
       findOneAndUpdate: jest.fn(),
     };
 
-    jest.spyOn(ModelRegistry.instance, 'getTypedModel').mockImplementation((modelName: string) => {
-      if (modelName === BaseModelName.User) return mockUserModel;
-      if (modelName === BaseModelName.EmailToken) return mockEmailTokenModel;
-      return {};
-    });
+    jest
+      .spyOn(ModelRegistry.instance, 'getTypedModel')
+      .mockImplementation((modelName: string) => {
+        if (modelName === BaseModelName.User) return mockUserModel;
+        if (modelName === BaseModelName.EmailToken) return mockEmailTokenModel;
+        return {};
+      });
 
     mockApplication = {
       environment: {

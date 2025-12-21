@@ -1,4 +1,5 @@
 import type { SecureString } from '@digitaldefiance/ecies-lib';
+import type { Types } from '@digitaldefiance/mongoose-types';
 import type { Member as BackendMember } from '@digitaldefiance/node-ecies-lib';
 
 declare global {
@@ -6,7 +7,7 @@ declare global {
     | Map<
         string,
         {
-          member: BackendMember<any>;
+          member: BackendMember<Types.ObjectId>;
           mnemonic: SecureString;
         }
       >

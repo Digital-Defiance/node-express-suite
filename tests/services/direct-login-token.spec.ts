@@ -3,8 +3,8 @@ import {
   DirectTokenUsedError,
   FailedToUseDirectTokenError,
 } from '@digitaldefiance/suite-core-lib';
-import { DirectLoginTokenService } from '../../src/services/direct-login-token';
 import { ModelRegistry } from '../../src/model-registry';
+import { DirectLoginTokenService } from '../../src/services/direct-login-token';
 
 describe('DirectLoginTokenService', () => {
   let mockApp: any;
@@ -103,7 +103,10 @@ describe('DirectLoginTokenService', () => {
       mockModel.exists.mockReturnValue({
         session: jest.fn().mockResolvedValue(null),
       });
-      mockModel.create.mockRejectedValue({ code: 11000, message: 'Duplicate key' });
+      mockModel.create.mockRejectedValue({
+        code: 11000,
+        message: 'Duplicate key',
+      });
 
       await expect(
         DirectLoginTokenService.useToken(mockApp, userId, token),
@@ -127,7 +130,9 @@ describe('DirectLoginTokenService', () => {
     it('should work with provided session', async () => {
       const userId = new Types.ObjectId();
       const token = 'test-token';
-      const providedSession = { inTransaction: jest.fn().mockReturnValue(true) };
+      const providedSession = {
+        inTransaction: jest.fn().mockReturnValue(true),
+      };
 
       mockModel.exists.mockReturnValue({
         session: jest.fn().mockResolvedValue(null),
@@ -135,7 +140,12 @@ describe('DirectLoginTokenService', () => {
       mockModel.create.mockResolvedValue([{ userId, token }]);
 
       await expect(
-        DirectLoginTokenService.useToken(mockApp, userId, token, providedSession as any),
+        DirectLoginTokenService.useToken(
+          mockApp,
+          userId,
+          token,
+          providedSession as any,
+        ),
       ).resolves.toBeUndefined();
     });
   });

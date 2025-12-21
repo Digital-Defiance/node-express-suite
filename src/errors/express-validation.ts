@@ -10,7 +10,7 @@ export class ExpressValidationError extends TranslatableGenericError<SuiteCoreSt
   public readonly statusCode?: number = 422;
   constructor(errors: Result<ValidationError> | ValidationError[]) {
     const errorsArray = Array.isArray(errors) ? errors : errors.array();
-    const errorCount = errorsArray.length;
+    const _errorCount = errorsArray.length;
     super(
       SuiteCoreComponentId,
       SuiteCoreStringKey.Validation_ExpressValidationFailed,

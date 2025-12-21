@@ -1,8 +1,8 @@
 import mongoose, { Model } from '@digitaldefiance/mongoose-types';
+import { ServiceContainer } from '../container';
 import { IBaseDocument } from '../documents';
 import { Environment } from '../environment';
 import { IConstants } from './constants';
-import { ServiceContainer } from '../container';
 
 export interface IApplication {
   get environment(): Environment;

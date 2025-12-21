@@ -1,7 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import mongoose from '@digitaldefiance/mongoose-types';
 import { SecureString } from '@digitaldefiance/ecies-lib';
-import { Document, Model } from '@digitaldefiance/mongoose-types';
+import mongoose, { Document, Model } from '@digitaldefiance/mongoose-types';
 import { LocalhostConstants } from '../../../src/constants';
 import { ServiceContainer } from '../../../src/container';
 import { Environment } from '../../../src/environment';
@@ -25,13 +23,13 @@ export function createApplicationMock(
   } as Environment;
 
   const defaultGetModel = <T extends Document>(name: string): Model<T> =>
-    ({}) as Model<T>;
+    ({} as Model<T>);
 
   return {
     environment: mockEnvironment,
     constants: LocalhostConstants,
     disableEmailSend: true,
-    db: overrides?.db || ({} as any),
+    db: overrides?.db || ({} as typeof mongoose),
     ready: true,
     async start() {
       /* noop */
@@ -49,11 +47,11 @@ export function createApplicationMock2(
   apiDistDir: string,
   reactDistDir: string,
   serverUrl: string = 'http://localhost:3000',
-  overrides?: any,
-  envOverrides?: any,
-): any {
+  overrides?: Partial<IApplication>,
+  envOverrides?: Partial<Environment>,
+): IApplication {
   // minimal environment-like object with only fields used by constructors
-  const env: any = {
+  const env: Partial<Environment> = {
     debug: false,
     detailedDebug: false,
     serverUrl: serverUrl,
@@ -61,15 +59,12 @@ export function createApplicationMock2(
     basePath: '/',
     apiDistDir: apiDistDir,
     reactDistDir: reactDistDir,
-    // mock nested aws config to satisfy email service ctor if used indirectly
-    transactionTimeout: 1000,
-    useTransactions: false,
     ...envOverrides,
   };
 
-  const application: any = {
+  const application: IApplication = {
     get environment() {
-      return { ...env } as any;
+      return { ...env } as Environment;
     },
     get db() {
       return mongoose;
@@ -80,11 +75,15 @@ export function createApplicationMock2(
     async start() {
       /* noop */
     },
-    getModel(): any {
+    getModel<T extends Document>(): Model<T> {
       throw new Error('getModel not implemented in test mock');
     },
+    services: new ServiceContainer(),
+    plugins: new PluginManager(),
+    constants: LocalhostConstants,
+    disableEmailSend: true,
     ...(overrides as object),
-  } as any;
+  } as IApplication;
 
   return application;
 }

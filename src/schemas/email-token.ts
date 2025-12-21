@@ -1,12 +1,10 @@
-import { Schema, Types } from '@digitaldefiance/mongoose-types';
+import { Schema } from '@digitaldefiance/mongoose-types';
 import {
   EmailTokenType,
   getSuiteCoreTranslation,
-  IEmailTokenBase,
   SuiteCoreStringKey,
 } from '@digitaldefiance/suite-core-lib';
 import validator from 'validator';
-import { IEmailTokenDocument } from '../documents/email-token';
 import { BaseModelName } from '../enumerations';
 import { IConstants } from '../interfaces';
 
@@ -39,10 +37,10 @@ export interface EmailTokenSchemaOptions<
 export function createEmailTokenSchema<
   TTokenType extends string = EmailTokenType,
   TModelName extends string = BaseModelName,
-  TConstants extends IConstants = IConstants
+  TConstants extends IConstants = IConstants,
 >(
   options: EmailTokenSchemaOptions<TTokenType, TModelName> = {},
-  constants?: TConstants,
+  _constants?: TConstants,
 ): Schema {
   const {
     tokenTypeEnum = Object.values(EmailTokenType) as TTokenType[],

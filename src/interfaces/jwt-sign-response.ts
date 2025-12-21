@@ -1,9 +1,9 @@
+import { Types } from '@digitaldefiance/mongoose-types';
 import {
   ITokenRole,
   ITokenRoleDTO,
   ITokenUser,
 } from '@digitaldefiance/suite-core-lib';
-import { Types } from '@digitaldefiance/mongoose-types';
 
 export interface IJwtSignResponse<
   I = Types.ObjectId,

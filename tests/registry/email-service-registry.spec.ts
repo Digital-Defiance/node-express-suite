@@ -1,5 +1,5 @@
-import { emailServiceRegistry } from '../../src/registry/email-service-registry';
 import { IEmailService } from '../../src/interfaces/email-service';
+import { emailServiceRegistry } from '../../src/registry/email-service-registry';
 
 describe('EmailServiceRegistry', () => {
   const mockEmailService: IEmailService = {

@@ -1,10 +1,10 @@
 import { CoreLanguageCode, HandleableError } from '@digitaldefiance/i18n-lib';
+import { Error } from '@digitaldefiance/mongoose-types';
 import {
   getSuiteCoreI18nEngine,
   SuiteCoreComponentId,
   SuiteCoreStringKey,
 } from '@digitaldefiance/suite-core-lib';
-import { Error } from '@digitaldefiance/mongoose-types';
 import { IApplication } from '../interfaces';
 
 export class MongooseValidationError extends HandleableError {
@@ -18,7 +18,9 @@ export class MongooseValidationError extends HandleableError {
     language?: CoreLanguageCode,
     application?: IApplication,
   ) {
-    const coreEngine = getSuiteCoreI18nEngine(application ? { constants: application.constants } : undefined);
+    const coreEngine = getSuiteCoreI18nEngine(
+      application ? { constants: application.constants } : undefined,
+    );
     super(
       new Error(
         `${coreEngine.translate(

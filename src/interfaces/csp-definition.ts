@@ -2,37 +2,33 @@ import { HelmetOptions } from 'helmet';
 import { IncomingMessage, ServerResponse } from 'http';
 
 export interface ISimpleCSPDef {
-      defaultSrc: (
-        | string
-        | ((req: IncomingMessage, res: ServerResponse) => string)
-      )[];
-      imgSrc: (
-        | string
-        | ((req: IncomingMessage, res: ServerResponse) => string)
-      )[];
-      connectSrc: (
-        | string
-        | ((req: IncomingMessage, res: ServerResponse) => string)
-      )[];
-      scriptSrc: (
-        | string
-        | ((req: IncomingMessage, res: ServerResponse) => string)
-      )[];
-      styleSrc: (
-        | string
-        | ((req: IncomingMessage, res: ServerResponse) => string)
-      )[];
-      fontSrc: (
-        | string
-        | ((req: IncomingMessage, res: ServerResponse) => string)
-      )[];
-      frameSrc: (
-        | string
-        | ((req: IncomingMessage, res: ServerResponse) => string)
-      )[];
-    };
+  defaultSrc: (
+    | string
+    | ((req: IncomingMessage, res: ServerResponse) => string)
+  )[];
+  imgSrc: (string | ((req: IncomingMessage, res: ServerResponse) => string))[];
+  connectSrc: (
+    | string
+    | ((req: IncomingMessage, res: ServerResponse) => string)
+  )[];
+  scriptSrc: (
+    | string
+    | ((req: IncomingMessage, res: ServerResponse) => string)
+  )[];
+  styleSrc: (
+    | string
+    | ((req: IncomingMessage, res: ServerResponse) => string)
+  )[];
+  fontSrc: (string | ((req: IncomingMessage, res: ServerResponse) => string))[];
+  frameSrc: (
+    | string
+    | ((req: IncomingMessage, res: ServerResponse) => string)
+  )[];
+}
 
-export const isSimpleCSPDef = (obj: ISimpleCSPDef | HelmetOptions): obj is ISimpleCSPDef => {
+export const isSimpleCSPDef = (
+  obj: ISimpleCSPDef | HelmetOptions,
+): obj is ISimpleCSPDef => {
   return (
     obj &&
     'defaultSrc' in obj &&
@@ -50,4 +46,4 @@ export const isSimpleCSPDef = (obj: ISimpleCSPDef | HelmetOptions): obj is ISimp
     Array.isArray(obj.fontSrc) &&
     Array.isArray(obj.frameSrc)
   );
-}
+};

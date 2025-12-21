@@ -1,13 +1,13 @@
+import { LanguageCodes } from '@digitaldefiance/i18n-lib';
+import { SuiteCoreStringKey } from '@digitaldefiance/suite-core-lib';
+import { ApplicationBuilder } from '../../src/builders/application-builder';
 import { ServiceContainer } from '../../src/container/service-container';
-import { ValidationBuilder } from '../../src/validation/validation-builder';
+import { IConstants } from '../../src/interfaces';
 import { Pipeline } from '../../src/pipeline/pipeline-builder';
+import { PluginManager } from '../../src/plugins/plugin-manager';
 import { ResponseBuilder } from '../../src/responses/response-builder';
 import { TransactionManager } from '../../src/transactions/transaction-manager';
-import { PluginManager } from '../../src/plugins/plugin-manager';
-import { ApplicationBuilder } from '../../src/builders/application-builder';
-import { SuiteCoreStringKey } from '@digitaldefiance/suite-core-lib';
-import { LanguageCodes } from '@digitaldefiance/i18n-lib';
-import { IConstants } from '../../src/interfaces';
+import { ValidationBuilder } from '../../src/validation/validation-builder';
 
 describe('Refactor Integration Tests', () => {
   describe('ServiceContainer + ValidationBuilder', () => {
@@ -18,17 +18,20 @@ describe('Refactor Integration Tests', () => {
         passwordRegex: /^.{8,}$/,
         emailRegex: /^.+@.+$/,
       };
-      
+
       container.register('constants', () => constants);
-      
+
       const retrievedConstants = container.get<IConstants>('constants');
-      const builder = ValidationBuilder.create(LanguageCodes.EN_US, retrievedConstants);
-      
+      const builder = ValidationBuilder.create(
+        LanguageCodes.EN_US,
+        retrievedConstants,
+      );
+
       builder
         .for('username')
         .matches((c) => c.usernameRegex)
         .withMessage(SuiteCoreStringKey.Validation_InvalidUsername);
-      
+
       const chains = builder.build();
       expect(chains).toHaveLength(1);
     });
@@ -37,19 +40,19 @@ describe('Refactor Integration Tests', () => {
   describe('Pipeline + ValidationBuilder', () => {
     it('should combine validation with middleware pipeline', () => {
       const builder = ValidationBuilder.create(LanguageCodes.EN_US);
-      
+
       builder
         .for('email')
         .isEmail()
         .withMessage(SuiteCoreStringKey.Validation_InvalidUsername);
-      
+
       const validationChains = builder.build();
-      
+
       const pipeline = Pipeline.create()
         .use((req, res, next) => next())
         .use(validationChains[0] as any)
         .use((req, res, next) => next());
-      
+
       const handlers = pipeline.build();
       expect(handlers).toHaveLength(3);
     });
@@ -59,23 +62,24 @@ describe('Refactor Integration Tests', () => {
     it('should handle transaction results with response builder', async () => {
       const mockConnection = {
         startSession: jest.fn().mockResolvedValue({
-          withTransaction: jest.fn().mockImplementation(async (cb) => await cb()),
+          withTransaction: jest
+            .fn()
+            .mockImplementation(async (cb) => await cb()),
           endSession: jest.fn(),
         }),
       } as any;
-      
+
       const manager = new TransactionManager(mockConnection, true);
-      
+
       const result = await manager.execute(async () => {
         return { user: { id: 1, username: 'test' } };
       });
-      
-      const response = ResponseBuilder
-        .created()
+
+      const response = ResponseBuilder.created()
         .message(SuiteCoreStringKey.Registration_Success)
         .data(result)
         .build();
-      
+
       expect(response.statusCode).toBe(201);
       expect(response.response.user).toEqual({ id: 1, username: 'test' });
     });
@@ -85,17 +89,17 @@ describe('Refactor Integration Tests', () => {
     it('should register services via plugin', async () => {
       const container = new ServiceContainer();
       const pluginManager = new PluginManager();
-      
+
       const servicePlugin = {
         name: 'service-plugin',
         init: async () => {
           container.register('testService', () => ({ value: 42 }));
         },
       };
-      
+
       pluginManager.register(servicePlugin);
       await pluginManager.initAll({} as any);
-      
+
       expect(container.has('testService')).toBe(true);
       expect(container.get('testService').value).toBe(42);
     });
@@ -109,30 +113,32 @@ describe('Refactor Integration Tests', () => {
       process.env.MNEMONIC_ENCRYPTION_KEY = 'b'.repeat(64);
       process.env.API_DIST_DIR = '/tmp/test-api-dist';
       process.env.REACT_DIST_DIR = '/tmp/test-react-dist';
-      if (!fs.existsSync('/tmp/test-api-dist')) fs.mkdirSync('/tmp/test-api-dist', { recursive: true });
-      if (!fs.existsSync('/tmp/test-react-dist')) fs.mkdirSync('/tmp/test-react-dist', { recursive: true });
-      
+      if (!fs.existsSync('/tmp/test-api-dist'))
+        fs.mkdirSync('/tmp/test-api-dist', { recursive: true });
+      if (!fs.existsSync('/tmp/test-react-dist'))
+        fs.mkdirSync('/tmp/test-react-dist', { recursive: true });
+
       const { Environment } = require('../../src/environment');
       const { BaseRouter } = require('../../src/routers/base');
-      
+
       const env = new Environment(undefined, true);
       const constants: IConstants = {
         usernameRegex: /^[a-z]+$/,
         passwordRegex: /^.{8,}$/,
         emailRegex: /^.+@.+$/,
       };
-      
+
       const app = new ApplicationBuilder()
         .withEnvironment(env)
         .withApiRouter((app) => new BaseRouter(app))
         .withSchemaMap(() => ({}))
         .withDatabaseInit(
           async () => ({ success: true, data: {} }),
-          () => 'hash'
+          () => 'hash',
         )
         .withConstants(constants)
         .build();
-      
+
       expect(app).toBeDefined();
       expect(app.services).toBeInstanceOf(ServiceContainer);
     });
@@ -146,42 +152,43 @@ describe('Refactor Integration Tests', () => {
         passwordRegex: /^.{8,}$/,
         emailRegex: /^.+@.+$/,
       };
-      
+
       container.register('constants', () => constants);
-      
-      const validator = ValidationBuilder.create(LanguageCodes.EN_US, constants);
+
+      const validator = ValidationBuilder.create(
+        LanguageCodes.EN_US,
+        constants,
+      );
       validator
         .for('username')
         .matches((c) => c.usernameRegex)
         .withMessage(SuiteCoreStringKey.Validation_InvalidUsername);
-      
-      const pipeline = Pipeline.create()
-        .use((req, res, next) => {
-          (req as any).validated = true;
-          next();
-        });
-      
+
+      const pipeline = Pipeline.create().use((req, res, next) => {
+        (req as any).validated = true;
+        next();
+      });
+
       const mockConnection = {
         startSession: jest.fn().mockResolvedValue({
-          withTransaction: jest.fn().mockImplementation(async (cb) => 
-            await cb({ id: 'session-1' })
-          ),
+          withTransaction: jest
+            .fn()
+            .mockImplementation(async (cb) => await cb({ id: 'session-1' })),
           endSession: jest.fn(),
         }),
       } as any;
-      
+
       const txManager = new TransactionManager(mockConnection, true);
-      
+
       const userData = await txManager.execute(async () => {
         return { id: 1, username: 'testuser' };
       });
-      
-      const response = ResponseBuilder
-        .created()
+
+      const response = ResponseBuilder.created()
         .message(SuiteCoreStringKey.Registration_Success)
         .data({ user: userData })
         .build();
-      
+
       expect(response.statusCode).toBe(201);
       expect(response.response.user.username).toBe('testuser');
     });
@@ -196,7 +203,7 @@ describe('Refactor Integration Tests', () => {
         emailRegex: /^.+@.+$/,
       };
       container.register('constants', () => constants);
-      
+
       const pluginManager = new PluginManager();
       pluginManager.register({
         name: 'logger',
@@ -207,16 +214,16 @@ describe('Refactor Integration Tests', () => {
         },
       });
       await pluginManager.initAll({} as any);
-      
+
       const validator = ValidationBuilder.create(
         LanguageCodes.EN_US,
-        container.get('constants')
+        container.get('constants'),
       );
       validator
         .for('username')
         .matches((c) => c.usernameRegex)
         .withMessage(SuiteCoreStringKey.Validation_InvalidUsername);
-      
+
       const pipeline = Pipeline.create()
         .use((req, res, next) => {
           (req as any).timestamp = Date.now();
@@ -226,30 +233,29 @@ describe('Refactor Integration Tests', () => {
           (req as any).validated = true;
           next();
         });
-      
+
       const mockConnection = {
         startSession: jest.fn().mockResolvedValue({
-          withTransaction: jest.fn().mockImplementation(async (cb) => 
-            await cb({ id: 'tx-1' })
-          ),
+          withTransaction: jest
+            .fn()
+            .mockImplementation(async (cb) => await cb({ id: 'tx-1' })),
           endSession: jest.fn(),
         }),
       } as any;
-      
+
       const txManager = new TransactionManager(mockConnection, true);
       const userData = await txManager.execute(async () => ({
         id: 1,
         username: 'testuser',
         email: 'test@example.com',
       }));
-      
-      const response = ResponseBuilder
-        .created()
+
+      const response = ResponseBuilder.created()
         .message(SuiteCoreStringKey.Registration_Success)
         .data({ user: userData })
         .headers({ 'X-Request-Id': 'req-123' })
         .build();
-      
+
       expect(container.has('constants')).toBe(true);
       expect(container.has('logger')).toBe(true);
       expect(validator.build()).toHaveLength(1);

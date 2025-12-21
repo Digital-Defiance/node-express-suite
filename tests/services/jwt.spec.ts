@@ -1,10 +1,10 @@
 import { LanguageCodes } from '@digitaldefiance/i18n-lib';
-import { Role } from '@digitaldefiance/suite-core-lib';
 import { Types } from '@digitaldefiance/mongoose-types';
+import { Role } from '@digitaldefiance/suite-core-lib';
+import { LocalhostConstants } from '../../src/constants';
 import { IUserDocument } from '../../src/documents/user';
 import { IApplication } from '../../src/interfaces/application';
 import { IEnvironment } from '../../src/interfaces/environment';
-import { LocalhostConstants } from '../../src/constants';
 import { JwtService } from '../../src/services/jwt';
 import { RoleService } from '../../src/services/role';
 

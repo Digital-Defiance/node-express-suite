@@ -101,6 +101,10 @@ describe('DatabaseInitializationService', () => {
             [SuiteCoreStringKey.Common_Mnemonic]: 'Mnemonic',
             [SuiteCoreStringKey.Common_BackupCodes]: 'Backup Codes',
             [SuiteCoreStringKey.Common_PublicKey]: 'Public Key',
+            '{{SuiteCoreStringKey.Admin_CredentialsWrittenToEnv}}':
+              'Credentials written to {path}',
+            '{{SuiteCoreStringKey.Admin_DroppingDatabase}}':
+              'Dropping database',
           };
           const template = translations[key] || key;
           if (!variables) return template;

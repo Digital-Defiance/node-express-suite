@@ -1,9 +1,9 @@
+import { Types } from '@digitaldefiance/mongoose-types';
 import {
   IRequestUserDTO,
   IRoleDTO,
   ITokenRole,
 } from '@digitaldefiance/suite-core-lib';
-import { Types } from '@digitaldefiance/mongoose-types';
 import { IUserDocument } from '../documents';
 import { IRequestUserBackendObject } from '../interfaces/backend-objects/request-user';
 import { convertStringToGenericId } from '../types/id-converters';
@@ -11,7 +11,7 @@ import { RoleService } from './role';
 
 export class RequestUserService<
   I extends string | Types.ObjectId,
-  TTokenRole extends ITokenRole<I>,
+  _TTokenRole extends ITokenRole<I>,
 > {
   /**
    * Given a user document and an array of role documents, create the IRequestUser
@@ -26,7 +26,9 @@ export class RequestUserService<
   >(
     userDoc:
       | IUserDocument<S, I>
-      | (Pick<IUserDocument<S, I>, keyof IUserDocument<S, I>> & { _id: any }),
+      | (Pick<IUserDocument<S, I>, keyof IUserDocument<S, I>> & {
+          _id: Types.ObjectId | string;
+        }),
     roles: TTokenRole[],
   ): TRequestUserDTO {
     if (!userDoc._id) {

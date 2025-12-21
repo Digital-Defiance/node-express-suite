@@ -1,5 +1,5 @@
-import { MongoMemoryServer } from 'mongodb-memory-server';
 import mongoose, { Connection } from '@digitaldefiance/mongoose-types';
+import { MongoMemoryServer } from 'mongodb-memory-server';
 
 let mongoServer: MongoMemoryServer | undefined;
 let connection: Connection | undefined;
@@ -14,10 +14,10 @@ export async function connectMemoryDB(): Promise<Connection> {
 
   mongoServer = await MongoMemoryServer.create();
   const uri = mongoServer.getUri();
-  
+
   await mongoose.connect(uri);
   connection = mongoose.connection;
-  
+
   return connection;
 }
 
@@ -30,7 +30,7 @@ export async function disconnectMemoryDB(): Promise<void> {
     await mongoose.disconnect();
     connection = undefined;
   }
-  
+
   if (mongoServer) {
     await mongoServer.stop();
     mongoServer = undefined;

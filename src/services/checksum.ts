@@ -1,4 +1,3 @@
-import { IChecksumConsts } from '../interfaces/checksum-consts';
 import {
   ChecksumBuffer,
   ChecksumString,
@@ -7,6 +6,7 @@ import { createHash } from 'crypto';
 import { promises as fs } from 'fs';
 import { CHECKSUM } from '../constants';
 import { IChecksumConfig } from '../interfaces/checksum-config';
+import { IChecksumConsts } from '../interfaces/checksum-consts';
 
 export class ChecksumService {
   private readonly config: IChecksumConfig;

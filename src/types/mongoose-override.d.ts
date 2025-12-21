@@ -1,1 +1,1 @@
-/// <reference path="../../../../node_modules/@digitaldefiance/mongoose-types/src/document.d.ts" />
+// Type overrides for mongoose - intentionally empty

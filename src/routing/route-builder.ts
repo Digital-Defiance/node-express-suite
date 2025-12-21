@@ -6,7 +6,7 @@ export class RouteBuilder<TLanguage extends string = string> {
   private config: {
     method?: 'get' | 'post' | 'put' | 'delete' | 'patch';
     path?: string;
-    handler?: Function;
+    handler?: RequestHandler;
     auth?: boolean;
     cryptoAuth?: boolean;
     validation?: ValidationChain[] | ((lang: TLanguage) => ValidationChain[]);
@@ -61,7 +61,9 @@ export class RouteBuilder<TLanguage extends string = string> {
     return this;
   }
 
-  validate(validation: ValidationChain[] | ((lang: TLanguage) => ValidationChain[])): this {
+  validate(
+    validation: ValidationChain[] | ((lang: TLanguage) => ValidationChain[]),
+  ): this {
     this.config.validation = validation;
     return this;
   }
@@ -87,7 +89,7 @@ export class RouteBuilder<TLanguage extends string = string> {
     return this;
   }
 
-  handle(handler: Function): RouteConfig<TLanguage> {
+  handle(handler: RequestHandler): RouteConfig<TLanguage> {
     if (!this.config.method || !this.config.path) {
       throw new Error('Method and path must be set before calling handle()');
     }
@@ -112,7 +114,7 @@ export class RouteBuilder<TLanguage extends string = string> {
 export interface RouteConfig<TLanguage extends string = string> {
   method: 'get' | 'post' | 'put' | 'delete' | 'patch';
   path: string;
-  handler: Function;
+  handler: RequestHandler;
   options: {
     auth?: boolean;
     cryptoAuth?: boolean;

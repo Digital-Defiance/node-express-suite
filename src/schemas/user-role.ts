@@ -1,6 +1,4 @@
-import { Schema, Types } from '@digitaldefiance/mongoose-types';
-import { IUserRoleBase } from '@digitaldefiance/suite-core-lib';
-import { IUserRoleDocument } from '../documents/user-role';
+import { Schema } from '@digitaldefiance/mongoose-types';
 import { BaseModelName } from '../enumerations';
 import { IConstants } from '../interfaces';
 
@@ -23,10 +21,10 @@ export interface UserRoleSchemaOptions<
  */
 export function createUserRoleSchema<
   TModelName extends string = BaseModelName,
-  TConstants extends IConstants = IConstants
+  TConstants extends IConstants = IConstants,
 >(
   options: UserRoleSchemaOptions<TModelName> = {},
-  constants?: TConstants
+  _constants?: TConstants,
 ): Schema {
   const {
     userModelName = BaseModelName.User as TModelName,

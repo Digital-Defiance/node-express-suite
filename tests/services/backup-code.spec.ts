@@ -303,12 +303,18 @@ describe('BackupCode', () => {
       });
 
       it('should lazily initialize system user via SystemUserService', () => {
-        const SystemUserService = require('../../src/services/system-user').SystemUserService;
-        const spy = jest.spyOn(SystemUserService, 'getSystemUser').mockReturnValue(mockSystemUser);
-        
+        const SystemUserService =
+          require('../../src/services/system-user').SystemUserService;
+        const spy = jest
+          .spyOn(SystemUserService, 'getSystemUser')
+          .mockReturnValue(mockSystemUser);
+
         const user = service['getSystemUser']();
-        
-        expect(spy).toHaveBeenCalledWith(mockApp.environment, mockApp.constants);
+
+        expect(spy).toHaveBeenCalledWith(
+          mockApp.environment,
+          mockApp.constants,
+        );
         expect(user).toBe(mockSystemUser);
         spy.mockRestore();
       });
@@ -335,26 +341,32 @@ describe('BackupCode', () => {
 
         const codes = [code];
         const formatted = BackupCodeString.formatBackupCode(codeStr);
-        
+
         const result = service.useBackupCodeV1(codes, formatted);
-        
+
         expect(result.code).toBe(code);
         expect(result.newCodesArray).toHaveLength(0);
       });
 
       it('should throw InvalidBackupCodeError for invalid format', () => {
-        expect(() => service.useBackupCodeV1([], 'invalid')).toThrow(InvalidBackupCodeError);
+        expect(() => service.useBackupCodeV1([], 'invalid')).toThrow(
+          InvalidBackupCodeError,
+        );
       });
 
       it('should throw InvalidBackupCodeError when no matching code found', () => {
-        const codes = [{
-          version: BackupCode.BackupCodeVersion,
-          checksumSalt: randomBytes(16).toString('hex'),
-          checksum: randomBytes(32).toString('hex'),
-          encrypted: 'data',
-        }];
-        
-        expect(() => service.useBackupCodeV1(codes, 'b'.repeat(32))).toThrow(InvalidBackupCodeError);
+        const codes = [
+          {
+            version: BackupCode.BackupCodeVersion,
+            checksumSalt: randomBytes(16).toString('hex'),
+            checksum: randomBytes(32).toString('hex'),
+            encrypted: 'data',
+          },
+        ];
+
+        expect(() => service.useBackupCodeV1(codes, 'b'.repeat(32))).toThrow(
+          InvalidBackupCodeError,
+        );
       });
     });
 
@@ -368,35 +380,41 @@ describe('BackupCode', () => {
           encrypted: 'data',
         };
         const salt = Buffer.from(code.checksumSalt, 'hex');
-        code.checksum = (BackupCode as any).hkdfSha256(
-          Buffer.from(codeStr, 'utf8'),
-          salt,
-          Buffer.from('backup-checksum'),
-          32,
-        ).toString('hex');
+        code.checksum = (BackupCode as any)
+          .hkdfSha256(
+            Buffer.from(codeStr, 'utf8'),
+            salt,
+            Buffer.from('backup-checksum'),
+            32,
+          )
+          .toString('hex');
 
         const spy = jest.spyOn(service, 'useBackupCodeV1');
         service.useBackupCode([code], codeStr);
-        
+
         expect(spy).toHaveBeenCalled();
       });
 
       it('should throw InvalidBackupCodeVersionError for unknown version', () => {
-        const codes = [{
-          version: '9.9.9',
-          checksumSalt: '00',
-          checksum: '00',
-          encrypted: '00',
-        }];
-        
-        expect(() => service.useBackupCode(codes as any, 'd'.repeat(32))).toThrow();
+        const codes = [
+          {
+            version: '9.9.9',
+            checksumSalt: '00',
+            checksum: '00',
+            encrypted: '00',
+          },
+        ];
+
+        expect(() =>
+          service.useBackupCode(codes as any, 'd'.repeat(32)),
+        ).toThrow();
       });
     });
 
     describe('recoverKeyWithBackupCodeV1', () => {
       it('should recover key without new password', async () => {
         service.setSystemUser(mockSystemUser);
-        
+
         const userDoc = {
           _id: 'user123',
           username: 'testuser',
@@ -416,19 +434,24 @@ describe('BackupCode', () => {
           encrypted: 'encrypted-key',
         };
         const salt = Buffer.from(code.checksumSalt, 'hex');
-        code.checksum = (BackupCode as any).hkdfSha256(
-          Buffer.from(codeStr, 'utf8'),
-          salt,
-          Buffer.from('backup-checksum'),
-          32,
-        ).toString('hex');
+        code.checksum = (BackupCode as any)
+          .hkdfSha256(
+            Buffer.from(codeStr, 'utf8'),
+            salt,
+            Buffer.from('backup-checksum'),
+            32,
+          )
+          .toString('hex');
         userDoc.backupCodes = [code];
 
         // Mock withTransaction to execute callback immediately
         service.withTransaction = jest.fn(async (fn) => await fn(undefined));
 
-        const result = await service.recoverKeyWithBackupCodeV1(userDoc, codeStr);
-        
+        const result = await service.recoverKeyWithBackupCodeV1(
+          userDoc,
+          codeStr,
+        );
+
         expect(result.userDoc).toBe(userDoc);
         expect(result.user).toBeDefined();
         expect(result.codeCount).toBe(0);
@@ -446,25 +469,29 @@ describe('BackupCode', () => {
           encrypted: 'data',
         };
         const salt = Buffer.from(code.checksumSalt, 'hex');
-        code.checksum = (BackupCode as any).hkdfSha256(
-          Buffer.from(codeStr, 'utf8'),
-          salt,
-          Buffer.from('backup-checksum'),
-          32,
-        ).toString('hex');
+        code.checksum = (BackupCode as any)
+          .hkdfSha256(
+            Buffer.from(codeStr, 'utf8'),
+            salt,
+            Buffer.from('backup-checksum'),
+            32,
+          )
+          .toString('hex');
 
         const userDoc = {
           backupCodes: [code],
         };
 
-        const spy = jest.spyOn(service, 'recoverKeyWithBackupCodeV1').mockResolvedValue({
-          userDoc,
-          user: {},
-          codeCount: 0,
-        });
+        const spy = jest
+          .spyOn(service, 'recoverKeyWithBackupCodeV1')
+          .mockResolvedValue({
+            userDoc,
+            user: {},
+            codeCount: 0,
+          });
 
         await service.recoverKeyWithBackupCode(userDoc, codeStr);
-        
+
         expect(spy).toHaveBeenCalled();
       });
     });
@@ -481,14 +508,17 @@ describe('BackupCode', () => {
         const users = [
           {
             _id: 'user1',
-            backupCodes: [{
-              version: BackupCode.BackupCodeVersion,
-              encrypted: Buffer.alloc(100).toString('hex'),
-            }],
+            backupCodes: [
+              {
+                version: BackupCode.BackupCodeVersion,
+                encrypted: Buffer.alloc(100).toString('hex'),
+              },
+            ],
           },
         ];
 
-        const fetchBatch = jest.fn()
+        const fetchBatch = jest
+          .fn()
           .mockResolvedValueOnce(users)
           .mockResolvedValueOnce([]);
         const saveUser = jest.fn().mockResolvedValue(undefined);
@@ -505,18 +535,27 @@ describe('BackupCode', () => {
       });
 
       it('should call onProgress callback if provided', async () => {
-        const oldSystem = { decryptData: jest.fn().mockReturnValue(Buffer.from('data')) };
-        const newSystem = { encryptData: jest.fn().mockReturnValue(Buffer.from('data')) };
-        
-        const users = [{
-          _id: 'user1',
-          backupCodes: [{
-            version: BackupCode.BackupCodeVersion,
-            encrypted: Buffer.alloc(100).toString('hex'),
-          }],
-        }];
-        
-        const fetchBatch = jest.fn()
+        const oldSystem = {
+          decryptData: jest.fn().mockReturnValue(Buffer.from('data')),
+        };
+        const newSystem = {
+          encryptData: jest.fn().mockReturnValue(Buffer.from('data')),
+        };
+
+        const users = [
+          {
+            _id: 'user1',
+            backupCodes: [
+              {
+                version: BackupCode.BackupCodeVersion,
+                encrypted: Buffer.alloc(100).toString('hex'),
+              },
+            ],
+          },
+        ];
+
+        const fetchBatch = jest
+          .fn()
           .mockResolvedValueOnce(users)
           .mockResolvedValueOnce([]);
         const saveUser = jest.fn().mockResolvedValue(undefined);

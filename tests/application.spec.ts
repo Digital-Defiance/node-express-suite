@@ -1,20 +1,25 @@
+import { Connection } from '@digitaldefiance/mongoose-types';
 import { Application } from '../src/application';
 import { BaseApplication } from '../src/application-base';
-import { Environment } from '../src/environment';
-import { DatabaseInitializationService } from '../src/services/database-initialization';
-import { IServerInitResult, IConstants } from '../src/interfaces';
 import { LocalhostConstants } from '../src/constants';
-import { BaseRouter } from '../src/routers/base';
+import { Environment } from '../src/environment';
+import { IConstants, IServerInitResult } from '../src/interfaces';
 import { AppRouter } from '../src/routers/app';
-import { Connection } from '@digitaldefiance/mongoose-types';
+import { BaseRouter } from '../src/routers/base';
+import { DatabaseInitializationService } from '../src/services/database-initialization';
 import { SchemaMap } from '../src/types';
-import { IBaseDocument } from '../src/documents/base';
 
 // Mock dependencies
 jest.mock('../src/services/database-initialization');
 
 describe('Application', () => {
-  let application: Application<IServerInitResult, any, Environment, IConstants, AppRouter>;
+  let application: Application<
+    IServerInitResult,
+    any,
+    Environment,
+    IConstants,
+    AppRouter
+  >;
   let env: Environment;
   let mockApiRouter: BaseRouter;
   let mockSchemaMap: SchemaMap<any>;
@@ -102,7 +107,9 @@ describe('Application', () => {
 
     // Mock the DatabaseInitializationService.printServerInitResults
     jest.clearAllMocks();
-    jest.spyOn(DatabaseInitializationService, 'printServerInitResults').mockImplementation(() => {});
+    jest
+      .spyOn(DatabaseInitializationService, 'printServerInitResults')
+      .mockImplementation(() => {});
   });
 
   afterEach(async () => {
@@ -144,28 +151,35 @@ describe('Application', () => {
     it('should start without calling initializeDevDatabase', async () => {
       // Clear previous mock calls
       jest.clearAllMocks();
-      
+
       // Spy on the protected method
-      const initDevDbSpy = jest.spyOn(application as any, 'initializeDevDatabase');
-      
+      const initDevDbSpy = jest.spyOn(
+        application as any,
+        'initializeDevDatabase',
+      );
+
       // Mock the base start method to avoid actual database connection
-      jest.spyOn(BaseApplication.prototype as any, 'start').mockResolvedValue(undefined);
-      
+      jest
+        .spyOn(BaseApplication.prototype as any, 'start')
+        .mockResolvedValue(undefined);
+
       // Mock express app listen
-      const listenSpy = jest.spyOn(application.expressApp, 'listen').mockImplementation(
-        ((port: any, host: any, callback: any) => {
+      const listenSpy = jest
+        .spyOn(application.expressApp, 'listen')
+        .mockImplementation(((port: any, host: any, callback: any) => {
           callback();
           return {
             close: jest.fn(),
             closeAllConnections: jest.fn(),
           };
-        }) as any
-      );
+        }) as any);
 
       await application.start();
 
       expect(initDevDbSpy).not.toHaveBeenCalled();
-      expect(DatabaseInitializationService.printServerInitResults).not.toHaveBeenCalled();
+      expect(
+        DatabaseInitializationService.printServerInitResults,
+      ).not.toHaveBeenCalled();
       expect(application.ready).toBe(true);
 
       listenSpy.mockRestore();
@@ -246,7 +260,7 @@ describe('Application', () => {
     it('should call initializeDevDatabase when devDatabase is set', async () => {
       // Clear previous mock calls
       jest.clearAllMocks();
-      
+
       // Mock the necessary methods
       const mockInitResults: IServerInitResult = {
         systemUser: {
@@ -278,8 +292,10 @@ describe('Application', () => {
         .mockResolvedValue(mockInitResults);
 
       // Mock setupDevDatabase to provide a devDatabase instance
-      jest.spyOn(application as any, 'setupDevDatabase').mockResolvedValue('mongodb://localhost/test');
-      
+      jest
+        .spyOn(application as any, 'setupDevDatabase')
+        .mockResolvedValue('mongodb://localhost/test');
+
       // Mock the devDatabase getter to return a truthy value
       Object.defineProperty(application, 'devDatabase', {
         get: jest.fn(() => ({ getUri: () => 'mongodb://localhost/test' })),
@@ -287,27 +303,27 @@ describe('Application', () => {
       });
 
       // Mock the base start method
-      jest.spyOn(BaseApplication.prototype as any, 'start').mockResolvedValue(undefined);
+      jest
+        .spyOn(BaseApplication.prototype as any, 'start')
+        .mockResolvedValue(undefined);
 
       // Mock express app listen
-      const listenSpy = jest.spyOn(application.expressApp, 'listen').mockImplementation(
-        ((port: any, host: any, callback: any) => {
+      const listenSpy = jest
+        .spyOn(application.expressApp, 'listen')
+        .mockImplementation(((port: any, host: any, callback: any) => {
           callback();
           return {
             close: jest.fn(),
             closeAllConnections: jest.fn(),
           };
-        }) as any
-      );
+        }) as any);
 
       await application.start();
 
       expect(initDevDbSpy).toHaveBeenCalled();
-      expect(DatabaseInitializationService.printServerInitResults).toHaveBeenCalledWith(
-        mockInitResults,
-        false,
-        expect.any(Function)
-      );
+      expect(
+        DatabaseInitializationService.printServerInitResults,
+      ).toHaveBeenCalledWith(mockInitResults, false, expect.any(Function));
       expect(application.ready).toBe(true);
 
       listenSpy.mockRestore();
@@ -316,7 +332,7 @@ describe('Application', () => {
     it('should print server init results with verbose flag false', async () => {
       // Clear previous mock calls
       jest.clearAllMocks();
-      
+
       const mockInitResults: IServerInitResult = {
         systemUser: {
           _id: 'system-id',
@@ -344,30 +360,34 @@ describe('Application', () => {
       jest
         .spyOn(application as any, 'initializeDevDatabase')
         .mockResolvedValue(mockInitResults);
-      jest.spyOn(application as any, 'setupDevDatabase').mockResolvedValue('mongodb://localhost/test');
+      jest
+        .spyOn(application as any, 'setupDevDatabase')
+        .mockResolvedValue('mongodb://localhost/test');
       Object.defineProperty(application, 'devDatabase', {
         get: jest.fn(() => ({ getUri: () => 'mongodb://localhost/test' })),
         configurable: true,
       });
-      jest.spyOn(BaseApplication.prototype as any, 'start').mockResolvedValue(undefined);
-      const listenSpy = jest.spyOn(application.expressApp, 'listen').mockImplementation(
-        ((port: any, host: any, callback: any) => {
+      jest
+        .spyOn(BaseApplication.prototype as any, 'start')
+        .mockResolvedValue(undefined);
+      const listenSpy = jest
+        .spyOn(application.expressApp, 'listen')
+        .mockImplementation(((port: any, host: any, callback: any) => {
           callback();
           return {
             close: jest.fn(),
             closeAllConnections: jest.fn(),
           };
-        }) as any
-      );
+        }) as any);
 
       await application.start();
 
-      expect(DatabaseInitializationService.printServerInitResults).toHaveBeenCalledTimes(1);
-      expect(DatabaseInitializationService.printServerInitResults).toHaveBeenCalledWith(
-        mockInitResults,
-        false,
-        expect.any(Function)
-      );
+      expect(
+        DatabaseInitializationService.printServerInitResults,
+      ).toHaveBeenCalledTimes(1);
+      expect(
+        DatabaseInitializationService.printServerInitResults,
+      ).toHaveBeenCalledWith(mockInitResults, false, expect.any(Function));
 
       listenSpy.mockRestore();
     }, 10000); // Increase timeout
@@ -375,26 +395,34 @@ describe('Application', () => {
     it('should handle initializeDevDatabase errors', async () => {
       // Clear previous mock calls
       jest.clearAllMocks();
-      
+
       const mockError = new Error('Database initialization failed');
 
       jest
         .spyOn(application as any, 'initializeDevDatabase')
         .mockRejectedValue(mockError);
-      jest.spyOn(application as any, 'setupDevDatabase').mockResolvedValue('mongodb://localhost/test');
+      jest
+        .spyOn(application as any, 'setupDevDatabase')
+        .mockResolvedValue('mongodb://localhost/test');
       Object.defineProperty(application, 'devDatabase', {
         get: jest.fn(() => ({ getUri: () => 'mongodb://localhost/test' })),
         configurable: true,
       });
-      jest.spyOn(BaseApplication.prototype as any, 'start').mockResolvedValue(undefined);
+      jest
+        .spyOn(BaseApplication.prototype as any, 'start')
+        .mockResolvedValue(undefined);
 
       // Set NODE_ENV to test to make the error throw instead of exit
       const originalEnv = process.env.NODE_ENV;
       process.env.NODE_ENV = 'test';
 
-      await expect(application.start()).rejects.toThrow('Database initialization failed');
+      await expect(application.start()).rejects.toThrow(
+        'Database initialization failed',
+      );
 
-      expect(DatabaseInitializationService.printServerInitResults).not.toHaveBeenCalled();
+      expect(
+        DatabaseInitializationService.printServerInitResults,
+      ).not.toHaveBeenCalled();
 
       process.env.NODE_ENV = originalEnv;
     }, 10000); // Increase timeout
@@ -403,7 +431,9 @@ describe('Application', () => {
   describe('stop()', () => {
     it('should stop the application', async () => {
       // Mock the base stop method
-      jest.spyOn(BaseApplication.prototype, 'stop').mockResolvedValue(undefined);
+      jest
+        .spyOn(BaseApplication.prototype, 'stop')
+        .mockResolvedValue(undefined);
 
       // Mock server
       const mockServer = {
@@ -421,7 +451,9 @@ describe('Application', () => {
     });
 
     it('should handle missing server gracefully', async () => {
-      jest.spyOn(BaseApplication.prototype, 'stop').mockResolvedValue(undefined);
+      jest
+        .spyOn(BaseApplication.prototype, 'stop')
+        .mockResolvedValue(undefined);
       (application as any).server = null;
       (application as any)._ready = true;
 
@@ -432,7 +464,10 @@ describe('Application', () => {
 
   describe('registerServices()', () => {
     it('should call registerServices during construction', () => {
-      const registerServicesSpy = jest.spyOn(Application.prototype as any, 'registerServices');
+      const registerServicesSpy = jest.spyOn(
+        Application.prototype as any,
+        'registerServices',
+      );
 
       const apiRouterFactory = jest.fn((app) => new BaseRouter(app));
       const testApp = new Application(

@@ -26,7 +26,9 @@ import {
 } from '@digitaldefiance/suite-core-lib';
 import { crc32 } from 'crc';
 import { createHash, randomBytes } from 'crypto';
+import * as fs from 'fs';
 import { ObjectId as MongoObjectId } from 'mongodb';
+import * as path from 'path';
 import { BackupCode } from '../backup-code';
 import { IMnemonicDocument } from '../documents/mnemonic';
 import { IRoleDocument } from '../documents/role';
@@ -55,11 +57,11 @@ export abstract class DatabaseInitializationService {
   protected static initializationLock = new Map<string, boolean>();
   protected static defaultI18nTFunc(
     str: string,
-    variables?: Record<string, any>,
+    variables?: Record<string, unknown>,
     language?: string,
     application?: IApplication,
   ): string {
-    // All callers pass template strings with {{component.key}} syntax
+    // Handles template strings with {{component.key}} syntax
     return getSuiteCoreI18nEngine(
       application ? { constants: application.constants } : undefined,
     ).t(str, variables, language);
@@ -144,7 +146,7 @@ export abstract class DatabaseInitializationService {
       global.__MEMBER_CACHE__ = new Map<
         string,
         {
-          member: BackendMember<any>;
+          member: BackendMember<Types.ObjectId>;
           mnemonic: SecureString;
         }
       >();
@@ -172,10 +174,16 @@ export abstract class DatabaseInitializationService {
         undefined,
         createdBy,
       );
-      global.__MEMBER_CACHE__.set(key, { mnemonic: m, member: user });
+      global.__MEMBER_CACHE__.set(key, {
+        mnemonic: m,
+        member: user as unknown as BackendMember<Types.ObjectId>,
+      });
       return { mnemonic: m, member: user };
     } else {
-      return global.__MEMBER_CACHE__.get(key)!;
+      return global.__MEMBER_CACHE__.get(key)! as {
+        mnemonic: SecureString;
+        member: BackendMember<I>;
+      };
     }
   }
 
@@ -1523,9 +1531,6 @@ SYSTEM_PASSWORD="${serverInitResult.systemPassword}"
     result: IServerInitResult<I>,
     idToString: (id: I) => string = (id) => String(id),
   ): void {
-    const fs = require('fs');
-    const path = require('path');
-
     // Ensure the directory exists
     const dir = path.dirname(envFilePath);
     if (!fs.existsSync(dir)) {
@@ -1582,7 +1587,9 @@ SYSTEM_PASSWORD="${serverInitResult.systemPassword}"
       'log',
       this.defaultI18nTFunc(
         '{{SuiteCoreStringKey.Admin_CredentialsWrittenToEnv}}',
-        { path: envFilePath },
+        {
+          path: envFilePath,
+        },
       ),
     );
   }

@@ -1,5 +1,4 @@
-import { Connection, Schema, Types } from '@digitaldefiance/mongoose-types';
-import { IRoleDocument } from '../documents/role';
+import { Connection, Schema } from '@digitaldefiance/mongoose-types';
 import { BaseModelName } from '../enumerations';
 import { SchemaCollection } from '../enumerations/schema-collection';
 import { RoleSchema } from '../schemas/role';

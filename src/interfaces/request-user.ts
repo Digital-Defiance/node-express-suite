@@ -1,5 +1,9 @@
-import { ICombinedRolePrivileges, IRoleDTO, IRoleFrontendObject } from '@digitaldefiance/suite-core-lib';
 import { Types } from '@digitaldefiance/mongoose-types';
+import {
+  ICombinedRolePrivileges,
+  IRoleDTO,
+  IRoleFrontendObject,
+} from '@digitaldefiance/suite-core-lib';
 import { IRoleBackendObject } from './backend-objects/role';
 
 /**

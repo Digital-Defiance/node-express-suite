@@ -1,6 +1,6 @@
 import { withConsoleMocks } from '@digitaldefiance/express-suite-test-utils';
-import { FecUsageExample } from '../../src/services/fec-usage-example';
 import { FecService } from '../../src/services/fec';
+import { FecUsageExample } from '../../src/services/fec-usage-example';
 
 jest.mock('../../src/services/fec');
 
@@ -22,7 +22,9 @@ describe('FecUsageExample', () => {
         { data: Buffer.from('parity2'), index: 1 },
       ];
 
-      mockFecService.createParityData = jest.fn().mockResolvedValue(mockParityData);
+      mockFecService.createParityData = jest
+        .fn()
+        .mockResolvedValue(mockParityData);
 
       const result = await example.createFileWithParity(fileData);
 
@@ -42,11 +44,16 @@ describe('FecUsageExample', () => {
         index: i,
       }));
 
-      mockFecService.createParityData = jest.fn().mockResolvedValue(mockParityData);
+      mockFecService.createParityData = jest
+        .fn()
+        .mockResolvedValue(mockParityData);
 
       const result = await example.createFileWithParity(fileData, parityCount);
 
-      expect(mockFecService.createParityData).toHaveBeenCalledWith(fileData, parityCount);
+      expect(mockFecService.createParityData).toHaveBeenCalledWith(
+        fileData,
+        parityCount,
+      );
       expect(result.parityData).toBe(mockParityData);
       expect(result.originalSize).toBe(fileData.length);
     });
@@ -67,17 +74,22 @@ describe('FecUsageExample', () => {
           data: recoveredData,
         });
 
-        const result = await example.recoverCorruptedFile(parityData, originalSize);
+        const result = await example.recoverCorruptedFile(
+          parityData,
+          originalSize,
+        );
 
-        expect(mockFecService.recoverFileData).toHaveBeenCalledWith(null, parityData, originalSize);
+        expect(mockFecService.recoverFileData).toHaveBeenCalledWith(
+          null,
+          parityData,
+          originalSize,
+        );
         expect(result).toBe(recoveredData);
       });
     });
 
     it('should throw error when recovery fails', async () => {
-      const parityData = [
-        { data: Buffer.from('parity1'), index: 0 },
-      ];
+      const parityData = [{ data: Buffer.from('parity1'), index: 0 }];
       const originalSize = 100;
 
       mockFecService.recoverFileData = jest.fn().mockResolvedValue({
@@ -85,8 +97,9 @@ describe('FecUsageExample', () => {
         data: null,
       });
 
-      await expect(example.recoverCorruptedFile(parityData, originalSize))
-        .rejects.toThrow('File recovery failed');
+      await expect(
+        example.recoverCorruptedFile(parityData, originalSize),
+      ).rejects.toThrow('File recovery failed');
     });
   });
 
@@ -102,15 +115,16 @@ describe('FecUsageExample', () => {
 
       const result = await example.verifyFile(fileData, parityData);
 
-      expect(mockFecService.verifyFileIntegrity).toHaveBeenCalledWith(fileData, parityData);
+      expect(mockFecService.verifyFileIntegrity).toHaveBeenCalledWith(
+        fileData,
+        parityData,
+      );
       expect(result).toBe(true);
     });
 
     it('should return false when file integrity check fails', async () => {
       const fileData = Buffer.from('corrupted file');
-      const parityData = [
-        { data: Buffer.from('parity1'), index: 0 },
-      ];
+      const parityData = [{ data: Buffer.from('parity1'), index: 0 }];
 
       mockFecService.verifyFileIntegrity = jest.fn().mockResolvedValue(false);
 
@@ -123,14 +137,18 @@ describe('FecUsageExample', () => {
   describe('demonstrateWorkflow', () => {
     it('should complete full workflow with successful recovery', async () => {
       await withConsoleMocks({ mute: true }, async (spies) => {
-        const originalFile = Buffer.from('This is important file data that needs protection!');
+        const originalFile = Buffer.from(
+          'This is important file data that needs protection!',
+        );
         const mockParityData = [
           { data: Buffer.from('parity1'), index: 0 },
           { data: Buffer.from('parity2'), index: 1 },
         ];
 
         // Mock createParityData
-        mockFecService.createParityData = jest.fn().mockResolvedValue(mockParityData);
+        mockFecService.createParityData = jest
+          .fn()
+          .mockResolvedValue(mockParityData);
 
         // Mock verifyFileIntegrity
         mockFecService.verifyFileIntegrity = jest.fn().mockResolvedValue(true);
@@ -143,10 +161,20 @@ describe('FecUsageExample', () => {
 
         const result = await example.demonstrateWorkflow();
 
-        expect(mockFecService.createParityData).toHaveBeenCalledWith(originalFile, 2);
-        expect(mockFecService.verifyFileIntegrity).toHaveBeenCalledWith(originalFile, mockParityData);
-        expect(mockFecService.recoverFileData).toHaveBeenCalledWith(null, mockParityData, originalFile.length);
-        
+        expect(mockFecService.createParityData).toHaveBeenCalledWith(
+          originalFile,
+          2,
+        );
+        expect(mockFecService.verifyFileIntegrity).toHaveBeenCalledWith(
+          originalFile,
+          mockParityData,
+        );
+        expect(mockFecService.recoverFileData).toHaveBeenCalledWith(
+          null,
+          mockParityData,
+          originalFile.length,
+        );
+
         expect(result.originalFile).toEqual(originalFile);
         expect(result.recoveredFile).toEqual(originalFile);
         expect(result.parityData).toBe(mockParityData);
@@ -154,20 +182,27 @@ describe('FecUsageExample', () => {
 
         expect(spies.log).toHaveBeenCalledWith('Creating parity data...');
         expect(spies.log).toHaveBeenCalledWith('Verifying file integrity...');
-        expect(spies.log).toHaveBeenCalledWith('File integrity check:', 'PASSED');
-        expect(spies.log).toHaveBeenCalledWith('Simulating file corruption and recovery...');
+        expect(spies.log).toHaveBeenCalledWith(
+          'File integrity check:',
+          'PASSED',
+        );
+        expect(spies.log).toHaveBeenCalledWith(
+          'Simulating file corruption and recovery...',
+        );
         expect(spies.log).toHaveBeenCalledWith('Recovery successful:', 'YES');
       });
     });
 
     it('should complete workflow with failed verification', async () => {
       await withConsoleMocks({ mute: true }, async (spies) => {
-        const originalFile = Buffer.from('This is important file data that needs protection!');
-        const mockParityData = [
-          { data: Buffer.from('parity1'), index: 0 },
-        ];
+        const originalFile = Buffer.from(
+          'This is important file data that needs protection!',
+        );
+        const mockParityData = [{ data: Buffer.from('parity1'), index: 0 }];
 
-        mockFecService.createParityData = jest.fn().mockResolvedValue(mockParityData);
+        mockFecService.createParityData = jest
+          .fn()
+          .mockResolvedValue(mockParityData);
         mockFecService.verifyFileIntegrity = jest.fn().mockResolvedValue(false);
         mockFecService.recoverFileData = jest.fn().mockResolvedValue({
           recovered: true,
@@ -176,19 +211,24 @@ describe('FecUsageExample', () => {
 
         const result = await example.demonstrateWorkflow();
 
-        expect(spies.log).toHaveBeenCalledWith('File integrity check:', 'FAILED');
+        expect(spies.log).toHaveBeenCalledWith(
+          'File integrity check:',
+          'FAILED',
+        );
       });
     });
 
     it('should complete workflow with unsuccessful recovery', async () => {
       await withConsoleMocks({ mute: true }, async (spies) => {
-        const originalFile = Buffer.from('This is important file data that needs protection!');
+        const originalFile = Buffer.from(
+          'This is important file data that needs protection!',
+        );
         const differentFile = Buffer.from('Different data');
-        const mockParityData = [
-          { data: Buffer.from('parity1'), index: 0 },
-        ];
+        const mockParityData = [{ data: Buffer.from('parity1'), index: 0 }];
 
-        mockFecService.createParityData = jest.fn().mockResolvedValue(mockParityData);
+        mockFecService.createParityData = jest
+          .fn()
+          .mockResolvedValue(mockParityData);
         mockFecService.verifyFileIntegrity = jest.fn().mockResolvedValue(true);
         mockFecService.recoverFileData = jest.fn().mockResolvedValue({
           recovered: true,

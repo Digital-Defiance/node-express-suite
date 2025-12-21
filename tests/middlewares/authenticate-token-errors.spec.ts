@@ -32,7 +32,7 @@ function makeApp() {
   app.use(express.json());
   const application = createApplicationMock(
     {
-      getModel: () => ({}) as unknown,
+      getModel: () => ({} as unknown),
     },
     { mongo: { uri: 'mongodb://localhost:27017', transactionTimeout: 60000 } },
   );

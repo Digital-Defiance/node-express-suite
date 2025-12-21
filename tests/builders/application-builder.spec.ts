@@ -1,10 +1,10 @@
+import mongoose from '@digitaldefiance/mongoose-types';
+import { TranslatableSuiteError } from '@digitaldefiance/suite-core-lib';
 import { ApplicationBuilder } from '../../src/builders/application-builder';
 import { Environment } from '../../src/environment';
-import { BaseRouter } from '../../src/routers/base';
-import { AppRouter } from '../../src/routers/app';
 import { IConstants } from '../../src/interfaces';
-import { TranslatableSuiteError } from '@digitaldefiance/suite-core-lib';
-import mongoose from '@digitaldefiance/mongoose-types';
+import { AppRouter } from '../../src/routers/app';
+import { BaseRouter } from '../../src/routers/base';
 
 describe('ApplicationBuilder', () => {
   let builder: ApplicationBuilder<any, any>;
@@ -17,9 +17,11 @@ describe('ApplicationBuilder', () => {
     process.env.MNEMONIC_ENCRYPTION_KEY = 'b'.repeat(64);
     process.env.API_DIST_DIR = '/tmp/test-api-dist';
     process.env.REACT_DIST_DIR = '/tmp/test-react-dist';
-    if (!fs.existsSync('/tmp/test-api-dist')) fs.mkdirSync('/tmp/test-api-dist', { recursive: true });
-    if (!fs.existsSync('/tmp/test-react-dist')) fs.mkdirSync('/tmp/test-react-dist', { recursive: true });
-    
+    if (!fs.existsSync('/tmp/test-api-dist'))
+      fs.mkdirSync('/tmp/test-api-dist', { recursive: true });
+    if (!fs.existsSync('/tmp/test-react-dist'))
+      fs.mkdirSync('/tmp/test-react-dist', { recursive: true });
+
     mockEnv = new Environment(undefined, true);
     builder = new ApplicationBuilder();
   });
@@ -174,7 +176,10 @@ describe('ApplicationBuilder', () => {
         .withEnvironment(mockEnv)
         .withApiRouter((app) => new BaseRouter(app))
         .withSchemaMap(() => ({}))
-        .withDatabaseInit(async () => ({ success: true, data: {} }), undefined as any);
+        .withDatabaseInit(
+          async () => ({ success: true, data: {} }),
+          undefined as any,
+        );
       expect(() => builder.build()).toThrow(TranslatableSuiteError);
     });
 
@@ -185,10 +190,10 @@ describe('ApplicationBuilder', () => {
         .withSchemaMap(() => ({}))
         .withDatabaseInit(
           async () => ({ success: true, data: {} }),
-          () => 'hash'
+          () => 'hash',
         )
         .build();
-      
+
       expect(app).toBeDefined();
     });
 
@@ -198,7 +203,7 @@ describe('ApplicationBuilder', () => {
         passwordRegex: /^.{8,}$/,
         emailRegex: /^.+@.+$/,
       };
-      
+
       const app = builder
         .withEnvironment(mockEnv)
         .withApiRouter((app) => new BaseRouter(app))
@@ -206,12 +211,12 @@ describe('ApplicationBuilder', () => {
         .withSchemaMap(() => ({}))
         .withDatabaseInit(
           async () => ({ success: true, data: {} }),
-          () => 'hash'
+          () => 'hash',
         )
         .withCSP({ directives: { defaultSrc: ["'self'"] } })
         .withConstants(constants)
         .build();
-      
+
       expect(app).toBeDefined();
     });
   });
@@ -223,7 +228,7 @@ describe('ApplicationBuilder', () => {
         passwordRegex: /^.{8,}$/,
         emailRegex: /^.+@.+$/,
       };
-      
+
       const app = new ApplicationBuilder()
         .withEnvironment(mockEnv)
         .withApiRouter((app) => new BaseRouter(app))
@@ -231,13 +236,13 @@ describe('ApplicationBuilder', () => {
         .withSchemaMap(() => ({}))
         .withDatabaseInit(
           async () => ({ success: true, data: {} }),
-          () => 'hash'
+          () => 'hash',
         )
         .withCSP({ directives: { defaultSrc: ["'self'"] } })
         .withConstants(constants)
         .withMiddleware(jest.fn() as any)
         .build();
-      
+
       expect(app).toBeDefined();
     });
 
@@ -248,10 +253,10 @@ describe('ApplicationBuilder', () => {
         .withSchemaMap(() => ({}))
         .withDatabaseInit(
           async () => ({ success: true, data: {} }),
-          () => 'hash'
+          () => 'hash',
         )
         .build();
-      
+
       expect(app).toBeDefined();
     });
   });
@@ -263,7 +268,7 @@ describe('ApplicationBuilder', () => {
         passwordRegex: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/,
         emailRegex: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
       };
-      
+
       const app = new ApplicationBuilder()
         .withEnvironment(mockEnv)
         .withApiRouter((app) => new BaseRouter(app))
@@ -271,18 +276,18 @@ describe('ApplicationBuilder', () => {
         .withSchemaMap(() => ({}))
         .withDatabaseInit(
           async () => ({ success: true, data: { users: [], roles: [] } }),
-          (results) => JSON.stringify(results)
+          (results) => JSON.stringify(results),
         )
         .withCSP({
           directives: {
             defaultSrc: ["'self'"],
             scriptSrc: ["'self'", "'unsafe-inline'"],
             styleSrc: ["'self'", "'unsafe-inline'"],
-          }
+          },
         })
         .withConstants(constants)
         .build();
-      
+
       expect(app).toBeDefined();
     });
 
@@ -293,10 +298,10 @@ describe('ApplicationBuilder', () => {
         .withSchemaMap(() => ({}))
         .withDatabaseInit(
           async () => ({ success: true, data: {} }),
-          () => 'test-hash'
+          () => 'test-hash',
         )
         .build();
-      
+
       expect(app).toBeDefined();
     });
 
@@ -305,18 +310,18 @@ describe('ApplicationBuilder', () => {
         // Custom initialization logic
         return { success: true, data: { initialized: true } };
       };
-      
+
       const customHash = (results: any) => {
         return `hash-${results.initialized}`;
       };
-      
+
       const app = new ApplicationBuilder()
         .withEnvironment(mockEnv)
         .withApiRouter((app) => new BaseRouter(app))
         .withSchemaMap(() => ({}))
         .withDatabaseInit(customInit, customHash)
         .build();
-      
+
       expect(app).toBeDefined();
     });
   });
@@ -329,10 +334,10 @@ describe('ApplicationBuilder', () => {
         .withSchemaMap(() => ({}))
         .withDatabaseInit(
           async () => ({ success: true, data: {} }),
-          () => 'hash'
+          () => 'hash',
         )
         .build();
-      
+
       expect(app).toBeDefined();
     });
 
@@ -343,54 +348,55 @@ describe('ApplicationBuilder', () => {
         File: {} as any,
         Session: {} as any,
       });
-      
+
       const app = builder
         .withEnvironment(mockEnv)
         .withApiRouter((app) => new BaseRouter(app))
         .withSchemaMap(schemaMap)
         .withDatabaseInit(
           async () => ({ success: true, data: {} }),
-          () => 'hash'
+          () => 'hash',
         )
         .build();
-      
+
       expect(app).toBeDefined();
     });
 
     it('should handle async database init', () => {
       const asyncInit = async (app: any) => {
-        await new Promise(resolve => setTimeout(resolve, 10));
+        await new Promise((resolve) => setTimeout(resolve, 10));
         return { success: true, data: {} };
       };
-      
+
       const app = builder
         .withEnvironment(mockEnv)
         .withApiRouter((app) => new BaseRouter(app))
         .withSchemaMap(() => ({}))
         .withDatabaseInit(asyncInit, () => 'hash')
         .build();
-      
+
       expect(app).toBeDefined();
     });
 
     it('should handle complex constants', () => {
       const constants: IConstants = {
         usernameRegex: /^[a-z0-9_]{3,20}$/,
-        passwordRegex: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
+        passwordRegex:
+          /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
         emailRegex: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
       };
-      
+
       const app = builder
         .withEnvironment(mockEnv)
         .withApiRouter((app) => new BaseRouter(app))
         .withSchemaMap(() => ({}))
         .withDatabaseInit(
           async () => ({ success: true, data: {} }),
-          () => 'hash'
+          () => 'hash',
         )
         .withConstants(constants)
         .build();
-      
+
       expect(app).toBeDefined();
     });
   });

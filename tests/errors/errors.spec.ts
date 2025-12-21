@@ -1,4 +1,5 @@
 import { Result, ValidationError } from 'express-validator';
+import { SymmetricErrorType } from '../../src/enumerations/symmetric-error-type';
 import { ExpressValidationError } from '../../src/errors/express-validation';
 import { InvalidBackupCodeVersionError } from '../../src/errors/invalid-backup-code-version';
 import { InvalidJwtTokenError } from '../../src/errors/invalid-jwt-token';
@@ -11,7 +12,6 @@ import { ModelNotRegisteredError } from '../../src/errors/model-not-registered';
 import { MongooseValidationError } from '../../src/errors/mongoose-validation';
 import { SymmetricError } from '../../src/errors/symmetric';
 import { TokenExpiredError } from '../../src/errors/token-expired';
-import { SymmetricErrorType } from '../../src/enumerations/symmetric-error-type';
 
 describe('Error Classes', () => {
   describe('ExpressValidationError', () => {

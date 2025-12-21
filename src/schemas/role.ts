@@ -1,11 +1,12 @@
-import { CallbackWithoutResultAndOptionalError, Schema, Types } from '@digitaldefiance/mongoose-types';
 import {
-  IRoleBase,
+  CallbackWithoutResultAndOptionalError,
+  Schema,
+} from '@digitaldefiance/mongoose-types';
+import {
   Role,
   SuiteCoreStringKey,
   TranslatableSuiteError,
 } from '@digitaldefiance/suite-core-lib';
-import { IRoleDocument } from '../documents/role';
 import { BaseModelName } from '../enumerations';
 import { IConstants } from '../interfaces';
 
@@ -35,8 +36,11 @@ export interface RoleSchemaOptions<
 export function createRoleSchema<
   TRole extends string = Role,
   TModelName extends string = BaseModelName,
-  TConstants extends IConstants = IConstants
->(options: RoleSchemaOptions<TRole, TModelName> = {}, constants: TConstants = {} as TConstants): Schema {
+  TConstants extends IConstants = IConstants,
+>(
+  options: RoleSchemaOptions<TRole, TModelName> = {},
+  _constants: TConstants = {} as TConstants,
+): Schema {
   const {
     roleEnum = Object.values(Role) as TRole[],
     userModelName = BaseModelName.User as TModelName,
@@ -100,6 +104,7 @@ export function createRoleSchema<
   schema.index({ name: 1 }, { unique: true });
 
   schema.pre('save', function (next: CallbackWithoutResultAndOptionalError) {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const doc = this;
     if (customValidation) {
       customValidation(doc, next);

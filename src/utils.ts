@@ -1,9 +1,12 @@
-/// <reference path="./types.d.ts" />
 import { I18nEngine } from '@digitaldefiance/i18n-lib';
+import {
+  ClientSession,
+  Connection,
+  Types,
+} from '@digitaldefiance/mongoose-types';
 import { NextFunction, Request, Response } from 'express';
 import { Result, ValidationError } from 'express-validator';
 import { existsSync, readdirSync, writeSync } from 'fs';
-import { ClientSession, Connection, Types } from '@digitaldefiance/mongoose-types';
 import { resolve } from 'path';
 import { z, ZodType } from 'zod';
 import { ExpressValidationError } from './errors/express-validation';
@@ -26,7 +29,7 @@ export type DEBUG_TYPE = 'error' | 'warn' | 'log';
 export function debugLog(
   debug: boolean,
   type: DEBUG_TYPE = 'log',
-  ...args: any[]
+  ...args: unknown[]
 ): void {
   if (debug && type === 'error') {
     console.error(...args);
@@ -624,7 +627,7 @@ export function handleError(
     | IApiExpressValidationErrorResponse
     | IApiMongoValidationErrorResponse
   >,
-  next: NextFunction,
+  _next: NextFunction,
 ): void {
   if (isRecursiveError(error)) {
     const fallbackError = new HandleableError(
@@ -644,8 +647,11 @@ export function handleError(
   }
 
   markErrorAsHandling(error);
-  const { handleableError, alreadyHandled, errorType } =
-    convertToHandleableError(error);
+  const {
+    handleableError,
+    alreadyHandled: _alreadyHandled,
+    errorType,
+  } = convertToHandleableError(error);
 
   if (!(error instanceof ExpressValidationError)) {
     console.error(
@@ -753,7 +759,7 @@ export function decodeLengthEncodedData(buffer: Buffer): {
     throw new RangeError('Buffer is too short to read the full length value.');
   }
 
-  let length: number | BigInt;
+  let length: number | bigint;
   switch (lengthType) {
     case LengthEncodingType.UInt8:
       length = buffer.readUint8(1);
@@ -986,7 +992,7 @@ export function concatUint8Arrays(...arrays: Uint8Array[]): Uint8Array {
  * @returns The corresponding LengthEncodingType
  */
 export function getLengthEncodingTypeForLength(
-  length: number | BigInt,
+  length: number | bigint,
 ): LengthEncodingType {
   if (typeof length === 'number') {
     if (length < 256) {

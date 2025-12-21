@@ -1,5 +1,5 @@
-import { getSuiteCoreI18nEngine } from '@digitaldefiance/suite-core-lib';
 import { withConsoleMocks } from '@digitaldefiance/express-suite-test-utils';
+import { getSuiteCoreI18nEngine } from '@digitaldefiance/suite-core-lib';
 
 describe('I18n Debug', () => {
   it('should translate using SuiteCoreStringKey alias', () => {
@@ -14,7 +14,7 @@ describe('I18n Debug', () => {
   });
 
   it('should translate using suite-core-lib component ID', () => {
-    withConsoleMocks({ mute: true },() => {
+    withConsoleMocks({ mute: true }, () => {
       const engine = getSuiteCoreI18nEngine();
       const result = engine.t('{{suite-core-lib.Admin_DroppingDatabase}}');
       console.log('Result:', result);

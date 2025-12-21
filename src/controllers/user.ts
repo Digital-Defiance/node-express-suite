@@ -1,5 +1,3 @@
-/// <reference path="../types.d.ts" />
-
 import { ECIES, SecureString, UINT64_SIZE } from '@digitaldefiance/ecies-lib';
 import {
   CoreLanguageCode,
@@ -7,6 +5,7 @@ import {
   isValidTimezone,
   LanguageCodes,
 } from '@digitaldefiance/i18n-lib';
+import { Types } from '@digitaldefiance/mongoose-types';
 import {
   Member as BackendMember,
   ECIESService,
@@ -24,13 +23,14 @@ import {
 } from '@digitaldefiance/suite-core-lib';
 import type { NextFunction, Request, Response } from 'express';
 import { body } from 'express-validator';
-import { Types } from '@digitaldefiance/mongoose-types';
 import { z } from 'zod';
 import { BackupCode } from '../backup-code';
 import { DecoratorBaseController } from '../decorators/base-controller';
 import { Controller, Get, Post } from '../decorators/controller';
+import { IBaseDocument } from '../documents';
 import { IUserDocument } from '../documents/user';
 import { BaseModelName } from '../enumerations/base-model-name';
+import { Environment } from '../environment';
 import { MnemonicOrPasswordRequiredError } from '../errors/mnemonic-or-password-required';
 import {
   IApiChallengeResponse,
@@ -44,6 +44,7 @@ import {
 } from '../interfaces';
 import { IApiBackupCodesResponse } from '../interfaces/api-responses/backup-codes-response';
 import type { IApplication } from '../interfaces/application';
+import { IConstants } from '../interfaces/constants';
 import { IStatusCodeResponse } from '../interfaces/status-code-response';
 import { findAuthToken } from '../middlewares/authenticate-token';
 import { BackupCodeService } from '../services/backup-code';
@@ -91,14 +92,14 @@ export class UserController<
   TLanguage extends CoreLanguageCode = CoreLanguageCode,
 > extends DecoratorBaseController<TLanguage> {
   protected readonly userService: UserService<
-    any,
+    IUserDocument,
     I,
     D,
     S,
     A,
-    any,
-    any,
-    any,
+    Environment,
+    IConstants,
+    IBaseDocument<IUserDocument, I>,
     TUser,
     TTokenRole,
     TApplication
@@ -155,8 +156,8 @@ export class UserController<
   @Get('/verify', { auth: true })
   async tokenVerifiedResponse(
     req: Request,
-    res: Response,
-    next: NextFunction,
+    _res: Response,
+    _next: NextFunction,
   ): Promise<IStatusCodeResponse<IApiRequestUserResponse | ApiErrorResponse>> {
     if (!req.user) {
       throw new HandleableError(
@@ -196,8 +197,8 @@ export class UserController<
   @Get('/refresh-token', { auth: true })
   async refreshToken(
     req: Request,
-    res: Response,
-    next: NextFunction,
+    _res: Response,
+    _next: NextFunction,
   ): Promise<IStatusCodeResponse<IApiLoginResponse | ApiErrorResponse>> {
     const token = findAuthToken(req.headers);
     if (!token) {
@@ -290,8 +291,8 @@ export class UserController<
   })
   async register(
     req: Request,
-    res: Response,
-    next: NextFunction,
+    _res: Response,
+    _next: NextFunction,
   ): Promise<IStatusCodeResponse<IApiRegistrationResponse | ApiErrorResponse>> {
     return await withTransaction(
       this.application.db.connection,
@@ -382,11 +383,11 @@ export class UserController<
     },
   })
   async completeAccountVerification(
-    req: Request,
-    res: Response,
-    next: NextFunction,
+    _req: Request,
+    _res: Response,
+    _next: NextFunction,
   ): Promise<IStatusCodeResponse<IApiMessageResponse | ApiErrorResponse>> {
-    const { token } = this.validatedBody;
+    const { token } = this.validatedBody as { token?: unknown };
 
     return await withTransaction(
       this.application.db.connection,
@@ -435,15 +436,15 @@ export class UserController<
   })
   async setLanguage(
     req: Request,
-    res: Response,
-    next: NextFunction,
+    _res: Response,
+    _next: NextFunction,
   ): Promise<IStatusCodeResponse<IApiRequestUserResponse | ApiErrorResponse>> {
     return await withTransaction(
       this.application.db.connection,
       this.application.environment.mongo.useTransactions,
       undefined,
       async (sess) => {
-        const { language } = this.validatedBody;
+        const { language } = this.validatedBody as { language?: unknown };
         if (!req.user) {
           throw new HandleableError(
             new Error(
@@ -492,15 +493,15 @@ export class UserController<
   })
   async setDarkMode(
     req: Request,
-    res: Response,
-    next: NextFunction,
+    _res: Response,
+    _next: NextFunction,
   ): Promise<IStatusCodeResponse<IApiRequestUserResponse | ApiErrorResponse>> {
     return await withTransaction(
       this.application.db.connection,
       this.application.environment.mongo.useTransactions,
       undefined,
       async (sess) => {
-        const { darkMode } = this.validatedBody;
+        const { darkMode } = this.validatedBody as { darkMode?: unknown };
         if (!req.user) {
           throw new HandleableError(
             new Error(
@@ -534,8 +535,8 @@ export class UserController<
   @Get('/settings', { auth: true })
   async getSettings(
     req: Request,
-    res: Response,
-    next: NextFunction,
+    _res: Response,
+    _next: NextFunction,
   ): Promise<IStatusCodeResponse<IApiUserSettingsResponse | ApiErrorResponse>> {
     if (!req.user) {
       throw new HandleableError(
@@ -640,8 +641,8 @@ export class UserController<
   })
   async updateSettings(
     req: Request,
-    res: Response,
-    next: NextFunction,
+    _res: Response,
+    _next: NextFunction,
   ): Promise<IStatusCodeResponse<IApiRequestUserResponse | ApiErrorResponse>> {
     return await withTransaction(
       this.application.db.connection,
@@ -700,8 +701,8 @@ export class UserController<
   @Get('/backup-codes', { auth: true })
   async getBackupCodeCount(
     req: Request,
-    res: Response,
-    next: NextFunction,
+    _res: Response,
+    _next: NextFunction,
   ): Promise<IStatusCodeResponse<IApiCodeCountResponse | ApiErrorResponse>> {
     if (!req.user) {
       throw new HandleableError(
@@ -771,8 +772,8 @@ export class UserController<
   })
   async resetBackupCodes(
     req: Request,
-    res: Response,
-    next: NextFunction,
+    _res: Response,
+    _next: NextFunction,
   ): Promise<IStatusCodeResponse<IApiBackupCodesResponse | ApiErrorResponse>> {
     if (!req.user || !req.eciesUser || !req.eciesUser.hasPrivateKey) {
       throw new HandleableError(
@@ -820,8 +821,8 @@ export class UserController<
   })
   async recoverMnemonic(
     req: Request,
-    res: Response,
-    next: NextFunction,
+    _res: Response,
+    _next: NextFunction,
   ): Promise<IStatusCodeResponse<IApiMnemonicResponse | ApiErrorResponse>> {
     return await withTransaction(
       this.application.db.connection,
@@ -848,7 +849,7 @@ export class UserController<
           );
         }
 
-        const { password } = this.validatedBody;
+        const { password } = this.validatedBody as { password?: unknown };
         if (!isString(password)) {
           throw new GenericValidationError(
             getSuiteCoreTranslation(
@@ -915,15 +916,18 @@ export class UserController<
   })
   async changePassword(
     req: Request,
-    res: Response,
-    next: NextFunction,
+    _res: Response,
+    _next: NextFunction,
   ): Promise<IStatusCodeResponse<IApiMessageResponse | ApiErrorResponse>> {
     return await withTransaction(
       this.application.db.connection,
       this.application.environment.mongo.useTransactions,
       undefined,
       async (sess) => {
-        const { currentPassword, newPassword } = this.validatedBody;
+        const { currentPassword, newPassword } = this.validatedBody as {
+          currentPassword?: unknown;
+          newPassword?: unknown;
+        };
         if (!req.user) {
           throw new HandleableError(
             new Error(
@@ -964,9 +968,9 @@ export class UserController<
 
   @Post('/request-direct-login')
   async requestDirectLogin(
-    req: Request,
-    res: Response,
-    next: NextFunction,
+    _req: Request,
+    _res: Response,
+    _next: NextFunction,
   ): Promise<IStatusCodeResponse<IApiChallengeResponse | ApiErrorResponse>> {
     const challenge = this.userService.generateDirectLoginChallenge();
     return {
@@ -1049,15 +1053,21 @@ export class UserController<
   })
   async directLoginChallenge(
     req: Request,
-    res: Response,
-    next: NextFunction,
+    _res: Response,
+    _next: NextFunction,
   ): Promise<IStatusCodeResponse<IApiLoginResponse | ApiErrorResponse>> {
     return await withTransaction(
       this.application.db.connection,
       this.application.environment.mongo.useTransactions,
       undefined,
       async (sess) => {
-        const { username, email, challenge, signature } = this.validatedBody;
+        const { username, email, challenge, signature } = this
+          .validatedBody as {
+          username?: unknown;
+          email?: unknown;
+          challenge?: unknown;
+          signature?: unknown;
+        };
 
         const { userDoc } = await this.userService.verifyDirectLoginChallenge(
           String(challenge),
@@ -1123,11 +1133,14 @@ export class UserController<
     },
   })
   async requestEmailLogin(
-    req: Request,
-    res: Response,
-    next: NextFunction,
+    _req: Request,
+    _res: Response,
+    _next: NextFunction,
   ): Promise<IStatusCodeResponse<IApiMessageResponse | ApiErrorResponse>> {
-    const { username, email } = this.validatedBody;
+    const { username, email } = this.validatedBody as {
+      username?: unknown;
+      email?: unknown;
+    };
 
     try {
       await withTransaction(
@@ -1148,7 +1161,7 @@ export class UserController<
           );
         },
       );
-    } catch (error) {
+    } catch {
       // Suppress user-related errors for security
     }
 
@@ -1224,15 +1237,18 @@ export class UserController<
   })
   async emailLoginChallenge(
     req: Request,
-    res: Response,
-    next: NextFunction,
+    _res: Response,
+    _next: NextFunction,
   ): Promise<IStatusCodeResponse<IApiLoginResponse | ApiErrorResponse>> {
     return await withTransaction(
       this.application.db.connection,
       this.application.environment.mongo.useTransactions,
       undefined,
       async (sess) => {
-        const { token, signature } = this.validatedBody;
+        const { token, signature } = this.validatedBody as {
+          token?: unknown;
+          signature?: unknown;
+        };
 
         const userDoc = await this.userService.validateEmailLoginTokenChallenge(
           String(token),
@@ -1288,21 +1304,24 @@ export class UserController<
     },
   })
   async resendVerification(
-    req: Request,
-    res: Response,
-    next: NextFunction,
+    _req: Request,
+    _res: Response,
+    _next: NextFunction,
   ): Promise<IStatusCodeResponse<IApiMessageResponse | ApiErrorResponse>> {
     return await withTransaction(
       this.application.db.connection,
       this.application.environment.mongo.useTransactions,
       undefined,
       async (sess) => {
-        const { username, email } = this.validatedBody;
+        const { username, email } = this.validatedBody as {
+          username?: unknown;
+          email?: unknown;
+        };
 
         const UserModel = this.application.getModel<IUserDocument<string, I>>(
           BaseModelName.User,
         );
-        let query: { username?: string; email?: string } = {};
+        const query: { username?: string; email?: string } = {};
         if (isString(username)) query.username = username;
         else if (isString(email)) query.email = email;
         else {
@@ -1385,16 +1404,21 @@ export class UserController<
     },
   })
   async useBackupCodeLogin(
-    req: Request,
-    res: Response,
-    next: NextFunction,
+    _req: Request,
+    _res: Response,
+    _next: NextFunction,
   ): Promise<IStatusCodeResponse<IApiLoginResponse | ApiErrorResponse>> {
     return await withTransaction(
       this.application.db.connection,
       this.application.environment.mongo.useTransactions,
       undefined,
       async (sess) => {
-        const { code, newPassword, email, username } = this.validatedBody;
+        const { code, newPassword, email, username } = this.validatedBody as {
+          code?: unknown;
+          newPassword?: unknown;
+          email?: unknown;
+          username?: unknown;
+        };
 
         if (!code) {
           throw new GenericValidationError(
@@ -1477,16 +1501,16 @@ export class UserController<
     },
   })
   async forgotPassword(
-    req: Request,
-    res: Response,
-    next: NextFunction,
+    _req: Request,
+    _res: Response,
+    _next: NextFunction,
   ): Promise<IStatusCodeResponse<IApiMessageResponse | ApiErrorResponse>> {
     return await withTransaction(
       this.application.db.connection,
       this.application.environment.mongo.useTransactions,
       undefined,
       async (sess) => {
-        const { email } = this.validatedBody;
+        const { email } = this.validatedBody as { email?: unknown };
 
         const UserModel = this.application.getModel<IUserDocument<string, I>>(
           BaseModelName.User,
@@ -1538,8 +1562,8 @@ export class UserController<
   @Get('/verify-reset-token')
   async verifyResetToken(
     req: Request,
-    res: Response,
-    next: NextFunction,
+    _res: Response,
+    _next: NextFunction,
   ): Promise<IStatusCodeResponse<IApiMessageResponse | ApiErrorResponse>> {
     const token = req.query['token'] as string;
     if (!token) {
@@ -1632,9 +1656,9 @@ export class UserController<
     },
   })
   async resetPassword(
-    req: Request,
-    res: Response,
-    next: NextFunction,
+    _req: Request,
+    _res: Response,
+    _next: NextFunction,
   ): Promise<IStatusCodeResponse<IApiMessageResponse | ApiErrorResponse>> {
     return await withTransaction(
       this.application.db.connection,

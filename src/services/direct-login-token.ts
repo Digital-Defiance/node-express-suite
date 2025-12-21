@@ -1,19 +1,17 @@
+import { ClientSession, Types } from '@digitaldefiance/mongoose-types';
 import {
   DirectTokenUsedError,
   FailedToUseDirectTokenError,
   IUsedDirectLoginTokenBase,
 } from '@digitaldefiance/suite-core-lib';
-import { ClientSession, Types } from '@digitaldefiance/mongoose-types';
-import { IBaseDocument } from '../documents';
-import { IUsedDirectLoginTokenDocument } from '../documents/used-direct-login-token';
 import { BaseModelName } from '../enumerations/base-model-name';
-import { Environment } from '../environment';
-import { IConstants } from '../interfaces';
 import { IApplication } from '../interfaces/application';
 import { ModelRegistry } from '../model-registry';
 import { withTransaction } from '../utils';
 export abstract class DirectLoginTokenService {
-  public static async useToken<I extends string | Types.ObjectId = Types.ObjectId>(
+  public static async useToken<
+    I extends string | Types.ObjectId = Types.ObjectId,
+  >(
     app: IApplication,
     userId: I,
     token: string,
@@ -26,6 +24,7 @@ export abstract class DirectLoginTokenService {
       async (sess) => {
         const UsedDirectLoginTokenModel = ModelRegistry.instance.get<
           IUsedDirectLoginTokenBase<I>,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           any
         >(BaseModelName.UsedDirectLoginToken).model;
         const tokenExists = await UsedDirectLoginTokenModel.exists({

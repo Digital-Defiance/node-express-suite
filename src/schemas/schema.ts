@@ -9,6 +9,7 @@ import {
 import { IUsedDirectLoginTokenDocument } from '../documents/used-direct-login-token';
 import { BaseModelName } from '../enumerations';
 import { SchemaCollection } from '../enumerations/schema-collection';
+import { IConstants } from '../interfaces';
 import EmailTokenModel from '../models/email-token';
 import MnemonicModel from '../models/mnemonic';
 import RoleModel from '../models/role';
@@ -19,10 +20,12 @@ import { SchemaMap } from '../types';
 import { EmailTokenSchema, createEmailTokenSchema } from './email-token';
 import { MnemonicSchema, createMnemonicSchema } from './mnemonic';
 import { RoleSchema, createRoleSchema } from './role';
-import { UsedDirectLoginTokenSchema, createUsedDirectLoginTokenSchema } from './used-direct-login-token';
+import {
+  UsedDirectLoginTokenSchema,
+  createUsedDirectLoginTokenSchema,
+} from './used-direct-login-token';
 import { UserSchema, createUserSchema } from './user';
 import { UserRoleSchema, createUserRoleSchema } from './user-role';
-import { IConstants } from '../interfaces';
 
 export interface BaseModelDocs {
   EmailToken: IEmailTokenDocument;
@@ -69,8 +72,19 @@ export function getSchemaMap(
     EmailToken: createEmailTokenSchema(undefined, options?.constants),
     Mnemonic: createMnemonicSchema(undefined, options?.constants),
     Role: createRoleSchema(undefined, options?.constants),
-    UsedDirectLoginToken: createUsedDirectLoginTokenSchema(undefined, options?.constants),
-    User: createUserSchema(undefined, undefined, undefined, undefined, undefined, undefined, options?.constants),
+    UsedDirectLoginToken: createUsedDirectLoginTokenSchema(
+      undefined,
+      options?.constants,
+    ),
+    User: createUserSchema(
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      options?.constants,
+    ),
     UserRole: createUserRoleSchema(undefined, options?.constants),
   };
   const { modelNames = {}, collections = {} } = options;

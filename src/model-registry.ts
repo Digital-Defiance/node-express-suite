@@ -1,4 +1,8 @@
-import { Model, Document as MongooseDocument, Schema } from '@digitaldefiance/mongoose-types';
+import {
+  Model,
+  Document as MongooseDocument,
+  Schema,
+} from '@digitaldefiance/mongoose-types';
 import { IBaseDocument } from './documents/base';
 import { InvalidModelError } from './errors';
 

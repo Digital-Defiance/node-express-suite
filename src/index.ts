@@ -1,5 +1,5 @@
-/// <reference path="./types/mongoose-override.d.ts" />
 import 'reflect-metadata';
+import './types.d';
 
 export * from './application';
 export * from './application-base';
@@ -8,9 +8,8 @@ export * from './backup-code';
 export * from './builders';
 export * from './constants';
 export * from './container';
-export * from './database';
 export * from './controllers';
-export * from './container';
+export * from './database';
 export * from './decorators';
 export * from './defaults';
 export * from './documents';

@@ -1,13 +1,24 @@
-import { ValidationBuilder, FieldValidator } from '../../src/validation/validation-builder';
-import { SuiteCoreStringKey, initSuiteCoreI18nEngine } from '@digitaldefiance/suite-core-lib';
 import { LanguageCodes, LanguageRegistry } from '@digitaldefiance/i18n-lib';
+import {
+  SuiteCoreStringKey,
+  initSuiteCoreI18nEngine,
+} from '@digitaldefiance/suite-core-lib';
 import { IConstants } from '../../src/interfaces';
+import {
+  FieldValidator,
+  ValidationBuilder,
+} from '../../src/validation/validation-builder';
 
 describe('ValidationBuilder', () => {
   beforeAll(() => {
     // Initialize i18n system
     LanguageRegistry['languages'].clear();
-    LanguageRegistry.registerLanguage({ id: 'en', code: 'en', name: 'English', isDefault: true });
+    LanguageRegistry.registerLanguage({
+      id: 'en',
+      code: 'en',
+      name: 'English',
+      isDefault: true,
+    });
     LanguageRegistry.setDefaultLanguage('en');
     initSuiteCoreI18nEngine();
   });
@@ -69,7 +80,9 @@ describe('ValidationBuilder', () => {
     it('should add message with translation key', () => {
       const validator = new FieldValidator('username', LanguageCodes.EN_US);
       validator.isString(); // Initialize chain first
-      const result = validator.withMessage(SuiteCoreStringKey.Validation_InvalidUsername);
+      const result = validator.withMessage(
+        SuiteCoreStringKey.Validation_InvalidUsername,
+      );
       expect(result).toBe(validator);
     });
 
@@ -78,7 +91,7 @@ describe('ValidationBuilder', () => {
       validator.isString(); // Initialize chain first
       const result = validator.withMessage(
         SuiteCoreStringKey.Error_ServiceIsNotRegisteredTemplate,
-        { key: 'test' }
+        { key: 'test' },
       );
       expect(result).toBe(validator);
     });
@@ -89,7 +102,7 @@ describe('ValidationBuilder', () => {
         passwordRegex: /^.{8,}$/,
         emailRegex: /^.+@.+$/,
       };
-      
+
       const validator = new FieldValidator('username', undefined, constants);
       const result = validator.matches((c) => c.usernameRegex);
       expect(result).toBe(validator);
@@ -102,7 +115,7 @@ describe('ValidationBuilder', () => {
         .notEmpty()
         .isEmail()
         .withMessage(SuiteCoreStringKey.Validation_InvalidUsername);
-      
+
       expect(result).toBe(validator);
     });
   });
@@ -138,26 +151,26 @@ describe('ValidationBuilder', () => {
       const builder = ValidationBuilder.create();
       builder.for('username').isString().notEmpty();
       builder.for('email').isEmail();
-      
+
       const chains = builder.build();
       expect(chains).toHaveLength(2);
     });
 
     it('should support fluent API', () => {
       const builder = ValidationBuilder.create(LanguageCodes.EN_US);
-      
+
       builder
         .for('username')
         .isString()
         .notEmpty()
         .matches(/^[a-z]+$/)
         .withMessage(SuiteCoreStringKey.Validation_InvalidUsername);
-      
+
       builder
         .for('email')
         .isEmail()
         .withMessage(SuiteCoreStringKey.Validation_InvalidUsername);
-      
+
       const chains = builder.build();
       expect(chains).toHaveLength(2);
     });
@@ -191,37 +204,37 @@ describe('ValidationBuilder', () => {
         passwordRegex: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/,
         emailRegex: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
       };
-      
+
       const builder = ValidationBuilder.create(LanguageCodes.EN_US, constants);
-      
+
       builder
         .for('username')
         .isString()
         .notEmpty()
         .matches((c) => c.usernameRegex)
         .withMessage(SuiteCoreStringKey.Validation_InvalidUsername);
-      
+
       builder
         .for('email')
         .isString()
         .notEmpty()
         .isEmail()
         .withMessage(SuiteCoreStringKey.Validation_InvalidUsername);
-      
+
       builder
         .for('password')
         .isString()
         .notEmpty()
         .matches((c) => c.passwordRegex)
         .withMessage(SuiteCoreStringKey.Validation_PasswordTooWeak);
-      
+
       builder
         .for('confirmPassword')
         .isString()
         .notEmpty()
         .custom((value) => value === 'password')
         .withMessage(SuiteCoreStringKey.Validation_InvalidUsername);
-      
+
       const chains = builder.build();
       expect(chains).toHaveLength(4);
     });

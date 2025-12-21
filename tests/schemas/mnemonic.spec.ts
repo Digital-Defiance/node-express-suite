@@ -1,5 +1,8 @@
-import { createMnemonicSchema, MnemonicSchema } from '../../src/schemas/mnemonic';
 import { LocalhostConstants } from '../../src/constants';
+import {
+  createMnemonicSchema,
+  MnemonicSchema,
+} from '../../src/schemas/mnemonic';
 
 describe('MnemonicSchema', () => {
   describe('createMnemonicSchema', () => {

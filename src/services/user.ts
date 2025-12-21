@@ -88,9 +88,9 @@ export class UserService<
   D extends Date,
   S extends string,
   A extends string,
-  TEnvironment extends Environment = Environment,
-  TConstants extends IConstants = IConstants,
-  TBaseDocument extends IBaseDocument<T, I> = IBaseDocument<T, I>,
+  _TEnvironment extends Environment = Environment,
+  _TConstants extends IConstants = IConstants,
+  _TBaseDocument extends IBaseDocument<T, I> = IBaseDocument<T, I>,
   TUser extends IUserBase<I, D, S, A> = IUserBase<I, D, S, A>,
   TTokenRole extends ITokenRole<I, D> = ITokenRole<I, D>,
   TApplication extends IApplication = IApplication,
@@ -346,7 +346,7 @@ export class UserService<
     const emailToken = await this.createEmailToken(user, type, session);
     try {
       await this.sendEmailToken(emailToken, session, debug);
-    } catch (error) {
+    } catch {
       // keep parity with previous behavior: continue returning token even if email send fails
     }
     return emailToken;
@@ -410,7 +410,7 @@ export class UserService<
 
     try {
       await this.sendEmailToken(emailToken, session, debug);
-    } catch (error) {
+    } catch {
       // Ignore email send errors in direct token creation
     }
 
@@ -497,7 +497,7 @@ export class UserService<
         Date.now() + this.application.constants.EmailTokenExpiration,
       );
       await emailToken.save({ session });
-    } catch (error) {
+    } catch {
       throw new EmailTokenFailedToSendError(emailToken.type);
     }
   }
@@ -537,7 +537,7 @@ export class UserService<
           .session(session ?? null)
           .exec();
       }
-    } catch (error) {
+    } catch {
       // Database error in findUser - convert to InvalidCredentialsError for security
       throw new InvalidCredentialsError();
     }

@@ -1,10 +1,10 @@
 import { SecureBuffer, SecureString } from '@digitaldefiance/ecies-lib';
+import { ClientSession, Model, Types } from '@digitaldefiance/mongoose-types';
 import {
   SuiteCoreStringKey,
   TranslatableSuiteError,
 } from '@digitaldefiance/suite-core-lib';
 import { createHmac } from 'crypto';
-import { ClientSession, Model, Types } from '@digitaldefiance/mongoose-types';
 import { IMnemonicDocument } from '../documents/mnemonic';
 import { IConstants } from '../interfaces';
 
@@ -12,7 +12,9 @@ import { IConstants } from '../interfaces';
  * Encrypts and stores mnemonics securely, using an HMAC to check for
  * uniqueness without exposing the mnemonic itself.
  */
-export class MnemonicService<I extends string | Types.ObjectId = Types.ObjectId> {
+export class MnemonicService<
+  I extends string | Types.ObjectId = Types.ObjectId,
+> {
   private readonly hmacSecret: SecureBuffer;
   private readonly MnemonicModel: Model<IMnemonicDocument<I>>;
   private readonly constants: IConstants;

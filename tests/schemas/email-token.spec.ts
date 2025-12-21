@@ -1,6 +1,9 @@
 import { EmailTokenType } from '@digitaldefiance/suite-core-lib';
-import { createEmailTokenSchema, EmailTokenSchema } from '../../src/schemas/email-token';
 import { BaseModelName } from '../../src/enumerations';
+import {
+  createEmailTokenSchema,
+  EmailTokenSchema,
+} from '../../src/schemas/email-token';
 
 describe('EmailTokenSchema', () => {
   describe('createEmailTokenSchema', () => {
@@ -14,13 +17,18 @@ describe('EmailTokenSchema', () => {
     });
 
     it('should create schema with custom token types', () => {
-      const customTypes = [EmailTokenType.AccountVerification, EmailTokenType.PasswordReset];
+      const customTypes = [
+        EmailTokenType.AccountVerification,
+        EmailTokenType.PasswordReset,
+      ];
       const schema = createEmailTokenSchema({ tokenTypeEnum: customTypes });
       expect(schema).toBeDefined();
     });
 
     it('should create schema with custom user model name', () => {
-      const schema = createEmailTokenSchema({ userModelName: 'CustomUser' as BaseModelName });
+      const schema = createEmailTokenSchema({
+        userModelName: 'CustomUser' as BaseModelName,
+      });
       expect(schema).toBeDefined();
     });
 
@@ -30,8 +38,11 @@ describe('EmailTokenSchema', () => {
     });
 
     it('should create schema with custom validation message', () => {
-      const customMessage = (props: { value: string }) => `Invalid: ${props.value}`;
-      const schema = createEmailTokenSchema({ validationMessage: customMessage });
+      const customMessage = (props: { value: string }) =>
+        `Invalid: ${props.value}`;
+      const schema = createEmailTokenSchema({
+        validationMessage: customMessage,
+      });
       expect(schema).toBeDefined();
     });
   });

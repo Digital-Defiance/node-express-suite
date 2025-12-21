@@ -1,6 +1,6 @@
 {
   "name": "@digitaldefiance/node-express-suite",
-  "version": "3.6.19",
+  "version": "3.6.20",
   "homepage": "https://github.com/Digital-Defiance/node-express-suite",
   "repository": {
     "type": "git",
@@ -37,11 +37,11 @@
     "publish:public": "npm publish --access public"
   },
   "dependencies": {
-    "@digitaldefiance/ecies-lib": "4.4.16",
-    "@digitaldefiance/i18n-lib": "3.8.6",
+    "@digitaldefiance/ecies-lib": "4.4.18",
+    "@digitaldefiance/i18n-lib": "3.8.30",
     "@digitaldefiance/mongoose-types": "8.20.9",
-    "@digitaldefiance/node-ecies-lib": "4.4.15",
-    "@digitaldefiance/suite-core-lib": "3.6.16",
+    "@digitaldefiance/node-ecies-lib": "4.4.16",
+    "@digitaldefiance/suite-core-lib": "3.6.18",
     "@noble/curves": "^2.0.1",
     "@noble/hashes": "^2.0.1",
     "@subspace/reed-solomon-erasure.wasm": "^0.2.5",
@@ -61,7 +61,7 @@
     "zod": "^3.24.0"
   },
   "devDependencies": {
-    "@digitaldefiance/express-suite-test-utils": "1.0.12",
+    "@digitaldefiance/express-suite-test-utils": "1.0.13",
     "@typescript-eslint/eslint-plugin": "^8.48.0",
     "@typescript-eslint/parser": "^8.48.0",
     "eslint-plugin-import": "^2.32.0",
@@ -80,5 +80,5 @@
   ],
   "author": "Digital Defiance",
   "license": "MIT",
-  "packageManager": "yarn@4.10.3"
+  "packageManager": "yarn@4.12.0"
 }

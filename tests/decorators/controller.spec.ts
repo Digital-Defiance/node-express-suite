@@ -1,12 +1,12 @@
 import 'reflect-metadata';
 import {
   Controller,
+  CONTROLLER_METADATA,
+  Delete,
   Get,
+  Patch,
   Post,
   Put,
-  Delete,
-  Patch,
-  CONTROLLER_METADATA,
   ROUTES_METADATA,
 } from '../../src/decorators/controller';
 

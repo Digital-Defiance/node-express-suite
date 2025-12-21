@@ -4,6 +4,7 @@ import {
   SecureBuffer,
   SecureString,
 } from '@digitaldefiance/ecies-lib';
+import { ClientSession, Types } from '@digitaldefiance/mongoose-types';
 import {
   Member as BackendMember,
   ECIESService,
@@ -14,7 +15,6 @@ import {
   ITokenRole,
 } from '@digitaldefiance/suite-core-lib';
 import { timingSafeEqual } from 'crypto';
-import { ClientSession, Types } from '@digitaldefiance/mongoose-types';
 import { BackupCode } from '../backup-code';
 import { LocalhostConstants as AppConstants } from '../constants';
 import { IUserDocument } from '../documents';
@@ -160,13 +160,13 @@ export class BackupCodeService<
     session?: ClientSession,
   ): Promise<{
     userDoc: IUserDocument<string, I>;
-    user: BackendMember<any>;
+    user: BackendMember<I>;
     codeCount: number;
   }> {
     const normalizedCode = BackupCode.normalizeCode(backupCode);
     return await this.withTransaction<{
       userDoc: IUserDocument<string, I>;
-      user: BackendMember<any>;
+      user: BackendMember<I>;
       codeCount: number;
     }>(
       async (sess: ClientSession | undefined) => {
@@ -246,7 +246,7 @@ export class BackupCodeService<
     session?: ClientSession,
   ): Promise<{
     userDoc: IUserDocument<string, I>;
-    user: BackendMember<any>;
+    user: BackendMember<I>;
     codeCount: number;
   }> {
     const version = BackupCode.detectBackupCodeVersion(

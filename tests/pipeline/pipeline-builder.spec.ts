@@ -1,5 +1,5 @@
+import { NextFunction, Request, RequestHandler, Response } from 'express';
 import { Pipeline } from '../../src/pipeline/pipeline-builder';
-import { Request, Response, NextFunction, RequestHandler } from 'express';
 
 describe('Pipeline', () => {
   let mockReq: Partial<Request>;
@@ -23,7 +23,7 @@ describe('Pipeline', () => {
     it('should add middleware to pipeline', () => {
       const middleware: RequestHandler = (req, res, next) => next();
       const pipeline = Pipeline.create().use(middleware);
-      
+
       expect(pipeline).toBeInstanceOf(Pipeline);
     });
 
@@ -31,19 +31,19 @@ describe('Pipeline', () => {
       const middleware1: RequestHandler = (req, res, next) => next();
       const middleware2: RequestHandler = (req, res, next) => next();
       const middleware3: RequestHandler = (req, res, next) => next();
-      
+
       const pipeline = Pipeline.create()
         .use(middleware1)
         .use(middleware2)
         .use(middleware3);
-      
+
       expect(pipeline).toBeInstanceOf(Pipeline);
     });
 
     it('should return same instance for chaining', () => {
       const pipeline = Pipeline.create();
       const middleware: RequestHandler = (req, res, next) => next();
-      
+
       const result = pipeline.use(middleware);
       expect(result).toBe(pipeline);
     });
@@ -53,20 +53,18 @@ describe('Pipeline', () => {
     it('should return empty array for empty pipeline', () => {
       const pipeline = Pipeline.create();
       const handlers = pipeline.build();
-      
+
       expect(handlers).toEqual([]);
     });
 
     it('should return array of middleware', () => {
       const middleware1: RequestHandler = (req, res, next) => next();
       const middleware2: RequestHandler = (req, res, next) => next();
-      
-      const pipeline = Pipeline.create()
-        .use(middleware1)
-        .use(middleware2);
-      
+
+      const pipeline = Pipeline.create().use(middleware1).use(middleware2);
+
       const handlers = pipeline.build();
-      
+
       expect(handlers).toHaveLength(2);
       expect(handlers[0]).toBe(middleware1);
       expect(handlers[1]).toBe(middleware2);
@@ -74,7 +72,7 @@ describe('Pipeline', () => {
 
     it('should preserve middleware order', () => {
       const order: number[] = [];
-      
+
       const middleware1: RequestHandler = (req, res, next) => {
         order.push(1);
         next();
@@ -87,18 +85,18 @@ describe('Pipeline', () => {
         order.push(3);
         next();
       };
-      
+
       const pipeline = Pipeline.create()
         .use(middleware1)
         .use(middleware2)
         .use(middleware3);
-      
+
       const handlers = pipeline.build();
-      
+
       handlers[0](mockReq as Request, mockRes as Response, mockNext);
       handlers[1](mockReq as Request, mockRes as Response, mockNext);
       handlers[2](mockReq as Request, mockRes as Response, mockNext);
-      
+
       expect(order).toEqual([1, 2, 3]);
     });
   });
@@ -109,16 +107,14 @@ describe('Pipeline', () => {
         (req as any).user = { id: 1 };
         next();
       };
-      
+
       const authorize: RequestHandler = (req, res, next) => {
         if ((req as any).user) next();
         else res.status?.(403);
       };
-      
-      const pipeline = Pipeline.create()
-        .use(authenticate)
-        .use(authorize);
-      
+
+      const pipeline = Pipeline.create().use(authenticate).use(authorize);
+
       const handlers = pipeline.build();
       expect(handlers).toHaveLength(2);
     });
@@ -127,12 +123,12 @@ describe('Pipeline', () => {
       const validateBody: RequestHandler = (req, res, next) => next();
       const validateParams: RequestHandler = (req, res, next) => next();
       const sanitize: RequestHandler = (req, res, next) => next();
-      
+
       const pipeline = Pipeline.create()
         .use(validateBody)
         .use(validateParams)
         .use(sanitize);
-      
+
       const handlers = pipeline.build();
       expect(handlers).toHaveLength(3);
     });
@@ -142,16 +138,14 @@ describe('Pipeline', () => {
         console.log('Request received');
         next();
       };
-      
+
       const logResponse: RequestHandler = (req, res, next) => {
         console.log('Response sent');
         next();
       };
-      
-      const pipeline = Pipeline.create()
-        .use(logRequest)
-        .use(logResponse);
-      
+
+      const pipeline = Pipeline.create().use(logRequest).use(logResponse);
+
       const handlers = pipeline.build();
       expect(handlers).toHaveLength(2);
     });
@@ -164,10 +158,10 @@ describe('Pipeline', () => {
           res.status?.(500);
         }
       };
-      
+
       const pipeline = Pipeline.create().use(errorHandler);
       const handlers = pipeline.build();
-      
+
       expect(handlers).toHaveLength(1);
     });
 
@@ -177,14 +171,14 @@ describe('Pipeline', () => {
       const stage3: RequestHandler = (req, res, next) => next();
       const stage4: RequestHandler = (req, res, next) => next();
       const stage5: RequestHandler = (req, res, next) => next();
-      
+
       const pipeline = Pipeline.create()
         .use(stage1)
         .use(stage2)
         .use(stage3)
         .use(stage4)
         .use(stage5);
-      
+
       const handlers = pipeline.build();
       expect(handlers).toHaveLength(5);
     });
@@ -196,10 +190,10 @@ describe('Pipeline', () => {
         await Promise.resolve();
         next();
       };
-      
+
       const pipeline = Pipeline.create().use(asyncMiddleware);
       const handlers = pipeline.build();
-      
+
       expect(handlers).toHaveLength(1);
     });
 
@@ -208,10 +202,10 @@ describe('Pipeline', () => {
         (req as any).custom = 'value';
         next();
       };
-      
+
       const pipeline = Pipeline.create().use(middleware);
       const handlers = pipeline.build();
-      
+
       handlers[0](mockReq as Request, mockRes as Response, mockNext);
       expect((mockReq as any).custom).toBe('value');
     });
@@ -220,10 +214,10 @@ describe('Pipeline', () => {
       const middleware: RequestHandler = (req, res, next) => {
         // Don't call next()
       };
-      
+
       const pipeline = Pipeline.create().use(middleware);
       const handlers = pipeline.build();
-      
+
       handlers[0](mockReq as Request, mockRes as Response, mockNext);
       expect(mockNext).not.toHaveBeenCalled();
     });

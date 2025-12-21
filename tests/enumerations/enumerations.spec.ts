@@ -32,13 +32,17 @@ describe('Enumerations', () => {
       expect(SchemaCollection.User).toBe('users');
       expect(SchemaCollection.Mnemonic).toBe('mnemonics');
       expect(SchemaCollection.UserRole).toBe('user-roles');
-      expect(SchemaCollection.UsedDirectLoginToken).toBe('used-direct-login-tokens');
+      expect(SchemaCollection.UsedDirectLoginToken).toBe(
+        'used-direct-login-tokens',
+      );
     });
   });
 
   describe('SymmetricErrorType', () => {
     it('should have error types', () => {
-      expect(SymmetricErrorType.DataNullOrUndefined).toBe('DataNullOrUndefined');
+      expect(SymmetricErrorType.DataNullOrUndefined).toBe(
+        'DataNullOrUndefined',
+      );
       expect(SymmetricErrorType.InvalidKeyLength).toBe('InvalidKeyLength');
     });
   });

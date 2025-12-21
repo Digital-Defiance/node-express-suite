@@ -1,5 +1,5 @@
-import { RouteBuilder } from '../../src/routing/route-builder';
 import { z } from 'zod';
+import { RouteBuilder } from '../../src/routing/route-builder';
 
 describe('RouteBuilder', () => {
   describe('create', () => {
@@ -208,10 +208,8 @@ describe('RouteBuilder', () => {
 
     it('should return complete config', () => {
       const handler = () => {};
-      const config = RouteBuilder.create()
-        .get('/test')
-        .handle(handler);
-      
+      const config = RouteBuilder.create().get('/test').handle(handler);
+
       expect(config.method).toBe('get');
       expect(config.path).toBe('/test');
       expect(config.handler).toBe(handler);
@@ -224,7 +222,7 @@ describe('RouteBuilder', () => {
       const handler = jest.fn();
       const middleware = jest.fn();
       const schema = z.object({ id: z.number() });
-      
+
       const config = RouteBuilder.create()
         .post('/users')
         .auth()
@@ -234,7 +232,7 @@ describe('RouteBuilder', () => {
         .transaction(true, 3000)
         .rawJson()
         .handle(handler);
-      
+
       expect(config.method).toBe('post');
       expect(config.path).toBe('/users');
       expect(config.handler).toBe(handler);

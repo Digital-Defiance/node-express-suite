@@ -1,10 +1,13 @@
+import {
+  clearMemoryDB,
+  connectMemoryDB,
+  disconnectMemoryDB,
+} from '@digitaldefiance/express-suite-test-utils';
 import { LanguageCodes } from '@digitaldefiance/i18n-lib';
+import mongoose, { Model, Types } from '@digitaldefiance/mongoose-types';
 import { AccountStatus } from '@digitaldefiance/suite-core-lib';
-import { connectMemoryDB, disconnectMemoryDB, clearMemoryDB } from '@digitaldefiance/express-suite-test-utils';
-import mongoose, { Model } from '@digitaldefiance/mongoose-types';
-import { createUserSchema } from '../../src/schemas/user';
 import { IUserDocument } from '../../src/documents/user';
-import { Types } from '@digitaldefiance/mongoose-types';
+import { createUserSchema } from '../../src/schemas/user';
 
 describe('UserSchema validation with Mongoose', () => {
   let UserModel: Model<IUserDocument>;
@@ -46,7 +49,7 @@ describe('UserSchema validation with Mongoose', () => {
         ...validUserData,
         username: 'invalid username with spaces',
       });
-      
+
       await expect(user.validate()).rejects.toThrow();
     });
 
@@ -55,7 +58,7 @@ describe('UserSchema validation with Mongoose', () => {
         ...validUserData,
         username: undefined,
       });
-      
+
       await expect(user.validate()).rejects.toThrow();
     });
   });
@@ -71,7 +74,7 @@ describe('UserSchema validation with Mongoose', () => {
         ...validUserData,
         email: 'not-an-email',
       });
-      
+
       await expect(user.validate()).rejects.toThrow();
     });
 
@@ -80,7 +83,7 @@ describe('UserSchema validation with Mongoose', () => {
         ...validUserData,
         email: undefined,
       });
-      
+
       await expect(user.validate()).rejects.toThrow();
     });
   });
@@ -99,7 +102,7 @@ describe('UserSchema validation with Mongoose', () => {
         ...validUserData,
         timezone: 'Invalid/Timezone',
       });
-      
+
       await expect(user.validate()).rejects.toThrow();
     });
 
@@ -108,7 +111,7 @@ describe('UserSchema validation with Mongoose', () => {
         ...validUserData,
         timezone: undefined,
       });
-      
+
       expect(user.timezone).toBe('UTC');
     });
   });
@@ -127,7 +130,7 @@ describe('UserSchema validation with Mongoose', () => {
         ...validUserData,
         siteLanguage: 'invalid-lang' as any,
       });
-      
+
       await expect(user.validate()).rejects.toThrow();
     });
 
@@ -136,7 +139,7 @@ describe('UserSchema validation with Mongoose', () => {
         ...validUserData,
         siteLanguage: undefined,
       });
-      
+
       expect(user.siteLanguage).toBe(LanguageCodes.EN_US);
     });
   });
@@ -155,7 +158,7 @@ describe('UserSchema validation with Mongoose', () => {
         ...validUserData,
         accountStatus: 'InvalidStatus' as any,
       });
-      
+
       await expect(user.validate()).rejects.toThrow();
     });
 
@@ -164,7 +167,7 @@ describe('UserSchema validation with Mongoose', () => {
         ...validUserData,
         accountStatus: undefined,
       });
-      
+
       expect(user.accountStatus).toBe(AccountStatus.PendingEmailVerification);
     });
   });
@@ -172,11 +175,13 @@ describe('UserSchema validation with Mongoose', () => {
   describe('timestamps', () => {
     it('should automatically add createdAt and updatedAt', async () => {
       // Ensure we have a fresh connection and the collection exists
-      await mongoose.connection.createCollection('uservalidations').catch(() => {});
-      
+      await mongoose.connection
+        .createCollection('uservalidations')
+        .catch(() => {});
+
       const user = new UserModel(validUserData);
       await user.save();
-      
+
       expect(user.createdAt).toBeDefined();
       expect(user.updatedAt).toBeDefined();
       expect(user.createdAt).toBeInstanceOf(Date);
@@ -188,63 +193,78 @@ describe('UserSchema validation with Mongoose', () => {
     it('should use custom username validation message', async () => {
       const customMsg = () => 'Custom username error message';
       const schema = createUserSchema(customMsg);
-      const CustomModel = mongoose.model<IUserDocument>('UserCustomUsername', schema);
-      
+      const CustomModel = mongoose.model<IUserDocument>(
+        'UserCustomUsername',
+        schema,
+      );
+
       const user = new CustomModel({
         ...validUserData,
         username: '!!!invalid!!!',
       });
-      
+
       try {
         await user.validate();
         fail('Should have thrown validation error');
       } catch (error: any) {
         expect(error.errors.username).toBeDefined();
       }
-      
-      await mongoose.connection.dropCollection('usercustomusernames').catch(() => {});
+
+      await mongoose.connection
+        .dropCollection('usercustomusernames')
+        .catch(() => {});
       mongoose.deleteModel('UserCustomUsername');
     }, 30000);
 
     it('should use custom email validation message', async () => {
       const customMsg = () => 'Custom email error message';
       const schema = createUserSchema(undefined, customMsg);
-      const CustomModel = mongoose.model<IUserDocument>('UserCustomEmail', schema);
-      
+      const CustomModel = mongoose.model<IUserDocument>(
+        'UserCustomEmail',
+        schema,
+      );
+
       const user = new CustomModel({
         ...validUserData,
         email: 'not-an-email',
       });
-      
+
       try {
         await user.validate();
         fail('Should have thrown validation error');
       } catch (error: any) {
         expect(error.errors.email).toBeDefined();
       }
-      
-      await mongoose.connection.dropCollection('usercustomemails').catch(() => {});
+
+      await mongoose.connection
+        .dropCollection('usercustomemails')
+        .catch(() => {});
       mongoose.deleteModel('UserCustomEmail');
     }, 30000);
 
     it('should use custom timezone validation message', async () => {
       const customMsg = () => 'Custom timezone error message';
       const schema = createUserSchema(undefined, undefined, customMsg);
-      const CustomModel = mongoose.model<IUserDocument>('UserCustomTimezone', schema);
-      
+      const CustomModel = mongoose.model<IUserDocument>(
+        'UserCustomTimezone',
+        schema,
+      );
+
       const user = new CustomModel({
         ...validUserData,
         timezone: 'Bad/Timezone',
       });
-      
+
       try {
         await user.validate();
         fail('Should have thrown validation error');
       } catch (error: any) {
         expect(error.errors.timezone).toBeDefined();
       }
-      
-      await mongoose.connection.dropCollection('usercustomtimezones').catch(() => {});
+
+      await mongoose.connection
+        .dropCollection('usercustomtimezones')
+        .catch(() => {});
       mongoose.deleteModel('UserCustomTimezone');
     }, 30000);
   });
@@ -252,22 +272,33 @@ describe('UserSchema validation with Mongoose', () => {
   describe('unsupported languages', () => {
     it('should accept only specified languages', async () => {
       const customLangs = ['en', 'es', 'fr'];
-      const schema = createUserSchema(undefined, undefined, undefined, undefined, customLangs);
-      const CustomModel = mongoose.model<IUserDocument>('UserCustomLangs', schema);
-      
+      const schema = createUserSchema(
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        customLangs,
+      );
+      const CustomModel = mongoose.model<IUserDocument>(
+        'UserCustomLangs',
+        schema,
+      );
+
       const validUser = new CustomModel({
         ...validUserData,
         siteLanguage: 'es' as any,
       });
       await expect(validUser.validate()).resolves.not.toThrow();
-      
+
       const invalidUser = new CustomModel({
         ...validUserData,
         siteLanguage: 'de' as any,
       });
       await expect(invalidUser.validate()).rejects.toThrow();
-      
-      await mongoose.connection.dropCollection('usercustomlangs').catch(() => {});
+
+      await mongoose.connection
+        .dropCollection('usercustomlangs')
+        .catch(() => {});
       mongoose.deleteModel('UserCustomLangs');
     }, 30000);
   });
@@ -348,7 +379,7 @@ describe('UserSchema validation with Mongoose', () => {
           },
         ],
       });
-      
+
       await expect(user.validate()).resolves.not.toThrow();
       expect(user.backupCodes.length).toBe(2);
     });

@@ -1,25 +1,38 @@
+import {
+  CoreLanguageCode,
+  GlobalActiveContext,
+  IActiveContext,
+} from '@digitaldefiance/i18n-lib';
 import { Connection } from '@digitaldefiance/mongoose-types';
+import { IFailableResult } from '@digitaldefiance/suite-core-lib';
+import { HelmetOptions } from 'helmet';
 import { Application } from '../../application';
+import { BaseApplication } from '../../application-base';
 import { IBaseDocument } from '../../documents';
 import { Environment } from '../../environment';
-import { IApplication, IConstants, ICSPConfig, IFlexibleCSP, IServerInitResult } from '../../interfaces';
+import {
+  IApplication,
+  IConstants,
+  ICSPConfig,
+  IFlexibleCSP,
+  IServerInitResult,
+} from '../../interfaces';
 import { ITestEnvironment } from '../../interfaces/test-environment';
-import { SchemaMap } from '../../types';
-import { BaseApplication } from '../../application-base';
-import { AppRouter, BaseRouter } from '../../routers';
-import { HelmetOptions } from 'helmet';
 import { initMiddleware } from '../../middlewares';
+import { AppRouter, BaseRouter } from '../../routers';
 import { DatabaseInitializationService } from '../../services';
-import { IFailableResult } from '@digitaldefiance/suite-core-lib';
-import { CoreLanguageCode, GlobalActiveContext, IActiveContext } from '@digitaldefiance/i18n-lib';
+import { SchemaMap } from '../../types';
 
-export async function setupTestEnvironment<TModelDocs extends Record<string, IBaseDocument<any>>, TConstants extends IConstants = IConstants, TAppRouter extends AppRouter = AppRouter> (  
+export async function setupTestEnvironment<
+  TModelDocs extends Record<string, IBaseDocument<any>>,
+  TConstants extends IConstants = IConstants,
+  TAppRouter extends AppRouter = AppRouter,
+>(
   constants: TConstants,
   apiRouterFactory: (app: IApplication) => BaseRouter,
-  schemaMapFactory: (
-    connection: Connection,
-  ) => SchemaMap<TModelDocs>,
-  appRouterFactory: (apiRouter: BaseRouter) => TAppRouter = (apiRouter) => new AppRouter(apiRouter) as TAppRouter,
+  schemaMapFactory: (connection: Connection) => SchemaMap<TModelDocs>,
+  appRouterFactory: (apiRouter: BaseRouter) => TAppRouter = (apiRouter) =>
+    new AppRouter(apiRouter) as TAppRouter,
   customInitMiddleware: typeof initMiddleware = initMiddleware,
   envLocation?: string,
   databaseInitFunction?: (
@@ -79,14 +92,19 @@ export async function setupTestEnvironment<TModelDocs extends Record<string, IBa
 
   // Use a random high port to avoid conflicts
   process.env['PORT'] = String(Math.floor(Math.random() * 10000) + 50000);
-  
+
   // Use unique database name for each test to avoid conflicts
-  const uniqueDbName = `test_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+  const uniqueDbName = `test_${Date.now()}_${Math.floor(
+    Math.random() * 10000,
+  )}`;
   process.env['DEV_DATABASE'] = uniqueDbName;
 
   // Reset global language context to English
   const setAdminLanguage = (language: CoreLanguageCode) => {
-    const context = GlobalActiveContext.getInstance<CoreLanguageCode, IActiveContext<CoreLanguageCode>>();
+    const context = GlobalActiveContext.getInstance<
+      CoreLanguageCode,
+      IActiveContext<CoreLanguageCode>
+    >();
     context.setAdminLanguage(language);
   };
   setAdminLanguage('en-US');
@@ -97,8 +115,14 @@ export async function setupTestEnvironment<TModelDocs extends Record<string, IBa
     env,
     apiRouterFactory,
     schemaMapFactory,
-    databaseInitFunction ?? DatabaseInitializationService.initUserDb.bind(DatabaseInitializationService),
-    initResultHashFunction ?? DatabaseInitializationService.serverInitResultHash.bind(DatabaseInitializationService),
+    databaseInitFunction ??
+      DatabaseInitializationService.initUserDb.bind(
+        DatabaseInitializationService,
+      ),
+    initResultHashFunction ??
+      DatabaseInitializationService.serverInitResultHash.bind(
+        DatabaseInitializationService,
+      ),
     cspConfig,
     constants,
     appRouterFactory,
@@ -145,7 +169,10 @@ export async function setupTestEnvironment<TModelDocs extends Record<string, IBa
         .catch(() => undefined);
     }
   } catch (error) {
-    console.error('Failed to start application with MongoDB URI:', application.environment.mongo.uri);
+    console.error(
+      'Failed to start application with MongoDB URI:',
+      application.environment.mongo.uri,
+    );
     console.error('Connection error:', error);
     throw error;
   }

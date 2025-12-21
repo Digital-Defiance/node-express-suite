@@ -1,7 +1,7 @@
-import { LanguageRegistry, Timezone } from '@digitaldefiance/i18n-lib';
+import { LanguageRegistry } from '@digitaldefiance/i18n-lib';
+import { Types } from '@digitaldefiance/mongoose-types';
 import { existsSync, mkdirSync, rmSync, unlinkSync, writeFileSync } from 'fs';
 import { ObjectId } from 'mongodb';
-import { Types } from '@digitaldefiance/mongoose-types';
 import { join } from 'path';
 import { Environment } from '../src/environment';
 
@@ -16,7 +16,12 @@ describe('Environment', () => {
   beforeAll(() => {
     // Initialize i18n system
     LanguageRegistry['languages'].clear();
-    LanguageRegistry.registerLanguage({ id: 'en', code: 'en', name: 'English', isDefault: true });
+    LanguageRegistry.registerLanguage({
+      id: 'en',
+      code: 'en',
+      name: 'English',
+      isDefault: true,
+    });
     LanguageRegistry.setDefaultLanguage('en');
     // Create temporary directories for testing
     tempDir = join(process.cwd(), 'tmp-test-env');
@@ -103,7 +108,8 @@ describe('Environment', () => {
     process.env['PORT'] = '3000';
     // test fixture - not a real credential
     // amazonq-ignore-next-line
-    process.env['JWT_SECRET'] = '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
+    process.env['JWT_SECRET'] =
+      '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
     process.env['EMAIL_SENDER'] = 'test@example.com';
     process.env['MONGO_URI'] = 'mongodb://localhost:27017/test';
     process.env['API_DIST_DIR'] = tempApiDistDir;
@@ -143,7 +149,9 @@ describe('Environment', () => {
       expect(env.detailedDebug).toBe(false);
       expect(env.host).toBe('0.0.0.0');
       expect(env.port).toBe(3000);
-      expect(env.jwtSecret).toBe('0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef');
+      expect(env.jwtSecret).toBe(
+        '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
+      );
       expect(env.emailSender).toBe('test@example.com');
       expect(env.basePath).toBe('/');
       expect(env.disableEmailSend).toBe(false);
@@ -238,7 +246,7 @@ describe('Environment', () => {
         false,
         true,
         undefined,
-        (bytes) => new Types.ObjectId(Buffer.from(bytes)) as any
+        (bytes) => new Types.ObjectId(Buffer.from(bytes)) as any,
       );
 
       expect(env.adminId?.toString()).toBe(adminId.toString());
@@ -367,7 +375,9 @@ MONGO_URI=mongodb://file-host:27017/file-db
       expect(env.detailedDebug).toBe(true);
       expect(env.host).toBe('custom-host');
       expect(env.port).toBe(9000);
-      expect(env.jwtSecret).toBe('abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789');
+      expect(env.jwtSecret).toBe(
+        'abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789',
+      );
       expect(env.emailSender).toBe('file@example.com');
       expect(env.mongo.uri).toBe('mongodb://file-host:27017/file-db');
     });
@@ -617,7 +627,8 @@ PORT=9000
     it('should accept valid JWT_SECRET matching regex', () => {
       // test fixture - not a real credential
       // amazonq-ignore-next-line
-      process.env['JWT_SECRET'] = '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
+      process.env['JWT_SECRET'] =
+        '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
 
       expect(() => {
         new Environment();
@@ -627,7 +638,8 @@ PORT=9000
     it('should accept valid MNEMONIC_HMAC_SECRET matching regex', () => {
       // test fixture - not a real credential
       // amazonq-ignore-next-line
-      process.env['MNEMONIC_HMAC_SECRET'] = 'ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789';
+      process.env['MNEMONIC_HMAC_SECRET'] =
+        'ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789';
 
       expect(() => {
         new Environment();
@@ -637,7 +649,8 @@ PORT=9000
     it('should accept valid MNEMONIC_ENCRYPTION_KEY matching regex', () => {
       // test fixture - not a real credential
       // amazonq-ignore-next-line
-      process.env['MNEMONIC_ENCRYPTION_KEY'] = 'fedcba9876543210FEDCBA9876543210fedcba9876543210FEDCBA9876543210';
+      process.env['MNEMONIC_ENCRYPTION_KEY'] =
+        'fedcba9876543210FEDCBA9876543210fedcba9876543210FEDCBA9876543210';
 
       expect(() => {
         new Environment();
@@ -657,7 +670,8 @@ PORT=9000
       process.env['PORT'] = '8080';
       // test credential - not a real credential
       // amazonq-ignore-next-line
-      process.env['JWT_SECRET'] = 'fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210';
+      process.env['JWT_SECRET'] =
+        'fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210';
       process.env['EMAIL_SENDER'] = 'test@example.com';
       process.env['BASE_PATH'] = '/api';
       process.env['HTTPS_DEV_PORT'] = '8443';
@@ -690,7 +704,9 @@ PORT=9000
     it('should return correct server configuration', () => {
       expect(env.host).toBe('test-host');
       expect(env.port).toBe(8080);
-      expect(env.jwtSecret).toBe('fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210');
+      expect(env.jwtSecret).toBe(
+        'fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210',
+      );
       expect(env.emailSender).toBe('test@example.com');
       expect(env.basePath).toBe('/api');
       expect(env.httpsDevPort).toBe(8443);

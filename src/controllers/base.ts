@@ -1,4 +1,3 @@
-/// <reference path="../types.d.ts" />
 import {
   GlobalActiveContext,
   HandleableError,
@@ -6,6 +5,7 @@ import {
   PluginI18nEngine,
   TranslatableGenericError,
 } from '@digitaldefiance/i18n-lib';
+import { ClientSession, Types } from '@digitaldefiance/mongoose-types';
 import {
   AccountStatus,
   getSuiteCoreTranslation,
@@ -28,7 +28,6 @@ import {
   ValidationChain,
   validationResult,
 } from 'express-validator';
-import { ClientSession, Types } from '@digitaldefiance/mongoose-types';
 import { IUserDocument } from '../documents/user';
 import { BaseModelName } from '../enumerations/base-model-name';
 import { ExpressValidationError } from '../errors/express-validation';
@@ -78,6 +77,7 @@ export abstract class BaseController<
   }
   protected handlers: H;
   // Allowlist of registered validation functions to prevent code injection
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
   private static validationRegistry = new WeakSet<Function>();
   protected transactionManager: TransactionManager;
 
@@ -328,8 +328,8 @@ export abstract class BaseController<
 
   private handleBooleanFields(
     validationArray: ValidationChain[],
-    validatedBody: Record<string, any>,
-  ): Record<string, any> {
+    validatedBody: Record<string, unknown>,
+  ): Record<string, unknown> {
     // false booleans will be missing from validatedBody, so we need to add them
     validationArray.forEach((validation: ValidationChain) => {
       const fieldChains = validation.builder.build().fields;
@@ -337,12 +337,15 @@ export abstract class BaseController<
       fieldChains.forEach((field: string) => {
         const hasBooleanValidator = validation.builder
           .build()
-          .stack.some((item: any) => {
+          .stack.some((item: unknown) => {
+            const validator = item as {
+              validator?: { name?: string };
+              negated?: boolean;
+            };
             return (
-              item.validator &&
-              typeof item.validator === 'function' &&
-              item.validator.name === 'isBoolean' &&
-              !item.negated
+              validator.validator &&
+              validator.validator.name === 'isBoolean' &&
+              !validator.negated
             );
           });
 
@@ -412,7 +415,7 @@ export abstract class BaseController<
     return this.activeRequest.user;
   }
 
-  public get validatedBody(): Record<string, any> {
+  public get validatedBody(): Record<string, unknown> {
     if (!this.activeRequest) {
       throw new TranslatableGenericError<SuiteCoreStringKey>(
         SuiteCoreComponentId,

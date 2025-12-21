@@ -1,6 +1,6 @@
 import { Types } from '@digitaldefiance/mongoose-types';
-import { IConstants } from '../interfaces';
 import { Environment } from '../environment';
+import { IConstants } from '../interfaces';
 
 export interface ControllerConfig {
   idType: Types.ObjectId | string;

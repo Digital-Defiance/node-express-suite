@@ -1,4 +1,7 @@
-import { SuiteCoreStringKey, TranslatableSuiteError } from '@digitaldefiance/suite-core-lib';
+import {
+  SuiteCoreStringKey,
+  TranslatableSuiteError,
+} from '@digitaldefiance/suite-core-lib';
 
 export type ServiceFactory<T = any> = () => T;
 
@@ -18,14 +21,22 @@ export class ServiceContainer {
     if (this.singletons.has(key)) {
       if (!this.instances.has(key)) {
         const factory = this.services.get(key);
-        if (!factory) throw new TranslatableSuiteError(SuiteCoreStringKey.Error_ServiceIsNotRegisteredTemplate, { key });
+        if (!factory)
+          throw new TranslatableSuiteError(
+            SuiteCoreStringKey.Error_ServiceIsNotRegisteredTemplate,
+            { key },
+          );
         this.instances.set(key, factory());
       }
       return this.instances.get(key);
     }
 
     const factory = this.services.get(key);
-    if (!factory) throw new TranslatableSuiteError(SuiteCoreStringKey.Error_ServiceIsNotRegisteredTemplate, { key });
+    if (!factory)
+      throw new TranslatableSuiteError(
+        SuiteCoreStringKey.Error_ServiceIsNotRegisteredTemplate,
+        { key },
+      );
     return factory();
   }
 

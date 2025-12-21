@@ -1,6 +1,9 @@
-import { ResponseBuilder, Response } from '../../src/responses/response-builder';
-import { SuiteCoreStringKey } from '@digitaldefiance/suite-core-lib';
 import { LanguageCodes } from '@digitaldefiance/i18n-lib';
+import { SuiteCoreStringKey } from '@digitaldefiance/suite-core-lib';
+import {
+  Response,
+  ResponseBuilder,
+} from '../../src/responses/response-builder';
 
 describe('ResponseBuilder', () => {
   describe('static factory methods', () => {
@@ -81,27 +84,33 @@ describe('ResponseBuilder', () => {
 
   describe('message', () => {
     it('should add message with translation key', () => {
-      const builder = ResponseBuilder.ok()
-        .message(SuiteCoreStringKey.Registration_Success);
+      const builder = ResponseBuilder.ok().message(
+        SuiteCoreStringKey.Registration_Success,
+      );
       const result = builder.build();
-      
+
       expect(result.response.message).toBeDefined();
       expect(typeof result.response.message).toBe('string');
     });
 
     it('should add message with params', () => {
-      const builder = ResponseBuilder.ok()
-        .message(SuiteCoreStringKey.Error_ServiceIsNotRegisteredTemplate, { key: 'test' });
+      const builder = ResponseBuilder.ok().message(
+        SuiteCoreStringKey.Error_ServiceIsNotRegisteredTemplate,
+        { key: 'test' },
+      );
       const result = builder.build();
-      
+
       expect(result.response.message).toBeDefined();
     });
 
     it('should add message with language', () => {
-      const builder = ResponseBuilder.ok()
-        .message(SuiteCoreStringKey.Registration_Success, undefined, LanguageCodes.EN_US);
+      const builder = ResponseBuilder.ok().message(
+        SuiteCoreStringKey.Registration_Success,
+        undefined,
+        LanguageCodes.EN_US,
+      );
       const result = builder.build();
-      
+
       expect(result.response.message).toBeDefined();
     });
 
@@ -117,7 +126,7 @@ describe('ResponseBuilder', () => {
       const data = { user: { id: 1, name: 'Test' } };
       const builder = ResponseBuilder.ok().data(data);
       const result = builder.build();
-      
+
       expect(result.response.user).toEqual(data.user);
     });
 
@@ -126,7 +135,7 @@ describe('ResponseBuilder', () => {
         .data({ field1: 'value1' })
         .data({ field2: 'value2' });
       const result = builder.build();
-      
+
       expect(result.response.field1).toBe('value1');
       expect(result.response.field2).toBe('value2');
     });
@@ -136,7 +145,7 @@ describe('ResponseBuilder', () => {
         .data({ field: 'old' })
         .data({ field: 'new' });
       const result = builder.build();
-      
+
       expect(result.response.field).toBe('new');
     });
 
@@ -152,7 +161,7 @@ describe('ResponseBuilder', () => {
       const headers = { 'X-Custom': 'value' };
       const builder = ResponseBuilder.ok().headers(headers);
       const result = builder.build();
-      
+
       expect(result.headers).toEqual(headers);
     });
 
@@ -165,7 +174,7 @@ describe('ResponseBuilder', () => {
     it('should not include headers if not set', () => {
       const builder = ResponseBuilder.ok();
       const result = builder.build();
-      
+
       expect(result.headers).toBeUndefined();
     });
   });
@@ -176,9 +185,9 @@ describe('ResponseBuilder', () => {
         .message(SuiteCoreStringKey.Registration_Success)
         .data({ user: { id: 1 } })
         .headers({ 'X-Custom': 'value' });
-      
+
       const result = builder.build();
-      
+
       expect(result.statusCode).toBe(200);
       expect(result.response.message).toBeDefined();
       expect(result.response.user).toEqual({ id: 1 });
@@ -188,7 +197,7 @@ describe('ResponseBuilder', () => {
     it('should build minimal response', () => {
       const builder = ResponseBuilder.ok();
       const result = builder.build();
-      
+
       expect(result.statusCode).toBe(200);
       expect(result.response).toEqual({});
     });
@@ -196,13 +205,12 @@ describe('ResponseBuilder', () => {
 
   describe('fluent API', () => {
     it('should support full fluent chain', () => {
-      const result = ResponseBuilder
-        .created()
+      const result = ResponseBuilder.created()
         .message(SuiteCoreStringKey.Registration_Success)
         .data({ user: { id: 1, username: 'test' } })
-        .headers({ 'Location': '/users/1' })
+        .headers({ Location: '/users/1' })
         .build();
-      
+
       expect(result.statusCode).toBe(201);
       expect(result.response.message).toBeDefined();
       expect(result.response.user).toBeDefined();
@@ -210,83 +218,73 @@ describe('ResponseBuilder', () => {
     });
 
     it('should support Response alias', () => {
-      const result = Response
-        .ok()
+      const result = Response.ok()
         .message(SuiteCoreStringKey.Registration_Success)
         .build();
-      
+
       expect(result.statusCode).toBe(200);
     });
   });
 
   describe('real-world scenarios', () => {
     it('should create registration success response', () => {
-      const result = Response
-        .created()
+      const result = Response.created()
         .message(SuiteCoreStringKey.Registration_Success)
         .data({
           user: { id: 1, username: 'newuser', email: 'user@example.com' },
-          mnemonic: 'word1 word2 word3...'
+          mnemonic: 'word1 word2 word3...',
         })
         .build();
-      
+
       expect(result.statusCode).toBe(201);
       expect(result.response.user).toBeDefined();
       expect(result.response.mnemonic).toBeDefined();
     });
 
     it('should create login success response', () => {
-      const result = Response
-        .ok()
+      const result = Response.ok()
         .data({
           token: 'jwt-token',
-          user: { id: 1, username: 'user' }
+          user: { id: 1, username: 'user' },
         })
         .build();
-      
+
       expect(result.statusCode).toBe(200);
       expect(result.response.token).toBeDefined();
     });
 
     it('should create validation error response', () => {
-      const result = Response
-        .badRequest()
+      const result = Response.badRequest()
         .data({
           errors: [
             { field: 'username', message: 'Invalid username' },
-            { field: 'email', message: 'Invalid email' }
-          ]
+            { field: 'email', message: 'Invalid email' },
+          ],
         })
         .build();
-      
+
       expect(result.statusCode).toBe(400);
       expect(result.response.errors).toHaveLength(2);
     });
 
     it('should create unauthorized response', () => {
-      const result = Response
-        .unauthorized()
-        .build();
-      
+      const result = Response.unauthorized().build();
+
       expect(result.statusCode).toBe(401);
     });
 
     it('should create not found response', () => {
-      const result = Response
-        .notFound()
+      const result = Response.notFound()
         .data({ resource: 'user', id: 123 })
         .build();
-      
+
       expect(result.statusCode).toBe(404);
       expect(result.response.resource).toBe('user');
     });
 
     it('should create server error response', () => {
-      const result = Response
-        .error()
-        .data({ errorId: 'err-12345' })
-        .build();
-      
+      const result = Response.error().data({ errorId: 'err-12345' }).build();
+
       expect(result.statusCode).toBe(500);
       expect(result.response.errorId).toBeDefined();
     });
@@ -315,12 +313,12 @@ describe('ResponseBuilder', () => {
           profile: {
             name: 'Test',
             settings: {
-              theme: 'dark'
-            }
-          }
-        }
+              theme: 'dark',
+            },
+          },
+        },
       };
-      
+
       const result = Response.ok().data(complexData).build();
       expect(result.response.user.profile.settings.theme).toBe('dark');
     });

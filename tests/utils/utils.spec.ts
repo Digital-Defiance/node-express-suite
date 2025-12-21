@@ -1,27 +1,26 @@
+import { Types } from '@digitaldefiance/mongoose-types';
 import { z } from 'zod';
+import { LengthEncodingType } from '../../src/enumerations/length-encoding-type';
 import {
-  debugLog,
-  directLog,
-  getValueAtPath,
-  mapZodIssuesToValidationErrors,
-  isValidStringId,
-  omit,
-  validateEnumCollection,
-  uint8ArrayToBase64,
-  base64ToUint8Array,
-  uint8ArrayToHex,
-  hexToUint8Array,
-  crc16,
   arraysEqual,
+  base64ToUint8Array,
   concatUint8Arrays,
+  crc16,
+  debugLog,
+  decodeLengthEncodedData,
+  directLog,
   getLengthEncodingTypeForLength,
   getLengthForLengthType,
+  getValueAtPath,
+  hexToUint8Array,
+  isValidStringId,
   lengthEncodeData,
-  decodeLengthEncodedData,
+  mapZodIssuesToValidationErrors,
+  omit,
+  uint8ArrayToBase64,
+  uint8ArrayToHex,
+  validateEnumCollection,
 } from '../../src/utils';
-import { LengthEncodingType } from '../../src/enumerations/length-encoding-type';
-import { Types } from '@digitaldefiance/mongoose-types';
-import * as fs from 'fs';
 
 describe('utils', () => {
   describe('debugLog', () => {
@@ -104,7 +103,9 @@ describe('utils', () => {
         schema.parse({ email: 'invalid' });
       } catch (error) {
         if (error instanceof z.ZodError) {
-          const result = mapZodIssuesToValidationErrors(error.issues, { email: 'invalid' });
+          const result = mapZodIssuesToValidationErrors(error.issues, {
+            email: 'invalid',
+          });
           expect(result).toHaveLength(1);
           expect(result[0].path).toBe('email');
           expect(result[0].location).toBe('body');
@@ -209,15 +210,21 @@ describe('utils', () => {
 
   describe('getLengthEncodingTypeForLength', () => {
     it('should return UInt8 for small lengths', () => {
-      expect(getLengthEncodingTypeForLength(100)).toBe(LengthEncodingType.UInt8);
+      expect(getLengthEncodingTypeForLength(100)).toBe(
+        LengthEncodingType.UInt8,
+      );
     });
 
     it('should return UInt16 for medium lengths', () => {
-      expect(getLengthEncodingTypeForLength(1000)).toBe(LengthEncodingType.UInt16);
+      expect(getLengthEncodingTypeForLength(1000)).toBe(
+        LengthEncodingType.UInt16,
+      );
     });
 
     it('should return UInt32 for large lengths', () => {
-      expect(getLengthEncodingTypeForLength(100000)).toBe(LengthEncodingType.UInt32);
+      expect(getLengthEncodingTypeForLength(100000)).toBe(
+        LengthEncodingType.UInt32,
+      );
     });
   });
 
@@ -255,14 +262,14 @@ describe('utils', () => {
       const callback = jest.fn();
 
       await expect(
-        requireValidatedFieldsAsync(req, schema, callback)
+        requireValidatedFieldsAsync(req, schema, callback),
       ).rejects.toThrow();
       expect(callback).not.toHaveBeenCalled();
     });
 
     it('should call callback with validated data when valid', async () => {
       const req = {
-        validatedBody: { name: 'test', age: 25 }
+        validatedBody: { name: 'test', age: 25 },
       } as any;
       const schema = z.object({ name: z.string(), age: z.number() });
       const callback = jest.fn().mockResolvedValue('success');
@@ -275,13 +282,13 @@ describe('utils', () => {
 
     it('should throw ExpressValidationError for invalid data', async () => {
       const req = {
-        validatedBody: { name: 123 }
+        validatedBody: { name: 123 },
       } as any;
       const schema = z.object({ name: z.string() });
       const callback = jest.fn();
 
       await expect(
-        requireValidatedFieldsAsync(req, schema, callback)
+        requireValidatedFieldsAsync(req, schema, callback),
       ).rejects.toThrow();
       expect(callback).not.toHaveBeenCalled();
     });
@@ -295,20 +302,20 @@ describe('utils', () => {
       const callback = jest.fn();
 
       await expect(
-        requireOneOfValidatedFieldsAsync(req, ['field1', 'field2'], callback)
+        requireOneOfValidatedFieldsAsync(req, ['field1', 'field2'], callback),
       ).rejects.toThrow();
     });
 
     it('should call callback when at least one field exists', async () => {
       const req = {
-        validatedBody: { field1: 'value' }
+        validatedBody: { field1: 'value' },
       } as any;
       const callback = jest.fn().mockResolvedValue('success');
 
       const result = await requireOneOfValidatedFieldsAsync(
         req,
         ['field1', 'field2'],
-        callback
+        callback,
       );
 
       expect(callback).toHaveBeenCalled();
@@ -317,12 +324,12 @@ describe('utils', () => {
 
     it('should throw when no fields exist', async () => {
       const req = {
-        validatedBody: { field3: 'value' }
+        validatedBody: { field3: 'value' },
       } as any;
       const callback = jest.fn();
 
       await expect(
-        requireOneOfValidatedFieldsAsync(req, ['field1', 'field2'], callback)
+        requireOneOfValidatedFieldsAsync(req, ['field1', 'field2'], callback),
       ).rejects.toThrow();
     });
   });
@@ -335,20 +342,20 @@ describe('utils', () => {
       const callback = jest.fn();
 
       expect(() =>
-        requireValidatedFieldsOrThrow(req, ['field1'], callback)
+        requireValidatedFieldsOrThrow(req, ['field1'], callback),
       ).toThrow();
     });
 
     it('should call callback when all fields exist', () => {
       const req = {
-        validatedBody: { field1: 'value1', field2: 'value2' }
+        validatedBody: { field1: 'value1', field2: 'value2' },
       } as any;
       const callback = jest.fn().mockReturnValue('success');
 
       const result = requireValidatedFieldsOrThrow(
         req,
         ['field1', 'field2'],
-        callback
+        callback,
       );
 
       expect(callback).toHaveBeenCalled();
@@ -357,12 +364,12 @@ describe('utils', () => {
 
     it('should throw when a required field is missing', () => {
       const req = {
-        validatedBody: { field1: 'value1' }
+        validatedBody: { field1: 'value1' },
       } as any;
       const callback = jest.fn();
 
       expect(() =>
-        requireValidatedFieldsOrThrow(req, ['field1', 'field2'], callback)
+        requireValidatedFieldsOrThrow(req, ['field1', 'field2'], callback),
       ).toThrow();
     });
   });
@@ -425,7 +432,11 @@ describe('utils', () => {
         json: jest.fn(),
       };
 
-      sendApiMessageResponse(500, { message: 'error', error: new Error('test') }, mockRes as any);
+      sendApiMessageResponse(
+        500,
+        { message: 'error', error: new Error('test') },
+        mockRes as any,
+      );
 
       expect(mockRes.status).toHaveBeenCalledWith(500);
       expect(mockRes.json).toHaveBeenCalled();
@@ -472,55 +483,57 @@ describe('utils', () => {
 
     it('should return undefined if no PEM files found', () => {
       const mockReaddirSync = jest.spyOn(fs, 'readdirSync').mockReturnValue([]);
-      
+
       const result = locatePEMRoot('./test');
-      
+
       expect(result).toBeUndefined();
       mockReaddirSync.mockRestore();
     });
 
     it('should return undefined if less than 2 PEM files', () => {
-      const mockReaddirSync = jest.spyOn(fs, 'readdirSync').mockReturnValue(['localhost+1.pem']);
-      
+      const mockReaddirSync = jest
+        .spyOn(fs, 'readdirSync')
+        .mockReturnValue(['localhost+1.pem']);
+
       const result = locatePEMRoot('./test');
-      
+
       expect(result).toBeUndefined();
       mockReaddirSync.mockRestore();
     });
 
     it('should find valid PEM root', () => {
-      const mockReaddirSync = jest.spyOn(fs, 'readdirSync').mockReturnValue([
-        'localhost+1.pem',
-        'localhost+1-key.pem'
-      ]);
+      const mockReaddirSync = jest
+        .spyOn(fs, 'readdirSync')
+        .mockReturnValue(['localhost+1.pem', 'localhost+1-key.pem']);
       const mockExistsSync = jest.spyOn(fs, 'existsSync').mockReturnValue(true);
-      
+
       const result = locatePEMRoot('./test');
-      
+
       expect(result).toBeDefined();
       mockReaddirSync.mockRestore();
       mockExistsSync.mockRestore();
     });
 
     it('should reject files with path separators', () => {
-      const mockReaddirSync = jest.spyOn(fs, 'readdirSync').mockReturnValue([
-        '../localhost+1.pem',
-        'localhost+1-key.pem'
-      ]);
-      
+      const mockReaddirSync = jest
+        .spyOn(fs, 'readdirSync')
+        .mockReturnValue(['../localhost+1.pem', 'localhost+1-key.pem']);
+
       const result = locatePEMRoot('./test');
-      
+
       expect(result).toBeUndefined();
       mockReaddirSync.mockRestore();
     });
 
     it('should handle readdir errors', () => {
-      const mockReaddirSync = jest.spyOn(fs, 'readdirSync').mockImplementation(() => {
-        throw new Error('Permission denied');
-      });
-      
+      const mockReaddirSync = jest
+        .spyOn(fs, 'readdirSync')
+        .mockImplementation(() => {
+          throw new Error('Permission denied');
+        });
+
       const result = locatePEMRoot('./test');
-      
+
       expect(result).toBeUndefined();
       mockReaddirSync.mockRestore();
     });
@@ -566,7 +579,7 @@ describe('utils', () => {
         false,
         undefined,
         mockCallback,
-        {}
+        {},
       );
 
       expect(result).toBe('result');
@@ -593,7 +606,7 @@ describe('utils', () => {
         true,
         undefined,
         mockCallback,
-        {}
+        {},
       );
 
       expect(mockClient.startSession).toHaveBeenCalled();
@@ -620,7 +633,7 @@ describe('utils', () => {
       const mockCallback = jest.fn().mockRejectedValue(new Error('Test error'));
 
       await expect(
-        withTransaction(mockConnection, true, undefined, mockCallback, {})
+        withTransaction(mockConnection, true, undefined, mockCallback, {}),
       ).rejects.toThrow('Test error');
 
       // Verify abort was called
@@ -645,7 +658,7 @@ describe('utils', () => {
         false,
         mockSession as any,
         mockCallback,
-        {}
+        {},
       );
 
       expect(mockSession.startTransaction).not.toHaveBeenCalled();
@@ -667,11 +680,11 @@ describe('utils', () => {
         true,
         undefined,
         mockCallback,
-        { debugLogEnabled: true }
+        { debugLogEnabled: true },
       );
 
       expect(result).toBe('result');
-      
+
       consoleWarnSpy.mockRestore();
     });
   });

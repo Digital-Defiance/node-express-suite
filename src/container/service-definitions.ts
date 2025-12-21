@@ -8,4 +8,4 @@ export const ServiceKeys = {
   BACKUP_CODE: 'backupCode',
 } as const;
 
-export type ServiceKey = typeof ServiceKeys[keyof typeof ServiceKeys];
+export type ServiceKey = (typeof ServiceKeys)[keyof typeof ServiceKeys];

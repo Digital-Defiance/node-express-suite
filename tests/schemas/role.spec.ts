@@ -1,7 +1,8 @@
-import { Role, SuiteCoreStringKey, TranslatableSuiteError } from '@digitaldefiance/suite-core-lib';
-import { Schema } from '@digitaldefiance/mongoose-types';
+import {
+  SuiteCoreStringKey,
+  TranslatableSuiteError,
+} from '@digitaldefiance/suite-core-lib';
 import { createRoleSchema, RoleSchema } from '../../src/schemas/role';
-import { IRoleDocument } from '../../src/documents/role';
 
 describe('RoleSchema', () => {
   describe('createRoleSchema', () => {
@@ -38,7 +39,7 @@ describe('RoleSchema', () => {
 
     it('should have unique index on name', () => {
       const indexes = RoleSchema.indexes();
-      const nameIndex = indexes.find(idx => idx[0].name === 1);
+      const nameIndex = indexes.find((idx) => idx[0].name === 1);
       expect(nameIndex).toBeDefined();
     });
   });
@@ -56,10 +57,12 @@ describe('RoleSchema', () => {
       // Get our custom validation hook (last one added)
       const hooks = Array.from(schema.s.hooks._pres.get('save') || []);
       const ourHook = hooks[hooks.length - 1].fn;
-      
+
       ourHook.call(mockDoc, (err: any) => {
         expect(err).toBeInstanceOf(TranslatableSuiteError);
-        expect(err.StringName).toBe(SuiteCoreStringKey.Error_ChildRoleCannotBeAnAdminRole);
+        expect(err.StringName).toBe(
+          SuiteCoreStringKey.Error_ChildRoleCannotBeAnAdminRole,
+        );
         done();
       });
     });
@@ -75,10 +78,12 @@ describe('RoleSchema', () => {
 
       const hooks = Array.from(schema.s.hooks._pres.get('save') || []);
       const ourHook = hooks[hooks.length - 1].fn;
-      
+
       ourHook.call(mockDoc, (err: any) => {
         expect(err).toBeInstanceOf(TranslatableSuiteError);
-        expect(err.StringName).toBe(SuiteCoreStringKey.Error_ChildRoleCannotBeASystemRole);
+        expect(err.StringName).toBe(
+          SuiteCoreStringKey.Error_ChildRoleCannotBeASystemRole,
+        );
         done();
       });
     });
@@ -94,7 +99,7 @@ describe('RoleSchema', () => {
 
       const hooks = Array.from(schema.s.hooks._pres.get('save') || []);
       const ourHook = hooks[hooks.length - 1].fn;
-      
+
       ourHook.call(mockDoc, (err: any) => {
         expect(err).toBeUndefined();
         done();
@@ -112,7 +117,7 @@ describe('RoleSchema', () => {
 
       const hooks = Array.from(schema.s.hooks._pres.get('save') || []);
       const ourHook = hooks[hooks.length - 1].fn;
-      
+
       ourHook.call(mockDoc, (err: any) => {
         expect(err).toBeUndefined();
         done();
@@ -130,9 +135,12 @@ describe('RoleSchema', () => {
 
       const hooks = Array.from(schema.s.hooks._pres.get('save') || []);
       const ourHook = hooks[hooks.length - 1].fn;
-      
+
       ourHook.call(mockDoc, (err: any) => {
-        expect(customValidation).toHaveBeenCalledWith(mockDoc, expect.any(Function));
+        expect(customValidation).toHaveBeenCalledWith(
+          mockDoc,
+          expect.any(Function),
+        );
         expect(err).toBeUndefined();
         done();
       });
@@ -148,7 +156,7 @@ describe('RoleSchema', () => {
 
       const hooks = Array.from(schema.s.hooks._pres.get('save') || []);
       const ourHook = hooks[hooks.length - 1].fn;
-      
+
       ourHook.call(mockDoc, (err: any) => {
         expect(err).toBe(customError);
         done();

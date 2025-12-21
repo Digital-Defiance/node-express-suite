@@ -1,5 +1,5 @@
-import { BaseRouter } from '../../src/routers/base';
 import { Router } from 'express';
+import { BaseRouter } from '../../src/routers/base';
 
 describe('BaseRouter', () => {
   class TestRouter extends BaseRouter {

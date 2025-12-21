@@ -1,14 +1,22 @@
-import { AppRouter } from '../../src/routers/app';
-import { BaseRouter } from '../../src/routers/base';
-import { IApplication } from '../../src/interfaces/application';
-import { Environment } from '../../src/environment';
-import { LocalhostConstants } from '../../src/constants';
-import { Request, Response, NextFunction, Application as ExpressApp } from 'express';
-import { TranslatableSuiteError, SuiteCoreStringKey } from '@digitaldefiance/suite-core-lib';
 import '@digitaldefiance/express-suite-test-utils';
 import { withConsoleMocks } from '@digitaldefiance/express-suite-test-utils';
+import {
+  SuiteCoreStringKey,
+  TranslatableSuiteError,
+} from '@digitaldefiance/suite-core-lib';
+import {
+  Application as ExpressApp,
+  NextFunction,
+  Request,
+  Response,
+} from 'express';
 import * as fs from 'fs';
 import * as path from 'path';
+import { LocalhostConstants } from '../../src/constants';
+import { Environment } from '../../src/environment';
+import { IApplication } from '../../src/interfaces/application';
+import { AppRouter } from '../../src/routers/app';
+import { BaseRouter } from '../../src/routers/base';
 
 jest.mock('fs');
 
@@ -32,7 +40,7 @@ describe('AppRouter', () => {
     mockFs.existsSync.mockReturnValue(true);
     mockFs.readdirSync.mockReturnValue([]);
     mockFs.readFileSync.mockReturnValue('');
-    
+
     // Set up environment variables
     process.env.JWT_SECRET = 'a'.repeat(64);
     process.env.MNEMONIC_HMAC_SECRET = 'a'.repeat(64);
@@ -70,15 +78,22 @@ describe('AppRouter', () => {
       mockEnvironment.setEnvironment('apiDistDir', '/tmp/../etc');
       mockApplication.environment = mockEnvironment;
 
-      expect(() => new AppRouter(mockBaseRouter)).toThrowType(TranslatableSuiteError, (error: TranslatableSuiteError) => {
-        expect(error.StringName).toBe(SuiteCoreStringKey.Error_InvalidPathContainsParentDirectoryReference);
-      });
+      expect(() => new AppRouter(mockBaseRouter)).toThrowType(
+        TranslatableSuiteError,
+        (error: TranslatableSuiteError) => {
+          expect(error.StringName).toBe(
+            SuiteCoreStringKey.Error_InvalidPathContainsParentDirectoryReference,
+          );
+        },
+      );
     });
 
     it('should throw error if React dist dir contains parent directory reference', () => {
       mockEnvironment.setEnvironment('reactDistDir', '/tmp/../etc');
 
-      expect(() => new AppRouter(mockBaseRouter)).toThrow(TranslatableSuiteError);
+      expect(() => new AppRouter(mockBaseRouter)).toThrow(
+        TranslatableSuiteError,
+      );
     });
 
     it('should validate views path does not escape base directory', () => {
@@ -102,7 +117,9 @@ describe('AppRouter', () => {
       expect(appRouter['viewsPath']).toContain('views');
       expect(appRouter['indexPath']).toContain('index.html');
       expect(appRouter['assetsDir']).toContain('assets');
-      expect(appRouter['reactDistDir']).toBe(path.resolve('/tmp/test-react-dist'));
+      expect(appRouter['reactDistDir']).toBe(
+        path.resolve('/tmp/test-react-dist'),
+      );
     });
   });
 
@@ -117,7 +134,7 @@ describe('AppRouter', () => {
 
       const result = appRouter.getAssetFilename(
         appRouter['assetsDir'],
-        /^index-.*\.js$/
+        /^index-.*\.js$/,
       );
 
       expect(result).toBe('index-abc123.js');
@@ -129,7 +146,7 @@ describe('AppRouter', () => {
 
       const result = appRouter.getAssetFilename(
         appRouter['assetsDir'],
-        /^index-.*\.js$/
+        /^index-.*\.js$/,
       );
 
       expect(result).toBeUndefined();
@@ -138,7 +155,7 @@ describe('AppRouter', () => {
     it('should return undefined for path traversal attempt', () => {
       const result = appRouter.getAssetFilename(
         '/tmp/test-react-dist/../etc',
-        /^index-.*\.js$/
+        /^index-.*\.js$/,
       );
 
       expect(result).toBeUndefined();
@@ -148,7 +165,7 @@ describe('AppRouter', () => {
     it('should return undefined for path outside react dist dir', () => {
       const result = appRouter.getAssetFilename(
         '/etc/passwd',
-        /^index-.*\.js$/
+        /^index-.*\.js$/,
       );
 
       expect(result).toBeUndefined();
@@ -162,7 +179,7 @@ describe('AppRouter', () => {
 
       const result = appRouter.getAssetFilename(
         appRouter['assetsDir'],
-        /^index-.*\.js$/
+        /^index-.*\.js$/,
       );
 
       expect(result).toBeUndefined();
@@ -279,15 +296,17 @@ describe('AppRouter', () => {
         mockRes as Response,
         mockNext,
         'test-template',
-        { title: 'Test' }
+        { title: 'Test' },
       );
 
       expect(mockRender).toHaveBeenCalledWith(
         'test-template',
         { title: 'Test' },
-        expect.any(Function)
+        expect.any(Function),
       );
-      expect(mockRes.send).toHaveBeenCalledWith('<html>rendered content</html>');
+      expect(mockRes.send).toHaveBeenCalledWith(
+        '<html>rendered content</html>',
+      );
       expect(mockNext).not.toHaveBeenCalled();
     });
 
@@ -297,14 +316,14 @@ describe('AppRouter', () => {
         mockRes as Response,
         mockNext,
         '../../../etc/passwd',
-        {}
+        {},
       );
 
       expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
       expect(mockNext).toHaveBeenCalledWith(
         expect.objectContaining({
           message: 'Invalid template name requested',
-        })
+        }),
       );
       expect(mockRes.render).not.toHaveBeenCalled();
     });
@@ -322,7 +341,7 @@ describe('AppRouter', () => {
           mockRes as Response,
           mockNext,
           'test-template',
-          {}
+          {},
         );
 
         expect(mockRes.status).toHaveBeenCalledWith(500);
@@ -345,7 +364,7 @@ describe('AppRouter', () => {
           mockRes as Response,
           mockNext,
           'test-template',
-          {}
+          {},
         );
 
         expect(mockRes.status).not.toHaveBeenCalled();
@@ -365,13 +384,13 @@ describe('AppRouter', () => {
         mockRes as Response,
         mockNext,
         'test-template',
-        {}
+        {},
       );
 
       expect(mockNext).toHaveBeenCalledWith(
         expect.objectContaining({
           message: 'Rendered template "test-template" returned empty HTML',
-        })
+        }),
       );
     });
 
@@ -387,7 +406,7 @@ describe('AppRouter', () => {
         mockRes as Response,
         mockNext,
         'test-template',
-        {}
+        {},
       );
 
       // URL should be sanitized in logs (checked via debugLog mock if needed)
@@ -411,14 +430,20 @@ describe('AppRouter', () => {
         customData: 'test',
       });
 
-      const renderer = appRouter['createViewRenderer']('test-template', localsFactory);
+      const renderer = appRouter['createViewRenderer'](
+        'test-template',
+        localsFactory,
+      );
 
       expect(renderer).toBeInstanceOf(Function);
     });
 
     it('should call renderTemplate with merged locals', () => {
       const localsFactory = jest.fn().mockReturnValue({ extra: 'data' });
-      const renderer = appRouter['createViewRenderer']('test-template', localsFactory);
+      const renderer = appRouter['createViewRenderer'](
+        'test-template',
+        localsFactory,
+      );
 
       const mockReq = {
         hostname: 'localhost',
@@ -443,7 +468,7 @@ describe('AppRouter', () => {
         mockRes,
         mockNext,
         'test-template',
-        expect.objectContaining({ extra: 'data' })
+        expect.objectContaining({ extra: 'data' }),
       );
     });
   });
@@ -484,7 +509,7 @@ describe('AppRouter', () => {
           jsFile: 'assets/index-abc123.js',
           cssFile: 'assets/index-xyz789.css',
         }),
-        expect.any(Function)
+        expect.any(Function),
       );
     });
 
@@ -540,7 +565,7 @@ describe('AppRouter', () => {
           jsFile: undefined,
           cssFile: undefined,
         }),
-        expect.any(Function)
+        expect.any(Function),
       );
     });
   });
@@ -550,7 +575,9 @@ describe('AppRouter', () => {
       appRouter = new AppRouter(mockBaseRouter);
       const mockApp = {} as ExpressApp;
 
-      expect(() => appRouter['registerAdditionalRenderHooks'](mockApp)).not.toThrow();
+      expect(() =>
+        appRouter['registerAdditionalRenderHooks'](mockApp),
+      ).not.toThrow();
     });
   });
 

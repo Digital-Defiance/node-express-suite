@@ -4,14 +4,10 @@ import { ValidationChain } from 'express-validator';
 import { ValidatedBody } from './types';
 
 declare module 'express-serve-static-core' {
-  interface Request<
-    TRequestUserDTO extends IRequestUserDTO = IRequestUserDTO,
-    TMember extends Member = Member,
-    TValidatedBody = ValidatedBody<string>,
-  > {
-    user?: TRequestUserDTO;
-    eciesUser?: TMember;
-    validatedBody?: TValidatedBody;
+  interface Request {
+    user?: IRequestUserDTO;
+    eciesUser?: Member;
+    validatedBody?: ValidatedBody<string>;
     validate?: {
       body: (field: string) => ValidationChain;
       param: (field: string) => ValidationChain;
@@ -24,14 +20,10 @@ declare module 'express-serve-static-core' {
 
 declare global {
   namespace Express {
-    interface Request<
-      TRequestUserDTO extends IRequestUserDTO = IRequestUserDTO,
-      TMember extends Member = Member,
-      TValidatedBody extends ValidatedBody<string> = ValidatedBody<string>,
-    > {
-      user?: TRequestUserDTO;
-      eciesUser?: TMember;
-      validatedBody?: TValidatedBody;
+    interface Request {
+      user?: IRequestUserDTO;
+      eciesUser?: Member;
+      validatedBody?: ValidatedBody<string>;
       validate?: {
         body: (field: string) => ValidationChain;
         param: (field: string) => ValidationChain;
@@ -42,3 +34,6 @@ declare global {
     }
   }
 }
+
+// This export makes the file a module, ensuring the augmentations are applied
+export {};

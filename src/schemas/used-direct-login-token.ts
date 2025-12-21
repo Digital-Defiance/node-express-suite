@@ -1,6 +1,4 @@
-import { Schema, Types } from '@digitaldefiance/mongoose-types';
-import { IUsedDirectLoginTokenBase } from '@digitaldefiance/suite-core-lib';
-import { IUsedDirectLoginTokenDocument } from '../documents/used-direct-login-token';
+import { Schema } from '@digitaldefiance/mongoose-types';
 import { BaseModelName } from '../enumerations';
 import { IConstants } from '../interfaces';
 
@@ -21,12 +19,15 @@ export interface UsedDirectLoginTokenSchemaOptions<
  */
 export function createUsedDirectLoginTokenSchema<
   TModelName extends string = BaseModelName,
-  TConstants extends IConstants = IConstants
+  TConstants extends IConstants = IConstants,
 >(
   options: UsedDirectLoginTokenSchemaOptions<TModelName> = {},
-  constants?: TConstants,
+  _constants?: TConstants,
 ): Schema {
-  const { userModelName = BaseModelName.User as TModelName, idType = Schema.Types.ObjectId } = options;
+  const {
+    userModelName = BaseModelName.User as TModelName,
+    idType = Schema.Types.ObjectId,
+  } = options;
 
   const definition = {
     userId: { type: idType, required: true, ref: userModelName },

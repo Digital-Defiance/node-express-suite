@@ -1,3 +1,4 @@
+import { Types } from '@digitaldefiance/mongoose-types';
 import {
   ITokenRole,
   ITokenRoleDTO,
@@ -11,14 +12,10 @@ import {
   verify,
   VerifyOptions,
 } from 'jsonwebtoken';
-import { Types } from '@digitaldefiance/mongoose-types';
 import { promisify } from 'util';
-import { IBaseDocument } from '../documents';
 import { IUserDocument } from '../documents/user';
-import { Environment } from '../environment';
 import { InvalidJwtTokenError } from '../errors/invalid-jwt-token';
 import { TokenExpiredError } from '../errors/token-expired';
-import { IConstants } from '../interfaces';
 import { IApplication } from '../interfaces/application';
 import { IJwtSignResponse } from '../interfaces/jwt-sign-response';
 import { BaseService } from './base';

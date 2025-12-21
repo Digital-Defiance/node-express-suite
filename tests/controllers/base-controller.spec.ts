@@ -1,7 +1,6 @@
-import { Request, Response, NextFunction } from 'express';
-import { BaseController } from '../../src/controllers/base';
-import { MissingValidatedDataError } from '../../src/errors';
+import { Request, Response } from 'express';
 import { body } from 'express-validator';
+import { BaseController } from '../../src/controllers/base';
 
 describe('BaseController', () => {
   class TestController extends BaseController<any, any, string> {
@@ -25,21 +24,21 @@ describe('BaseController', () => {
           handlerKey: 'validatedHandler' as any,
           useAuthentication: false,
           validation: [body('email').isEmail()],
-        }
+        },
       ];
       this.handlers = {
         testHandler: jest.fn().mockResolvedValue({
           statusCode: 200,
-          response: { message: 'success' }
+          response: { message: 'success' },
         }),
         authHandler: jest.fn().mockResolvedValue({
           statusCode: 200,
-          response: { message: 'authenticated' }
+          response: { message: 'authenticated' },
         }),
         validatedHandler: jest.fn().mockResolvedValue({
           statusCode: 200,
-          response: { message: 'validated' }
-        })
+          response: { message: 'validated' },
+        }),
       } as any;
     }
   }
@@ -134,7 +133,9 @@ describe('BaseController', () => {
     it('should throw when constants not initialized', () => {
       mockApp.constants = undefined;
       const newController = new TestController(mockApp);
-      expect(() => newController['constants']).toThrow('Constants not initialized');
+      expect(() => newController['constants']).toThrow(
+        'Constants not initialized',
+      );
     });
   });
 
@@ -152,7 +153,11 @@ describe('BaseController', () => {
   describe('registerValidationFunctions', () => {
     it('should register validation functions from route definitions', () => {
       const validationFn = jest.fn();
-      const testController = new (class extends BaseController<any, any, string> {
+      const testController = new (class extends BaseController<
+        any,
+        any,
+        string
+      > {
         protected initRouteDefinitions(): void {
           this.routeDefinitions = [
             {
@@ -160,31 +165,37 @@ describe('BaseController', () => {
               path: '/test',
               handlerKey: 'test' as any,
               validation: validationFn,
-            }
+            },
           ];
         }
       })(mockApp);
 
       // Validation function should be registered
-      expect((BaseController as any).validationRegistry.has(validationFn)).toBe(true);
+      expect((BaseController as any).validationRegistry.has(validationFn)).toBe(
+        true,
+      );
     });
   });
 
   describe('authentication middleware', () => {
     it('should apply authentication when useAuthentication is true', () => {
       const routes = controller['routeDefinitions'];
-      const authRoute = routes.find(r => r.path === '/auth-test');
-      const middleware = (controller as any).getAuthenticationMiddleware(authRoute);
-      
+      const authRoute = routes.find((r) => r.path === '/auth-test');
+      const middleware = (controller as any).getAuthenticationMiddleware(
+        authRoute,
+      );
+
       expect(middleware).toHaveLength(1);
       expect(typeof middleware[0]).toBe('function');
     });
 
     it('should not apply authentication when useAuthentication is false', () => {
       const routes = controller['routeDefinitions'];
-      const publicRoute = routes.find(r => r.path === '/test');
-      const middleware = (controller as any).getAuthenticationMiddleware(publicRoute);
-      
+      const publicRoute = routes.find((r) => r.path === '/test');
+      const middleware = (controller as any).getAuthenticationMiddleware(
+        publicRoute,
+      );
+
       expect(middleware).toHaveLength(0);
     });
   });
@@ -192,17 +203,21 @@ describe('BaseController', () => {
   describe('validation middleware', () => {
     it('should apply validation when validation array is provided', () => {
       const routes = controller['routeDefinitions'];
-      const validatedRoute = routes.find(r => r.path === '/validated');
-      const middleware = (controller as any).getValidationMiddleware(validatedRoute);
-      
+      const validatedRoute = routes.find((r) => r.path === '/validated');
+      const middleware = (controller as any).getValidationMiddleware(
+        validatedRoute,
+      );
+
       expect(middleware.length).toBeGreaterThan(0);
     });
 
     it('should not apply validation when no validation is provided', () => {
       const routes = controller['routeDefinitions'];
-      const publicRoute = routes.find(r => r.path === '/test');
-      const middleware = (controller as any).getValidationMiddleware(publicRoute);
-      
+      const publicRoute = routes.find((r) => r.path === '/test');
+      const middleware = (controller as any).getValidationMiddleware(
+        publicRoute,
+      );
+
       expect(middleware).toHaveLength(0);
     });
   });

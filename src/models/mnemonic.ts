@@ -1,5 +1,4 @@
-import { Connection, Schema, Types } from '@digitaldefiance/mongoose-types';
-import { IMnemonicDocument } from '../documents/mnemonic';
+import { Connection, Schema } from '@digitaldefiance/mongoose-types';
 import { BaseModelName } from '../enumerations';
 import { SchemaCollection } from '../enumerations/schema-collection';
 import { MnemonicSchema } from '../schemas/mnemonic';

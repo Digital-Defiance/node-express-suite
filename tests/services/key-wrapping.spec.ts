@@ -123,7 +123,9 @@ describe('KeyWrappingService', () => {
     const wrapped = svc.wrapSecret(secret, pwd);
     const unwrapped = svc.unwrapSecret(wrapped, pwd);
 
-    expect(Buffer.from(unwrapped.value).toString('utf8')).toBe('my-secret-data');
+    expect(Buffer.from(unwrapped.value).toString('utf8')).toBe(
+      'my-secret-data',
+    );
 
     unwrapped.dispose();
     secret.dispose();
@@ -207,9 +209,7 @@ describe('KeyWrappingService', () => {
 
     const wrapped = svc.wrapSecret(secret, pwd);
 
-    await expect(
-      svc.unwrapSecretAsync(wrapped, null as any),
-    ).rejects.toThrow();
+    await expect(svc.unwrapSecretAsync(wrapped, null as any)).rejects.toThrow();
 
     secret.dispose();
   });

@@ -1,4 +1,4 @@
-import { GlobalActiveContext, Timezone } from '@digitaldefiance/i18n-lib';
+import { GlobalActiveContext } from '@digitaldefiance/i18n-lib';
 import { setGlobalActiveContextAdminTimezoneFromProcessArgvOrEnv } from '../../src/get-timezone';
 
 describe('get-timezone', () => {

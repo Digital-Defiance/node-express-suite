@@ -4,8 +4,8 @@ import {
 } from '@digitaldefiance/suite-core-lib';
 
 export class MissingValidatedDataError<
-  TLanguage extends string,
-  TContext extends string,
+  _TLanguage extends string,
+  _TContext extends string,
 > extends TranslatableSuiteHandleableError {
   public readonly field?: string;
   public readonly fields?: string[];

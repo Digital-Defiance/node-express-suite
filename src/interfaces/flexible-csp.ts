@@ -3,8 +3,8 @@ import { isHelmetOptions } from '../middlewares';
 import { ISimpleCSPDef, isSimpleCSPDef } from './csp-definition';
 
 export interface IFlexibleCSP {
-  corsWhitelist: string[],
-  csp: ISimpleCSPDef| HelmetOptions,
+  corsWhitelist: string[];
+  csp: ISimpleCSPDef | HelmetOptions;
 }
 
 export const isFlexibleCSP = (obj: any): obj is IFlexibleCSP => {
@@ -15,4 +15,4 @@ export const isFlexibleCSP = (obj: any): obj is IFlexibleCSP => {
     'csp' in obj &&
     (isSimpleCSPDef(obj.csp) || isHelmetOptions(obj.csp))
   );
-}
+};

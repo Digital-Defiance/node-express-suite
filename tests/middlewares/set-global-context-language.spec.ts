@@ -1,4 +1,8 @@
-import { GlobalActiveContext, IActiveContext, LanguageRegistry } from '@digitaldefiance/i18n-lib';
+import {
+  GlobalActiveContext,
+  IActiveContext,
+  LanguageRegistry,
+} from '@digitaldefiance/i18n-lib';
 import { setGlobalContextLanguageFromRequest } from '../../src/middlewares/set-global-context-language';
 
 function makeReq(
@@ -22,12 +26,21 @@ describe('setGlobalContextLanguageFromRequest', () => {
   beforeAll(() => {
     // Clear and initialize LanguageRegistry with default language
     LanguageRegistry['languages'].clear();
-    LanguageRegistry.registerLanguage({ id: 'en', code: 'en', name: 'English', isDefault: true });
+    LanguageRegistry.registerLanguage({
+      id: 'en',
+      code: 'en',
+      name: 'English',
+      isDefault: true,
+    });
     LanguageRegistry.registerLanguage({ id: 'fr', code: 'fr', name: 'French' });
-    LanguageRegistry.registerLanguage({ id: 'es', code: 'es', name: 'Spanish' });
+    LanguageRegistry.registerLanguage({
+      id: 'es',
+      code: 'es',
+      name: 'Spanish',
+    });
     LanguageRegistry.setDefaultLanguage('en');
   });
-  
+
   beforeEach(() => {
     context = GlobalActiveContext.getInstance<string, IActiveContext<string>>();
     context.userLanguage = 'en-US';

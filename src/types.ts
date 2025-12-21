@@ -1,6 +1,6 @@
+import { ClientSession } from '@digitaldefiance/mongoose-types';
 import { NextFunction, RequestHandler, Response } from 'express';
 import { ValidationChain } from 'express-validator';
-import { ClientSession } from '@digitaldefiance/mongoose-types';
 import { IBaseDocument } from './documents';
 import {
   IApiErrorResponse,

@@ -1,6 +1,5 @@
 import { CoreLanguageCode, PluginTypedError } from '@digitaldefiance/i18n-lib';
 import {
-  getSuiteCoreI18nEngine,
   SuiteCoreComponentId,
   SuiteCoreStringKey,
 } from '@digitaldefiance/suite-core-lib';

@@ -1,5 +1,5 @@
-import { Member } from '@digitaldefiance/node-ecies-lib';
 import { Types } from '@digitaldefiance/mongoose-types';
+import { Member } from '@digitaldefiance/node-ecies-lib';
 import { IRoleDocument } from '../documents/role';
 import { IUserDocument } from '../documents/user';
 import { IUserRoleDocument } from '../documents/user-role';
@@ -7,7 +7,9 @@ import { IUserRoleDocument } from '../documents/user-role';
 // Re-export essential document types
 export type { IRoleDocument, IUserDocument, IUserRoleDocument };
 
-export interface IServerInitResult<I extends Types.ObjectId | string = Types.ObjectId> {
+export interface IServerInitResult<
+  I extends Types.ObjectId | string = Types.ObjectId,
+> {
   adminRole: IRoleDocument<I>;
   adminUser: IUserDocument<string, I>;
   adminUsername: string;

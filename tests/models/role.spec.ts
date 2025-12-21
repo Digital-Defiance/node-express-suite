@@ -1,6 +1,6 @@
 import mongoose from '@digitaldefiance/mongoose-types';
-import { RoleModel } from '../../src/models/role';
 import { BaseModelName } from '../../src/enumerations';
+import { RoleModel } from '../../src/models/role';
 
 describe('RoleModel', () => {
   let connection: mongoose.Connection;

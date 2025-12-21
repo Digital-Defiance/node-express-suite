@@ -1,4 +1,5 @@
 // Avoid importing from the barrel (../index) here to prevent circular deps
+import mongoose, { Model } from '@digitaldefiance/mongoose-types';
 import {
   Constants,
   getSuiteCoreI18nEngine,
@@ -8,8 +9,8 @@ import {
   TranslatableSuiteError,
 } from '@digitaldefiance/suite-core-lib';
 import { MongoMemoryReplSet } from 'mongodb-memory-server';
-import mongoose, { Model, Types } from '@digitaldefiance/mongoose-types';
 import { join } from 'path';
+import { ServiceContainer } from './container';
 import { IBaseDocument } from './documents/base';
 import { Environment } from './environment';
 import { IApplication } from './interfaces/application';
@@ -17,10 +18,9 @@ import { IConstants } from './interfaces/constants';
 import { IFailableResult } from './interfaces/failable-result';
 import { ISchema } from './interfaces/schema';
 import { ModelRegistry } from './model-registry';
+import { PluginManager } from './plugins';
 import { SchemaMap } from './types';
 import { debugLog } from './utils';
-import { ServiceContainer } from './container';
-import { PluginManager } from './plugins';
 
 /**
  * Base Application class with core functionality
@@ -176,10 +176,12 @@ export class BaseApplication<
     // In production, block private IPs and localhost
     if (this._environment.production) {
       // Updated regex to handle IPv6 addresses with brackets
-      const urlMatch = uri.match(/^mongodb(?:\+srv)?:\/\/(?:[^@]+@)?(\[[^\]]+\]|[^:/]+)/);
+      const urlMatch = uri.match(
+        /^mongodb(?:\+srv)?:\/\/(?:[^@]+@)?(\[[^\]]+\]|[^:/]+)/,
+      );
       if (urlMatch) {
         // Remove brackets from hostname for IPv6 addresses
-        const hostname = urlMatch[1].replace(/[\[\]]/g, '');
+        const hostname = urlMatch[1].replace(/[[\]]/g, '');
         // Block localhost and private IP ranges
         if (
           hostname === 'localhost' ||
@@ -216,12 +218,12 @@ export class BaseApplication<
         SuiteCoreStringKey.Common_Connecting,
         undefined,
         undefined,
-        { constants: this.constants }
+        { constants: this.constants },
       )} ] ${getSuiteCoreTranslation(
         SuiteCoreStringKey.Common_MongoDB,
         undefined,
         undefined,
-        { constants: this.constants }
+        { constants: this.constants },
       )}: ${mongoUri}`,
     );
 
@@ -396,7 +398,21 @@ export class BaseApplication<
       `${engine.translate(
         SuiteCoreComponentId,
         SuiteCoreStringKey.Admin_StartingDatabaseInitialization,
-      )}: ${engine.translate(SuiteCoreComponentId, SuiteCoreStringKey.Admin_TransactionsEnabledDisabledTemplate, { STATE: this._environment.mongo.useTransactions ? engine.translate(SuiteCoreComponentId, SuiteCoreStringKey.Common_Enabled) : engine.translate(SuiteCoreComponentId, SuiteCoreStringKey.Common_Disabled) })}`,
+      )}: ${engine.translate(
+        SuiteCoreComponentId,
+        SuiteCoreStringKey.Admin_TransactionsEnabledDisabledTemplate,
+        {
+          STATE: this._environment.mongo.useTransactions
+            ? engine.translate(
+                SuiteCoreComponentId,
+                SuiteCoreStringKey.Common_Enabled,
+              )
+            : engine.translate(
+                SuiteCoreComponentId,
+                SuiteCoreStringKey.Common_Disabled,
+              ),
+        },
+      )}`,
     );
     let initTimeout: NodeJS.Timeout | undefined;
     const initTimeoutMs = 300000;

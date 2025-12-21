@@ -1,16 +1,17 @@
-import request from 'supertest';
-import express, { Application } from 'express';
-import { UserController } from '../../src/controllers/user';
-import { JwtService } from '../../src/services/jwt';
-import { UserService } from '../../src/services/user';
-import { BackupCodeService } from '../../src/services/backup-code';
-import { RoleService } from '../../src/services/role';
-import { ECIESService } from '@digitaldefiance/node-ecies-lib';
-import { SystemUserService } from '../../src/services/system-user';
 import { Types } from '@digitaldefiance/mongoose-types';
-import { getSuiteCoreTranslation, SuiteCoreStringKey } from '@digitaldefiance/suite-core-lib';
-import jwt from 'jsonwebtoken';
+import { ECIESService } from '@digitaldefiance/node-ecies-lib';
+import {
+  getSuiteCoreTranslation,
+  SuiteCoreStringKey,
+} from '@digitaldefiance/suite-core-lib';
+import express, { Application } from 'express';
+import request from 'supertest';
+import { UserController } from '../../src/controllers/user';
 import * as authenticateTokenModule from '../../src/middlewares/authenticate-token';
+import { BackupCodeService } from '../../src/services/backup-code';
+import { JwtService } from '../../src/services/jwt';
+import { RoleService } from '../../src/services/role';
+import { UserService } from '../../src/services/user';
 
 jest.mock('../../src/middlewares/authenticate-token');
 
@@ -29,7 +30,9 @@ describe('UserController - GET /settings', () => {
   let controller: UserController;
   let mockApp: any;
   let mockJwtService: jest.Mocked<JwtService<any, any, any, any, any>>;
-  let mockUserService: jest.Mocked<UserService<any, any, any, any, any, any, any, any, any, any, any>>;
+  let mockUserService: jest.Mocked<
+    UserService<any, any, any, any, any, any, any, any, any, any, any>
+  >;
   let mockBackupCodeService: jest.Mocked<BackupCodeService<any, any, any, any>>;
   let mockRoleService: jest.Mocked<RoleService<any, any, any>>;
   let mockEciesService: jest.Mocked<ECIESService>;
@@ -37,7 +40,10 @@ describe('UserController - GET /settings', () => {
   let mockUserId: Types.ObjectId;
 
   beforeEach(() => {
-    const mockAuthenticateToken = authenticateTokenModule.authenticateToken as jest.MockedFunction<typeof authenticateTokenModule.authenticateToken>;
+    const mockAuthenticateToken =
+      authenticateTokenModule.authenticateToken as jest.MockedFunction<
+        typeof authenticateTokenModule.authenticateToken
+      >;
     mockAuthenticateToken.mockImplementation(async (app, req, res, next) => {
       req.user = {
         id: new Types.ObjectId().toString(),
@@ -208,7 +214,10 @@ describe('UserController - GET /settings', () => {
 
   describe('authentication', () => {
     it('should require authentication', async () => {
-      const mockAuthenticateToken = authenticateTokenModule.authenticateToken as jest.MockedFunction<typeof authenticateTokenModule.authenticateToken>;
+      const mockAuthenticateToken =
+        authenticateTokenModule.authenticateToken as jest.MockedFunction<
+          typeof authenticateTokenModule.authenticateToken
+        >;
       mockAuthenticateToken.mockClear();
 
       await request(app)
@@ -268,14 +277,19 @@ describe('UserController - POST /settings', () => {
   let controller: UserController;
   let mockApp: any;
   let mockJwtService: jest.Mocked<JwtService<any, any, any, any, any>>;
-  let mockUserService: jest.Mocked<UserService<any, any, any, any, any, any, any, any, any, any, any>>;
+  let mockUserService: jest.Mocked<
+    UserService<any, any, any, any, any, any, any, any, any, any, any>
+  >;
   let mockBackupCodeService: jest.Mocked<BackupCodeService<any, any, any, any>>;
   let mockRoleService: jest.Mocked<RoleService<any, any, any>>;
   let mockEciesService: jest.Mocked<ECIESService>;
   let mockToken: string;
 
   beforeEach(() => {
-    const mockAuthenticateToken = authenticateTokenModule.authenticateToken as jest.MockedFunction<typeof authenticateTokenModule.authenticateToken>;
+    const mockAuthenticateToken =
+      authenticateTokenModule.authenticateToken as jest.MockedFunction<
+        typeof authenticateTokenModule.authenticateToken
+      >;
     mockAuthenticateToken.mockImplementation(async (app, req, res, next) => {
       req.user = {
         id: new Types.ObjectId().toString(),
@@ -678,7 +692,10 @@ describe('UserController - POST /settings', () => {
   describe('authentication', () => {
     it('should require authentication', async () => {
       // Since we've mocked authenticateToken globally, we just verify it's called
-      const mockAuthenticateToken = authenticateTokenModule.authenticateToken as jest.MockedFunction<typeof authenticateTokenModule.authenticateToken>;
+      const mockAuthenticateToken =
+        authenticateTokenModule.authenticateToken as jest.MockedFunction<
+          typeof authenticateTokenModule.authenticateToken
+        >;
       mockAuthenticateToken.mockClear();
 
       await request(app)

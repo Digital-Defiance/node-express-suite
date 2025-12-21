@@ -1,8 +1,4 @@
 import { Router } from 'express';
-import { Types } from '@digitaldefiance/mongoose-types';
-import { IBaseDocument } from '../documents';
-import { Environment } from '../environment';
-import { IConstants } from '../interfaces';
 import { IApplication } from '../interfaces/application';
 
 export abstract class BaseRouter<

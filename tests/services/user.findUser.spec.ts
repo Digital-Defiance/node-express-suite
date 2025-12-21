@@ -10,11 +10,11 @@ import {
 } from '@digitaldefiance/suite-core-lib';
 import { ModelRegistry } from '../../src/model-registry';
 import { BackupCodeService } from '../../src/services/backup-code';
+import { DummyEmailService } from '../../src/services/dummy-email-service';
 import { KeyWrappingService } from '../../src/services/key-wrapping';
 import { RoleService } from '../../src/services/role';
 import { UserService } from '../../src/services/user';
 import { createApplicationMock } from '../__tests__/helpers/application.mock';
-import { DummyEmailService } from '../../src/services/dummy-email-service';
 
 beforeAll(() => {
   const mockModel = {

@@ -1,8 +1,7 @@
-import { Connection } from '@digitaldefiance/mongoose-types';
+import mongoose, { Connection } from '@digitaldefiance/mongoose-types';
 import { MongoMemoryServer } from 'mongodb-memory-server';
-import mongoose from '@digitaldefiance/mongoose-types';
-import { getSchemaMap } from '../../src/schemas/schema';
 import { LocalhostConstants } from '../../src/constants';
+import { getSchemaMap } from '../../src/schemas/schema';
 
 describe('Schema', () => {
   let mongoServer: MongoMemoryServer;
@@ -31,7 +30,9 @@ describe('Schema', () => {
     });
 
     it('should create schema map with custom constants', () => {
-      const schemaMap = getSchemaMap(connection, { constants: LocalhostConstants });
+      const schemaMap = getSchemaMap(connection, {
+        constants: LocalhostConstants,
+      });
       expect(schemaMap.User).toBeDefined();
     });
 

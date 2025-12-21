@@ -3,9 +3,9 @@ import { z } from 'zod';
 
 // Convert Zod schema to express-validator chains
 export function zodToExpressValidator<TLanguage extends string>(
-  schema: z.ZodType<any>,
-): (lang: TLanguage) => ValidationChain[] {
-  return (lang: TLanguage) => {
+  schema: z.ZodType<unknown>,
+): (_lang: TLanguage) => ValidationChain[] {
+  return (_lang: TLanguage) => {
     const chains: ValidationChain[] = [];
 
     // Only process if it's a ZodObject with shape
@@ -28,9 +28,10 @@ export function zodToExpressValidator<TLanguage extends string>(
 
         // Handle min length
         if (zodType._def.checks) {
-          zodType._def.checks.forEach((check: any) => {
-            if (check.kind === 'min') {
-              chain = chain.isLength({ min: check.value });
+          zodType._def.checks.forEach((check: unknown) => {
+            const checkObj = check as { kind?: string; value?: number };
+            if (checkObj.kind === 'min') {
+              chain = chain.isLength({ min: checkObj.value });
             }
           });
         }
@@ -44,9 +45,9 @@ export function zodToExpressValidator<TLanguage extends string>(
 }
 
 // Decorator that uses Zod schema
-export function ZodValidate(schema: z.ZodType<any>) {
+export function ZodValidate(schema: z.ZodType<unknown>) {
   return function (
-    target: any,
+    target: object,
     propertyKey: string,
     descriptor: PropertyDescriptor,
   ) {

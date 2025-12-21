@@ -173,7 +173,7 @@ export class CrcService {
       });
 
       input.on('end', () => {
-        const fullBuffer = Buffer.concat(chunks.map(c => new Uint8Array(c)));
+        const fullBuffer = Buffer.concat(chunks.map((c) => new Uint8Array(c)));
         resolve(this.crc32(fullBuffer));
       });
 

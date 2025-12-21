@@ -1,4 +1,5 @@
 import { HandleableError } from '@digitaldefiance/i18n-lib';
+import mongoose from '@digitaldefiance/mongoose-types';
 import {
   Constants,
   getSuiteCoreI18nEngine,
@@ -16,7 +17,6 @@ import { readFileSync } from 'fs';
 import { HelmetOptions } from 'helmet';
 import { Server } from 'http';
 import { createServer } from 'https';
-import mongoose from '@digitaldefiance/mongoose-types';
 import { isAbsolute, normalize, resolve } from 'path';
 import { BaseApplication } from './application-base';
 import { IBaseDocument } from './documents/base';
@@ -142,7 +142,7 @@ export class Application<
           err: HandleableError | Error,
           req: Request,
           res: Response,
-          next: NextFunction,
+          _next: NextFunction,
         ) => {
           if (
             res.headersSent ||

@@ -1,4 +1,7 @@
-import { RouterConfig, DefaultRouterConfig } from '../../src/routers/router-config';
+import {
+  DefaultRouterConfig,
+  RouterConfig,
+} from '../../src/routers/router-config';
 
 describe('RouterConfig', () => {
   describe('DefaultRouterConfig', () => {
@@ -25,28 +28,28 @@ describe('RouterConfig', () => {
         staticPaths: [{ prefix: '/static', directory: '/public' }],
         viewEngine: { name: 'ejs', viewsPath: '/views' },
         middleware: [],
-        cors: { origin: '*', credentials: true }
+        cors: { origin: '*', credentials: true },
       };
       expect(config).toBeDefined();
     });
 
     it('should accept config with only staticPaths', () => {
       const config: RouterConfig = {
-        staticPaths: [{ prefix: '/assets', directory: '/dist' }]
+        staticPaths: [{ prefix: '/assets', directory: '/dist' }],
       };
       expect(config.staticPaths).toHaveLength(1);
     });
 
     it('should accept config with cors string origin', () => {
       const config: RouterConfig = {
-        cors: { origin: 'https://example.com' }
+        cors: { origin: 'https://example.com' },
       };
       expect(config.cors?.origin).toBe('https://example.com');
     });
 
     it('should accept config with cors array origin', () => {
       const config: RouterConfig = {
-        cors: { origin: ['https://example.com', 'https://test.com'] }
+        cors: { origin: ['https://example.com', 'https://test.com'] },
       };
       expect(Array.isArray(config.cors?.origin)).toBe(true);
     });

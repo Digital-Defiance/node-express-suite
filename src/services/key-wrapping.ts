@@ -280,8 +280,6 @@ export class KeyWrappingService {
     try {
       // Re-wrap with new password
       return this.wrapMasterKey(masterKey, newPassword, constants);
-    } catch (error: unknown) {
-      throw error;
     } finally {
       masterKey.dispose();
     }

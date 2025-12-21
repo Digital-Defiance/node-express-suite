@@ -4,18 +4,15 @@ import {
   SecureBuffer,
   SecureString,
 } from '@digitaldefiance/ecies-lib';
+import { withConsoleMocks } from '@digitaldefiance/express-suite-test-utils';
 import {
   Member as BackendMember,
   ECIESService,
 } from '@digitaldefiance/node-ecies-lib';
-import {
-  SuiteCoreStringKey,
-  TranslatableSuiteError,
-} from '@digitaldefiance/suite-core-lib';
-import { withConsoleMocks } from '@digitaldefiance/express-suite-test-utils';
-import { SystemUserService } from '../../src/services/system-user';
-import { Environment } from '../../src/environment';
+import { TranslatableSuiteError } from '@digitaldefiance/suite-core-lib';
 import { createExpressConstants } from '../../src/constants';
+import { Environment } from '../../src/environment';
+import { SystemUserService } from '../../src/services/system-user';
 
 // Create test constants with valid email domain
 const TestConstants = createExpressConstants('example.com', 'example.com');
@@ -23,7 +20,8 @@ const TestConstants = createExpressConstants('example.com', 'example.com');
 describe('SystemUserService', () => {
   let mockEnvironment: Environment;
   const testPublicKeyHex = '0'.repeat(130);
-  const testMnemonic = 'test test test test test test test test test test test junk';
+  const testMnemonic =
+    'test test test test test test test test test test test junk';
 
   beforeEach(() => {
     // Reset static state
@@ -38,7 +36,7 @@ describe('SystemUserService', () => {
   describe('getSystemUser', () => {
     it('should throw error if systemMnemonic not set', () => {
       const env = { systemMnemonic: undefined } as Environment;
-      
+
       expect(() => SystemUserService.getSystemUser(env, TestConstants)).toThrow(
         TranslatableSuiteError,
       );
@@ -49,8 +47,11 @@ describe('SystemUserService', () => {
 
     it('should create system user from mnemonic', async () => {
       await withConsoleMocks({ mute: true }, () => {
-        const user = SystemUserService.getSystemUser(mockEnvironment, TestConstants);
-        
+        const user = SystemUserService.getSystemUser(
+          mockEnvironment,
+          TestConstants,
+        );
+
         expect(user).toBeInstanceOf(BackendMember);
         expect(user.type).toBe(MemberType.System);
         expect(user.name).toBe(TestConstants.SystemUser);
@@ -60,9 +61,15 @@ describe('SystemUserService', () => {
 
     it('should cache system user on subsequent calls', async () => {
       await withConsoleMocks({ mute: true }, () => {
-        const user1 = SystemUserService.getSystemUser(mockEnvironment, TestConstants);
-        const user2 = SystemUserService.getSystemUser(mockEnvironment, TestConstants);
-        
+        const user1 = SystemUserService.getSystemUser(
+          mockEnvironment,
+          TestConstants,
+        );
+        const user2 = SystemUserService.getSystemUser(
+          mockEnvironment,
+          TestConstants,
+        );
+
         expect(user1).toBe(user2);
       });
     });
@@ -70,7 +77,7 @@ describe('SystemUserService', () => {
     it('should warn if derived public key does not match environment', async () => {
       await withConsoleMocks({ mute: true }, (spies) => {
         SystemUserService.getSystemUser(mockEnvironment, TestConstants);
-        
+
         expect(spies.warn).toHaveBeenCalledWith(
           expect.stringContaining('System public key does not match'),
           expect.any(Object),
@@ -92,8 +99,11 @@ describe('SystemUserService', () => {
       );
 
       SystemUserService.setSystemUser(mockUser, TestConstants);
-      
-      const retrieved = SystemUserService.getSystemUser(mockEnvironment, TestConstants);
+
+      const retrieved = SystemUserService.getSystemUser(
+        mockEnvironment,
+        TestConstants,
+      );
       expect(retrieved).toBe(mockUser);
     });
 
@@ -108,7 +118,9 @@ describe('SystemUserService', () => {
         new SecureBuffer(Buffer.alloc(32)),
       );
 
-      expect(() => SystemUserService.setSystemUser(invalidUser, TestConstants)).toThrow(
+      expect(() =>
+        SystemUserService.setSystemUser(invalidUser, TestConstants),
+      ).toThrow(
         'setSystemUser can only be called with a MemberType.System user',
       );
     });
@@ -124,7 +136,9 @@ describe('SystemUserService', () => {
         new SecureBuffer(Buffer.alloc(32)),
       );
 
-      expect(() => SystemUserService.setSystemUser(invalidUser, TestConstants)).toThrow(
+      expect(() =>
+        SystemUserService.setSystemUser(invalidUser, TestConstants),
+      ).toThrow(
         'setSystemUser can only be called with a MemberType.System user',
       );
     });

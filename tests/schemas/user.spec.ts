@@ -18,10 +18,10 @@ describe('UserSchema', () => {
       const usernameMsg = () => 'Custom username error';
       const emailMsg = () => 'Custom email error';
       const timezoneMsg = () => 'Custom timezone error';
-      
+
       const schema = createUserSchema(usernameMsg, emailMsg, timezoneMsg);
       expect(schema).toBeDefined();
-      
+
       // Just verify schema was created successfully with custom messages
       expect(schema.path('username')).toBeDefined();
       expect(schema.path('email')).toBeDefined();
@@ -30,8 +30,14 @@ describe('UserSchema', () => {
 
     it('should create schema with custom supported languages', () => {
       const customLanguages = ['en', 'es', 'fr'];
-      const schema = createUserSchema(undefined, undefined, undefined, undefined, customLanguages);
-      
+      const schema = createUserSchema(
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        customLanguages,
+      );
+
       expect(schema).toBeDefined();
       const siteLanguagePath = schema.path('siteLanguage') as any;
       expect(siteLanguagePath.enumValues).toEqual(customLanguages);
@@ -45,8 +51,16 @@ describe('UserSchema', () => {
         MnemonicRegex: /^[a-z ]+$/,
         BACKUP_CODES: { Count: 10 },
       };
-      
-      const schema = createUserSchema(undefined, undefined, undefined, undefined, undefined, undefined, customConstants);
+
+      const schema = createUserSchema(
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        customConstants,
+      );
       expect(schema).toBeDefined();
     });
   });
@@ -75,15 +89,25 @@ describe('UserSchema', () => {
       };
 
       expect(UserSchema.path('timezone').defaultValue).toBe(defaults.timezone);
-      expect(UserSchema.path('siteLanguage').defaultValue).toBe(defaults.siteLanguage);
-      expect(UserSchema.path('directChallenge').defaultValue).toBe(defaults.directChallenge);
-      expect(UserSchema.path('emailVerified').defaultValue).toBe(defaults.emailVerified);
-      expect(UserSchema.path('accountStatus').defaultValue).toBe(defaults.accountStatus);
+      expect(UserSchema.path('siteLanguage').defaultValue).toBe(
+        defaults.siteLanguage,
+      );
+      expect(UserSchema.path('directChallenge').defaultValue).toBe(
+        defaults.directChallenge,
+      );
+      expect(UserSchema.path('emailVerified').defaultValue).toBe(
+        defaults.emailVerified,
+      );
+      expect(UserSchema.path('accountStatus').defaultValue).toBe(
+        defaults.accountStatus,
+      );
     });
 
     it('should have enum values for accountStatus', () => {
       const accountStatusPath = UserSchema.path('accountStatus') as any;
-      expect(accountStatusPath.enumValues).toEqual(Object.values(AccountStatus));
+      expect(accountStatusPath.enumValues).toEqual(
+        Object.values(AccountStatus),
+      );
     });
 
     it('should have enum values for siteLanguage', () => {
@@ -107,7 +131,7 @@ describe('UserSchema', () => {
       const emailValidator = UserSchema.path('email').validators[0];
       expect(emailValidator).toBeDefined();
       expect(typeof emailValidator.validator).toBe('function');
-      
+
       // validator.isEmail returns different values (true/false/length)
       // Just verify it's callable
       expect(emailValidator.validator('valid@example.com')).toBeDefined();
@@ -118,7 +142,7 @@ describe('UserSchema', () => {
       const timezoneValidator = UserSchema.path('timezone').validators[0];
       expect(timezoneValidator).toBeDefined();
       expect(typeof timezoneValidator.validator).toBe('function');
-      
+
       // Just verify validator is callable
       const result1 = timezoneValidator.validator('America/New_York');
       const result2 = timezoneValidator.validator('Invalid/Timezone');
@@ -129,7 +153,7 @@ describe('UserSchema', () => {
     it('should use custom email validation message', () => {
       const customEmailMsg = () => 'Custom email message';
       const schema = createUserSchema(undefined, customEmailMsg);
-      
+
       const emailValidator = schema.path('email').validators[0];
       expect(emailValidator.message).toBeDefined();
     });
@@ -137,7 +161,7 @@ describe('UserSchema', () => {
     it('should use custom timezone validation message', () => {
       const customTimezoneMsg = () => 'Custom timezone message';
       const schema = createUserSchema(undefined, undefined, customTimezoneMsg);
-      
+
       const timezoneValidator = schema.path('timezone').validators[0];
       expect(timezoneValidator.message).toBeDefined();
     });
@@ -145,7 +169,7 @@ describe('UserSchema', () => {
     it('should call email validation message function with props', () => {
       const schema = createUserSchema();
       const emailValidator = schema.path('email').validators[0];
-      
+
       // Message can be a function that receives props
       if (typeof emailValidator.message === 'function') {
         const result = emailValidator.message({ value: 'test@example.com' });
@@ -156,7 +180,7 @@ describe('UserSchema', () => {
     it('should call timezone validation message function with props', () => {
       const schema = createUserSchema();
       const timezoneValidator = schema.path('timezone').validators[0];
-      
+
       // Message can be a function that receives props
       if (typeof timezoneValidator.message === 'function') {
         const result = timezoneValidator.message({ value: 'America/New_York' });

@@ -1,6 +1,6 @@
 import { Schema, model } from '@digitaldefiance/mongoose-types';
-import { ModelRegistry } from '../src/model-registry';
 import { InvalidModelError } from '../src/errors';
+import { ModelRegistry } from '../src/model-registry';
 
 describe('ModelRegistry', () => {
   let registry: ModelRegistry;
@@ -13,7 +13,7 @@ describe('ModelRegistry', () => {
     it('should register and retrieve a model', () => {
       const schema = new Schema({ name: String });
       const testModel = model('TestModel', schema);
-      
+
       registry.register({
         modelName: 'TestModel',
         schema,
@@ -35,7 +35,7 @@ describe('ModelRegistry', () => {
     it('should return true for registered model', () => {
       const schema = new Schema({ name: String });
       const testModel = model('HasTestModel', schema);
-      
+
       registry.register({
         modelName: 'HasTestModel',
         schema,
@@ -62,7 +62,7 @@ describe('ModelRegistry', () => {
     it('should retrieve typed model', () => {
       const schema = new Schema({ name: String });
       const testModel = model('TypedModel', schema);
-      
+
       registry.register({
         modelName: 'TypedModel',
         schema,
@@ -75,7 +75,9 @@ describe('ModelRegistry', () => {
     });
 
     it('should throw InvalidModelError for unregistered model', () => {
-      expect(() => registry.getTypedModel('NonExistent')).toThrow(InvalidModelError);
+      expect(() => registry.getTypedModel('NonExistent')).toThrow(
+        InvalidModelError,
+      );
     });
   });
 
@@ -83,7 +85,7 @@ describe('ModelRegistry', () => {
     it('should retrieve typed schema', () => {
       const schema = new Schema({ name: String });
       const testModel = model('SchemaModel', schema);
-      
+
       registry.register({
         modelName: 'SchemaModel',
         schema,
@@ -96,7 +98,9 @@ describe('ModelRegistry', () => {
     });
 
     it('should throw InvalidModelError for unregistered model', () => {
-      expect(() => registry.getTypedSchema('NonExistent')).toThrow(InvalidModelError);
+      expect(() => registry.getTypedSchema('NonExistent')).toThrow(
+        InvalidModelError,
+      );
     });
   });
 

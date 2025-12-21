@@ -10,11 +10,11 @@ import { LocalhostConstants as AppConstants } from '../../src/constants';
 import { ModelRegistry } from '../../src/model-registry';
 import { emailServiceRegistry } from '../../src/registry';
 import { BackupCodeService } from '../../src/services/backup-code';
+import { DummyEmailService } from '../../src/services/dummy-email-service';
 import { KeyWrappingService } from '../../src/services/key-wrapping';
 import { RoleService } from '../../src/services/role';
 import { UserService } from '../../src/services/user';
 import { createApplicationMock } from '../__tests__/helpers/application.mock';
-import { DummyEmailService } from '../../src/services/dummy-email-service';
 
 beforeAll(() => {
   const app = createApplicationMock();
@@ -230,11 +230,9 @@ describe('UserService.verifyAccountTokenAndComplete', () => {
       findOne: jest
         .fn()
         .mockReturnValue({ session: jest.fn().mockResolvedValue(token) }),
-      deleteOne: jest
-        .fn()
-        .mockReturnValue({
-          session: jest.fn().mockResolvedValue({ acknowledged: true }),
-        }),
+      deleteOne: jest.fn().mockReturnValue({
+        session: jest.fn().mockResolvedValue({ acknowledged: true }),
+      }),
     };
     const userModel = {
       findById: jest
@@ -271,11 +269,9 @@ describe('UserService.verifyAccountTokenAndComplete', () => {
       findOne: jest
         .fn()
         .mockReturnValue({ session: jest.fn().mockResolvedValue(token) }),
-      deleteOne: jest
-        .fn()
-        .mockReturnValue({
-          session: jest.fn().mockResolvedValue({ acknowledged: true }),
-        }),
+      deleteOne: jest.fn().mockReturnValue({
+        session: jest.fn().mockResolvedValue({ acknowledged: true }),
+      }),
     };
     const userModel = {
       findById: jest

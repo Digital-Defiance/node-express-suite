@@ -1,6 +1,6 @@
-import { PluginManager } from '../../src/plugins/plugin-manager';
-import { IApplicationPlugin } from '../../src/plugins/plugin-interface';
 import { IApplication } from '../../src/interfaces/application';
+import { IApplicationPlugin } from '../../src/plugins/plugin-interface';
+import { PluginManager } from '../../src/plugins/plugin-manager';
 
 describe('PluginManager', () => {
   let manager: PluginManager;
@@ -17,9 +17,9 @@ describe('PluginManager', () => {
         name: 'test-plugin',
         init: jest.fn(),
       };
-      
+
       manager.register(plugin);
-      
+
       expect(manager.has('test-plugin')).toBe(true);
     });
 
@@ -28,10 +28,12 @@ describe('PluginManager', () => {
         name: 'test-plugin',
         init: jest.fn(),
       };
-      
+
       manager.register(plugin);
-      
-      expect(() => manager.register(plugin)).toThrow('Plugin test-plugin already registered');
+
+      expect(() => manager.register(plugin)).toThrow(
+        'Plugin test-plugin already registered',
+      );
     });
 
     it('should throw error when registering after initialization', async () => {
@@ -39,21 +41,23 @@ describe('PluginManager', () => {
         name: 'test-plugin',
         init: jest.fn(),
       };
-      
+
       await manager.initAll(mockApp);
-      
-      expect(() => manager.register(plugin)).toThrow('Cannot register plugin test-plugin after initialization');
+
+      expect(() => manager.register(plugin)).toThrow(
+        'Cannot register plugin test-plugin after initialization',
+      );
     });
 
     it('should register multiple plugins', () => {
       const plugin1: IApplicationPlugin = { name: 'plugin1', init: jest.fn() };
       const plugin2: IApplicationPlugin = { name: 'plugin2', init: jest.fn() };
       const plugin3: IApplicationPlugin = { name: 'plugin3', init: jest.fn() };
-      
+
       manager.register(plugin1);
       manager.register(plugin2);
       manager.register(plugin3);
-      
+
       expect(manager.has('plugin1')).toBe(true);
       expect(manager.has('plugin2')).toBe(true);
       expect(manager.has('plugin3')).toBe(true);
@@ -64,38 +68,44 @@ describe('PluginManager', () => {
     it('should initialize all plugins', async () => {
       const plugin1: IApplicationPlugin = { name: 'plugin1', init: jest.fn() };
       const plugin2: IApplicationPlugin = { name: 'plugin2', init: jest.fn() };
-      
+
       manager.register(plugin1);
       manager.register(plugin2);
-      
+
       await manager.initAll(mockApp);
-      
+
       expect(plugin1.init).toHaveBeenCalledWith(mockApp);
       expect(plugin2.init).toHaveBeenCalledWith(mockApp);
     });
 
     it('should initialize plugins in registration order', async () => {
       const order: string[] = [];
-      
+
       const plugin1: IApplicationPlugin = {
         name: 'plugin1',
-        init: async () => { order.push('plugin1'); },
+        init: async () => {
+          order.push('plugin1');
+        },
       };
       const plugin2: IApplicationPlugin = {
         name: 'plugin2',
-        init: async () => { order.push('plugin2'); },
+        init: async () => {
+          order.push('plugin2');
+        },
       };
       const plugin3: IApplicationPlugin = {
         name: 'plugin3',
-        init: async () => { order.push('plugin3'); },
+        init: async () => {
+          order.push('plugin3');
+        },
       };
-      
+
       manager.register(plugin1);
       manager.register(plugin2);
       manager.register(plugin3);
-      
+
       await manager.initAll(mockApp);
-      
+
       expect(order).toEqual(['plugin1', 'plugin2', 'plugin3']);
     });
 
@@ -103,12 +113,12 @@ describe('PluginManager', () => {
       const plugin: IApplicationPlugin = {
         name: 'async-plugin',
         init: async () => {
-          await new Promise(resolve => setTimeout(resolve, 10));
+          await new Promise((resolve) => setTimeout(resolve, 10));
         },
       };
-      
+
       manager.register(plugin);
-      
+
       await expect(manager.initAll(mockApp)).resolves.not.toThrow();
     });
 
@@ -119,9 +129,9 @@ describe('PluginManager', () => {
           throw new Error('Init failed');
         },
       };
-      
+
       manager.register(plugin);
-      
+
       await expect(manager.initAll(mockApp)).rejects.toThrow('Init failed');
     });
 
@@ -142,12 +152,12 @@ describe('PluginManager', () => {
         init: jest.fn(),
         stop: jest.fn(),
       };
-      
+
       manager.register(plugin1);
       manager.register(plugin2);
-      
+
       await manager.stopAll();
-      
+
       expect(plugin1.stop).toHaveBeenCalled();
       expect(plugin2.stop).toHaveBeenCalled();
     });
@@ -162,10 +172,10 @@ describe('PluginManager', () => {
         name: 'plugin2',
         init: jest.fn(),
       };
-      
+
       manager.register(plugin1);
       manager.register(plugin2);
-      
+
       await expect(manager.stopAll()).resolves.not.toThrow();
       expect(plugin1.stop).toHaveBeenCalled();
     });
@@ -175,12 +185,12 @@ describe('PluginManager', () => {
         name: 'async-plugin',
         init: jest.fn(),
         stop: async () => {
-          await new Promise(resolve => setTimeout(resolve, 10));
+          await new Promise((resolve) => setTimeout(resolve, 10));
         },
       };
-      
+
       manager.register(plugin);
-      
+
       await expect(manager.stopAll()).resolves.not.toThrow();
     });
 
@@ -192,9 +202,9 @@ describe('PluginManager', () => {
           throw new Error('Stop failed');
         },
       };
-      
+
       manager.register(plugin);
-      
+
       await expect(manager.stopAll()).rejects.toThrow('Stop failed');
     });
 
@@ -209,9 +219,9 @@ describe('PluginManager', () => {
         name: 'test-plugin',
         init: jest.fn(),
       };
-      
+
       manager.register(plugin);
-      
+
       expect(manager.get('test-plugin')).toBe(plugin);
     });
 
@@ -226,9 +236,9 @@ describe('PluginManager', () => {
         name: 'test-plugin',
         init: jest.fn(),
       };
-      
+
       manager.register(plugin);
-      
+
       expect(manager.has('test-plugin')).toBe(true);
     });
 
@@ -240,7 +250,7 @@ describe('PluginManager', () => {
   describe('real-world scenarios', () => {
     it('should handle logging plugin', async () => {
       const logs: string[] = [];
-      
+
       const loggingPlugin: IApplicationPlugin = {
         name: 'logging',
         version: '1.0.0',
@@ -251,11 +261,11 @@ describe('PluginManager', () => {
           logs.push('Logging plugin stopped');
         },
       };
-      
+
       manager.register(loggingPlugin);
       await manager.initAll(mockApp);
       await manager.stopAll();
-      
+
       expect(logs).toEqual([
         'Logging plugin initialized',
         'Logging plugin stopped',
@@ -273,55 +283,61 @@ describe('PluginManager', () => {
           // Flush metrics
         },
       };
-      
+
       manager.register(metricsPlugin);
       await manager.initAll(mockApp);
-      
+
       expect(manager.get('metrics')).toBe(metricsPlugin);
     });
 
     it('should handle database plugin', async () => {
       const initMock = jest.fn();
       const stopMock = jest.fn();
-      
+
       const databasePlugin: IApplicationPlugin = {
         name: 'database',
         init: initMock,
         stop: stopMock,
       };
-      
+
       manager.register(databasePlugin);
       await manager.initAll(mockApp);
       await manager.stopAll();
-      
+
       expect(initMock).toHaveBeenCalled();
       expect(stopMock).toHaveBeenCalled();
     });
 
     it('should handle multiple plugins with dependencies', async () => {
       const initOrder: string[] = [];
-      
+
       const configPlugin: IApplicationPlugin = {
         name: 'config',
-        init: async () => { initOrder.push('config'); },
+        init: async () => {
+          initOrder.push('config');
+        },
       };
-      
+
       const databasePlugin: IApplicationPlugin = {
         name: 'database',
-        init: async () => { initOrder.push('database'); },
+        init: async () => {
+          initOrder.push('database');
+        },
       };
-      
+
       const apiPlugin: IApplicationPlugin = {
         name: 'api',
-        init: async () => { initOrder.push('api'); },
+        init: async () => {
+          initOrder.push('api');
+        },
       };
-      
+
       manager.register(configPlugin);
       manager.register(databasePlugin);
       manager.register(apiPlugin);
-      
+
       await manager.initAll(mockApp);
-      
+
       expect(initOrder).toEqual(['config', 'database', 'api']);
     });
   });
@@ -333,9 +349,9 @@ describe('PluginManager', () => {
         version: '1.2.3',
         init: jest.fn(),
       };
-      
+
       manager.register(plugin);
-      
+
       const retrieved = manager.get('versioned-plugin');
       expect(retrieved?.version).toBe('1.2.3');
     });
@@ -345,9 +361,9 @@ describe('PluginManager', () => {
         name: 'unversioned-plugin',
         init: jest.fn(),
       };
-      
+
       manager.register(plugin);
-      
+
       const retrieved = manager.get('unversioned-plugin');
       expect(retrieved?.version).toBeUndefined();
     });
@@ -359,10 +375,10 @@ describe('PluginManager', () => {
           (app as any).customProperty = 'modified';
         },
       };
-      
+
       manager.register(plugin);
       await manager.initAll(mockApp);
-      
+
       expect((mockApp as any).customProperty).toBe('modified');
     });
 
@@ -377,7 +393,7 @@ describe('PluginManager', () => {
           ]);
         },
       };
-      
+
       manager.register(plugin);
       await expect(manager.initAll(mockApp)).resolves.not.toThrow();
     });

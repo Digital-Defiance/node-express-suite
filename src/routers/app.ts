@@ -11,16 +11,12 @@ import ejs from 'ejs';
 import {
   Application,
   static as expressStatic,
+  NextFunction,
   Request,
   Response,
-  NextFunction,
 } from 'express';
 import { existsSync, readdirSync } from 'fs';
-import { Types } from '@digitaldefiance/mongoose-types';
-import { basename, resolve, sep } from 'path';
-import { IBaseDocument } from '../documents';
-import { Environment } from '../environment';
-import { IConstants } from '../interfaces';
+import { resolve, sep } from 'path';
 import { IApplication } from '../interfaces/application';
 import { debugLog, handleError, sendApiMessageResponse } from '../utils';
 import { BaseRouter } from './base';
@@ -34,9 +30,7 @@ function keepEJS() {
  * Application router
  * Sets up the API and static file serving
  */
-export class AppRouter<
-  TApplication extends IApplication = IApplication,
-> {
+export class AppRouter<TApplication extends IApplication = IApplication> {
   protected readonly viewsPath: string;
   protected readonly indexPath: string;
   protected readonly assetsDir: string;
@@ -176,8 +170,7 @@ export class AppRouter<
             ? String(err.message).replace(/[\r\n]/g, ' ')
             : 'Unknown error';
         console.error('Error rendering: ' + errMsg);
-        const normalizedError =
-          err instanceof Error ? err : new Error(errMsg);
+        const normalizedError = err instanceof Error ? err : new Error(errMsg);
         if (!res.headersSent) {
           res.status(500).send('An error occurred');
         }

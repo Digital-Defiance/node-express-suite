@@ -1,11 +1,9 @@
-import { Schema, Types } from '@digitaldefiance/mongoose-types';
+import { Schema } from '@digitaldefiance/mongoose-types';
 import {
   getSuiteCoreTranslation,
-  IMnemonicBase,
   SuiteCoreStringKey,
 } from '@digitaldefiance/suite-core-lib';
 import { LocalhostConstants as AppConstants } from '../constants';
-import { IMnemonicDocument } from '../documents/mnemonic';
 import { IConstants } from '../interfaces/constants';
 
 /**

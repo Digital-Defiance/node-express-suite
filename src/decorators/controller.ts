@@ -20,7 +20,12 @@ export interface RouteOptions<
   TLanguage extends CoreLanguageCode = CoreLanguageCode,
   TConstants extends IConstants = IConstants,
 > {
-  validation?: ValidationChain[] | ((this: ValidationContext<TConstants>, lang: TLanguage) => ValidationChain[]);
+  validation?:
+    | ValidationChain[]
+    | ((
+        this: ValidationContext<TConstants>,
+        lang: TLanguage,
+      ) => ValidationChain[]);
   schema?: z.ZodSchema;
   middleware?: RequestHandler[];
   auth?: boolean;
@@ -42,6 +47,7 @@ export interface RouteMetadata<
 
 // Controller decorator
 export function Controller(basePath: string = '') {
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
   return function <T extends { new (...args: any[]): {} }>(constructor: T) {
     Reflect.defineMetadata(CONTROLLER_METADATA, { basePath }, constructor);
     return constructor;
@@ -115,7 +121,7 @@ function createRouteDecorator<
 }
 
 // Convenience decorators
-export function Auth(cryptoAuth: boolean = false) {
+export function Auth(_cryptoAuth: boolean = false) {
   return function (
     target: any,
     propertyKey: string,
@@ -127,7 +133,7 @@ export function Auth(cryptoAuth: boolean = false) {
 }
 
 export function Validate<TLanguage extends CoreLanguageCode = CoreLanguageCode>(
-  validation: ValidationChain[] | ((lang: TLanguage) => ValidationChain[]),
+  _validation: ValidationChain[] | ((lang: TLanguage) => ValidationChain[]),
 ) {
   return function (
     target: any,

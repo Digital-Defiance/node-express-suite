@@ -1,5 +1,4 @@
-import { Connection, Model, Schema, Types } from '@digitaldefiance/mongoose-types';
-import { IUserDocument } from '../documents/user';
+import { Connection, Model, Schema } from '@digitaldefiance/mongoose-types';
 import { BaseModelName } from '../enumerations';
 import { SchemaCollection } from '../enumerations/schema-collection';
 import { UserSchema } from '../schemas/user';

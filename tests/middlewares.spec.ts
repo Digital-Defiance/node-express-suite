@@ -1,5 +1,9 @@
 import express from 'express';
-import { corsOptionsDelegate, isHelmetOptions, initMiddleware } from '../src/middlewares';
+import {
+  corsOptionsDelegate,
+  initMiddleware,
+  isHelmetOptions,
+} from '../src/middlewares';
 
 describe('middlewares', () => {
   describe('corsOptionsDelegate', () => {

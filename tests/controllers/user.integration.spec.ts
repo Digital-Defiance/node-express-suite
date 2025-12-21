@@ -1,12 +1,9 @@
+import { ECIESService } from '@digitaldefiance/node-ecies-lib';
 import { UserController } from '../../src/controllers/user';
-import { JwtService } from '../../src/services/jwt';
-import { UserService } from '../../src/services/user';
 import { BackupCodeService } from '../../src/services/backup-code';
+import { JwtService } from '../../src/services/jwt';
 import { RoleService } from '../../src/services/role';
-import { ECIESService, Member as BackendMember } from '@digitaldefiance/node-ecies-lib';
-import { SystemUserService } from '../../src/services/system-user';
-import { Types } from '@digitaldefiance/mongoose-types';
-import { AccountStatus } from '@digitaldefiance/suite-core-lib';
+import { UserService } from '../../src/services/user';
 
 // Mock SystemUserService before importing UserController
 jest.mock('../../src/services/system-user', () => ({
@@ -23,7 +20,9 @@ describe('UserController', () => {
   let controller: UserController;
   let mockApp: any;
   let mockJwtService: jest.Mocked<JwtService<any, any, any, any, any>>;
-  let mockUserService: jest.Mocked<UserService<any, any, any, any, any, any, any, any, any, any, any>>;
+  let mockUserService: jest.Mocked<
+    UserService<any, any, any, any, any, any, any, any, any, any, any>
+  >;
   let mockBackupCodeService: jest.Mocked<BackupCodeService<any, any, any, any>>;
   let mockRoleService: jest.Mocked<RoleService<any, any, any>>;
   let mockEciesService: jest.Mocked<ECIESService>;
@@ -40,14 +39,16 @@ describe('UserController', () => {
         jwtSecret: 'a'.repeat(64),
         systemPublicKeyHex: 'aabbccdd',
       },
-      db: { connection: {
-        startSession: jest.fn().mockResolvedValue({
-          startTransaction: jest.fn(),
-          commitTransaction: jest.fn(),
-          abortTransaction: jest.fn(),
-          endSession: jest.fn(),
-        }),
-      } },
+      db: {
+        connection: {
+          startSession: jest.fn().mockResolvedValue({
+            startTransaction: jest.fn(),
+            commitTransaction: jest.fn(),
+            abortTransaction: jest.fn(),
+            endSession: jest.fn(),
+          }),
+        },
+      },
       constants: {
         BACKUP_CODES: { Count: 10 },
         UsernameRegex: /^[a-zA-Z0-9_-]{3,30}$/,
@@ -159,9 +160,9 @@ describe('UserController', () => {
           path: layer.route.path,
           methods: Object.keys(layer.route.methods),
         }));
-      
+
       const hasRegister = routes.some(
-        (r: any) => r.path === '/register' && r.methods.includes('post')
+        (r: any) => r.path === '/register' && r.methods.includes('post'),
       );
       expect(hasRegister).toBe(true);
     });
@@ -173,9 +174,9 @@ describe('UserController', () => {
           path: layer.route.path,
           methods: Object.keys(layer.route.methods),
         }));
-      
+
       const hasRefreshToken = routes.some(
-        (r: any) => r.path === '/refresh-token' && r.methods.includes('get')
+        (r: any) => r.path === '/refresh-token' && r.methods.includes('get'),
       );
       expect(hasRefreshToken).toBe(true);
     });
@@ -187,9 +188,10 @@ describe('UserController', () => {
           path: layer.route.path,
           methods: Object.keys(layer.route.methods),
         }));
-      
+
       const hasAccountVerification = routes.some(
-        (r: any) => r.path === '/account-verification' && r.methods.includes('post')
+        (r: any) =>
+          r.path === '/account-verification' && r.methods.includes('post'),
       );
       expect(hasAccountVerification).toBe(true);
     });
@@ -201,9 +203,9 @@ describe('UserController', () => {
           path: layer.route.path,
           methods: Object.keys(layer.route.methods),
         }));
-      
+
       const hasVerify = routes.some(
-        (r: any) => r.path === '/verify' && r.methods.includes('get')
+        (r: any) => r.path === '/verify' && r.methods.includes('get'),
       );
       expect(hasVerify).toBe(true);
     });
@@ -215,9 +217,9 @@ describe('UserController', () => {
           path: layer.route.path,
           methods: Object.keys(layer.route.methods),
         }));
-      
+
       const hasChangePassword = routes.some(
-        (r: any) => r.path === '/change-password' && r.methods.includes('post')
+        (r: any) => r.path === '/change-password' && r.methods.includes('post'),
       );
       expect(hasChangePassword).toBe(true);
     });
@@ -229,9 +231,9 @@ describe('UserController', () => {
           path: layer.route.path,
           methods: Object.keys(layer.route.methods),
         }));
-      
+
       const hasBackupCodes = routes.some(
-        (r: any) => r.path === '/backup-codes' && r.methods.includes('get')
+        (r: any) => r.path === '/backup-codes' && r.methods.includes('get'),
       );
       expect(hasBackupCodes).toBe(true);
     });
@@ -243,9 +245,9 @@ describe('UserController', () => {
           path: layer.route.path,
           methods: Object.keys(layer.route.methods),
         }));
-      
+
       const hasPostBackupCodes = routes.some(
-        (r: any) => r.path === '/backup-codes' && r.methods.includes('post')
+        (r: any) => r.path === '/backup-codes' && r.methods.includes('post'),
       );
       expect(hasPostBackupCodes).toBe(true);
     });
@@ -257,9 +259,9 @@ describe('UserController', () => {
           path: layer.route.path,
           methods: Object.keys(layer.route.methods),
         }));
-      
+
       const hasForgotPassword = routes.some(
-        (r: any) => r.path === '/forgot-password' && r.methods.includes('post')
+        (r: any) => r.path === '/forgot-password' && r.methods.includes('post'),
       );
       expect(hasForgotPassword).toBe(true);
     });
@@ -271,9 +273,9 @@ describe('UserController', () => {
           path: layer.route.path,
           methods: Object.keys(layer.route.methods),
         }));
-      
+
       const hasResetPassword = routes.some(
-        (r: any) => r.path === '/reset-password' && r.methods.includes('post')
+        (r: any) => r.path === '/reset-password' && r.methods.includes('post'),
       );
       expect(hasResetPassword).toBe(true);
     });
@@ -285,9 +287,9 @@ describe('UserController', () => {
           path: layer.route.path,
           methods: Object.keys(layer.route.methods),
         }));
-      
+
       const hasLanguage = routes.some(
-        (r: any) => r.path === '/language' && r.methods.includes('post')
+        (r: any) => r.path === '/language' && r.methods.includes('post'),
       );
       expect(hasLanguage).toBe(true);
     });
@@ -299,9 +301,10 @@ describe('UserController', () => {
           path: layer.route.path,
           methods: Object.keys(layer.route.methods),
         }));
-      
+
       const hasDirectLogin = routes.some(
-        (r: any) => r.path === '/request-direct-login' && r.methods.includes('post')
+        (r: any) =>
+          r.path === '/request-direct-login' && r.methods.includes('post'),
       );
       expect(hasDirectLogin).toBe(true);
     });
@@ -313,9 +316,10 @@ describe('UserController', () => {
           path: layer.route.path,
           methods: Object.keys(layer.route.methods),
         }));
-      
+
       const hasDirectChallenge = routes.some(
-        (r: any) => r.path === '/direct-challenge' && r.methods.includes('post')
+        (r: any) =>
+          r.path === '/direct-challenge' && r.methods.includes('post'),
       );
       expect(hasDirectChallenge).toBe(true);
     });
@@ -327,9 +331,10 @@ describe('UserController', () => {
           path: layer.route.path,
           methods: Object.keys(layer.route.methods),
         }));
-      
+
       const hasEmailLogin = routes.some(
-        (r: any) => r.path === '/request-email-login' && r.methods.includes('post')
+        (r: any) =>
+          r.path === '/request-email-login' && r.methods.includes('post'),
       );
       expect(hasEmailLogin).toBe(true);
     });
@@ -341,9 +346,9 @@ describe('UserController', () => {
           path: layer.route.path,
           methods: Object.keys(layer.route.methods),
         }));
-      
+
       const hasEmailChallenge = routes.some(
-        (r: any) => r.path === '/email-challenge' && r.methods.includes('post')
+        (r: any) => r.path === '/email-challenge' && r.methods.includes('post'),
       );
       expect(hasEmailChallenge).toBe(true);
     });
@@ -355,9 +360,10 @@ describe('UserController', () => {
           path: layer.route.path,
           methods: Object.keys(layer.route.methods),
         }));
-      
+
       const hasResendVerification = routes.some(
-        (r: any) => r.path === '/resend-verification' && r.methods.includes('post')
+        (r: any) =>
+          r.path === '/resend-verification' && r.methods.includes('post'),
       );
       expect(hasResendVerification).toBe(true);
     });
@@ -369,9 +375,9 @@ describe('UserController', () => {
           path: layer.route.path,
           methods: Object.keys(layer.route.methods),
         }));
-      
+
       const hasBackupCode = routes.some(
-        (r: any) => r.path === '/backup-code' && r.methods.includes('post')
+        (r: any) => r.path === '/backup-code' && r.methods.includes('post'),
       );
       expect(hasBackupCode).toBe(true);
     });
@@ -383,9 +389,10 @@ describe('UserController', () => {
           path: layer.route.path,
           methods: Object.keys(layer.route.methods),
         }));
-      
+
       const hasVerifyResetToken = routes.some(
-        (r: any) => r.path === '/verify-reset-token' && r.methods.includes('get')
+        (r: any) =>
+          r.path === '/verify-reset-token' && r.methods.includes('get'),
       );
       expect(hasVerifyResetToken).toBe(true);
     });
@@ -397,9 +404,10 @@ describe('UserController', () => {
           path: layer.route.path,
           methods: Object.keys(layer.route.methods),
         }));
-      
+
       const hasRecoverMnemonic = routes.some(
-        (r: any) => r.path === '/recover-mnemonic' && r.methods.includes('post')
+        (r: any) =>
+          r.path === '/recover-mnemonic' && r.methods.includes('post'),
       );
       expect(hasRecoverMnemonic).toBe(true);
     });
@@ -439,7 +447,9 @@ describe('UserController', () => {
       // Verify the decorated methods exist
       expect(typeof (controller as any).register).toBe('function');
       expect(typeof (controller as any).refreshToken).toBe('function');
-      expect(typeof (controller as any).completeAccountVerification).toBe('function');
+      expect(typeof (controller as any).completeAccountVerification).toBe(
+        'function',
+      );
       expect(typeof (controller as any).tokenVerifiedResponse).toBe('function');
       expect(typeof (controller as any).changePassword).toBe('function');
       expect(typeof (controller as any).getBackupCodeCount).toBe('function');

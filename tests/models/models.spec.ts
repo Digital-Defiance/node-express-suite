@@ -1,11 +1,10 @@
-import { Connection } from '@digitaldefiance/mongoose-types';
+import mongoose, { Connection } from '@digitaldefiance/mongoose-types';
 import { MongoMemoryServer } from 'mongodb-memory-server';
-import mongoose from '@digitaldefiance/mongoose-types';
 import { EmailTokenModel } from '../../src/models/email-token';
 import { MnemonicModel } from '../../src/models/mnemonic';
 import { UsedDirectLoginTokenModel } from '../../src/models/used-direct-login-token';
-import UserRoleModel from '../../src/models/user-role';
 import { UserModel } from '../../src/models/user';
+import UserRoleModel from '../../src/models/user-role';
 
 describe('Model Functions', () => {
   let mongoServer: MongoMemoryServer;
@@ -29,7 +28,11 @@ describe('Model Functions', () => {
     });
 
     it('should create model with custom parameters', () => {
-      const model = EmailTokenModel(connection, 'CustomEmailToken', 'custom_email_tokens');
+      const model = EmailTokenModel(
+        connection,
+        'CustomEmailToken',
+        'custom_email_tokens',
+      );
       expect(model.modelName).toBe('CustomEmailToken');
     });
   });
@@ -41,7 +44,11 @@ describe('Model Functions', () => {
     });
 
     it('should create model with custom parameters', () => {
-      const model = MnemonicModel(connection, 'CustomMnemonic', 'custom_mnemonics');
+      const model = MnemonicModel(
+        connection,
+        'CustomMnemonic',
+        'custom_mnemonics',
+      );
       expect(model.modelName).toBe('CustomMnemonic');
     });
   });
@@ -53,7 +60,11 @@ describe('Model Functions', () => {
     });
 
     it('should create model with custom parameters', () => {
-      const model = UsedDirectLoginTokenModel(connection, 'CustomToken', 'custom_tokens');
+      const model = UsedDirectLoginTokenModel(
+        connection,
+        'CustomToken',
+        'custom_tokens',
+      );
       expect(model.modelName).toBe('CustomToken');
     });
   });
@@ -65,7 +76,11 @@ describe('Model Functions', () => {
     });
 
     it('should create model with custom parameters', () => {
-      const model = UserRoleModel(connection, 'CustomUserRole', 'custom_user_roles');
+      const model = UserRoleModel(
+        connection,
+        'CustomUserRole',
+        'custom_user_roles',
+      );
       expect(model.modelName).toBe('CustomUserRole');
     });
   });

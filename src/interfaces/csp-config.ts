@@ -13,4 +13,4 @@ export const isCSPConfig = (obj: any): obj is ICSPConfig => {
     'csp' in obj &&
     isSimpleCSPDef(obj.csp)
   );
-}
+};

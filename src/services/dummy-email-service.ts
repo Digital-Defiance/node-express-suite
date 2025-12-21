@@ -7,12 +7,12 @@ import { IApplication, IEmailService } from '../interfaces';
 export class DummyEmailService<TApplication extends IApplication = IApplication>
   implements IEmailService
 {
-  constructor(application: TApplication) {}
+  constructor(_application: TApplication) {}
   public async sendEmail(
-    to: string,
-    subject: string,
-    text: string,
-    html: string,
+    _to: string,
+    _subject: string,
+    _text: string,
+    _html: string,
   ): Promise<void> {
     // Do nothing
     return;

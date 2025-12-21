@@ -4,6 +4,7 @@ import {
   SecureBuffer,
   SecureString,
 } from '@digitaldefiance/ecies-lib';
+import { Document, Model } from '@digitaldefiance/mongoose-types';
 import {
   Member as BackendMember,
   ECIESService,
@@ -14,10 +15,10 @@ import {
   InvalidCredentialsError,
   PasswordLoginNotEnabledError,
 } from '@digitaldefiance/suite-core-lib';
-import { Document, Model } from '@digitaldefiance/mongoose-types';
 import { BaseModelName } from '../../src/enumerations/base-model-name';
 import { ModelRegistry } from '../../src/model-registry';
 import { BackupCodeService } from '../../src/services/backup-code';
+import { DummyEmailService } from '../../src/services/dummy-email-service';
 import { KeyWrappingService } from '../../src/services/key-wrapping';
 import { RoleService } from '../../src/services/role';
 import { SystemUserService } from '../../src/services/system-user';
@@ -28,7 +29,6 @@ import {
   makeUserModel,
   makeUserRoleModel,
 } from '../__tests__/helpers/model-mocks.mock';
-import { DummyEmailService } from '../../src/services/dummy-email-service';
 
 beforeAll(() => {
   // This will be overridden by makeService, just set up a default
