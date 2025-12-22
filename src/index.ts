@@ -1,5 +1,5 @@
+/// <reference path="./types.d.ts" />
 import 'reflect-metadata';
-import './types.d';
 
 export * from './application';
 export * from './application-base';
