@@ -120,8 +120,8 @@ export class Environment<I = Types.ObjectId> implements IEnvironment<I> {
         envObj['NODE_ENV'] === 'production'
           ? 'https://localhost'
           : httpsDevCertRoot
-          ? `https://localhost:${httpsDevPort}`
-          : 'http://localhost:3000',
+            ? `https://localhost:${httpsDevPort}`
+            : 'http://localhost:3000',
       // Avoid importing Application here to prevent circular deps
       // Compute dist dir from process.cwd() directly
       apiDistDir: Environment.requireEnv<string>('API_DIST_DIR', envObj),
@@ -195,8 +195,8 @@ export class Environment<I = Types.ObjectId> implements IEnvironment<I> {
         transactionRetryBaseDelay: envObj['MONGO_TRANSACTION_RETRY_BASE_DELAY']
           ? parseInt(envObj['MONGO_TRANSACTION_RETRY_BASE_DELAY'])
           : envObj['NODE_ENV'] === 'test'
-          ? 25
-          : 100,
+            ? 25
+            : 100,
       },
       adminMnemonic: new SecureString(envObj['ADMIN_MNEMONIC'] ?? null),
       adminCreatedAt: envObj['ADMIN_CREATED_AT']

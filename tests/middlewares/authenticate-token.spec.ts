@@ -57,7 +57,7 @@ describe('authenticateToken middleware', () => {
     const application = createApplicationMock(
       {
         // Minimal getModel to avoid DB calls when token is missing/invalid
-        getModel: () => ({} as unknown),
+        getModel: () => ({}) as unknown,
       },
       {
         mongo: { uri: 'mongodb://localhost:27017', transactionTimeout: 60000 },

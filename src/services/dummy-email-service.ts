@@ -4,9 +4,9 @@ import { IApplication, IEmailService } from '../interfaces';
  * Dummy email service that does nothing.
  * Primarily for testing
  */
-export class DummyEmailService<TApplication extends IApplication = IApplication>
-  implements IEmailService
-{
+export class DummyEmailService<
+  TApplication extends IApplication = IApplication,
+> implements IEmailService {
   constructor(_application: TApplication) {}
   public async sendEmail(
     _to: string,

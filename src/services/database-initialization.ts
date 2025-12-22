@@ -133,8 +133,8 @@ export abstract class DatabaseInitializationService {
     const newId: I = memberId
       ? memberId
       : idGenerator
-      ? idGenerator()
-      : convertObjectIdToGenericId<I>(new MongoObjectId());
+        ? idGenerator()
+        : convertObjectIdToGenericId<I>(new MongoObjectId());
     const key = DatabaseInitializationService.cacheKey(
       username,
       email,

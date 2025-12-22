@@ -722,9 +722,8 @@ describe('DatabaseInitializationService', () => {
 
   describe('dropDatabase', () => {
     it('should drop database when connection has db', async () => {
-      const result = await DatabaseInitializationService.dropDatabase(
-        mockConnection,
-      );
+      const result =
+        await DatabaseInitializationService.dropDatabase(mockConnection);
 
       expect(result).toBe(true);
       expect(mockConnection.db!.dropDatabase).toHaveBeenCalled();
@@ -733,9 +732,8 @@ describe('DatabaseInitializationService', () => {
     it('should return false when connection has no db', async () => {
       const connectionWithoutDb = { db: null } as unknown as Connection;
 
-      const result = await DatabaseInitializationService.dropDatabase(
-        connectionWithoutDb,
-      );
+      const result =
+        await DatabaseInitializationService.dropDatabase(connectionWithoutDb);
 
       expect(result).toBe(false);
     });
@@ -1401,9 +1399,8 @@ describe('DatabaseInitializationService', () => {
       const connectionError = new Error('Database connection failed');
       (mockConnection as any).db = null;
 
-      const dropResult = await DatabaseInitializationService.dropDatabase(
-        mockConnection,
-      );
+      const dropResult =
+        await DatabaseInitializationService.dropDatabase(mockConnection);
       expect(dropResult).toBe(false);
     });
 

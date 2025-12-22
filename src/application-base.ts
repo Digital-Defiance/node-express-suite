@@ -29,8 +29,7 @@ export class BaseApplication<
   TModelDocs extends Record<string, IBaseDocument<any>>,
   TInitResults,
   TConstants extends IConstants = IConstants,
-> implements IApplication
-{
+> implements IApplication {
   /**
    * Application environment
    */

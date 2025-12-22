@@ -23,7 +23,7 @@ export function createApplicationMock(
   } as Environment;
 
   const defaultGetModel = <T extends Document>(name: string): Model<T> =>
-    ({} as Model<T>);
+    ({}) as Model<T>;
 
   return {
     environment: mockEnvironment,

@@ -43,12 +43,12 @@ import { debugLog, handleError, sendApiMessageResponse } from './utils';
 type ServerWithOptionalClose = Server & { closeAllConnections?: () => void };
 
 export class Application<
-    TInitResults extends IServerInitResult,
-    TModelDocs extends Record<string, IBaseDocument<any>>,
-    TEnvironment extends Environment = Environment,
-    TConstants extends IConstants = IConstants,
-    TAppRouter extends AppRouter = AppRouter,
-  >
+  TInitResults extends IServerInitResult,
+  TModelDocs extends Record<string, IBaseDocument<any>>,
+  TEnvironment extends Environment = Environment,
+  TConstants extends IConstants = IConstants,
+  TAppRouter extends AppRouter = AppRouter,
+>
   extends BaseApplication<TModelDocs, TInitResults, TConstants>
   implements IApplication
 {
