@@ -451,7 +451,7 @@ export class Environment<I = Types.ObjectId> implements IEnvironment<I> {
     obj[keys[keys.length - 1]] = value;
   }
 
-  public getObject(): object {
+  public getObject(): EnvironmentVariables {
     return this._envObject;
   }
 
