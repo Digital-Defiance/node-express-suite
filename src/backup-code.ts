@@ -145,9 +145,7 @@ export class BackupCode extends BackupCodeString {
     }
   }
 
-  public async encrypt<
-    TID extends string | Types.ObjectId | Buffer | Uint8Array = Buffer,
-  >(
+  public async encrypt<TID extends string | Types.ObjectId | Buffer = Buffer>(
     backupUser: BackendMember<TID>,
     systemUser: BackendMember<TID>,
     constants: IConstants = LocalhostConstants,
@@ -208,7 +206,7 @@ export class BackupCode extends BackupCodeString {
    * - Encrypts the private key with AEAD and wraps with system user
    */
   public static async encryptBackupCodesV1<
-    TID extends string | Types.ObjectId | Buffer | Uint8Array = Buffer,
+    TID extends string | Types.ObjectId | Buffer = Buffer,
   >(
     backupUser: BackendMember<TID>,
     systemUser: BackendMember<TID>,
@@ -223,7 +221,7 @@ export class BackupCode extends BackupCodeString {
 
   /** Delegate to current version. */
   public static encryptBackupCodes<
-    TID extends string | Types.ObjectId | Buffer | Uint8Array = Buffer,
+    TID extends string | Types.ObjectId | Buffer = Buffer,
   >(
     backupUser: BackendMember<TID>,
     systemUser: BackendMember<TID>,

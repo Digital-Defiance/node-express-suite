@@ -4,6 +4,7 @@ import {
   IKeyringConsts,
   IWrappedKeyConsts,
   PbkdfProfiles,
+  type IVotingConsts,
 } from '@digitaldefiance/node-ecies-lib';
 import { IConstants as IBaseConstants } from '@digitaldefiance/suite-core-lib';
 import { CipherGCMTypes } from 'crypto';
@@ -93,6 +94,10 @@ export interface IConstants extends IBaseConstants {
    * Encryption constants used for encrypted data
    */
   ENCRYPTION: IEncryptionConsts;
+  /**
+   * Voting constants used for homomorphic encryption voting
+   */
+  VOTING: IVotingConsts;
   /**
    * Algorithm configuration string for keyring operations
    */

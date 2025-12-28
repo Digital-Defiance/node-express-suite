@@ -229,6 +229,7 @@ export function createExpressRuntimeConfiguration(
         overrides?.WRAPPED_KEY?.MIN_ITERATIONS ??
         base.WRAPPED_KEY.MIN_ITERATIONS,
     },
+    VOTING: base.VOTING,
   };
   return Object.freeze(merged);
 }

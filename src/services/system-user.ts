@@ -67,7 +67,7 @@ export class SystemUserService {
   }
 
   public static setSystemUser<
-    TID extends string | Types.ObjectId | Buffer | Uint8Array = Buffer,
+    TID extends string | Types.ObjectId | Buffer = Buffer,
   >(user: BackendMember<TID>, constants: IConstants): void {
     if (user.type !== MemberType.System || user.name !== constants.SystemUser) {
       throw new Error(
