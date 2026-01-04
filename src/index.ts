@@ -21,6 +21,7 @@ export * from './get-language';
 export * from './get-timezone';
 export * from './interfaces';
 export * from './middlewares';
+export * from './middleware-utils';
 export * from './model-registry';
 export * from './models';
 export * from './pipeline';

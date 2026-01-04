@@ -1,5 +1,5 @@
 import { HelmetOptions } from 'helmet';
-import { isHelmetOptions } from '../middlewares';
+import { isHelmetOptions } from '../middleware-utils';
 import { ISimpleCSPDef, isSimpleCSPDef } from './csp-definition';
 
 export interface IFlexibleCSP {

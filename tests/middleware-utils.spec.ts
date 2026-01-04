@@ -3,9 +3,9 @@ import {
   corsOptionsDelegate,
   initMiddleware,
   isHelmetOptions,
-} from '../src/middlewares';
+} from '../src/middleware-utils';
 
-describe('middlewares', () => {
+describe('middleware-utils', () => {
   describe('corsOptionsDelegate', () => {
     it('should allow whitelisted origins', (done) => {
       const delegate = corsOptionsDelegate(['http://localhost:3000']);

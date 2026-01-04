@@ -30,7 +30,7 @@ import {
 } from './interfaces';
 import { IConstants } from './interfaces/constants';
 import { IFlexibleCSP, isFlexibleCSP } from './interfaces/flexible-csp';
-import { initMiddleware, isHelmetOptions } from './middlewares';
+import { initMiddleware, isHelmetOptions } from './middleware-utils';
 import { AppRouter } from './routers/app';
 import { BaseRouter } from './routers/base';
 import { DatabaseInitializationService } from './services';

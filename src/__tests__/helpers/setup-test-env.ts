@@ -18,7 +18,7 @@ import {
   IServerInitResult,
 } from '../../interfaces';
 import { ITestEnvironment } from '../../interfaces/test-environment';
-import { initMiddleware } from '../../middlewares';
+import { initMiddleware } from '../../middleware-utils';
 import { AppRouter, BaseRouter } from '../../routers';
 import { DatabaseInitializationService } from '../../services';
 import { SchemaMap } from '../../types';

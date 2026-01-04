@@ -16,7 +16,7 @@ import {
 } from '../interfaces';
 import { IConstants } from '../interfaces/constants';
 import { IFlexibleCSP } from '../interfaces/flexible-csp';
-import { initMiddleware } from '../middlewares';
+import { initMiddleware } from '../middleware-utils';
 import { AppRouter } from '../routers/app';
 import { BaseRouter } from '../routers/base';
 import { SchemaMap } from '../types';
