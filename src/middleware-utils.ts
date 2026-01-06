@@ -44,9 +44,9 @@ export const corsOptionsDelegate = (corsWhitelist: string[]) => {
   };
 };
 
-export const isHelmetOptions = (obj: any): boolean => {
+export const isHelmetOptions = (obj: unknown): obj is HelmetOptions => {
   // A very basic check; in real scenarios, you might want to be more thorough
-  return (
+  return !!(
     obj &&
     typeof obj === 'object' &&
     ('contentSecurityPolicy' in obj ||
@@ -81,8 +81,10 @@ export const initMiddleware = (
               "'self'",
               //"'unsafe-inline'",
               "'strict-dynamic'",
-              (req: IncomingMessage, res: ServerResponse) =>
-                `'nonce-${(res as Response).locals['cspNonce']}'`,
+              (req: IncomingMessage, res: ServerResponse) => {
+                const response = res as Response;
+                return `'nonce-${response.locals['cspNonce']}'`;
+              },
               ...csp.scriptSrc,
             ],
             styleSrc: [
