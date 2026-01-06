@@ -416,7 +416,7 @@ describe('BackupCode', () => {
         service.setSystemUser(mockSystemUser);
 
         const userDoc = {
-          _id: 'user123',
+          _id: new (require('@digitaldefiance/mongoose-types').Types.ObjectId)(),
           username: 'testuser',
           email: 'test@example.com',
           publicKey: Buffer.alloc(65).toString('hex'),
