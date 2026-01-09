@@ -159,6 +159,34 @@ describe('DatabaseInitializationService', () => {
 
     // Mock ECIES service
     mockECIESService = {
+      constants: {
+        idProvider: {
+          toBytes: jest.fn().mockImplementation((id) => {
+            if (Buffer.isBuffer(id)) return id;
+            if (typeof id === 'string') return Buffer.from(id, 'hex');
+            if (id && typeof id.toHexString === 'function') {
+              return Buffer.from(id.toHexString(), 'hex');
+            }
+            return Buffer.from(String(id), 'hex');
+          }),
+          generate: jest.fn().mockReturnValue(Buffer.alloc(12, 0x42)),
+          fromBytes: jest.fn().mockImplementation((bytes) => {
+            const buf = Buffer.isBuffer(bytes) ? bytes : Buffer.from(bytes);
+            return new (require('@digitaldefiance/mongoose-types').Types.ObjectId)(
+              buf,
+            );
+          }),
+          serialize: jest.fn().mockImplementation((bytes) => {
+            const buf = Buffer.isBuffer(bytes) ? bytes : Buffer.from(bytes);
+            return buf.toString('hex');
+          }),
+          deserialize: jest.fn().mockImplementation((str) => {
+            return Buffer.from(str, 'hex');
+          }),
+          validate: jest.fn().mockReturnValue(true),
+          byteLength: 12,
+        },
+      },
       generateNewMnemonic: jest
         .fn()
         .mockReturnValue(new SecureString('test mnemonic phrase here')),

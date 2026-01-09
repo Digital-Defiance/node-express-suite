@@ -203,16 +203,16 @@ export class Environment<I = Types.ObjectId> implements IEnvironment<I> {
         ? new Date(envObj['ADMIN_CREATED_AT'])
         : new Date(),
       adminId: envObj['ADMIN_ID']
-        ? idAdapter(constants.idProvider.idFromString(envObj['ADMIN_ID']))
+        ? idAdapter(constants.idProvider.deserialize(envObj['ADMIN_ID']))
         : idAdapter(constants.idProvider.generate()),
       adminPassword: envObj['ADMIN_PASSWORD']
         ? new SecureString(envObj['ADMIN_PASSWORD'])
         : undefined,
       adminRoleId: envObj['ADMIN_ROLE_ID']
-        ? idAdapter(constants.idProvider.idFromString(envObj['ADMIN_ROLE_ID']))
+        ? idAdapter(constants.idProvider.deserialize(envObj['ADMIN_ROLE_ID']))
         : undefined,
       adminUserRoleId: envObj['ADMIN_ROLE_ID']
-        ? idAdapter(constants.idProvider.idFromString(envObj['ADMIN_ROLE_ID']))
+        ? idAdapter(constants.idProvider.deserialize(envObj['ADMIN_ROLE_ID']))
         : undefined,
       adminBackupCodes: envObj['ADMIN_BACKUP_CODES']
         ? parseBackupCodes('admin', envObj)
@@ -222,17 +222,17 @@ export class Environment<I = Types.ObjectId> implements IEnvironment<I> {
         ? new Date(envObj['MEMBER_CREATED_AT'])
         : new Date(),
       memberId: envObj['MEMBER_ID']
-        ? idAdapter(constants.idProvider.idFromString(envObj['MEMBER_ID']))
+        ? idAdapter(constants.idProvider.deserialize(envObj['MEMBER_ID']))
         : idAdapter(constants.idProvider.generate()),
       memberPassword: envObj['MEMBER_PASSWORD']
         ? new SecureString(envObj['MEMBER_PASSWORD'])
         : undefined,
       memberRoleId: envObj['MEMBER_ROLE_ID']
-        ? idAdapter(constants.idProvider.idFromString(envObj['MEMBER_ROLE_ID']))
+        ? idAdapter(constants.idProvider.deserialize(envObj['MEMBER_ROLE_ID']))
         : undefined,
       memberUserRoleId: envObj['MEMBER_USER_ROLE_ID']
         ? idAdapter(
-            constants.idProvider.idFromString(envObj['MEMBER_USER_ROLE_ID']),
+            constants.idProvider.deserialize(envObj['MEMBER_USER_ROLE_ID']),
           )
         : undefined,
       memberBackupCodes: envObj['MEMBER_BACKUP_CODES']
@@ -243,17 +243,17 @@ export class Environment<I = Types.ObjectId> implements IEnvironment<I> {
         ? new Date(envObj['SYSTEM_CREATED_AT'])
         : new Date(),
       systemId: envObj['SYSTEM_ID']
-        ? idAdapter(constants.idProvider.idFromString(envObj['SYSTEM_ID']))
+        ? idAdapter(constants.idProvider.deserialize(envObj['SYSTEM_ID']))
         : idAdapter(constants.idProvider.generate()),
       systemPublicKeyHex: envObj['SYSTEM_PUBLIC_KEY'] ?? undefined,
       systemPassword: envObj['SYSTEM_PASSWORD']
         ? new SecureString(envObj['SYSTEM_PASSWORD'])
         : undefined,
       systemRoleId: envObj['SYSTEM_ROLE_ID']
-        ? idAdapter(constants.idProvider.idFromString(envObj['SYSTEM_ROLE_ID']))
+        ? idAdapter(constants.idProvider.deserialize(envObj['SYSTEM_ROLE_ID']))
         : undefined,
       systemUserRoleId: envObj['SYSTEM_ROLE_ID']
-        ? idAdapter(constants.idProvider.idFromString(envObj['SYSTEM_ROLE_ID']))
+        ? idAdapter(constants.idProvider.deserialize(envObj['SYSTEM_ROLE_ID']))
         : undefined,
       systemBackupCodes: envObj['SYSTEM_BACKUP_CODES']
         ? parseBackupCodes('system', envObj)

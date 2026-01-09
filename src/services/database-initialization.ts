@@ -359,7 +359,9 @@ export abstract class DatabaseInitializationService {
     backupCodeService: BackupCodeService<I>,
     idGenerator?: () => I,
     idToString: (id: I) => string = (id) =>
-      application.constants.idProvider.idToString(id),
+      application.constants.idProvider.serialize(
+        application.constants.idProvider.toBytes(id),
+      ),
   ): Promise<IDBInitResult<IServerInitResult<I>>> {
     const engine = getSuiteCoreI18nEngine({ constants: application.constants });
     const isTestEnvironment = process.env['NODE_ENV'] === 'test';
@@ -1606,7 +1608,9 @@ SYSTEM_PASSWORD="${serverInitResult.systemPassword}"
     application: IApplication,
     idGenerator?: () => I,
     idToString: (id: I) => string = (id) =>
-      application.constants.idProvider.idToString(id),
+      application.constants.idProvider.serialize(
+        application.constants.idProvider.toBytes(id),
+      ),
   ): Promise<IFailableResult<IServerInitResult<I>>> {
     const mnemonicModel = ModelRegistry.instance.getTypedModel<
       IMnemonicDocument<I>

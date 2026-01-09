@@ -1,6 +1,18 @@
 const { pathsToModuleNameMapper } = require('ts-jest');
 const { compilerOptions } = require('../../tsconfig.base.json');
 
+// Suppress TypeScript ESLint deprecation warnings
+const originalWarn = process.emitWarning;
+process.emitWarning = function(warning, type, code) {
+  if (
+    typeof warning === 'string' &&
+    warning.includes('The \'argument\' property is deprecated on TSImportType nodes')
+  ) {
+    return;
+  }
+  originalWarn.call(process, warning, type, code);
+};
+
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',

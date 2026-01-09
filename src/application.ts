@@ -120,7 +120,10 @@ export class Application<
       DatabaseInitializationService.printServerInitResults(
         result,
         false,
-        (id) => this.constants.idProvider.idToString(id),
+        (id) =>
+          this.constants.idProvider.serialize(
+            this.constants.idProvider.toBytes(id),
+          ),
       );
     }
     try {

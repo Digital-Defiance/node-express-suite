@@ -1,4 +1,7 @@
-import { ECIES as BaseECIES, IIdProvider } from '@digitaldefiance/ecies-lib';
+import {
+  ECIES as BaseECIES,
+  IIdProviderBase,
+} from '@digitaldefiance/ecies-lib';
 import {
   KEYRING_ALGORITHM_CONFIGURATION,
   Constants as NodeEciesConstants,
@@ -59,7 +62,7 @@ export function createExpressRuntimeConfiguration(
   const merged: IConstants = {
     ...base,
     ...(overrides ?? {}),
-    idProvider: (overrides?.idProvider ?? base.idProvider) as IIdProvider,
+    idProvider: (overrides?.idProvider ?? base.idProvider) as IIdProviderBase,
     UsernameRegex: (overrides?.UsernameRegex ?? base.UsernameRegex) as RegExp,
     PasswordRegex: (overrides?.PasswordRegex ?? base.PasswordRegex) as RegExp,
     MnemonicRegex: (overrides?.MnemonicRegex ?? base.MnemonicRegex) as RegExp,
