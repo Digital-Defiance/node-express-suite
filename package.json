@@ -37,7 +37,7 @@
     "publish:public": "npm publish --access public"
   },
   "dependencies": {
-    "@digitaldefiance/ecies-lib": "4.11.2",
+    "@digitaldefiance/ecies-lib": "4.11.3",
     "@digitaldefiance/i18n-lib": "3.8.16",
     "@digitaldefiance/mongoose-types": "8.20.9",
     "@digitaldefiance/node-ecies-lib": "4.11.2",
