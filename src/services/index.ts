@@ -1,7 +1,6 @@
 export * from './backup-code';
 export * from './base';
 export * from './checksum';
-export * from './crc';
 export * from './database-initialization';
 export * from './db-init-cache';
 export * from './direct-login-token';
