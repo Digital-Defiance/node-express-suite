@@ -6,6 +6,7 @@ import {
   LastAdminError,
   Role,
 } from '@digitaldefiance/suite-core-lib';
+import { registerNodeRuntimeConfiguration } from '@digitaldefiance/node-ecies-lib';
 import { ModelRegistry } from '../../src/model-registry';
 import { RoleService } from '../../src/services/role';
 
@@ -15,6 +16,10 @@ describe('RoleService', () => {
   let mockRoleModel: any;
   let mockUserRoleModel: any;
   let mockUserModel: any;
+
+  beforeAll(() => {
+    registerNodeRuntimeConfiguration();
+  });
 
   beforeEach(() => {
     mockApp = {
@@ -129,8 +134,8 @@ describe('RoleService', () => {
 
       const result = RoleService.hydrateRoleDTOToBackend(roleDTO as any);
 
-      expect(result._id).toBeInstanceOf(Types.ObjectId);
-      expect(result.createdBy).toBeInstanceOf(Types.ObjectId);
+      expect(Types.ObjectId.isValid(result._id)).toBe(true);
+      expect(Types.ObjectId.isValid(result.createdBy)).toBe(true);
       expect(result.createdAt).toBeInstanceOf(Date);
       expect('translatedName' in result).toBe(false);
     });
@@ -149,7 +154,7 @@ describe('RoleService', () => {
 
       const result = RoleService.hydrateRoleDTOToBackend(roleDTO as any);
 
-      expect(result.deletedBy).toBeInstanceOf(Types.ObjectId);
+      expect(Types.ObjectId.isValid(result.deletedBy)).toBe(true);
       expect(result.deletedAt).toBeInstanceOf(Date);
     });
   });

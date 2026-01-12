@@ -1,12 +1,19 @@
 import { Types } from '@digitaldefiance/mongoose-types';
 import { Role } from '@digitaldefiance/suite-core-lib';
+import { registerNodeRuntimeConfiguration } from '@digitaldefiance/node-ecies-lib';
 import { RequestUserService } from '../../src/services/request-user';
 
+const { ObjectId } = Types;
+
 describe('RequestUserService', () => {
+  beforeAll(() => {
+    registerNodeRuntimeConfiguration();
+  });
+
   describe('makeRequestUserDTO', () => {
     it('should create DTO from user document', () => {
       const userDoc = {
-        _id: new Types.ObjectId(),
+        _id: new ObjectId(),
         email: 'test@example.com',
         username: 'testuser',
         timezone: 'UTC',
@@ -17,16 +24,16 @@ describe('RequestUserService', () => {
 
       const roles = [
         {
-          _id: new Types.ObjectId(),
+          _id: new ObjectId(),
           name: Role.Member,
           admin: false,
           member: true,
           child: false,
           system: false,
           createdAt: new Date(),
-          createdBy: new Types.ObjectId(),
+          createdBy: new ObjectId(),
           updatedAt: new Date(),
-          updatedBy: new Types.ObjectId(),
+          updatedBy: new ObjectId(),
         },
       ] as any;
 
@@ -51,7 +58,7 @@ describe('RequestUserService', () => {
 
     it('should combine role privileges across multiple roles', () => {
       const userDoc = {
-        _id: new Types.ObjectId(),
+        _id: new ObjectId(),
         email: 'test@example.com',
         username: 'testuser',
         timezone: 'UTC',
@@ -62,28 +69,28 @@ describe('RequestUserService', () => {
 
       const roles = [
         {
-          _id: new Types.ObjectId(),
+          _id: new ObjectId(),
           name: Role.Member,
           admin: false,
           member: true,
           child: false,
           system: false,
           createdAt: new Date(),
-          createdBy: new Types.ObjectId(),
+          createdBy: new ObjectId(),
           updatedAt: new Date(),
-          updatedBy: new Types.ObjectId(),
+          updatedBy: new ObjectId(),
         },
         {
-          _id: new Types.ObjectId(),
-          name: Role.Administrator,
+          _id: new ObjectId(),
+          name: Role.Admin,
           admin: true,
           member: false,
           child: false,
           system: false,
           createdAt: new Date(),
-          createdBy: new Types.ObjectId(),
+          createdBy: new ObjectId(),
           updatedAt: new Date(),
-          updatedBy: new Types.ObjectId(),
+          updatedBy: new ObjectId(),
         },
       ] as any;
 
@@ -102,7 +109,7 @@ describe('RequestUserService', () => {
   describe('hydrateRequestUser', () => {
     it('should hydrate DTO to backend object', () => {
       const dto = {
-        id: new Types.ObjectId().toString(),
+        id: new ObjectId().toString(),
         email: 'test@example.com',
         username: 'testuser',
         timezone: 'UTC',
@@ -121,7 +128,7 @@ describe('RequestUserService', () => {
       } as any;
 
       const result = RequestUserService.hydrateRequestUser(dto);
-      expect(result.id).toBeInstanceOf(Types.ObjectId);
+      expect(ObjectId.isValid(result.id)).toBe(true);
       expect(result.email).toBe('test@example.com');
       expect(result.rolePrivileges).toEqual({
         admin: false,
@@ -133,7 +140,7 @@ describe('RequestUserService', () => {
 
     it('should handle optional lastLogin', () => {
       const dto = {
-        id: new Types.ObjectId().toString(),
+        id: new ObjectId().toString(),
         email: 'test@example.com',
         username: 'testuser',
         timezone: 'UTC',

@@ -5,10 +5,11 @@ import {
   isValidTimezone,
   LanguageCodes,
 } from '@digitaldefiance/i18n-lib';
-import { Types } from '@digitaldefiance/mongoose-types';
 import {
   Member as BackendMember,
   ECIESService,
+  getEnhancedNodeIdProvider,
+  PlatformID,
 } from '@digitaldefiance/node-ecies-lib';
 import {
   AccountStatus,
@@ -81,23 +82,23 @@ const DirectLoginChallengeSchema = z.object({
 
 @Controller()
 export class UserController<
-  I extends Types.ObjectId | string = Types.ObjectId,
+  I extends PlatformID = Buffer,
   D extends Date = Date,
   S extends string = string,
   A extends string = string,
   TUser extends IUserBase<I, D, S, A> = IUserBase<I, D, S, A>,
   TTokenRole extends ITokenRole<I, D> = ITokenRole<I, D>,
   TTokenUser extends ITokenUser = ITokenUser,
-  TApplication extends IApplication = IApplication,
+  TApplication extends IApplication<I> = IApplication<I>,
   TLanguage extends CoreLanguageCode = CoreLanguageCode,
-> extends DecoratorBaseController<TLanguage> {
+> extends DecoratorBaseController<TLanguage, I> {
   protected readonly userService: UserService<
     IUserDocument,
     I,
     D,
     S,
     A,
-    Environment,
+    Environment<I>,
     IConstants,
     IBaseDocument<IUserDocument, I>,
     TUser,
@@ -119,10 +120,10 @@ export class UserController<
   >;
   protected readonly roleService: RoleService<I, D, TTokenRole>;
   protected readonly eciesService: ECIESService;
-  protected readonly systemUser: BackendMember;
+  protected readonly systemUser: BackendMember<I>;
 
   constructor(
-    application: IApplication,
+    application: IApplication<I>,
     jwtService: JwtService<I, D, TTokenRole, TTokenUser, TApplication>,
     userService: UserService<
       any,
@@ -147,7 +148,7 @@ export class UserController<
     this.backupCodeService = backupCodeService;
     this.roleService = roleService;
     this.eciesService = eciesService;
-    this.systemUser = SystemUserService.getSystemUser(
+    this.systemUser = SystemUserService.getSystemUser<I>(
       application.environment,
       application.constants,
     );
@@ -785,7 +786,7 @@ export class UserController<
     }
 
     const newBackupCodes = await this.userService.resetUserBackupCodes(
-      req.eciesUser,
+      req.eciesUser as BackendMember<I>,
       this.systemUser,
     );
     const codes = newBackupCodes.map((c) => c.notNullValue);
@@ -857,9 +858,9 @@ export class UserController<
             ),
           );
         }
-
+        const provider = getEnhancedNodeIdProvider<I>();
         const userDoc = await this.userService.findUserById(
-          this.userService.toId(req.user.id),
+          provider.idFromString(req.user.id),
           true,
           sess,
         );

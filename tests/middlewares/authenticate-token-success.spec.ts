@@ -1,4 +1,6 @@
 import { AccountStatus } from '@digitaldefiance/suite-core-lib';
+import { Types } from '@digitaldefiance/mongoose-types';
+import { registerNodeRuntimeConfiguration } from '@digitaldefiance/node-ecies-lib';
 import express from 'express';
 import request from 'supertest';
 import { authenticateToken } from '../../src/middlewares/authenticate-token';
@@ -13,6 +15,10 @@ describe('authenticateToken success paths', () => {
   let mockJwtService: any;
   let mockRoleService: any;
   let mockUserModel: any;
+
+  beforeAll(() => {
+    registerNodeRuntimeConfiguration();
+  });
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -105,9 +111,10 @@ describe('authenticateToken success paths', () => {
   });
 
   it('allows access when user is valid and Active', async () => {
-    mockJwtService.verifyToken.mockResolvedValue({ userId: 'user-123' });
+    const userId = new Types.ObjectId();
+    mockJwtService.verifyToken.mockResolvedValue({ userId: userId.toString() });
     mockUserModel.exec.mockResolvedValue({
-      _id: 'user-123',
+      _id: userId,
       accountStatus: AccountStatus.Active,
       siteLanguage: 'en',
       timezone: 'America/New_York',
@@ -122,10 +129,10 @@ describe('authenticateToken success paths', () => {
 
     expect(res.status).toBe(200);
     expect(mockJwtService.verifyToken).toHaveBeenCalledWith('valid-token');
-    expect(mockUserModel.findById).toHaveBeenCalledWith('user-123');
+    expect(mockUserModel.findById).toHaveBeenCalledWith(userId.toString());
     expect(mockUserModel.select).toHaveBeenCalledWith('-password');
     expect(mockRoleService.getUserRoles).toHaveBeenCalledWith(
-      'user-123',
+      userId,
       undefined,
     );
   });
@@ -143,9 +150,10 @@ describe('authenticateToken success paths', () => {
   });
 
   it('sets user language and timezone context when available', async () => {
-    mockJwtService.verifyToken.mockResolvedValue({ userId: 'user-456' });
+    const userId = new Types.ObjectId();
+    mockJwtService.verifyToken.mockResolvedValue({ userId: userId.toString() });
     mockUserModel.exec.mockResolvedValue({
-      _id: 'user-456',
+      _id: userId,
       accountStatus: AccountStatus.Active,
       siteLanguage: 'es',
       timezone: 'Europe/Madrid',

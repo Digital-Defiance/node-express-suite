@@ -20,6 +20,7 @@ import { resolve, sep } from 'path';
 import { IApplication } from '../interfaces/application';
 import { debugLog, handleError, sendApiMessageResponse } from '../utils';
 import { BaseRouter } from './base';
+import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function keepEJS() {
@@ -30,16 +31,19 @@ function keepEJS() {
  * Application router
  * Sets up the API and static file serving
  */
-export class AppRouter<TApplication extends IApplication = IApplication> {
+export class AppRouter<
+  I extends PlatformID = Buffer,
+  TApplication extends IApplication<I> = IApplication<I>,
+> {
   protected readonly viewsPath: string;
   protected readonly indexPath: string;
   protected readonly assetsDir: string;
   protected readonly reactDistDir: string;
 
-  protected readonly apiRouter: BaseRouter<TApplication>;
+  protected readonly apiRouter: BaseRouter<I, TApplication>;
   protected readonly application: TApplication;
 
-  constructor(apiRouter: BaseRouter<TApplication>) {
+  constructor(apiRouter: BaseRouter<I, TApplication>) {
     this.application = apiRouter.application;
     this.apiRouter = apiRouter;
 

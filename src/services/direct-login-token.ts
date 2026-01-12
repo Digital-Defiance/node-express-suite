@@ -1,4 +1,4 @@
-import { ClientSession, Types } from '@digitaldefiance/mongoose-types';
+import { ClientSession } from '@digitaldefiance/mongoose-types';
 import {
   DirectTokenUsedError,
   FailedToUseDirectTokenError,
@@ -8,11 +8,10 @@ import { BaseModelName } from '../enumerations/base-model-name';
 import { IApplication } from '../interfaces/application';
 import { ModelRegistry } from '../model-registry';
 import { withTransaction } from '../utils';
+import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 export abstract class DirectLoginTokenService {
-  public static async useToken<
-    I extends string | Types.ObjectId = Types.ObjectId,
-  >(
-    app: IApplication,
+  public static async useToken<I extends PlatformID = Buffer>(
+    app: IApplication<I>,
     userId: I,
     token: string,
     session?: ClientSession,

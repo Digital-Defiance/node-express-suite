@@ -1,7 +1,10 @@
 import { SecureString } from '@digitaldefiance/ecies-lib';
 import { withConsoleMocks } from '@digitaldefiance/express-suite-test-utils';
 import { Types } from '@digitaldefiance/mongoose-types';
-import { Member as BackendMember } from '@digitaldefiance/node-ecies-lib';
+import {
+  Member as BackendMember,
+  registerNodeRuntimeConfiguration,
+} from '@digitaldefiance/node-ecies-lib';
 import {
   AccountLockedError,
   AccountStatus,
@@ -55,6 +58,10 @@ describe('UserService', () => {
   let mockUserModel: any;
   let mockEmailTokenModel: any;
   let mockMnemonicModel: any;
+
+  beforeAll(() => {
+    registerNodeRuntimeConfiguration();
+  });
 
   beforeEach(() => {
     mockUserModel = jest.fn() as any;
@@ -219,10 +226,9 @@ describe('UserService', () => {
       expect(result._id).toBe(userId.toString());
       expect(result.username).toBe('testuser');
       expect(result.email).toBe('test@example.com');
-      // createdBy and updatedBy are NOT converted to strings in userToUserDTO
-      // The function checks if they are Date objects (which they're not)
-      expect(result.createdBy).toEqual(createdBy);
-      expect(result.updatedBy).toEqual(updatedBy);
+      // createdBy and updatedBy ARE converted to strings in userToUserDTO
+      expect(result.createdBy).toBe(createdBy.toString());
+      expect(result.updatedBy).toBe(updatedBy.toString());
     });
 
     it('should handle optional lastLogin field', () => {
@@ -243,8 +249,8 @@ describe('UserService', () => {
       expect(typeof result.lastLogin).toBe('string');
     });
 
-    it('should handle deletedBy field when it is a Date', () => {
-      const deletedBy = new Date();
+    it('should handle deletedBy field when it is an ObjectId', () => {
+      const deletedBy = new Types.ObjectId();
       const userDoc = {
         _id: new Types.ObjectId(),
         username: 'testuser',
@@ -259,6 +265,7 @@ describe('UserService', () => {
 
       expect(result.deletedBy).toBeDefined();
       expect(typeof result.deletedBy).toBe('string');
+      expect(result.deletedBy).toBe(deletedBy.toString());
     });
   });
 
@@ -276,9 +283,9 @@ describe('UserService', () => {
 
       const result = service.hydrateUserDTOToBackend(dto);
 
-      expect(result._id).toBeInstanceOf(Types.ObjectId);
-      expect(result.createdBy).toBeInstanceOf(Types.ObjectId);
-      expect(result.updatedBy).toBeInstanceOf(Types.ObjectId);
+      expect(Types.ObjectId.isValid(result._id)).toBe(true);
+      expect(Types.ObjectId.isValid(result.createdBy)).toBe(true);
+      expect(Types.ObjectId.isValid(result.updatedBy)).toBe(true);
       expect(result.createdAt).toBeInstanceOf(Date);
       expect(result.updatedAt).toBeInstanceOf(Date);
     });
@@ -301,8 +308,8 @@ describe('UserService', () => {
 
       expect(result.lastLogin).toBeInstanceOf(Date);
       expect(result.deletedAt).toBeInstanceOf(Date);
-      expect(result.deletedBy).toBeInstanceOf(Types.ObjectId);
-      expect(result.mnemonicId).toBeInstanceOf(Types.ObjectId);
+      expect(Types.ObjectId.isValid(result.deletedBy)).toBe(true);
+      expect(Types.ObjectId.isValid(result.mnemonicId)).toBe(true);
     });
   });
 
@@ -1182,12 +1189,11 @@ describe('UserService', () => {
       expect(result.user).toBe(saveResult);
       expect(result.mnemonic).toBe('test mnemonic');
       expect(result.backupCodes).toEqual(['code1', 'code2']);
-      expect(mockRoleService.addUserToRole).toHaveBeenCalledWith(
-        memberRoleId,
-        saveResult._id,
-        expect.any(Types.ObjectId),
-        undefined,
-      );
+      const addUserToRoleCall = mockRoleService.addUserToRole.mock.calls[0];
+      expect(addUserToRoleCall[0]).toBe(memberRoleId);
+      expect(addUserToRoleCall[1]).toBe(saveResult._id);
+      expect(Types.ObjectId.isValid(addUserToRoleCall[2])).toBe(true);
+      expect(addUserToRoleCall[3]).toBeUndefined();
       expect(saveMock).toHaveBeenCalled();
       expect(validateMock).toHaveBeenCalled();
     });
@@ -2187,11 +2193,10 @@ describe('UserService', () => {
         'fr',
       );
 
-      expect(mockUserModel.findByIdAndUpdate).toHaveBeenCalledWith(
-        expect.any(Types.ObjectId),
-        { siteLanguage: 'fr' },
-        { new: true },
-      );
+      const findByIdCall = mockUserModel.findByIdAndUpdate.mock.calls[0];
+      expect(Types.ObjectId.isValid(findByIdCall[0])).toBe(true);
+      expect(findByIdCall[1]).toEqual({ siteLanguage: 'fr' });
+      expect(findByIdCall[2]).toEqual({ new: true });
       expect(mockRoleService.getUserRoles).toHaveBeenCalledWith(userDoc._id);
       expect(makeRequestUserDTOSpy).toHaveBeenCalledWith(userDoc, ['member']);
       expect(result).toEqual({ _id: 'user-id', siteLanguage: 'fr' });
@@ -2562,11 +2567,10 @@ describe('UserService', () => {
 
       const result = await service.updateDarkMode(userDoc._id.toString(), true);
 
-      expect(mockUserModel.findByIdAndUpdate).toHaveBeenCalledWith(
-        expect.any(Types.ObjectId),
-        { darkMode: true },
-        { new: true },
-      );
+      const findByIdCall = mockUserModel.findByIdAndUpdate.mock.calls[0];
+      expect(Types.ObjectId.isValid(findByIdCall[0])).toBe(true);
+      expect(findByIdCall[1]).toEqual({ darkMode: true });
+      expect(findByIdCall[2]).toEqual({ new: true });
       expect(mockRoleService.getUserRoles).toHaveBeenCalledWith(userDoc._id);
       expect(makeRequestUserDTOSpy).toHaveBeenCalledWith(userDoc, ['member']);
       expect(result).toEqual({ _id: 'user-id', darkMode: true });

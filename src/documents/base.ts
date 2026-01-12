@@ -1,10 +1,5 @@
-import { Document, Types } from '@digitaldefiance/mongoose-types';
-
-// Supported ID types for documents
-export type SupportedIdType = Types.ObjectId | string;
+import { Document } from '@digitaldefiance/mongoose-types';
+import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 
 // Base document interface that extends Mongoose Document
-export type IBaseDocument<
-  T,
-  I extends SupportedIdType = Types.ObjectId,
-> = Document<I> & T;
+export type IBaseDocument<T, I extends PlatformID = Buffer> = Document<I> & T;

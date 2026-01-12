@@ -1,5 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/triple-slash-reference
-/// <reference path="./types.d.ts" />
 import 'reflect-metadata';
 
 export * from './application';
@@ -44,7 +42,7 @@ export {
   requireValidatedFieldsAsync,
   requireOneOfValidatedFieldsAsync,
   requireValidatedFieldsOrThrow,
-  isValidStringId,
+  isValidStringObjectId as isValidStringId,
   DEFAULT_RETRY_ATTEMPTS,
   DEFAULT_TRANSACTION_TIMEOUT,
   DEFAULT_TRANSACTION_LOCK_REQUEST_TIMEOUT,

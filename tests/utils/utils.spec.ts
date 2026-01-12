@@ -13,7 +13,7 @@ import {
   getLengthForLengthType,
   getValueAtPath,
   hexToUint8Array,
-  isValidStringId,
+  isValidStringObjectId,
   lengthEncodeData,
   mapZodIssuesToValidationErrors,
   omit,
@@ -117,15 +117,15 @@ describe('utils', () => {
   describe('isValidStringId', () => {
     it('should return true for valid ObjectId string', () => {
       const id = new Types.ObjectId().toString();
-      expect(isValidStringId(id)).toBe(true);
+      expect(isValidStringObjectId(id)).toBe(true);
     });
 
     it('should return false for invalid string', () => {
-      expect(isValidStringId('invalid')).toBe(false);
+      expect(isValidStringObjectId('invalid')).toBe(false);
     });
 
     it('should return false for non-string', () => {
-      expect(isValidStringId(123)).toBe(false);
+      expect(isValidStringObjectId(123)).toBe(false);
     });
   });
 

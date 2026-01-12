@@ -1,4 +1,4 @@
-import { Types } from '@digitaldefiance/mongoose-types';
+import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 import { IUserRoleBase } from '@digitaldefiance/suite-core-lib';
 
 /**
@@ -8,4 +8,7 @@ export type IFrontendUserRole = IUserRoleBase<string, Date>;
 /**
  * Back-end Base interface for user role collection documents
  */
-export type IBackendUserRole<I = Types.ObjectId> = IUserRoleBase<I, Date>;
+export type IBackendUserRole<I extends PlatformID = Buffer> = IUserRoleBase<
+  I,
+  Date
+>;

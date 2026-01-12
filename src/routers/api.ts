@@ -1,6 +1,5 @@
 import { IECIESConfig } from '@digitaldefiance/ecies-lib';
-import { Types } from '@digitaldefiance/mongoose-types';
-import { ECIESService } from '@digitaldefiance/node-ecies-lib';
+import { ECIESService, PlatformID } from '@digitaldefiance/node-ecies-lib';
 import {
   ITokenRole,
   ITokenUser,
@@ -25,21 +24,18 @@ import { BaseRouter } from './base';
  * Router for the API
  */
 export class ApiRouter<
-  I extends Types.ObjectId | string,
+  I extends PlatformID,
   D extends Date,
   S extends string,
   A extends string,
   TUser extends IUserBase<I, D, S, A> = IUserBase<I, D, S, A>,
   TTokenRole extends ITokenRole<I, D> = ITokenRole<I, D>,
-  TBaseDocument extends IBaseDocument<any, Types.ObjectId> = IBaseDocument<
-    any,
-    Types.ObjectId
-  >,
+  TBaseDocument extends IBaseDocument<any, I> = IBaseDocument<any, I>,
   TTokenUser extends ITokenUser = ITokenUser,
   TConstants extends IConstants = IConstants,
-  TEnvironment extends Environment = Environment,
-  TApplication extends IApplication = IApplication,
-> extends BaseRouter<TApplication> {
+  TEnvironment extends Environment<I> = Environment<I>,
+  TApplication extends IApplication<I> = IApplication<I>,
+> extends BaseRouter<I, TApplication> {
   private readonly userController: UserController<
     I,
     D,
@@ -121,7 +117,10 @@ export class ApiRouter<
     const app = this.application;
 
     if (!app.services.has(ServiceKeys.JWT)) {
-      app.services.register(ServiceKeys.JWT, () => new JwtService(app));
+      app.services.register(
+        ServiceKeys.JWT,
+        () => new JwtService<I, D, TTokenRole, TTokenUser, TApplication>(app),
+      );
     }
     if (!app.services.has(ServiceKeys.ROLE)) {
       app.services.register(

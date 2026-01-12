@@ -1,9 +1,9 @@
 import { SecureBuffer, SecureString } from '@digitaldefiance/ecies-lib';
-import { Types } from '@digitaldefiance/mongoose-types';
 import { BackupCode } from '../backup-code';
 import { IMongoEnvironment } from './environment-mongo';
+import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 
-export interface IEnvironment<I = Types.ObjectId> {
+export interface IEnvironment<I extends PlatformID = Buffer> {
   /**
    * Whether to use a memory database for local development (eg with MongoMemoryServer)
    * If set, this will create a new in-memory database instance on application start with the given database name
@@ -177,9 +177,4 @@ export interface IEnvironment<I = Types.ObjectId> {
    * Whether this is a production environment
    */
   production: boolean;
-
-  /**
-   * Adapter to convert raw ID bytes to the application ID type I
-   */
-  idAdapter: (bytes: Uint8Array) => I;
 }

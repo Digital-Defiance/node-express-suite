@@ -21,19 +21,21 @@ import { ModelRegistry } from './model-registry';
 import { PluginManager } from './plugins';
 import { SchemaMap } from './types';
 import { debugLog } from './utils';
+import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 
 /**
  * Base Application class with core functionality
  */
 export class BaseApplication<
-  TModelDocs extends Record<string, IBaseDocument<any>>,
+  TID extends PlatformID,
+  TModelDocs extends Record<string, IBaseDocument<any, TID>>,
   TInitResults,
   TConstants extends IConstants = IConstants,
-> implements IApplication {
+> implements IApplication<TID> {
   /**
    * Application environment
    */
-  private _environment: Environment;
+  private _environment: Environment<TID>;
   /**
    * In-memory MongoDB instance for development
    */
@@ -52,7 +54,7 @@ export class BaseApplication<
    * Function to initialize the database with default data
    */
   private readonly _databaseInitFunction: (
-    application: BaseApplication<TModelDocs, TInitResults>,
+    application: BaseApplication<TID, TModelDocs, TInitResults>,
   ) => Promise<IFailableResult<TInitResults>>;
   /**
    * Function to create a hash from the database initialization results (for logging purposes)
@@ -64,7 +66,7 @@ export class BaseApplication<
   /**
    * Get the application environment
    */
-  public get environment(): Environment {
+  public get environment(): Environment<TID> {
     return this._environment;
   }
 
@@ -119,7 +121,7 @@ export class BaseApplication<
   /**
    * Plugin manager for extensibility
    */
-  public readonly plugins: PluginManager;
+  public readonly plugins: PluginManager<TID>;
 
   /**
    * Get the connected MongoDB database instance
@@ -141,12 +143,12 @@ export class BaseApplication<
   }
 
   constructor(
-    environment: Environment,
+    environment: Environment<TID>,
     schemaMapFactory: (
       connection: mongoose.Connection,
     ) => SchemaMap<TModelDocs>,
     databaseInitFunction: (
-      application: BaseApplication<TModelDocs, TInitResults>,
+      application: BaseApplication<TID, TModelDocs, TInitResults>,
     ) => Promise<IFailableResult<TInitResults>>,
     initResultHashFunction: (initResults: TInitResults) => string,
     constants: TConstants = Constants as TConstants,
@@ -158,7 +160,7 @@ export class BaseApplication<
     this._databaseInitFunction = databaseInitFunction;
     this._initResultHashFunction = initResultHashFunction;
     this.services = new ServiceContainer();
-    this.plugins = new PluginManager();
+    this.plugins = new PluginManager<TID>();
   }
 
   /**

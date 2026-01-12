@@ -1,17 +1,17 @@
-import { Types } from '@digitaldefiance/mongoose-types';
 import {
   ICombinedRolePrivileges,
   IRoleDTO,
   IRoleFrontendObject,
 } from '@digitaldefiance/suite-core-lib';
 import { IRoleBackendObject } from './backend-objects/role';
+import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 
 /**
  * Interface for the user object stored in the request object
  * This is not used for mongoose but for request handling
  */
 export interface IRequestUser<
-  I extends Types.ObjectId | string = string,
+  I extends PlatformID = Buffer,
   R extends
     | Array<IRoleDTO>
     | Array<IRoleFrontendObject>

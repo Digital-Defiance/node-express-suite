@@ -36,6 +36,7 @@ import { BaseRouter } from './routers/base';
 import { DatabaseInitializationService } from './services';
 import { SchemaMap } from './types';
 import { debugLog, handleError, sendApiMessageResponse } from './utils';
+import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 
 /**
  * Application class
@@ -43,22 +44,27 @@ import { debugLog, handleError, sendApiMessageResponse } from './utils';
 type ServerWithOptionalClose = Server & { closeAllConnections?: () => void };
 
 export class Application<
-  TInitResults extends IServerInitResult,
+  TInitResults extends IServerInitResult<TID>,
   TModelDocs extends Record<string, IBaseDocument<any>>,
-  TEnvironment extends Environment = Environment,
+  TID extends PlatformID = Buffer,
+  TEnvironment extends Environment<TID> = Environment<TID>,
   TConstants extends IConstants = IConstants,
-  TAppRouter extends AppRouter = AppRouter,
+  TAppRouter extends AppRouter<TID> = AppRouter<TID>,
 >
-  extends BaseApplication<TModelDocs, TInitResults, TConstants>
-  implements IApplication
+  extends BaseApplication<TID, TModelDocs, TInitResults, TConstants>
+  implements IApplication<TID>
 {
   public readonly expressApp: ExpressApplication;
   private server: ServerWithOptionalClose | null = null;
   private readonly _cspConfig: ICSPConfig | HelmetOptions | IFlexibleCSP;
-  private readonly _apiRouterFactory: (app: IApplication) => BaseRouter;
-  private readonly _appRouterFactory: (apiRouter: BaseRouter) => TAppRouter;
+  private readonly _apiRouterFactory: (
+    app: IApplication<TID>,
+  ) => BaseRouter<TID>;
+  private readonly _appRouterFactory: (
+    apiRouter: BaseRouter<TID>,
+  ) => TAppRouter;
   private readonly _initMiddleware: typeof initMiddleware;
-  private _apiRouter?: BaseRouter;
+  private _apiRouter?: BaseRouter<TID>;
 
   public override get environment(): TEnvironment {
     return super.environment as TEnvironment;
@@ -71,12 +77,12 @@ export class Application<
 
   constructor(
     environment: TEnvironment,
-    apiRouterFactory: (app: IApplication) => BaseRouter,
+    apiRouterFactory: (app: IApplication<TID>) => BaseRouter<TID>,
     schemaMapFactory: (
       connection: mongoose.Connection,
     ) => SchemaMap<TModelDocs>,
     databaseInitFunction: (
-      application: BaseApplication<TModelDocs, TInitResults>,
+      application: BaseApplication<TID, TModelDocs, TInitResults>,
     ) => Promise<IFailableResult<TInitResults>>,
     initResultHashFunction: (initResults: TInitResults) => string,
     cspConfig: ICSPConfig | HelmetOptions | IFlexibleCSP = {
@@ -92,8 +98,9 @@ export class Application<
       },
     },
     constants: TConstants = Constants as TConstants,
-    appRouterFactory: (apiRouter: BaseRouter) => TAppRouter = (apiRouter) =>
-      new AppRouter(apiRouter) as TAppRouter,
+    appRouterFactory: (apiRouter: BaseRouter<TID>) => TAppRouter = (
+      apiRouter,
+    ) => new AppRouter(apiRouter) as TAppRouter,
     customInitMiddleware: typeof initMiddleware = initMiddleware,
   ) {
     super(
@@ -117,14 +124,7 @@ export class Application<
     await super.start(mongoUri, true);
     if (this.devDatabase) {
       const result = await this.initializeDevDatabase();
-      DatabaseInitializationService.printServerInitResults(
-        result,
-        false,
-        (id) =>
-          this.constants.idProvider.serialize(
-            this.constants.idProvider.toBytes(id),
-          ),
-      );
+      DatabaseInitializationService.printServerInitResults(result, false);
     }
     try {
       this._apiRouter = this._apiRouterFactory(this);

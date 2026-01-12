@@ -1,4 +1,3 @@
-import { Types } from '@digitaldefiance/mongoose-types';
 import {
   IRequestUserDTO,
   IRoleDTO,
@@ -6,11 +5,14 @@ import {
 } from '@digitaldefiance/suite-core-lib';
 import { IUserDocument } from '../documents';
 import { IRequestUserBackendObject } from '../interfaces/backend-objects/request-user';
-import { convertStringToGenericId } from '../types/id-converters';
 import { RoleService } from './role';
+import {
+  getEnhancedNodeIdProvider,
+  PlatformID,
+} from '@digitaldefiance/node-ecies-lib';
 
 export class RequestUserService<
-  I extends string | Types.ObjectId,
+  I extends PlatformID,
   _TTokenRole extends ITokenRole<I>,
 > {
   /**
@@ -19,7 +21,7 @@ export class RequestUserService<
    * @returns
    */
   public static makeRequestUserDTO<
-    I extends string | Types.ObjectId,
+    I extends PlatformID,
     S extends string,
     TTokenRole extends ITokenRole<I>,
     TRequestUserDTO extends IRequestUserDTO,
@@ -27,7 +29,7 @@ export class RequestUserService<
     userDoc:
       | IUserDocument<S, I>
       | (Pick<IUserDocument<S, I>, keyof IUserDocument<S, I>> & {
-          _id: Types.ObjectId | string;
+          _id: PlatformID;
         }),
     roles: TTokenRole[],
   ): TRequestUserDTO {
@@ -43,8 +45,9 @@ export class RequestUserService<
       system: roles.some((r) => r.system),
     };
 
+    const provider = getEnhancedNodeIdProvider<I>();
     return {
-      id: userDoc._id.toString(),
+      id: provider.idToString(userDoc._id),
       email: userDoc.email,
       roles: roles.map((r) => RoleService.roleToRoleDTO(r)),
       rolePrivileges,
@@ -65,17 +68,14 @@ export class RequestUserService<
    * @returns An IRequestUserBackendObject
    */
   public static hydrateRequestUser<
-    I extends string | Types.ObjectId,
+    I extends PlatformID,
     S extends string,
     TRequestUserDTO extends IRequestUserDTO & { siteLanguage: S },
-  >(
-    requestUser: TRequestUserDTO,
-    idConverter?: (id: string) => I,
-  ): IRequestUserBackendObject<S, I> {
-    const convert =
-      idConverter ?? ((id: string) => convertStringToGenericId<I>(id));
+  >(requestUser: TRequestUserDTO): IRequestUserBackendObject<S, I> {
+    const provider = getEnhancedNodeIdProvider<I>();
+    const convert = (id: string) => provider.idFromString(id);
     const hydratedRoles = requestUser.roles.map((role: IRoleDTO) =>
-      RoleService.hydrateRoleDTOToBackend<I>(role, convert),
+      RoleService.hydrateRoleDTOToBackend<I>(role),
     );
 
     const hydratedUser: IRequestUserBackendObject<S, I> = {

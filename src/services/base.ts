@@ -5,8 +5,12 @@ import {
   TransactionOptions,
   withTransaction as utilsWithTransaction,
 } from '../utils';
+import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 
-export class BaseService<TApplication extends IApplication = IApplication> {
+export class BaseService<
+  TID extends PlatformID = Buffer,
+  TApplication extends IApplication<TID> = IApplication<TID>,
+> {
   protected readonly application: TApplication;
 
   constructor(application: TApplication) {
@@ -15,10 +19,10 @@ export class BaseService<TApplication extends IApplication = IApplication> {
   public async withTransaction<T>(
     callback: TransactionCallback<T>,
     session?: ClientSession,
-    options?: TransactionOptions,
+    options?: TransactionOptions<TID>,
     ...args: unknown[]
   ) {
-    return await utilsWithTransaction<T>(
+    return await utilsWithTransaction<T, TID>(
       this.application.db.connection,
       this.application.environment.mongo.useTransactions,
       session,

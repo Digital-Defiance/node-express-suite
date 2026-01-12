@@ -1,4 +1,6 @@
 import { ClientSession } from '@digitaldefiance/mongoose-types';
+import { Member, PlatformID } from '@digitaldefiance/node-ecies-lib';
+import { IRequestUserDTO } from '@digitaldefiance/suite-core-lib';
 import { NextFunction, RequestHandler, Response } from 'express';
 import { ValidationChain } from 'express-validator';
 import { IBaseDocument } from './documents';
@@ -25,6 +27,39 @@ export type TransactionCallback<T> = (
 export type ValidatedBody<T extends string> = {
   [K in T]: unknown;
 };
+
+declare module 'express-serve-static-core' {
+  interface Request {
+    user?: IRequestUserDTO;
+    eciesUser?: Member<PlatformID>;
+    validatedBody?: ValidatedBody<string>;
+    validate?: {
+      body: (field: string) => ValidationChain;
+      param: (field: string) => ValidationChain;
+      query: (field: string) => ValidationChain;
+      header: (field: string) => ValidationChain;
+      cookie: (field: string) => ValidationChain;
+    };
+  }
+}
+
+declare global {
+  /* eslint-disable @typescript-eslint/no-namespace */
+  namespace Express {
+    interface Request {
+      user?: IRequestUserDTO;
+      eciesUser?: Member<PlatformID>;
+      validatedBody?: ValidatedBody<string>;
+      validate?: {
+        body: (field: string) => ValidationChain;
+        param: (field: string) => ValidationChain;
+        query: (field: string) => ValidationChain;
+        header: (field: string) => ValidationChain;
+        cookie: (field: string) => ValidationChain;
+      };
+    }
+  }
+}
 
 /**
  * Schema map interface

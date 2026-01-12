@@ -1,3 +1,4 @@
+import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 import { IApplication, IEmailService } from '../interfaces';
 
 /**
@@ -5,7 +6,8 @@ import { IApplication, IEmailService } from '../interfaces';
  * Primarily for testing
  */
 export class DummyEmailService<
-  TApplication extends IApplication = IApplication,
+  TID extends PlatformID = Buffer,
+  TApplication extends IApplication<TID> = IApplication<TID>,
 > implements IEmailService {
   constructor(_application: TApplication) {}
   public async sendEmail(

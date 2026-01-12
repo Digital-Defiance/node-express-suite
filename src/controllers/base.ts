@@ -5,12 +5,10 @@ import {
   PluginI18nEngine,
   TranslatableGenericError,
 } from '@digitaldefiance/i18n-lib';
-import { ClientSession, Types } from '@digitaldefiance/mongoose-types';
+import { ClientSession } from '@digitaldefiance/mongoose-types';
 import {
-  AccountStatus,
   getSuiteCoreTranslation,
   IRequestUserDTO,
-  IUserBase,
   SuiteCoreComponentId,
   SuiteCoreStringKey,
   TranslatableSuiteError,
@@ -54,17 +52,19 @@ import {
   TransactionOptions,
   withTransaction as utilsWithTransaction,
 } from '../utils';
+import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 
 export abstract class BaseController<
   T extends ApiResponse,
   H extends object,
   TLanguage extends string,
+  I extends PlatformID = Buffer,
 > {
   public readonly router: Router;
   private activeRequest: Request | null = null;
   private activeResponse: Response | null = null;
   private activeSession: ClientSession | undefined = undefined;
-  public readonly application: IApplication;
+  public readonly application: IApplication<I>;
   protected routeDefinitions: RouteConfig<H, TLanguage>[] = [];
   protected get constants(): IConstants {
     if (!this.application.constants) {
@@ -81,7 +81,7 @@ export abstract class BaseController<
   private static validationRegistry = new WeakSet<Function>();
   protected transactionManager: TransactionManager;
 
-  public constructor(application: IApplication) {
+  public constructor(application: IApplication<I>) {
     this.application = application;
     this.router = Router();
     this.handlers = {} as H;
@@ -323,7 +323,7 @@ export abstract class BaseController<
   ): Promise<void> {
     // Pass the real `next` function directly to the middleware.
     // It will now correctly control the request lifecycle.
-    await authenticateToken(this.application, req, res, next);
+    await authenticateToken<I>(this.application, req, res, next);
   }
 
   private handleBooleanFields(
@@ -454,11 +454,10 @@ export abstract class BaseController<
 
   protected async validateAndFetchRequestUser(
     req: Request,
-  ): Promise<IUserDocument<TLanguage>> {
-    const UserModel = ModelRegistry.instance.get<
-      IUserBase<Types.ObjectId, Date, TLanguage, AccountStatus>,
-      IUserDocument<TLanguage>
-    >(BaseModelName.User).model;
+  ): Promise<IUserDocument<TLanguage, I>> {
+    const UserModel = ModelRegistry.instance.getTypedModel<
+      IUserDocument<TLanguage, I>
+    >(BaseModelName.User);
     if (!req.user) {
       throw new HandleableError(
         new Error(
@@ -484,10 +483,10 @@ export abstract class BaseController<
   public async withTransaction<T>(
     callback: TransactionCallback<T>,
     session?: ClientSession,
-    options?: TransactionOptions,
+    options?: TransactionOptions<I>,
     ...args: any
   ) {
-    return await utilsWithTransaction<T>(
+    return await utilsWithTransaction<T, I>(
       this.application.db.connection,
       this.application.environment.mongo.useTransactions,
       session,

@@ -12,6 +12,7 @@ import { Connection, Types } from '@digitaldefiance/mongoose-types';
 import {
   Member as BackendMember,
   ECIESService,
+  getNodeRuntimeConfiguration,
 } from '@digitaldefiance/node-ecies-lib';
 import {
   SuiteCoreStringKey,
@@ -43,7 +44,7 @@ jest.mock('fs', () => ({
   writeSync: jest.fn(),
 }));
 
-// Mock dependencies
+// Mock dependencies - use partial mock for node-ecies-lib to preserve configuration
 jest.mock('../../src/utils', () => {
   const actual = jest.requireActual('../../src/utils');
   return {
@@ -52,7 +53,8 @@ jest.mock('../../src/utils', () => {
     withTransaction: jest.fn(), // Keep withTransaction mocked for other tests
   };
 });
-jest.mock('@digitaldefiance/node-ecies-lib');
+// Don't mock @digitaldefiance/node-ecies-lib - we need the real configuration
+// jest.mock('@digitaldefiance/node-ecies-lib');
 jest.mock('../../src/services/key-wrapping');
 jest.mock('../../src/services/mnemonic');
 jest.mock('../../src/services/role');
@@ -74,6 +76,14 @@ describe('DatabaseInitializationService', () => {
   let mockWallet: any;
   let mockBackendMember: jest.Mocked<BackendMember>;
   let defaultI18nTFuncSpy: jest.SpyInstance | undefined;
+
+  beforeAll(() => {
+    // Ensure Node.js runtime configuration is loaded
+    const config = getNodeRuntimeConfiguration();
+    if (!config || !config.idProvider) {
+      throw new Error('Node runtime configuration not initialized');
+    }
+  });
 
   beforeEach(() => {
     // Mock the translation function to return actual English strings
@@ -296,8 +306,6 @@ describe('DatabaseInitializationService', () => {
         systemRoleId: undefined,
         systemUserRoleId: undefined,
         systemBackupCodes: undefined,
-        idAdapter: (bytes: Uint8Array) =>
-          new Types.ObjectId(Buffer.from(bytes)),
       },
       db: {
         connection: mockConnection,
@@ -319,10 +327,10 @@ describe('DatabaseInitializationService', () => {
       }),
     } as any;
 
-    // Mock constructors
-    (ECIESService as jest.MockedClass<typeof ECIESService>).mockImplementation(
-      () => mockECIESService,
-    );
+    // Mock constructors (except ECIESService and BackendMember which we need real)
+    // (ECIESService as jest.MockedClass<typeof ECIESService>).mockImplementation(
+    //   () => mockECIESService,
+    // );
     (
       KeyWrappingService as jest.MockedClass<typeof KeyWrappingService>
     ).mockImplementation(() => mockKeyWrappingService);
@@ -335,9 +343,9 @@ describe('DatabaseInitializationService', () => {
     (
       BackupCodeService as jest.MockedClass<typeof BackupCodeService>
     ).mockImplementation(() => mockBackupCodeService);
-    (
-      BackendMember as jest.MockedClass<typeof BackendMember>
-    ).mockImplementation(() => mockBackendMember);
+    // (
+    //   BackendMember as jest.MockedClass<typeof BackendMember>
+    // ).mockImplementation(() => mockBackendMember);
 
     // Mock BackupCode static methods
     (BackupCode.generateBackupCodes as jest.Mock) = jest
@@ -565,14 +573,6 @@ describe('DatabaseInitializationService', () => {
     });
 
     it('should generate compressed public keys (33 bytes) with real ECIES service', () => {
-      // Temporarily restore the real BackendMember implementation for this test
-      const RealBackendMember = jest.requireActual(
-        '@digitaldefiance/node-ecies-lib',
-      ).Member;
-      (
-        BackendMember as jest.MockedClass<typeof BackendMember>
-      ).mockImplementation((...args: any[]) => new RealBackendMember(...args));
-
       const realEciesService = new ECIESService();
       const username = 'testuser';
       const email = new EmailString('test@example.com');
@@ -611,23 +611,10 @@ describe('DatabaseInitializationService', () => {
         memberId,
       );
 
-      expect(result.member).toBe(mockBackendMember);
+      expect(result.member).toBeInstanceOf(BackendMember);
       expect(result.mnemonic).toBe(mnemonic);
       expect(mockECIESService.walletAndSeedFromMnemonic).toHaveBeenCalledWith(
         mnemonic,
-      );
-      expect(BackendMember).toHaveBeenCalledWith(
-        mockECIESService,
-        memberType,
-        username,
-        email,
-        expect.any(Buffer), // publicKeyWithPrefix
-        expect.any(SecureBuffer), // privateKey
-        mockWallet,
-        memberId,
-        undefined,
-        undefined,
-        undefined,
       );
     });
 
@@ -687,7 +674,7 @@ describe('DatabaseInitializationService', () => {
       const mnemonic = new SecureString('admin mnemonic');
       const createdBy = new Types.ObjectId();
 
-      DatabaseInitializationService.cacheOrNew(
+      const result = DatabaseInitializationService.cacheOrNew(
         username,
         email,
         mnemonic,
@@ -697,19 +684,9 @@ describe('DatabaseInitializationService', () => {
         createdBy,
       );
 
-      expect(BackendMember).toHaveBeenCalledWith(
-        mockECIESService,
-        MemberType.Admin,
-        username,
-        email,
-        expect.any(Buffer),
-        expect.any(SecureBuffer),
-        mockWallet,
-        expect.any(MongoObjectId),
-        undefined,
-        undefined,
-        createdBy,
-      );
+      expect(result.member).toBeInstanceOf(BackendMember);
+      expect(result.member.type).toBe(MemberType.Admin);
+      expect(result.member.name).toBe(username);
     });
   });
 

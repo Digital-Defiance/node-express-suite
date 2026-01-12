@@ -199,7 +199,7 @@ export function requireValidatedFieldsOrThrow<T = void>(
  * @param id The id to check
  * @returns True if the id is a valid string id
  */
-export function isValidStringId(id: unknown): boolean {
+export function isValidStringObjectId(id: unknown): boolean {
   return typeof id === 'string' && Types.ObjectId.isValid(id);
 }
 
@@ -222,8 +222,8 @@ export const DEFAULT_TRANSACTION_TIMEOUT =
 export const DEFAULT_TRANSACTION_LOCK_REQUEST_TIMEOUT =
   process.env['NODE_ENV'] === 'test' ? 10000 : 30000;
 
-export interface TransactionOptions {
-  application?: IApplication;
+export interface TransactionOptions<TID extends PlatformID = Buffer> {
+  application?: IApplication<TID>;
   timeoutMs?: number;
   retryAttempts?: number;
   baseDelay?: number;
@@ -256,12 +256,12 @@ export function getDefaultBaseDelay(): number {
  * @param args The arguments to pass to the callback
  * @returns The result of the callback
  */
-export async function withTransaction<T>(
+export async function withTransaction<T, TID extends PlatformID = Buffer>(
   connection: Connection,
   useTransaction: boolean,
   session: ClientSession | undefined,
   callback: TransactionCallback<T>,
-  options: TransactionOptions = {},
+  options: TransactionOptions<TID> = {},
   ...args: any
 ): Promise<T> {
   const engine = getSuiteCoreI18nEngine(
@@ -803,6 +803,7 @@ import moment from 'moment-timezone';
 import { BackupCode } from './backup-code';
 import { LengthEncodingType } from './enumerations/length-encoding-type';
 import { MissingValidatedDataError } from './errors';
+import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 
 export function isValidTimezone(timezone: string): boolean {
   return moment.tz.zone(timezone) !== null;

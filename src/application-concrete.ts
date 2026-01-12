@@ -1,3 +1,4 @@
+import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 import { Application } from './application';
 import { LocalhostConstants } from './constants';
 import { Environment } from './environment';
@@ -11,15 +12,18 @@ import { DummyEmailService } from './services/dummy-email-service';
 /**
  * Test application concrete class
  */
-export class ApplicationConcrete extends Application<
-  IServerInitResult,
+export class ApplicationConcrete<
+  TID extends PlatformID = Buffer,
+> extends Application<
+  IServerInitResult<TID>,
   BaseModelDocs,
-  Environment,
+  TID,
+  Environment<TID>,
   IConstants,
-  AppRouter
+  AppRouter<TID>
 > {
   constructor(
-    environment: Environment,
+    environment: Environment<TID>,
     constants: IConstants = LocalhostConstants,
   ) {
     super(
@@ -37,6 +41,8 @@ export class ApplicationConcrete extends Application<
       (apiRouter) => new AppRouter(apiRouter),
       undefined,
     );
-    emailServiceRegistry.setService(new DummyEmailService(this));
+    emailServiceRegistry.setService(
+      new DummyEmailService<TID, typeof this>(this),
+    );
   }
 }

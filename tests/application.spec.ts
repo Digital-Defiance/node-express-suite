@@ -1,4 +1,5 @@
 import { Connection } from '@digitaldefiance/mongoose-types';
+import { registerNodeRuntimeConfiguration } from '@digitaldefiance/node-ecies-lib';
 import { Application } from '../src/application';
 import { BaseApplication } from '../src/application-base';
 import { LocalhostConstants } from '../src/constants';
@@ -23,6 +24,10 @@ describe('Application', () => {
   let env: Environment;
   let mockApiRouter: BaseRouter;
   let mockSchemaMap: SchemaMap<any>;
+
+  beforeAll(() => {
+    registerNodeRuntimeConfiguration();
+  });
 
   beforeEach(() => {
     // Set up required environment variables
@@ -323,7 +328,7 @@ describe('Application', () => {
       expect(initDevDbSpy).toHaveBeenCalled();
       expect(
         DatabaseInitializationService.printServerInitResults,
-      ).toHaveBeenCalledWith(mockInitResults, false, expect.any(Function));
+      ).toHaveBeenCalledWith(mockInitResults, false);
       expect(application.ready).toBe(true);
 
       listenSpy.mockRestore();
@@ -387,7 +392,7 @@ describe('Application', () => {
       ).toHaveBeenCalledTimes(1);
       expect(
         DatabaseInitializationService.printServerInitResults,
-      ).toHaveBeenCalledWith(mockInitResults, false, expect.any(Function));
+      ).toHaveBeenCalledWith(mockInitResults, false);
 
       listenSpy.mockRestore();
     }, 10000); // Increase timeout

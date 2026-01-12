@@ -5,15 +5,18 @@ import {
   MemberType,
   SecureBuffer,
   SecureString,
+  stringToUint8Array,
 } from '@digitaldefiance/ecies-lib';
 import {
   TranslatableGenericError,
   TranslatableHandleableGenericError,
 } from '@digitaldefiance/i18n-lib';
-import { Connection, Types } from '@digitaldefiance/mongoose-types';
+import { Connection } from '@digitaldefiance/mongoose-types';
 import {
   Member as BackendMember,
   ECIESService,
+  getEnhancedNodeIdProvider,
+  PlatformID,
 } from '@digitaldefiance/node-ecies-lib';
 import {
   AccountStatus,
@@ -27,7 +30,6 @@ import {
 import { crc32 } from 'crc';
 import { createHash, randomBytes } from 'crypto';
 import * as fs from 'fs';
-import { ObjectId as MongoObjectId } from 'mongodb';
 import * as path from 'path';
 import { BackupCode } from '../backup-code';
 import { IMnemonicDocument } from '../documents/mnemonic';
@@ -41,7 +43,6 @@ import { IApplication } from '../interfaces/application';
 import { IServerInitResult } from '../interfaces/server-init-result';
 import { ModelRegistry } from '../model-registry';
 import { KeyWrappingService } from '../services/key-wrapping';
-import { convertObjectIdToGenericId } from '../types/id-converters';
 import { debugLog, directLog, withTransaction } from '../utils';
 import { BackupCodeService } from './backup-code';
 import { MnemonicService } from './mnemonic';
@@ -73,9 +74,9 @@ export abstract class DatabaseInitializationService {
    * @param eciesService The ECIES service to generate a new mnemonic
    * @returns The existing or new mnemonic
    */
-  public static mnemonicOrNew(
+  public static mnemonicOrNew<I extends PlatformID = Buffer>(
     mnemonic: SecureString | undefined,
-    eciesService: ECIESService,
+    eciesService: ECIESService<I>,
   ): SecureString {
     return mnemonic && mnemonic.hasValue
       ? mnemonic
@@ -89,18 +90,18 @@ export abstract class DatabaseInitializationService {
    * @param id The user ID
    * @returns The generated cache key
    */
-  public static cacheKey<I extends Types.ObjectId | string = Types.ObjectId>(
+  public static cacheKey<I extends PlatformID = Buffer>(
     username: string,
     email: EmailString,
     mnemonic: SecureString,
     id: I,
-    idToString: (id: I) => string = (id) => String(id),
   ): string {
-    const combined = `${username}|${email.email}|${mnemonic.value}|${idToString(
+    const idProvider = getEnhancedNodeIdProvider<I>();
+    const combined = `${username}|${email.email}|${mnemonic.value}|${idProvider.idToString(
       id,
     )}`;
-    const buffer = Buffer.from(combined, 'utf-8');
-    const crcHash = crc32(buffer);
+    const buffer = stringToUint8Array(combined);
+    const crcHash = crc32(Buffer.from(buffer));
     return crcHash.toString(16).padStart(8, '0');
   }
   /**
@@ -114,39 +115,33 @@ export abstract class DatabaseInitializationService {
    * @param createdBy Optional ID of the user who created this member
    * @returns The cached or newly created BackendMember and the mnemonic used
    */
-  public static cacheOrNew<I extends Types.ObjectId | string = Types.ObjectId>(
+  public static cacheOrNew<I extends PlatformID = Buffer>(
     username: string,
     email: EmailString,
     mnemonic: SecureString | undefined,
     memberType: MemberType,
-    eciesService: ECIESService,
+    eciesService: ECIESService<I>,
     memberId?: I,
     createdBy?: I,
-    idGenerator?: () => I,
-    idToString: (id: I) => string = (id) => String(id),
   ): {
     member: BackendMember<I>;
     mnemonic: SecureString;
   } {
+    const idProvider = getEnhancedNodeIdProvider<I>();
     const m = this.mnemonicOrNew(mnemonic, eciesService);
 
-    const newId: I = memberId
-      ? memberId
-      : idGenerator
-        ? idGenerator()
-        : convertObjectIdToGenericId<I>(new MongoObjectId());
+    const newId: I = memberId ? memberId : idProvider.generateTyped();
     const key = DatabaseInitializationService.cacheKey(
       username,
       email,
       m,
       newId,
-      idToString,
     );
     if (!global.__MEMBER_CACHE__) {
       global.__MEMBER_CACHE__ = new Map<
         string,
         {
-          member: BackendMember<Types.ObjectId>;
+          member: BackendMember<I>;
           mnemonic: SecureString;
         }
       >();
@@ -176,7 +171,7 @@ export abstract class DatabaseInitializationService {
       );
       global.__MEMBER_CACHE__.set(key, {
         mnemonic: m,
-        member: user as unknown as BackendMember<Types.ObjectId>,
+        member: user as unknown as BackendMember<I>,
       });
       return { mnemonic: m, member: user };
     } else {
@@ -242,10 +237,8 @@ export abstract class DatabaseInitializationService {
     return connection.db.dropDatabase();
   }
 
-  public static getInitOptions<
-    I extends Types.ObjectId | string = Types.ObjectId,
-  >(
-    application: IApplication,
+  public static getInitOptions<I extends PlatformID = Buffer>(
+    application: IApplication<I>,
   ): {
     adminId?: I;
     adminMnemonic?: SecureString;
@@ -301,34 +294,32 @@ export abstract class DatabaseInitializationService {
     };
   }
 
-  public static serverInitResultHash<
-    I extends Types.ObjectId | string = Types.ObjectId,
-  >(
+  public static serverInitResultHash<I extends PlatformID = Buffer>(
     serverInitResult: IServerInitResult<I>,
-    idToString: (id: I) => string = (id) => String(id),
   ): string {
     const h = createHash('sha256');
-    h.update(idToString(serverInitResult.adminUser._id as I));
-    h.update(idToString(serverInitResult.adminRole._id as I));
-    h.update(idToString(serverInitResult.adminUserRole._id as I));
+    const idProvider = getEnhancedNodeIdProvider<I>();
+    h.update(idProvider.idToString(serverInitResult.adminUser._id as I));
+    h.update(idProvider.idToString(serverInitResult.adminRole._id as I));
+    h.update(idProvider.idToString(serverInitResult.adminUserRole._id as I));
     h.update(serverInitResult.adminUsername);
     h.update(serverInitResult.adminEmail);
     h.update(serverInitResult.adminMnemonic);
     h.update(serverInitResult.adminPassword);
     h.update(serverInitResult.adminUser.publicKey);
     serverInitResult.adminBackupCodes.map((bc) => h.update(bc));
-    h.update(idToString(serverInitResult.memberUser._id as I));
-    h.update(idToString(serverInitResult.memberRole._id as I));
-    h.update(idToString(serverInitResult.memberUserRole._id as I));
+    h.update(idProvider.idToString(serverInitResult.memberUser._id as I));
+    h.update(idProvider.idToString(serverInitResult.memberRole._id as I));
+    h.update(idProvider.idToString(serverInitResult.memberUserRole._id as I));
     h.update(serverInitResult.memberUsername);
     h.update(serverInitResult.memberEmail);
     h.update(serverInitResult.memberMnemonic);
     h.update(serverInitResult.memberPassword);
     h.update(serverInitResult.memberUser.publicKey);
     serverInitResult.memberBackupCodes.map((bc) => h.update(bc));
-    h.update(idToString(serverInitResult.systemUser._id as I));
-    h.update(idToString(serverInitResult.systemRole._id as I));
-    h.update(idToString(serverInitResult.systemUserRole._id as I));
+    h.update(idProvider.idToString(serverInitResult.systemUser._id as I));
+    h.update(idProvider.idToString(serverInitResult.systemRole._id as I));
+    h.update(idProvider.idToString(serverInitResult.systemUserRole._id as I));
     h.update(serverInitResult.systemUsername);
     h.update(serverInitResult.systemEmail);
     h.update(serverInitResult.systemMnemonic);
@@ -348,30 +339,22 @@ export abstract class DatabaseInitializationService {
    * @param backupCodeService The backup code service
    * @returns The result of the initialization
    */
-  public static async initUserDbWithServices<
-    I extends Types.ObjectId | string = Types.ObjectId,
-  >(
-    application: IApplication,
+  public static async initUserDbWithServices<I extends PlatformID = Buffer>(
+    application: IApplication<I>,
     keyWrappingService: KeyWrappingService,
     mnemonicService: MnemonicService<I>,
-    eciesService: ECIESService,
+    eciesService: ECIESService<I>,
     roleService: RoleService<I>,
     backupCodeService: BackupCodeService<I>,
-    idGenerator?: () => I,
-    idToString: (id: I) => string = (id) =>
-      application.constants.idProvider.serialize(
-        application.constants.idProvider.toBytes(id),
-      ),
   ): Promise<IDBInitResult<IServerInitResult<I>>> {
     const engine = getSuiteCoreI18nEngine({ constants: application.constants });
     const isTestEnvironment = process.env['NODE_ENV'] === 'test';
     const options =
       DatabaseInitializationService.getInitOptions<I>(application);
-    const effectiveIdGenerator: () => I = (idGenerator ??
-      (() =>
-        application.environment.idAdapter(
-          application.constants.idProvider.generate(),
-        ))) as () => I;
+    const effectiveIdGenerator: () => I = (() =>
+      application.constants.idProvider.fromBytes(
+        application.constants.idProvider.generate(),
+      ) as I) as () => I;
     const UserModel = ModelRegistry.instance.getTypedModel<
       IUserDocument<string, I>
     >(BaseModelName.User);
@@ -680,8 +663,6 @@ export abstract class DatabaseInitializationService {
             eciesService,
             systemUserId as I,
             systemUserId as I,
-            effectiveIdGenerator,
-            idToString,
           );
           backupCodeService.setSystemUser(systemUser.member);
           SystemUserService.setSystemUser(
@@ -799,8 +780,6 @@ export abstract class DatabaseInitializationService {
             eciesService,
             adminUserId as I,
             systemDoc._id,
-            effectiveIdGenerator,
-            idToString,
           );
           // Encrypt mnemonic for recovery
           const adminEncryptedMnemonic = adminUser.member
@@ -913,8 +892,6 @@ export abstract class DatabaseInitializationService {
             eciesService,
             memberUserId as I,
             systemDoc._id,
-            effectiveIdGenerator,
-            idToString,
           );
           const memberPasswordSecure = options.memberPassword
             ? options.memberPassword
@@ -1121,38 +1098,34 @@ export abstract class DatabaseInitializationService {
     }
   }
 
-  public static serverInitResultsToDotEnv<
-    I extends Types.ObjectId | string = Types.ObjectId,
-  >(
+  public static serverInitResultsToDotEnv<I extends PlatformID = Buffer>(
     serverInitResult: IServerInitResult<I>,
-    idToString: (id: I) => string = (id) => String(id),
   ): string {
-    return `ADMIN_ID="${idToString(serverInitResult.adminUser._id as I)}"
+    const idProvider = getEnhancedNodeIdProvider<I>();
+    return `ADMIN_ID="${idProvider.idToString(serverInitResult.adminUser._id as I)}"
 ADMIN_MNEMONIC="${serverInitResult.adminMnemonic}"
-ADMIN_ROLE_ID="${idToString(serverInitResult.adminRole._id as I)}"
-ADMIN_USER_ROLE_ID="${idToString(serverInitResult.adminUserRole._id as I)}"
+ADMIN_ROLE_ID="${idProvider.idToString(serverInitResult.adminRole._id as I)}"
+ADMIN_USER_ROLE_ID="${idProvider.idToString(serverInitResult.adminUserRole._id as I)}"
 ADMIN_PASSWORD="${serverInitResult.adminPassword}"
-MEMBER_ID="${idToString(serverInitResult.memberUser._id as I)}"
+MEMBER_ID="${idProvider.idToString(serverInitResult.memberUser._id as I)}"
 MEMBER_MNEMONIC="${serverInitResult.memberMnemonic}"
-MEMBER_ROLE_ID="${idToString(serverInitResult.memberRole._id as I)}"
-MEMBER_USER_ROLE_ID="${idToString(serverInitResult.memberUserRole._id as I)}"
+MEMBER_ROLE_ID="${idProvider.idToString(serverInitResult.memberRole._id as I)}"
+MEMBER_USER_ROLE_ID="${idProvider.idToString(serverInitResult.memberUserRole._id as I)}"
 MEMBER_PASSWORD="${serverInitResult.memberPassword}"
-SYSTEM_ID="${idToString(serverInitResult.systemUser._id as I)}"
+SYSTEM_ID="${idProvider.idToString(serverInitResult.systemUser._id as I)}"
 SYSTEM_MNEMONIC="${serverInitResult.systemMnemonic}"
 SYSTEM_PUBLIC_KEY="${serverInitResult.systemUser.publicKey}"
-SYSTEM_ROLE_ID="${idToString(serverInitResult.systemRole._id as I)}"
-SYSTEM_USER_ROLE_ID="${idToString(serverInitResult.systemUserRole._id as I)}"
+SYSTEM_ROLE_ID="${idProvider.idToString(serverInitResult.systemRole._id as I)}"
+SYSTEM_USER_ROLE_ID="${idProvider.idToString(serverInitResult.systemUserRole._id as I)}"
 SYSTEM_PASSWORD="${serverInitResult.systemPassword}"
 `;
   }
 
-  public static printServerInitResults<
-    I extends Types.ObjectId | string = Types.ObjectId,
-  >(
+  public static printServerInitResults<I extends PlatformID = Buffer>(
     result: IServerInitResult<I>,
     printDotEnv: boolean = true,
-    idToString: (id: I) => string = (id) => String(id),
   ): void {
+    const idProvider = getEnhancedNodeIdProvider<I>();
     debugLog(
       true,
       'log',
@@ -1166,7 +1139,7 @@ SYSTEM_PASSWORD="${serverInitResult.systemPassword}"
       this.defaultI18nTFunc(
         '{{SuiteCoreStringKey.Common_System}} {{SuiteCoreStringKey.Common_ID}}: {id}',
         {
-          id: idToString(result.systemUser._id as I),
+          id: idProvider.idToString(result.systemUser._id as I),
         },
       ),
     );
@@ -1186,7 +1159,7 @@ SYSTEM_PASSWORD="${serverInitResult.systemPassword}"
       this.defaultI18nTFunc(
         '{{SuiteCoreStringKey.Common_System}} {{SuiteCoreStringKey.Common_Role}} {{SuiteCoreStringKey.Common_ID}}: {roleId}',
         {
-          roleId: idToString(result.systemRole._id as I),
+          roleId: idProvider.idToString(result.systemRole._id as I),
         },
       ),
     );
@@ -1196,7 +1169,7 @@ SYSTEM_PASSWORD="${serverInitResult.systemPassword}"
       this.defaultI18nTFunc(
         '{{SuiteCoreStringKey.Common_System}} {{SuiteCoreStringKey.Common_User}} {{SuiteCoreStringKey.Common_Role}} {{SuiteCoreStringKey.Common_ID}}: {userRoleId}',
         {
-          userRoleId: idToString(result.systemUserRole._id as I),
+          userRoleId: idProvider.idToString(result.systemUserRole._id as I),
         },
       ),
     );
@@ -1264,7 +1237,7 @@ SYSTEM_PASSWORD="${serverInitResult.systemPassword}"
       this.defaultI18nTFunc(
         '{{SuiteCoreStringKey.Common_Admin}} {{SuiteCoreStringKey.Common_ID}}: {id}',
         {
-          id: idToString(result.adminUser._id as I),
+          id: idProvider.idToString(result.adminUser._id as I),
         },
       ),
     );
@@ -1284,7 +1257,7 @@ SYSTEM_PASSWORD="${serverInitResult.systemPassword}"
       this.defaultI18nTFunc(
         '{{SuiteCoreStringKey.Common_Admin}} {{SuiteCoreStringKey.Common_Role}} {{SuiteCoreStringKey.Common_ID}}: {roleId}',
         {
-          roleId: idToString(result.adminRole._id as I),
+          roleId: idProvider.idToString(result.adminRole._id as I),
         },
       ),
     );
@@ -1294,7 +1267,7 @@ SYSTEM_PASSWORD="${serverInitResult.systemPassword}"
       this.defaultI18nTFunc(
         '{{SuiteCoreStringKey.Common_Admin}} {{SuiteCoreStringKey.Common_User}} {{SuiteCoreStringKey.Common_Role}} {{SuiteCoreStringKey.Common_ID}}: {userRoleId}',
         {
-          userRoleId: idToString(result.adminUserRole._id as I),
+          userRoleId: idProvider.idToString(result.adminUserRole._id as I),
         },
       ),
     );
@@ -1362,7 +1335,7 @@ SYSTEM_PASSWORD="${serverInitResult.systemPassword}"
       this.defaultI18nTFunc(
         '{{SuiteCoreStringKey.Common_Member}} {{SuiteCoreStringKey.Common_ID}}: {id}',
         {
-          id: idToString(result.memberUser._id as I),
+          id: idProvider.idToString(result.memberUser._id as I),
         },
       ),
     );
@@ -1382,7 +1355,7 @@ SYSTEM_PASSWORD="${serverInitResult.systemPassword}"
       this.defaultI18nTFunc(
         '{{SuiteCoreStringKey.Common_Member}} {{SuiteCoreStringKey.Common_Role}} {{SuiteCoreStringKey.Common_ID}}: {roleId}',
         {
-          roleId: idToString(result.memberRole._id as I),
+          roleId: idProvider.idToString(result.memberRole._id as I),
         },
       ),
     );
@@ -1392,7 +1365,7 @@ SYSTEM_PASSWORD="${serverInitResult.systemPassword}"
       this.defaultI18nTFunc(
         '{{SuiteCoreStringKey.Common_Member}} {{SuiteCoreStringKey.Common_User}} {{SuiteCoreStringKey.Common_Role}} {{SuiteCoreStringKey.Common_ID}}: {userRoleId}',
         {
-          userRoleId: idToString(result.memberUserRole._id as I),
+          userRoleId: idProvider.idToString(result.memberUserRole._id as I),
         },
       ),
     );
@@ -1470,11 +1443,6 @@ SYSTEM_PASSWORD="${serverInitResult.systemPassword}"
           '=== {{SuiteCoreStringKey.Admin_DotEnvFormat}} ===',
         ),
       );
-      directLog(
-        true,
-        'log',
-        this.serverInitResultsToDotEnv(result, idToString),
-      );
       debugLog(
         true,
         'log',
@@ -1485,36 +1453,44 @@ SYSTEM_PASSWORD="${serverInitResult.systemPassword}"
     }
   }
 
-  public static setEnvFromInitResults<
-    I extends Types.ObjectId | string = Types.ObjectId,
-  >(
+  public static setEnvFromInitResults<I extends PlatformID = Buffer>(
     result: IServerInitResult<I>,
-    idToString: (id: I) => string = (id) => String(id),
   ): void {
-    process.env['ADMIN_ID'] = idToString(result.adminUser._id as I);
+    const idProvider = getEnhancedNodeIdProvider<I>();
+    process.env['ADMIN_ID'] = idProvider.idToString(result.adminUser._id as I);
     process.env['ADMIN_PUBLIC_KEY'] = result.adminUser.publicKey;
     process.env['ADMIN_MNEMONIC'] = result.adminMnemonic;
     process.env['ADMIN_PASSWORD'] = result.adminPassword;
-    process.env['ADMIN_ROLE_ID'] = idToString(result.adminRole._id as I);
-    process.env['ADMIN_USER_ROLE_ID'] = idToString(
+    process.env['ADMIN_ROLE_ID'] = idProvider.idToString(
+      result.adminRole._id as I,
+    );
+    process.env['ADMIN_USER_ROLE_ID'] = idProvider.idToString(
       result.adminUserRole._id as I,
     );
     //
-    process.env['MEMBER_ID'] = idToString(result.memberUser._id as I);
+    process.env['MEMBER_ID'] = idProvider.idToString(
+      result.memberUser._id as I,
+    );
     process.env['MEMBER_PUBLIC_KEY'] = result.memberUser.publicKey;
     process.env['MEMBER_MNEMONIC'] = result.memberMnemonic;
     process.env['MEMBER_PASSWORD'] = result.memberPassword;
-    process.env['MEMBER_ROLE_ID'] = idToString(result.memberRole._id as I);
-    process.env['MEMBER_USER_ROLE_ID'] = idToString(
+    process.env['MEMBER_ROLE_ID'] = idProvider.idToString(
+      result.memberRole._id as I,
+    );
+    process.env['MEMBER_USER_ROLE_ID'] = idProvider.idToString(
       result.memberUserRole._id as I,
     );
     //
-    process.env['SYSTEM_ID'] = idToString(result.systemUser._id as I);
+    process.env['SYSTEM_ID'] = idProvider.idToString(
+      result.systemUser._id as I,
+    );
     process.env['SYSTEM_PUBLIC_KEY'] = result.systemUser.publicKey;
     process.env['SYSTEM_MNEMONIC'] = result.systemMnemonic;
     process.env['SYSTEM_PASSWORD'] = result.systemPassword;
-    process.env['SYSTEM_ROLE_ID'] = idToString(result.systemRole._id as I);
-    process.env['SYSTEM_USER_ROLE_ID'] = idToString(
+    process.env['SYSTEM_ROLE_ID'] = idProvider.idToString(
+      result.systemRole._id as I,
+    );
+    process.env['SYSTEM_USER_ROLE_ID'] = idProvider.idToString(
       result.systemUserRole._id as I,
     );
   }
@@ -1526,13 +1502,11 @@ SYSTEM_PASSWORD="${serverInitResult.systemPassword}"
    * @param result The initialization results containing credentials
    * @param idToString Function to convert IDs to strings
    */
-  public static writeEnvFile<
-    I extends Types.ObjectId | string = Types.ObjectId,
-  >(
+  public static writeEnvFile<I extends PlatformID = Buffer>(
     envFilePath: string,
     result: IServerInitResult<I>,
-    idToString: (id: I) => string = (id) => String(id),
   ): void {
+    const idProvider = getEnhancedNodeIdProvider<I>();
     // Ensure the directory exists
     const dir = path.dirname(envFilePath);
     if (!fs.existsSync(dir)) {
@@ -1547,21 +1521,25 @@ SYSTEM_PASSWORD="${serverInitResult.systemPassword}"
 
     // Define the credentials to update
     const credentials = {
-      ADMIN_ID: idToString(result.adminUser._id as I),
+      ADMIN_ID: idProvider.idToString(result.adminUser._id as I),
       ADMIN_MNEMONIC: result.adminMnemonic,
-      ADMIN_ROLE_ID: idToString(result.adminRole._id as I),
-      ADMIN_USER_ROLE_ID: idToString(result.adminUserRole._id as I),
+      ADMIN_ROLE_ID: idProvider.idToString(result.adminRole._id as I),
+      ADMIN_USER_ROLE_ID: idProvider.idToString(result.adminUserRole._id as I),
       ADMIN_PASSWORD: result.adminPassword,
-      MEMBER_ID: idToString(result.memberUser._id as I),
+      MEMBER_ID: idProvider.idToString(result.memberUser._id as I),
       MEMBER_MNEMONIC: result.memberMnemonic,
-      MEMBER_ROLE_ID: idToString(result.memberRole._id as I),
-      MEMBER_USER_ROLE_ID: idToString(result.memberUserRole._id as I),
+      MEMBER_ROLE_ID: idProvider.idToString(result.memberRole._id as I),
+      MEMBER_USER_ROLE_ID: idProvider.idToString(
+        result.memberUserRole._id as I,
+      ),
       MEMBER_PASSWORD: result.memberPassword,
-      SYSTEM_ID: idToString(result.systemUser._id as I),
+      SYSTEM_ID: idProvider.idToString(result.systemUser._id as I),
       SYSTEM_MNEMONIC: result.systemMnemonic,
       SYSTEM_PUBLIC_KEY: result.systemUser.publicKey,
-      SYSTEM_ROLE_ID: idToString(result.systemRole._id as I),
-      SYSTEM_USER_ROLE_ID: idToString(result.systemUserRole._id as I),
+      SYSTEM_ROLE_ID: idProvider.idToString(result.systemRole._id as I),
+      SYSTEM_USER_ROLE_ID: idProvider.idToString(
+        result.systemUserRole._id as I,
+      ),
       SYSTEM_PASSWORD: result.systemPassword,
     };
 
@@ -1602,15 +1580,8 @@ SYSTEM_PASSWORD="${serverInitResult.systemPassword}"
    * @param application The application
    * @returns The result of the initialization
    */
-  public static async initUserDb<
-    I extends Types.ObjectId | string = Types.ObjectId,
-  >(
-    application: IApplication,
-    idGenerator?: () => I,
-    idToString: (id: I) => string = (id) =>
-      application.constants.idProvider.serialize(
-        application.constants.idProvider.toBytes(id),
-      ),
+  public static async initUserDb<I extends PlatformID = Buffer>(
+    application: IApplication<I>,
   ): Promise<IFailableResult<IServerInitResult<I>>> {
     const mnemonicModel = ModelRegistry.instance.getTypedModel<
       IMnemonicDocument<I>
@@ -1628,7 +1599,7 @@ SYSTEM_PASSWORD="${serverInitResult.systemPassword}"
       symmetricKeyBits: ECIES.SYMMETRIC.KEY_BITS,
       symmetricKeyMode: ECIES.SYMMETRIC.MODE,
     };
-    const eciesService = new ECIESService(config);
+    const eciesService = new ECIESService<I>(config);
     const roleService = new RoleService<I>(application);
     const keyWrappingService = new KeyWrappingService();
     const backupCodeService = new BackupCodeService<I>(
@@ -1645,8 +1616,6 @@ SYSTEM_PASSWORD="${serverInitResult.systemPassword}"
       eciesService,
       roleService,
       backupCodeService,
-      idGenerator,
-      idToString,
     );
   }
 }

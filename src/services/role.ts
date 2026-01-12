@@ -4,11 +4,7 @@ import {
   I18nEngine,
   IActiveContext,
 } from '@digitaldefiance/i18n-lib';
-import {
-  ClientSession,
-  Document,
-  Types,
-} from '@digitaldefiance/mongoose-types';
+import { ClientSession, Document } from '@digitaldefiance/mongoose-types';
 import {
   IRoleBase,
   IRoleDTO,
@@ -24,37 +20,39 @@ import { BaseModelName } from '../enumerations/base-model-name';
 import { IApplication } from '../interfaces/application';
 import { IRoleBackendObject } from '../interfaces/backend-objects/role';
 import { ModelRegistry } from '../model-registry';
-import { convertStringToGenericId } from '../types/id-converters';
 import { omit } from '../utils';
 import { BaseService } from './base';
+import {
+  getEnhancedNodeIdProvider,
+  type PlatformID,
+} from '@digitaldefiance/node-ecies-lib';
 
 /**
  * Service for managing roles
  */
 export class RoleService<
-  I extends string | Types.ObjectId = Types.ObjectId,
+  I extends PlatformID = Buffer,
   D extends Date = Date,
   TTokenRole extends ITokenRole<I, D> = ITokenRole<I, D>,
-> extends BaseService {
+> extends BaseService<I> {
   /**
    * Constructor for the role service
    * @param application The application object
    */
-  constructor(application: IApplication) {
+  constructor(application: IApplication<I>) {
     super(application);
   }
 
   public static roleToRoleDTO<
-    I extends string | Types.ObjectId = Types.ObjectId,
+    I extends PlatformID = Buffer,
     D extends Date = Date,
   >(
     role: ITokenRole<I, D> | IRoleDocument<I> | Partial<IRoleBase<I>>,
   ): ITokenRoleDTO {
+    const provider = getEnhancedNodeIdProvider<I>();
     const roleObj = role instanceof Document ? role.toObject() : role;
     return {
-      _id: (role._id instanceof Types.ObjectId
-        ? role._id.toString()
-        : role._id) as string,
+      _id: provider.idToString(roleObj._id),
       name: roleObj.name as string,
       admin: roleObj.admin ?? false,
       member: roleObj.member ?? false,
@@ -65,15 +63,11 @@ export class RoleService<
       createdAt: (roleObj.createdAt instanceof Date
         ? roleObj.createdAt.toISOString()
         : roleObj.createdAt) as string,
-      createdBy: (role.createdBy instanceof Types.ObjectId
-        ? role.createdBy.toString()
-        : role.createdBy) as string,
+      createdBy: provider.idToString(roleObj.createdBy),
       updatedAt: (roleObj.updatedAt instanceof Date
         ? roleObj.updatedAt.toISOString()
         : roleObj.updatedAt) as string,
-      updatedBy: (role.updatedBy instanceof Types.ObjectId
-        ? role.updatedBy.toString()
-        : role.updatedBy) as string,
+      updatedBy: provider.idToString(roleObj.updatedBy),
       ...(roleObj.deletedAt
         ? {
             deletedAt: (roleObj.deletedAt instanceof Date
@@ -83,9 +77,7 @@ export class RoleService<
         : {}),
       ...(role.deletedBy
         ? {
-            deletedBy: (role.deletedBy instanceof Types.ObjectId
-              ? role.deletedBy.toString()
-              : role.deletedBy) as string,
+            deletedBy: provider.idToString(roleObj.deletedBy),
           }
         : {}),
     } as ITokenRoleDTO;
@@ -96,14 +88,11 @@ export class RoleService<
    * @param role The Role DTO
    * @returns An IRoleBackendObject
    */
-  public static hydrateRoleDTOToBackend<
-    I extends string | Types.ObjectId = Types.ObjectId,
-  >(
+  public static hydrateRoleDTOToBackend<I extends PlatformID = Buffer>(
     role: ITokenRoleDTO,
-    idConverter?: (id: string) => I,
   ): IRoleBackendObject<I> {
-    const convert =
-      idConverter ?? ((id: string) => convertStringToGenericId<I>(id));
+    const idProvider = getEnhancedNodeIdProvider<I>();
+    const convert = (id: string) => idProvider.idFromString(id);
     return {
       ...(omit<ITokenRoleDTO, 'translatedName'>(role, [
         'translatedName',

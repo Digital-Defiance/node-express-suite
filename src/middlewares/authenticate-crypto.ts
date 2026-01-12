@@ -1,6 +1,9 @@
 import { SecureString } from '@digitaldefiance/ecies-lib';
-import { ClientSession, Types } from '@digitaldefiance/mongoose-types';
-import { Member as BackendMember } from '@digitaldefiance/node-ecies-lib';
+import { ClientSession } from '@digitaldefiance/mongoose-types';
+import {
+  Member as BackendMember,
+  PlatformID,
+} from '@digitaldefiance/node-ecies-lib';
 import {
   AccountStatus,
   getSuiteCoreTranslation,
@@ -20,10 +23,10 @@ import { withTransaction } from '../utils';
  * Expects mnemonic or password in request body for fresh authentication
  */
 export async function authenticateCrypto<
-  I extends Types.ObjectId | string = Types.ObjectId,
+  I extends PlatformID = Buffer,
   TAccountStatus extends string = AccountStatus,
 >(
-  application: IApplication,
+  application: IApplication<I>,
   req: Request,
   res: Response,
   next: NextFunction,

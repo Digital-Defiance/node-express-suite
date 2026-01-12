@@ -1,9 +1,11 @@
 import { LanguageRegistry } from '@digitaldefiance/i18n-lib';
-import { Types } from '@digitaldefiance/mongoose-types';
 import { existsSync, mkdirSync, rmSync, unlinkSync, writeFileSync } from 'fs';
-import { ObjectId } from 'mongodb';
+import { Types } from '@digitaldefiance/mongoose-types';
+import { registerNodeRuntimeConfiguration } from '@digitaldefiance/node-ecies-lib';
 import { join } from 'path';
 import { Environment } from '../src/environment';
+
+const { ObjectId } = Types;
 
 describe('Environment', () => {
   let originalEnv: NodeJS.ProcessEnv;
@@ -14,6 +16,8 @@ describe('Environment', () => {
   let tempReactDistDir: string;
 
   beforeAll(() => {
+    // Initialize Node.js runtime configuration
+    registerNodeRuntimeConfiguration();
     // Initialize i18n system
     LanguageRegistry['languages'].clear();
     LanguageRegistry.registerLanguage({
@@ -241,13 +245,7 @@ describe('Environment', () => {
       process.env['MEMBER_ROLE_ID'] = memberRoleId.toString();
       process.env['SYSTEM_ROLE_ID'] = systemRoleId.toString();
 
-      const env = new Environment(
-        undefined,
-        false,
-        true,
-        undefined,
-        (bytes) => new Types.ObjectId(Buffer.from(bytes)) as any,
-      );
+      const env = new Environment(undefined, false, true, undefined);
 
       expect(env.adminId?.toString()).toBe(adminId.toString());
       expect(env.memberId?.toString()).toBe(memberId.toString());
@@ -726,9 +724,9 @@ PORT=9000
     });
 
     it('should return correct user IDs and dates', () => {
-      expect(env.adminId).toBeInstanceOf(ObjectId);
-      expect(env.memberId).toBeInstanceOf(ObjectId);
-      expect(env.systemId).toBeInstanceOf(ObjectId);
+      expect(ObjectId.isValid(env.adminId)).toBe(true);
+      expect(ObjectId.isValid(env.memberId)).toBe(true);
+      expect(ObjectId.isValid(env.systemId)).toBe(true);
       expect(env.adminCreatedAt).toEqual(new Date('2023-01-01T00:00:00.000Z'));
       expect(env.memberCreatedAt).toEqual(new Date('2023-02-01T00:00:00.000Z'));
       expect(env.systemCreatedAt).toEqual(new Date('2023-03-01T00:00:00.000Z'));
@@ -932,9 +930,9 @@ PORT=9000
 
       const env = new Environment();
 
-      expect(env.adminId).toBeInstanceOf(ObjectId);
-      expect(env.memberId).toBeInstanceOf(ObjectId);
-      expect(env.systemId).toBeInstanceOf(ObjectId);
+      expect(ObjectId.isValid(env.adminId)).toBe(true);
+      expect(ObjectId.isValid(env.memberId)).toBe(true);
+      expect(ObjectId.isValid(env.systemId)).toBe(true);
     });
 
     it('should generate default dates when not provided', () => {

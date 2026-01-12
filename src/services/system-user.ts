@@ -4,10 +4,10 @@ import {
   SecureBuffer,
   SecureString,
 } from '@digitaldefiance/ecies-lib';
-import { Types } from '@digitaldefiance/mongoose-types';
 import {
   Member as BackendMember,
   ECIESService,
+  PlatformID,
 } from '@digitaldefiance/node-ecies-lib';
 import {
   SuiteCoreStringKey,
@@ -20,16 +20,16 @@ import { IConstants } from '../interfaces/constants';
  * Service to manage the system member's wallet.
  */
 export class SystemUserService {
-  private static systemUser: BackendMember<Buffer> | null = null;
+  private static systemUser: BackendMember<PlatformID> | null = null;
 
   /**
    * Initializes and returns the system member's Member instance.
    * The mnemonic should be stored securely in environment variables.
    */
-  public static getSystemUser(
-    environment: Environment,
+  public static getSystemUser<TID extends PlatformID = Buffer>(
+    environment: Environment<TID>,
     constants: IConstants,
-  ): BackendMember<Buffer> {
+  ): BackendMember<TID> {
     if (!SystemUserService.systemUser) {
       if (!environment.systemMnemonic) {
         throw new TranslatableSuiteError(
@@ -40,11 +40,11 @@ export class SystemUserService {
         );
       }
       const mnemonic: SecureString = environment.systemMnemonic;
-      const eciesService = new ECIESService(undefined, constants.ECIES);
+      const eciesService = new ECIESService<TID>(undefined, constants.ECIES);
       const { wallet } = eciesService.walletAndSeedFromMnemonic(mnemonic);
       const keyPair = eciesService.walletToSimpleKeyPairBuffer(wallet);
 
-      SystemUserService.systemUser = new BackendMember(
+      SystemUserService.systemUser = new BackendMember<TID>(
         eciesService,
         MemberType.System,
         constants.SystemUser,
@@ -63,17 +63,18 @@ export class SystemUserService {
         });
       }
     }
-    return SystemUserService.systemUser;
+    return SystemUserService.systemUser as BackendMember<TID>;
   }
 
-  public static setSystemUser<
-    TID extends string | Types.ObjectId | Buffer = Buffer,
-  >(user: BackendMember<TID>, constants: IConstants): void {
+  public static setSystemUser<TID extends PlatformID = Buffer>(
+    user: BackendMember<TID>,
+    constants: IConstants,
+  ): void {
     if (user.type !== MemberType.System || user.name !== constants.SystemUser) {
       throw new Error(
         'setSystemUser can only be called with a MemberType.System user',
       );
     }
-    SystemUserService.systemUser = user as BackendMember<Buffer>;
+    SystemUserService.systemUser = user as BackendMember<TID>;
   }
 }

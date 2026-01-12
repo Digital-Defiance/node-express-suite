@@ -1,4 +1,3 @@
-import { Types } from '@digitaldefiance/mongoose-types';
 import {
   ITokenRole,
   ITokenUser,
@@ -8,9 +7,10 @@ import { IBaseDocument } from '../documents';
 import { Environment } from '../environment';
 import { IApplication } from './application';
 import { IConstants } from './constants';
+import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 
 export interface IControllerConfig<
-  I extends Types.ObjectId | string = Types.ObjectId,
+  I extends PlatformID = Buffer,
   D extends Date = Date,
   S extends string = string,
   A extends string = string,
@@ -22,14 +22,14 @@ export interface IControllerConfig<
   userType: IUserBase<I, D, S, A>;
   tokenRoleType: ITokenRole<I, D>;
   tokenUserType: ITokenUser;
-  baseDocumentType: IBaseDocument<any, Types.ObjectId>;
+  baseDocumentType: IBaseDocument<any, I>;
   environmentType: Environment;
   constantsType: IConstants;
   applicationType: IApplication;
 }
 
 export type DefaultControllerConfig = IControllerConfig<
-  Types.ObjectId,
+  Buffer,
   Date,
   string,
   string

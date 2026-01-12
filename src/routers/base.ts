@@ -1,8 +1,10 @@
 import { Router } from 'express';
 import { IApplication } from '../interfaces/application';
+import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 
 export abstract class BaseRouter<
-  TApplication extends IApplication = IApplication,
+  TID extends PlatformID = Buffer,
+  TApplication extends IApplication<TID> = IApplication<TID>,
 > {
   public readonly router: Router;
   public readonly application: TApplication;

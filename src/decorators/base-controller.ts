@@ -9,11 +9,13 @@ import {
   ValidationContext,
 } from './controller';
 import { zodToExpressValidator } from './zod-validation';
+import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 
 export abstract class DecoratorBaseController<
   TLanguage extends CoreLanguageCode = CoreLanguageCode,
-> extends BaseController<ApiResponse, Record<string, any>, TLanguage> {
-  constructor(application: IApplication) {
+  TID extends PlatformID = Buffer,
+> extends BaseController<ApiResponse, Record<string, any>, TLanguage, TID> {
+  constructor(application: IApplication<TID>) {
     super(application);
   }
 

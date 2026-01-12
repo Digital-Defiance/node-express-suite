@@ -22,23 +22,28 @@ import { initMiddleware } from '../../middleware-utils';
 import { AppRouter, BaseRouter } from '../../routers';
 import { DatabaseInitializationService } from '../../services';
 import { SchemaMap } from '../../types';
+import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 
 export async function setupTestEnvironment<
-  TModelDocs extends Record<string, IBaseDocument<any>>,
+  TID extends PlatformID = Buffer,
+  TModelDocs extends Record<string, IBaseDocument<any, TID>> = Record<
+    string,
+    IBaseDocument<any, TID>
+  >,
   TConstants extends IConstants = IConstants,
-  TAppRouter extends AppRouter = AppRouter,
+  TAppRouter extends AppRouter<TID> = AppRouter<TID>,
 >(
   constants: TConstants,
-  apiRouterFactory: (app: IApplication) => BaseRouter,
+  apiRouterFactory: (app: IApplication<TID>) => BaseRouter<TID>,
   schemaMapFactory: (connection: Connection) => SchemaMap<TModelDocs>,
-  appRouterFactory: (apiRouter: BaseRouter) => TAppRouter = (apiRouter) =>
+  appRouterFactory: (apiRouter: BaseRouter<TID>) => TAppRouter = (apiRouter) =>
     new AppRouter(apiRouter) as TAppRouter,
   customInitMiddleware: typeof initMiddleware = initMiddleware,
   envLocation?: string,
   databaseInitFunction?: (
-    application: BaseApplication<TModelDocs, IServerInitResult>,
-  ) => Promise<IFailableResult<IServerInitResult>>,
-  initResultHashFunction?: (initResults: IServerInitResult) => string,
+    application: IApplication<TID>,
+  ) => Promise<IFailableResult<IServerInitResult<TID>>>,
+  initResultHashFunction?: (initResults: IServerInitResult<TID>) => string,
   cspConfig: ICSPConfig | HelmetOptions | IFlexibleCSP = {
     corsWhitelist: [],
     csp: {
@@ -51,7 +56,7 @@ export async function setupTestEnvironment<
       frameSrc: [],
     },
   },
-): Promise<ITestEnvironment> {
+): Promise<ITestEnvironment<TID>> {
   // Make runtime deterministic for tests
   process.env.NODE_ENV = 'test';
   process.env['DEV_DATABASE'] = 'test';
@@ -109,9 +114,16 @@ export async function setupTestEnvironment<
   };
   setAdminLanguage('en-US');
 
-  const env = new Environment(envLocation, true);
+  const env = new Environment<TID>(envLocation, true);
 
-  const application = new Application(
+  const application = new Application<
+    IServerInitResult<TID>,
+    TModelDocs,
+    TID,
+    Environment<TID>,
+    TConstants,
+    TAppRouter
+  >(
     env,
     apiRouterFactory,
     schemaMapFactory,
@@ -129,8 +141,8 @@ export async function setupTestEnvironment<
     customInitMiddleware,
   );
 
-  const initResult: IFailableResult<IServerInitResult> =
-    await DatabaseInitializationService.initUserDb(application);
+  const initResult: IFailableResult<IServerInitResult<TID>> =
+    await DatabaseInitializationService.initUserDb<TID>(application);
   if (!initResult.success || !initResult.data) {
     throw new Error('Failed to initialize database for tests');
   }

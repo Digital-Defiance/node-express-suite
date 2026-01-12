@@ -1,4 +1,3 @@
-import { Types } from '@digitaldefiance/mongoose-types';
 import {
   ITokenRole,
   ITokenRoleDTO,
@@ -20,6 +19,7 @@ import { IApplication } from '../interfaces/application';
 import { IJwtSignResponse } from '../interfaces/jwt-sign-response';
 import { BaseService } from './base';
 import { RoleService } from './role';
+import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 
 const verifyAsync = promisify<
   string,
@@ -29,12 +29,12 @@ const verifyAsync = promisify<
 >(verify);
 
 export class JwtService<
-  I extends string | Types.ObjectId = Types.ObjectId,
+  I extends PlatformID = Buffer,
   D extends Date = Date,
   TTokenRole extends ITokenRole<I, D> = ITokenRole<I, D>,
   TTokenUser extends ITokenUser = ITokenUser,
-  TApplication extends IApplication = IApplication,
-> extends BaseService {
+  TApplication extends IApplication<I> = IApplication<I>,
+> extends BaseService<I, TApplication> {
   private readonly roleService: RoleService<I, D, TTokenRole>;
 
   /**

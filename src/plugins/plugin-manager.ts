@@ -1,11 +1,12 @@
+import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 import { IApplication } from '../interfaces/application';
 import { IApplicationPlugin } from './plugin-interface';
 
-export class PluginManager {
-  private plugins = new Map<string, IApplicationPlugin>();
+export class PluginManager<TID extends PlatformID = Buffer> {
+  private plugins = new Map<string, IApplicationPlugin<TID>>();
   private initialized = false;
 
-  register(plugin: IApplicationPlugin): void {
+  register(plugin: IApplicationPlugin<TID>): void {
     if (this.initialized) {
       throw new Error(
         `Cannot register plugin ${plugin.name} after initialization`,
@@ -17,7 +18,7 @@ export class PluginManager {
     this.plugins.set(plugin.name, plugin);
   }
 
-  async initAll(app: IApplication): Promise<void> {
+  async initAll(app: IApplication<TID>): Promise<void> {
     for (const plugin of this.plugins.values()) {
       await plugin.init(app);
     }
@@ -32,7 +33,7 @@ export class PluginManager {
     }
   }
 
-  get(name: string): IApplicationPlugin | undefined {
+  get(name: string): IApplicationPlugin<TID> | undefined {
     return this.plugins.get(name);
   }
 

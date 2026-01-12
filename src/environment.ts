@@ -1,5 +1,4 @@
 import { SecureBuffer, SecureString } from '@digitaldefiance/ecies-lib';
-import { Types } from '@digitaldefiance/mongoose-types';
 import {
   getSuiteCoreTranslation,
   SuiteCoreStringKey,
@@ -23,8 +22,11 @@ import {
   locatePEMRoot,
   parseBackupCodes,
 } from './utils';
+import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 
-export class Environment<I = Types.ObjectId> implements IEnvironment<I> {
+export class Environment<
+  I extends PlatformID = Buffer,
+> implements IEnvironment<I> {
   private readonly _environment: IEnvironment<I>;
   private readonly _envObject: EnvironmentVariables;
   public static requireEnv<T>(key: string, obj: EnvironmentVariables): T {
@@ -48,8 +50,6 @@ export class Environment<I = Types.ObjectId> implements IEnvironment<I> {
     initialization = false,
     override = true,
     constants: IConstants = LocalhostConstants,
-    idAdapter: (bytes: Uint8Array) => I = (bytes) =>
-      new Types.ObjectId(Buffer.from(bytes)) as I,
   ) {
     let envObj = process.env;
     let debug = envObj['DEBUG'] === 'true' || envObj['DEBUG'] === '1';
@@ -107,7 +107,6 @@ export class Environment<I = Types.ObjectId> implements IEnvironment<I> {
     const isDevDatabase = devDatabase !== undefined && devDatabase !== '';
 
     this._environment = {
-      idAdapter,
       debug: debug,
       devDatabase: devDatabase,
       detailedDebug: detailedDebug,
@@ -203,16 +202,24 @@ export class Environment<I = Types.ObjectId> implements IEnvironment<I> {
         ? new Date(envObj['ADMIN_CREATED_AT'])
         : new Date(),
       adminId: envObj['ADMIN_ID']
-        ? idAdapter(constants.idProvider.deserialize(envObj['ADMIN_ID']))
-        : idAdapter(constants.idProvider.generate()),
+        ? (constants.idProvider.fromBytes(
+            constants.idProvider.deserialize(envObj['ADMIN_ID']),
+          ) as I)
+        : (constants.idProvider.fromBytes(
+            constants.idProvider.generate(),
+          ) as I),
       adminPassword: envObj['ADMIN_PASSWORD']
         ? new SecureString(envObj['ADMIN_PASSWORD'])
         : undefined,
       adminRoleId: envObj['ADMIN_ROLE_ID']
-        ? idAdapter(constants.idProvider.deserialize(envObj['ADMIN_ROLE_ID']))
+        ? (constants.idProvider.fromBytes(
+            constants.idProvider.deserialize(envObj['ADMIN_ROLE_ID']),
+          ) as I)
         : undefined,
       adminUserRoleId: envObj['ADMIN_ROLE_ID']
-        ? idAdapter(constants.idProvider.deserialize(envObj['ADMIN_ROLE_ID']))
+        ? (constants.idProvider.fromBytes(
+            constants.idProvider.deserialize(envObj['ADMIN_ROLE_ID']),
+          ) as I)
         : undefined,
       adminBackupCodes: envObj['ADMIN_BACKUP_CODES']
         ? parseBackupCodes('admin', envObj)
@@ -222,18 +229,24 @@ export class Environment<I = Types.ObjectId> implements IEnvironment<I> {
         ? new Date(envObj['MEMBER_CREATED_AT'])
         : new Date(),
       memberId: envObj['MEMBER_ID']
-        ? idAdapter(constants.idProvider.deserialize(envObj['MEMBER_ID']))
-        : idAdapter(constants.idProvider.generate()),
+        ? (constants.idProvider.fromBytes(
+            constants.idProvider.deserialize(envObj['MEMBER_ID']),
+          ) as I)
+        : (constants.idProvider.fromBytes(
+            constants.idProvider.generate(),
+          ) as I),
       memberPassword: envObj['MEMBER_PASSWORD']
         ? new SecureString(envObj['MEMBER_PASSWORD'])
         : undefined,
       memberRoleId: envObj['MEMBER_ROLE_ID']
-        ? idAdapter(constants.idProvider.deserialize(envObj['MEMBER_ROLE_ID']))
+        ? (constants.idProvider.fromBytes(
+            constants.idProvider.deserialize(envObj['MEMBER_ROLE_ID']),
+          ) as I)
         : undefined,
       memberUserRoleId: envObj['MEMBER_USER_ROLE_ID']
-        ? idAdapter(
+        ? (constants.idProvider.fromBytes(
             constants.idProvider.deserialize(envObj['MEMBER_USER_ROLE_ID']),
-          )
+          ) as I)
         : undefined,
       memberBackupCodes: envObj['MEMBER_BACKUP_CODES']
         ? parseBackupCodes('member', envObj)
@@ -243,17 +256,25 @@ export class Environment<I = Types.ObjectId> implements IEnvironment<I> {
         ? new Date(envObj['SYSTEM_CREATED_AT'])
         : new Date(),
       systemId: envObj['SYSTEM_ID']
-        ? idAdapter(constants.idProvider.deserialize(envObj['SYSTEM_ID']))
-        : idAdapter(constants.idProvider.generate()),
+        ? (constants.idProvider.fromBytes(
+            constants.idProvider.deserialize(envObj['SYSTEM_ID']),
+          ) as I)
+        : (constants.idProvider.fromBytes(
+            constants.idProvider.generate(),
+          ) as I),
       systemPublicKeyHex: envObj['SYSTEM_PUBLIC_KEY'] ?? undefined,
       systemPassword: envObj['SYSTEM_PASSWORD']
         ? new SecureString(envObj['SYSTEM_PASSWORD'])
         : undefined,
       systemRoleId: envObj['SYSTEM_ROLE_ID']
-        ? idAdapter(constants.idProvider.deserialize(envObj['SYSTEM_ROLE_ID']))
+        ? (constants.idProvider.fromBytes(
+            constants.idProvider.deserialize(envObj['SYSTEM_ROLE_ID']),
+          ) as I)
         : undefined,
       systemUserRoleId: envObj['SYSTEM_ROLE_ID']
-        ? idAdapter(constants.idProvider.deserialize(envObj['SYSTEM_ROLE_ID']))
+        ? (constants.idProvider.fromBytes(
+            constants.idProvider.deserialize(envObj['SYSTEM_ROLE_ID']),
+          ) as I)
         : undefined,
       systemBackupCodes: envObj['SYSTEM_BACKUP_CODES']
         ? parseBackupCodes('system', envObj)
@@ -453,10 +474,6 @@ export class Environment<I = Types.ObjectId> implements IEnvironment<I> {
 
   public getObject(): EnvironmentVariables {
     return this._envObject;
-  }
-
-  public get idAdapter(): (bytes: Uint8Array) => I {
-    return this._environment.idAdapter;
   }
 
   /**

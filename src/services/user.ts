@@ -10,11 +10,12 @@ import {
   ClientSession,
   Document,
   ProjectionType,
-  Types,
 } from '@digitaldefiance/mongoose-types';
 import {
   Member as BackendMember,
   ECIESService,
+  getEnhancedNodeIdProvider,
+  PlatformID,
   SignatureBuffer,
 } from '@digitaldefiance/node-ecies-lib';
 import {
@@ -69,7 +70,6 @@ import { IUserBackendObject } from '../interfaces/backend-objects/user';
 import { IConstants } from '../interfaces/constants';
 import { IEmailService } from '../interfaces/email-service';
 import { ModelRegistry } from '../model-registry';
-import { convertObjectIdToGenericId } from '../types/id-converters';
 import { debugLog } from '../utils';
 import { BackupCodeService } from './backup-code';
 import { BaseService } from './base';
@@ -84,19 +84,19 @@ type ProjectionObject = Record<string, 0 | 1 | -1 | boolean>;
 
 export class UserService<
   T,
-  I extends Types.ObjectId | string,
+  I extends PlatformID,
   D extends Date,
   S extends string,
   A extends string,
-  _TEnvironment extends Environment = Environment,
+  _TEnvironment extends Environment<I> = Environment<I>,
   _TConstants extends IConstants = IConstants,
   _TBaseDocument extends IBaseDocument<T, I> = IBaseDocument<T, I>,
   TUser extends IUserBase<I, D, S, A> = IUserBase<I, D, S, A>,
   TTokenRole extends ITokenRole<I, D> = ITokenRole<I, D>,
-  TApplication extends IApplication = IApplication,
-> extends BaseService {
+  TApplication extends IApplication<I> = IApplication<I>,
+> extends BaseService<I, TApplication> {
   protected readonly roleService: RoleService<I, D, TTokenRole>;
-  protected readonly eciesService: ECIESService;
+  protected readonly eciesService: ECIESService<I>;
   protected readonly keyWrappingService: KeyWrappingService;
   protected readonly mnemonicService: MnemonicService;
   protected readonly emailService: IEmailService;
@@ -108,17 +108,13 @@ export class UserService<
   >;
   protected readonly serverUrl: string;
   protected readonly disableEmailSend: boolean;
-  protected readonly idConverter: (id: string) => I;
-  protected readonly idGenerator: () => I;
 
   constructor(
-    application: IApplication,
+    application: TApplication,
     roleService: RoleService<I, D, TTokenRole>,
     emailService: IEmailService,
     keyWrappingService: KeyWrappingService,
     backupCodeService: BackupCodeService<I, D, TTokenRole, TApplication>,
-    idConverter?: (id: string) => I,
-    idGenerator?: () => I,
   ) {
     super(application);
     this.roleService = roleService;
@@ -127,9 +123,6 @@ export class UserService<
     this.backupCodeService = backupCodeService;
     this.serverUrl = application.environment.serverUrl;
     this.disableEmailSend = application.environment.disableEmailSend;
-    this.idConverter =
-      idConverter ?? ((id: string) => new Types.ObjectId(id) as I);
-    this.idGenerator = idGenerator ?? (() => new Types.ObjectId() as I);
     const config: IECIESConfig = {
       curveName: this.application.constants.ECIES.CURVE_NAME,
       primaryKeyDerivationPath:
@@ -152,34 +145,33 @@ export class UserService<
     );
   }
 
-  public toId(id: string): I {
-    return this.idConverter(id);
-  }
-
-  public generateId(): I {
-    return this.idGenerator();
-  }
-
   /**
    * Given a User Document, make a User DTO
    * @param user a User Document
    * @returns An IUserDTO
    */
-  public static userToUserDTO<
-    S extends string,
-    I extends string | Types.ObjectId = Types.ObjectId,
-  >(user: IUserDocument<S, I> | Record<string, unknown>): IUserDTO {
+  public static userToUserDTO<S extends string, I extends PlatformID = Buffer>(
+    user: IUserDocument<S, I> | Record<string, unknown>,
+  ): IUserDTO {
+    const provider = getEnhancedNodeIdProvider<I>();
+    const userId = user._id as I;
     return {
       ...(user instanceof Document ? user.toObject() : user),
-      _id: (user._id instanceof Types.ObjectId
-        ? user._id.toString()
-        : user._id) as string,
-      createdBy: (user.createdBy instanceof Date
-        ? user.createdBy.toString()
-        : user.createdBy) as string,
-      updatedBy: (user.updatedBy instanceof Date
-        ? user.updatedBy.toString()
-        : user.updatedBy) as string,
+      _id:
+        provider.validate(provider.toBytes(userId)) &&
+        provider.idToString(userId),
+      createdAt: (user.createdAt instanceof Date
+        ? user.createdAt.toString()
+        : user.createdAt) as string,
+      createdBy:
+        provider.validate(provider.toBytes(user.createdBy as I)) &&
+        provider.idToString(user.createdBy as I),
+      updatedAt: (user.updatedAt instanceof Date
+        ? user.updatedAt.toString()
+        : user.updatedAt) as string,
+      updatedBy:
+        provider.validate(provider.toBytes(user.updatedBy as I)) &&
+        provider.idToString(user.updatedBy as I),
       ...(user.lastLogin
         ? {
             lastLogin: (user.lastLogin instanceof Date
@@ -187,11 +179,18 @@ export class UserService<
               : user.lastLogin) as string,
           }
         : {}),
+      ...(user.deletedAt
+        ? {
+            deletedAt: (user.deletedAt instanceof Date
+              ? user.deletedAt.toString()
+              : user.deletedAt) as string,
+          }
+        : {}),
       ...(user.deletedBy
         ? {
-            deletedBy: (user.deletedBy instanceof Date
-              ? user.deletedBy.toString()
-              : user.deletedBy) as string,
+            deletedBy:
+              provider.validate(provider.toBytes(user.deletedBy as I)) &&
+              provider.idToString(user.deletedBy as I),
           }
         : {}),
     } as IUserDTO;
@@ -203,22 +202,23 @@ export class UserService<
    * @returns An IUserBackendObject
    */
   public hydrateUserDTOToBackend(user: IUserDTO): IUserBackendObject<S, I> {
+    const provider = getEnhancedNodeIdProvider<I>();
     return {
       ...user,
-      _id: this.idConverter(user._id),
+      _id: provider.idFromString(user._id),
       ...(user.lastLogin ? { lastLogin: new Date(user.lastLogin) } : {}),
       createdAt: new Date(user.createdAt),
-      createdBy: this.idConverter(user.createdBy),
+      createdBy: provider.idFromString(user.createdBy),
       updatedAt: new Date(user.updatedAt),
-      updatedBy: this.idConverter(user.updatedBy),
+      updatedBy: provider.idFromString(user.updatedBy),
       ...(user.deletedAt ? { deletedAt: new Date(user.deletedAt) } : {}),
       ...(user.deletedBy
         ? {
-            deletedBy: this.idConverter(user.deletedBy),
+            deletedBy: provider.idFromString(user.deletedBy),
           }
         : {}),
       ...(user.mnemonicId
-        ? { mnemonicId: this.idConverter(user.mnemonicId) }
+        ? { mnemonicId: provider.idFromString(user.mnemonicId) }
         : {}),
     } as IUserBackendObject<S, I>;
   }
@@ -723,7 +723,7 @@ export class UserService<
    * @returns The new user document
    */
   public async newUser(
-    systemUser: BackendMember,
+    systemUser: BackendMember<I>,
     userData: ICreateUserBasics,
     createdBy?: I,
     newUserId?: I,
@@ -736,7 +736,8 @@ export class UserService<
     backupCodes: Array<string>;
     password?: string;
   }> {
-    const _newUserId = newUserId ?? this.idGenerator();
+    const provider = getEnhancedNodeIdProvider<I>();
+    const _newUserId = newUserId ?? provider.generateTyped();
     if (!this.application.constants.UsernameRegex.test(userData.username)) {
       throw new InvalidUsernameError();
     }
@@ -769,17 +770,17 @@ export class UserService<
         }
 
         let mnemonic: SecureString | undefined;
-        let member: BackendMember | undefined;
+        let member: BackendMember<I> | undefined;
         while (!mnemonic || !member) {
           try {
             const { member: newMember, mnemonic: newMnemonic } =
-              BackendMember.newMember(
+              BackendMember.newMember<I>(
                 this.eciesService,
                 MemberType.User,
                 userData.username,
                 new EmailString(userData.email),
                 undefined,
-                createdBy ? Buffer.from(String(createdBy), 'hex') : undefined,
+                createdBy,
               );
             // make sure the new mnemonic is not already in the database
 
@@ -899,14 +900,10 @@ export class UserService<
    * Requires the user not be deleted or inactive
    */
   public async getEncryptedUserBackupCodes(
-    userId: Types.ObjectId,
+    userId: I,
     session?: ClientSession,
   ): Promise<Array<IBackupCode>> {
-    const userWithCodes = await this.findUserById(
-      convertObjectIdToGenericId<I>(userId),
-      true,
-      session,
-    );
+    const userWithCodes = await this.findUserById(userId, true, session);
     return userWithCodes.backupCodes;
   }
 
@@ -917,8 +914,8 @@ export class UserService<
    * @returns A promise of an array of backup codes
    */
   public async resetUserBackupCodes(
-    backupUser: BackendMember,
-    systemUser: BackendMember,
+    backupUser: BackendMember<I>,
+    systemUser: BackendMember<I>,
     session?: ClientSession,
   ): Promise<Array<BackupCode>> {
     if (!backupUser.hasPrivateKey) {
@@ -988,9 +985,9 @@ export class UserService<
     mnemonic?: SecureString,
     wallet?: Wallet,
     session?: ClientSession,
-  ): Promise<BackendMember<any>> {
+  ): Promise<BackendMember<I>> {
     const memberType = await this.roleService.getMemberType(userDoc, session);
-    const user = new BackendMember(
+    const user = new BackendMember<I>(
       this.eciesService,
       memberType,
       userDoc.username,
@@ -1030,8 +1027,8 @@ export class UserService<
     mnemonic: SecureString,
     session?: ClientSession,
   ): Promise<{
-    userMember: BackendMember;
-    adminMember: BackendMember;
+    userMember: BackendMember<I>;
+    adminMember: BackendMember<I>;
   }> {
     try {
       // Verify provided mnemonic corresponds to the stored mnemonic HMAC (no password required)
@@ -1078,7 +1075,7 @@ export class UserService<
       }
 
       // Generate a nonce challenge to verify they can decrypt with their key
-      const adminMember = SystemUserService.getSystemUser(
+      const adminMember = SystemUserService.getSystemUser<I>(
         this.application.environment,
         this.application.constants,
       );
@@ -1134,8 +1131,8 @@ export class UserService<
     session?: ClientSession,
   ): Promise<{
     userDoc: IUserDocument<S, I>;
-    userMember: BackendMember;
-    adminMember: BackendMember;
+    userMember: BackendMember<I>;
+    adminMember: BackendMember<I>;
   }> {
     const challengeBuffer = Buffer.from(challengeResponse, 'hex');
     // validate the expected challenge response length (8 + 32 + 64 = 104 bytes)
@@ -1165,7 +1162,7 @@ export class UserService<
       throw new InvalidUsernameError();
     }
     // re-sign the time + nonce and check if the signature matches
-    const adminMember = SystemUserService.getSystemUser(
+    const adminMember = SystemUserService.getSystemUser<I>(
       this.application.environment,
       this.application.constants,
     );
@@ -1201,8 +1198,8 @@ export class UserService<
     session?: ClientSession,
   ): Promise<{
     userDoc: IUserDocument<S, I>;
-    userMember: BackendMember;
-    adminMember: BackendMember;
+    userMember: BackendMember<I>;
+    adminMember: BackendMember<I>;
   }> {
     const UserModel = this.application.getModel<IUserDocument<S, I>>(
       BaseModelName.User,
@@ -1276,7 +1273,7 @@ export class UserService<
         throw new InvalidCredentialsError();
       }
 
-      const adminMember = SystemUserService.getSystemUser(
+      const adminMember = SystemUserService.getSystemUser<I>(
         this.application.environment,
         this.application.constants,
       );
@@ -1309,8 +1306,8 @@ export class UserService<
     session?: ClientSession,
   ): Promise<{
     userDoc: IUserDocument<S, I>;
-    userMember: BackendMember;
-    adminMember: BackendMember;
+    userMember: BackendMember<I>;
+    adminMember: BackendMember<I>;
   }> {
     const UserModel = ModelRegistry.instance.getTypedModel<IUserDocument<S, I>>(
       BaseModelName.User,
@@ -1360,8 +1357,8 @@ export class UserService<
     session?: ClientSession,
   ): Promise<{
     userDoc: IUserDocument<S, I>;
-    userMember: BackendMember;
-    adminMember: BackendMember;
+    userMember: BackendMember<I>;
+    adminMember: BackendMember<I>;
   }> {
     const UserModel = this.application.getModel<IUserDocument<S, I>>(
       BaseModelName.User,
@@ -1416,7 +1413,7 @@ export class UserService<
     );
 
     // Generate a nonce challenge signed by system
-    const adminMember = SystemUserService.getSystemUser(
+    const adminMember = SystemUserService.getSystemUser<I>(
       this.application.environment,
       this.application.constants,
     );
@@ -1634,13 +1631,14 @@ export class UserService<
     newLanguage: string,
     session?: ClientSession,
   ): Promise<IRequestUserDTO> {
+    const provider = getEnhancedNodeIdProvider<I>();
     return await this.withTransaction<IRequestUserDTO>(
       async (sess: ClientSession | undefined) => {
         const UserModel = ModelRegistry.instance.getTypedModel<
           IUserDocument<S, I>
         >(BaseModelName.User);
         const userDoc = await UserModel.findByIdAndUpdate(
-          this.idConverter(userId),
+          provider.idFromString(userId),
           {
             siteLanguage: newLanguage,
           },
@@ -1672,13 +1670,14 @@ export class UserService<
     newDarkMode: boolean,
     session?: ClientSession,
   ): Promise<IRequestUserDTO> {
+    const provider = getEnhancedNodeIdProvider<I>();
     return await this.withTransaction<IRequestUserDTO>(
       async (sess: ClientSession | undefined) => {
         const UserModel = ModelRegistry.instance.getTypedModel<
           IUserDocument<S, I>
         >(BaseModelName.User);
         const userDoc = await UserModel.findByIdAndUpdate(
-          this.idConverter(userId),
+          provider.idFromString(userId),
           {
             darkMode: newDarkMode,
           },
@@ -1717,13 +1716,14 @@ export class UserService<
     },
     session?: ClientSession,
   ): Promise<IRequestUserDTO> {
+    const provider = getEnhancedNodeIdProvider<I>();
     return await this.withTransaction<IRequestUserDTO>(
       async (sess: ClientSession | undefined) => {
         const UserModel = ModelRegistry.instance.getTypedModel<
           IUserDocument<S, I>
         >(BaseModelName.User);
         const userDoc = await UserModel.findById(
-          this.idConverter(userId),
+          provider.idFromString(userId),
         ).session(sess ?? null);
         if (!userDoc) {
           throw new UserNotFoundError();
@@ -1790,13 +1790,14 @@ export class UserService<
     newPassword: string,
     session?: ClientSession,
   ): Promise<void> {
+    const provider = getEnhancedNodeIdProvider<I>();
     return await this.withTransaction<void>(
       async (sess: ClientSession | undefined) => {
         const UserModel = ModelRegistry.instance.getTypedModel<
           IUserDocument<S, I>
         >(BaseModelName.User);
         const userDoc = await UserModel.findById(
-          this.idConverter(userId),
+          provider.idFromString(userId),
         ).session(sess ?? null);
         if (!userDoc || !userDoc.passwordWrappedPrivateKey) {
           throw new UserNotFoundError();
@@ -2021,7 +2022,7 @@ export class UserService<
    * @returns The login challenge in hex
    */
   public generateDirectLoginChallenge(): string {
-    const adminMember = SystemUserService.getSystemUser(
+    const adminMember = SystemUserService.getSystemUser<I>(
       this.application.environment,
       this.application.constants,
     );
@@ -2044,10 +2045,10 @@ export class UserService<
     username?: string,
     email?: string,
     session?: ClientSession,
-  ): Promise<{ userDoc: IUserDocument<S, I>; userMember: BackendMember }> {
+  ): Promise<{ userDoc: IUserDocument<S, I>; userMember: BackendMember<I> }> {
     return await this.withTransaction<{
       userDoc: IUserDocument<S, I>;
-      userMember: BackendMember;
+      userMember: BackendMember<I>;
     }>(
       async (sess: ClientSession | undefined) => {
         // serverSignedRequest is:
@@ -2090,7 +2091,7 @@ export class UserService<
           throw new LoginChallengeExpiredError();
         }
         // validate the server's signature on the time + nonce portion
-        const adminMember = SystemUserService.getSystemUser(
+        const adminMember = SystemUserService.getSystemUser<I>(
           this.application.environment,
           this.application.constants,
         );
@@ -2133,7 +2134,7 @@ export class UserService<
         }
 
         // if the user is valid, try to use the token (prevents replay attacks)
-        await DirectLoginTokenService.useToken(
+        await DirectLoginTokenService.useToken<I>(
           this.application,
           userDoc._id,
           nonce.toString('hex'),

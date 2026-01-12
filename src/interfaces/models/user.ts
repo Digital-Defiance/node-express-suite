@@ -1,4 +1,4 @@
-import { Types } from '@digitaldefiance/mongoose-types';
+import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 import { AccountStatus, IUserBase } from '@digitaldefiance/suite-core-lib';
 
 /**
@@ -15,5 +15,5 @@ export type IFrontendUser<TLanguage extends string> = IUserBase<
  */
 export type IBackendUser<
   TLanguage extends string,
-  I = Types.ObjectId,
+  I extends PlatformID = Buffer,
 > = IUserBase<I, Date, TLanguage, AccountStatus>;

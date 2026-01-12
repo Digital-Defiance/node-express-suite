@@ -4,10 +4,11 @@ import {
   SecureBuffer,
   SecureString,
 } from '@digitaldefiance/ecies-lib';
-import { ClientSession, Types } from '@digitaldefiance/mongoose-types';
+import { ClientSession } from '@digitaldefiance/mongoose-types';
 import {
   Member as BackendMember,
   ECIESService,
+  PlatformID,
 } from '@digitaldefiance/node-ecies-lib';
 import {
   IBackupCode,
@@ -37,12 +38,12 @@ import { SystemUserService } from './system-user';
  * - Wrapping: AEAD blob wrapped with system user's asymmetric key (ECIES)
  */
 export class BackupCodeService<
-  I extends string | Types.ObjectId = Types.ObjectId,
+  I extends PlatformID = Buffer,
   D extends Date = Date,
   TTokenRole extends ITokenRole<I, D> = ITokenRole<I, D>,
-  TApplication extends IApplication = IApplication,
-> extends BaseService {
-  private readonly eciesService: ECIESService;
+  TApplication extends IApplication<I> = IApplication<I>,
+> extends BaseService<I> {
+  private readonly eciesService: ECIESService<I>;
   private systemUser?: BackendMember<I>;
   private readonly keyWrappingService: KeyWrappingService;
   private readonly roleService: RoleService<I, D, TTokenRole>;
@@ -52,7 +53,7 @@ export class BackupCodeService<
    */
   constructor(
     application: TApplication,
-    eciesService: ECIESService,
+    eciesService: ECIESService<I>,
     keyWrappingService: KeyWrappingService,
     roleService: RoleService<I, D, TTokenRole>,
   ) {

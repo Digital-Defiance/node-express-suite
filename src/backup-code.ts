@@ -1,8 +1,8 @@
 import { MemberType } from '@digitaldefiance/ecies-lib';
-import { Types } from '@digitaldefiance/mongoose-types';
 import {
   Constants as ApiConstants,
   Member as BackendMember,
+  PlatformID,
 } from '@digitaldefiance/node-ecies-lib';
 import {
   BackupCodeString,
@@ -145,7 +145,7 @@ export class BackupCode extends BackupCodeString {
     }
   }
 
-  public async encrypt<TID extends string | Types.ObjectId | Buffer = Buffer>(
+  public async encrypt<TID extends PlatformID = Buffer>(
     backupUser: BackendMember<TID>,
     systemUser: BackendMember<TID>,
     constants: IConstants = LocalhostConstants,
@@ -205,9 +205,7 @@ export class BackupCode extends BackupCodeString {
    * - Derives Argon2id encryption key (32 bytes) from UTF-8 code
    * - Encrypts the private key with AEAD and wraps with system user
    */
-  public static async encryptBackupCodesV1<
-    TID extends string | Types.ObjectId | Buffer = Buffer,
-  >(
+  public static async encryptBackupCodesV1<TID extends PlatformID = Buffer>(
     backupUser: BackendMember<TID>,
     systemUser: BackendMember<TID>,
     codes: Array<BackupCode>,
@@ -220,9 +218,7 @@ export class BackupCode extends BackupCodeString {
   }
 
   /** Delegate to current version. */
-  public static encryptBackupCodes<
-    TID extends string | Types.ObjectId | Buffer = Buffer,
-  >(
+  public static encryptBackupCodes<TID extends PlatformID = Buffer>(
     backupUser: BackendMember<TID>,
     systemUser: BackendMember<TID>,
     codes: Array<BackupCode>,

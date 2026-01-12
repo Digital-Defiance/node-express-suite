@@ -1,4 +1,4 @@
-import { Types } from '@digitaldefiance/mongoose-types';
+import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 import {
   ITokenRole,
   ITokenRoleDTO,
@@ -6,7 +6,7 @@ import {
 } from '@digitaldefiance/suite-core-lib';
 
 export interface IJwtSignResponse<
-  I = Types.ObjectId,
+  I extends PlatformID = Buffer,
   D extends Date = Date,
   TTokenRole extends ITokenRole<I, D> = ITokenRole<I, D>,
 > {

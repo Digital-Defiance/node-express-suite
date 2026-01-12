@@ -20,37 +20,39 @@ import { initMiddleware } from '../middleware-utils';
 import { AppRouter } from '../routers/app';
 import { BaseRouter } from '../routers/base';
 import { SchemaMap } from '../types';
+import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 
 export class ApplicationBuilder<
-  TModelDocs extends Record<string, IBaseDocument<any>>,
-  TInitResults extends IServerInitResult,
+  TID extends PlatformID,
+  TModelDocs extends Record<string, IBaseDocument<any, TID>>,
+  TInitResults extends IServerInitResult<TID>,
   TConstants extends IConstants = IConstants,
 > {
-  private environment?: Environment;
-  private apiRouterFactory?: (app: IApplication) => BaseRouter;
-  private appRouterFactory?: (apiRouter: BaseRouter) => AppRouter;
+  private environment?: Environment<TID>;
+  private apiRouterFactory?: (app: IApplication<TID>) => BaseRouter<TID>;
+  private appRouterFactory?: (apiRouter: BaseRouter<TID>) => AppRouter<TID>;
   private schemaMapFactory?: (
     connection: mongoose.Connection,
   ) => SchemaMap<TModelDocs>;
   private databaseInitFunction?: (
-    app: BaseApplication<TModelDocs, TInitResults>,
+    app: BaseApplication<TID, TModelDocs, TInitResults>,
   ) => Promise<IFailableResult<TInitResults>>;
   private initResultHashFunction?: (results: TInitResults) => string;
   private cspConfig?: ICSPConfig | HelmetOptions | IFlexibleCSP;
   private constants?: TConstants;
   private customInitMiddleware?: typeof initMiddleware;
 
-  withEnvironment(env: Environment): this {
+  withEnvironment(env: Environment<TID>): this {
     this.environment = env;
     return this;
   }
 
-  withApiRouter(factory: (app: any) => BaseRouter): this {
+  withApiRouter(factory: (app: any) => BaseRouter<TID>): this {
     this.apiRouterFactory = factory;
     return this;
   }
 
-  withAppRouter(factory: (apiRouter: BaseRouter) => AppRouter): this {
+  withAppRouter(factory: (apiRouter: BaseRouter<TID>) => AppRouter<TID>): this {
     this.appRouterFactory = factory;
     return this;
   }
@@ -64,7 +66,7 @@ export class ApplicationBuilder<
 
   withDatabaseInit(
     initFn: (
-      app: BaseApplication<TModelDocs, TInitResults>,
+      app: BaseApplication<TID, TModelDocs, TInitResults>,
     ) => Promise<IFailableResult<TInitResults>>,
     hashFn: (results: TInitResults) => string,
   ): this {
@@ -91,9 +93,10 @@ export class ApplicationBuilder<
   build(): Application<
     TInitResults,
     TModelDocs,
-    Environment,
+    TID,
+    Environment<TID>,
     TConstants,
-    AppRouter
+    AppRouter<TID>
   > {
     if (!this.environment)
       throw new TranslatableSuiteError(

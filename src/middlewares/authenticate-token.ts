@@ -1,6 +1,6 @@
 import type { Timezone as TimezoneType } from '@digitaldefiance/i18n-lib';
 import { GlobalActiveContext } from '@digitaldefiance/i18n-lib';
-import { ClientSession, Types } from '@digitaldefiance/mongoose-types';
+import { ClientSession } from '@digitaldefiance/mongoose-types';
 import {
   AccountStatus,
   getSuiteCoreTranslation,
@@ -18,6 +18,7 @@ import { JwtService } from '../services/jwt';
 import { RequestUserService } from '../services/request-user';
 import { RoleService } from '../services/role';
 import { withTransaction } from '../utils';
+import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 
 // Type for Timezone constructor
 type TimezoneConstructor = new (tz: string) => TimezoneType;
@@ -55,11 +56,11 @@ export function findAuthToken(headers: IncomingHttpHeaders): string | null {
  * @returns The response
  */
 export async function authenticateToken<
-  I extends Types.ObjectId | string = Types.ObjectId,
+  I extends PlatformID = Buffer,
   D extends Date = Date,
   TTokenRole extends ITokenRole<I, D> = ITokenRole<I, D>,
   TTokenUser extends ITokenUser = ITokenUser,
-  TApplication extends IApplication = IApplication,
+  TApplication extends IApplication<I> = IApplication<I>,
 >(
   application: TApplication,
   req: Request,
