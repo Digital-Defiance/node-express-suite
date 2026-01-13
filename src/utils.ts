@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Utility functions for Express application including validation, transactions, error handling, and data encoding.
+ * Provides comprehensive helpers for API responses, MongoDB transactions, validation, and cryptographic operations.
+ * @module utils
+ */
+
 import { I18nEngine } from '@digitaldefiance/i18n-lib';
 import {
   ClientSession,
@@ -18,13 +24,14 @@ import { IMongoErrors } from './interfaces/mongo-errors';
 import { RequiredStringKeys } from './interfaces/required-string-keys';
 import { ApiResponse, SendFunction, TransactionCallback } from './types';
 
+/** Debug message type for console output */
 export type DEBUG_TYPE = 'error' | 'warn' | 'log';
 
 /**
- * Optionally prints certain debug messages
+ * Conditionally prints debug messages to console.
  * @param debug Whether to print debug messages
- * @param type What type of message to print
- * @param args Any args to print
+ * @param type Type of message (error, warn, or log)
+ * @param args Arguments to print
  */
 export function debugLog(
   debug: boolean,
@@ -41,10 +48,11 @@ export function debugLog(
 }
 
 /**
- * Optionally prints certain debug messages
+ * Prints debug messages directly to stdout/stderr bypassing Node streams.
+ * Uses fs.writeSync to avoid Nx interception.
  * @param debug Whether to print debug messages
- * @param type What type of message to print
- * @param args Any args to print
+ * @param type Type of message (error, warn, or log)
+ * @param args Arguments to print
  */
 export function directLog(
   debug: boolean,
@@ -73,7 +81,12 @@ export function directLog(
   }
 }
 
-// Helper: get value at a dotted path from an object
+/**
+ * Gets value at a dotted path from an object.
+ * @param obj Object to traverse
+ * @param path Array of keys representing the path
+ * @returns Value at path or undefined
+ */
 export function getValueAtPath(
   obj: unknown,
   path: (string | number)[],
@@ -95,7 +108,13 @@ export function getValueAtPath(
   }, obj);
 }
 
-// Helper: map Zod issues to express-validator ValidationError[]
+/**
+ * Maps Zod validation issues to express-validator ValidationError format.
+ * @param issues Zod validation issues
+ * @param source Source object being validated
+ * @param location Location of validation (body, query, params, etc.)
+ * @returns Array of express-validator ValidationErrors
+ */
 export function mapZodIssuesToValidationErrors(
   issues: z.ZodError<unknown>['issues'],
   source: unknown,
@@ -113,11 +132,15 @@ export function mapZodIssuesToValidationErrors(
 }
 
 /**
- * Verifies the required fields were validated by express-validator and sends an error response if not or calls the callback if they are
- * @param req The request object
- * @param fields The fields to check
- * @param callback The callback to call if the fields are valid
- * @returns The result of the callback
+ * Validates request body against Zod schema and executes callback with validated data.
+ * @template T Zod schema type
+ * @template TResult Callback return type
+ * @param req Express request
+ * @param schema Zod schema for validation
+ * @param callback Callback to execute with validated data
+ * @returns Promise resolving to callback result
+ * @throws {MissingValidatedDataError} If validated body is missing
+ * @throws {ExpressValidationError} If validation fails
  */
 export async function requireValidatedFieldsAsync<
   T extends ZodType<any, any, any>,
@@ -149,11 +172,13 @@ export async function requireValidatedFieldsAsync<
 }
 
 /**
- * Verifies at least one of the required fields were validated by express-validator and sends an error response if not or calls the callback if they are
- * @param req The request object
- * @param fields The fields to check
- * @param callback The callback to call if the fields are valid
- * @returns The result of the callback
+ * Checks if at least one of the required fields is present in validated body.
+ * @template T Callback return type
+ * @param req Express request
+ * @param fields Array of field names to check
+ * @param callback Callback to execute if validation passes
+ * @returns Promise resolving to callback result
+ * @throws {MissingValidatedDataError} If none of the fields are present
  */
 export async function requireOneOfValidatedFieldsAsync<T = void>(
   req: Request,
@@ -171,11 +196,13 @@ export async function requireOneOfValidatedFieldsAsync<T = void>(
 }
 
 /**
- * Verifies the required fields were validated by express-validator and throws an error if not or calls the callback if they are
- * @param req The request object
- * @param fields The fields to check
- * @param callback The callback to call if the fields are valid
- * @returns The result of the callback
+ * Validates required fields are present in validated body (synchronous).
+ * @template T Callback return type
+ * @param req Express request
+ * @param fields Array of required field names
+ * @param callback Callback to execute if validation passes
+ * @returns Callback result
+ * @throws {MissingValidatedDataError} If any required field is missing
  */
 export function requireValidatedFieldsOrThrow<T = void>(
   req: Request,
@@ -195,33 +222,34 @@ export function requireValidatedFieldsOrThrow<T = void>(
 }
 
 /**
- * Checks if the given id is a valid string id
- * @param id The id to check
- * @returns True if the id is a valid string id
+ * Checks if a value is a valid MongoDB ObjectId string.
+ * @param id Value to check
+ * @returns True if valid ObjectId string
  */
 export function isValidStringObjectId(id: unknown): boolean {
   return typeof id === 'string' && Types.ObjectId.isValid(id);
 }
 
 /**
- * The default number of retry attempts for transactions
- * Use fewer retries in test environment for faster feedback
+ * Default number of retry attempts for transactions.
+ * Uses fewer retries in test environment for faster feedback.
  */
 export const DEFAULT_RETRY_ATTEMPTS =
   process.env['NODE_ENV'] === 'test' ? 2 : 3;
 /**
- * The default transaction timeout in milliseconds
- * Use shorter timeout in test environment for faster failure detection
+ * Default transaction timeout in milliseconds.
+ * Uses shorter timeout in test environment for faster failure detection.
  */
 export const DEFAULT_TRANSACTION_TIMEOUT =
   process.env['NODE_ENV'] === 'test' ? 15000 : 60000;
 
 /**
- * The default transaction lock request timeout in milliseconds
+ * Default transaction lock request timeout in milliseconds.
  */
 export const DEFAULT_TRANSACTION_LOCK_REQUEST_TIMEOUT =
   process.env['NODE_ENV'] === 'test' ? 10000 : 30000;
 
+/** Transaction configuration options */
 export interface TransactionOptions<TID extends PlatformID = Buffer> {
   application?: IApplication<TID>;
   timeoutMs?: number;

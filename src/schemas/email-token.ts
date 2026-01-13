@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Email token schema factory for MongoDB.
+ * Creates schema for email verification and password reset tokens.
+ * @module schemas/email-token
+ */
+
 import { Schema } from '@digitaldefiance/mongoose-types';
 import {
   EmailTokenType,
@@ -9,7 +15,10 @@ import { BaseModelName } from '../enumerations';
 import { IConstants } from '../interfaces';
 
 /**
- * Configuration options for creating an email token schema
+ * Configuration options for creating an email token schema.
+ * @template TTokenType - Token type enum (defaults to EmailTokenType)
+ * @template TModelName - Model name type (defaults to BaseModelName)
+ * @template TConstants - Constants type (defaults to IConstants)
  */
 export interface EmailTokenSchemaOptions<
   TTokenType extends string = EmailTokenType,
@@ -32,7 +41,14 @@ export interface EmailTokenSchemaOptions<
 }
 
 /**
- * Factory function to create an extensible email token schema
+ * Factory function to create an extensible email token schema.
+ * Includes TTL index for automatic token expiration.
+ * @template TTokenType - Token type enum (defaults to EmailTokenType)
+ * @template TModelName - Model name type (defaults to BaseModelName)
+ * @template TConstants - Constants type (defaults to IConstants)
+ * @param {EmailTokenSchemaOptions<TTokenType, TModelName>} options - Schema configuration options
+ * @param {TConstants} [_constants] - Optional constants (reserved for future use)
+ * @returns {Schema} Configured email token schema with TTL and unique indexes
  */
 export function createEmailTokenSchema<
   TTokenType extends string = EmailTokenType,
@@ -90,6 +106,7 @@ export function createEmailTokenSchema<
 }
 
 /**
- * Default email token schema with base configuration
+ * Default email token schema with base configuration.
+ * Pre-configured schema with 1-day TTL and compound unique index.
  */
 export const EmailTokenSchema = createEmailTokenSchema();

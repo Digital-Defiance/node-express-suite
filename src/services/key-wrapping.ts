@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Service for password-based key wrapping and unwrapping using AES-256-GCM.
+ * Provides secure master key management, password changes, and generic secret wrapping.
+ * @module services/key-wrapping
+ */
+
 import { SecureBuffer, SecureString } from '@digitaldefiance/ecies-lib';
 import {
   Constants,
@@ -12,34 +18,66 @@ import {
 } from 'crypto';
 import { InvalidNewPasswordError, InvalidPasswordError } from '../errors';
 
+/**
+ * Creates a PBKDF2 service instance from constants.
+ * @param constants Configuration constants
+ * @returns Configured PBKDF2 service
+ */
 function createPbkdf2Service(constants: IConstants): Pbkdf2Service {
   return Pbkdf2Service.fromConstants(constants);
 }
 
+/**
+ * Represents a password-wrapped master key with all encryption metadata.
+ */
 export interface WrappedKey {
+  /** Hex-encoded salt for PBKDF2 key derivation */
   salt: string;
+  /** Hex-encoded initialization vector for AES-GCM */
   iv: string;
+  /** Hex-encoded authentication tag for AES-GCM */
   authTag: string;
+  /** Hex-encoded encrypted master key */
   encryptedMasterKey: string;
+  /** Number of PBKDF2 iterations used */
   iterations: number;
 }
 
-// Generic password-wrapped secret payload shape
+/**
+ * Generic password-wrapped secret payload with encryption metadata.
+ */
 export interface PasswordWrappedSecret {
+  /** Hex-encoded salt for PBKDF2 key derivation */
   salt: string;
+  /** Hex-encoded initialization vector for AES-GCM */
   iv: string;
+  /** Hex-encoded authentication tag for AES-GCM */
   authTag: string;
+  /** Hex-encoded encrypted secret data */
   ciphertext: string;
+  /** Number of PBKDF2 iterations used */
   iterations: number;
 }
 
+/**
+ * Service for password-based key wrapping and unwrapping operations.
+ * Provides secure master key management with AES-256-GCM encryption and PBKDF2 key derivation.
+ * Supports both synchronous and asynchronous operations with deduplication for concurrent requests.
+ */
 export class KeyWrappingService {
-  // In-flight de-duplication map to share PBKDF2 work across concurrent identical requests
-  // Store a promise of the raw master key bytes, so each caller can get an independent SecureBuffer
+  /**
+   * In-flight de-duplication map to share PBKDF2 work across concurrent identical requests.
+   * Stores promises of base64-encoded master key bytes for sharing across callers.
+   * @private
+   */
   private static inFlightUnwraps: Map<string, Promise<string>> = new Map();
 
   /**
-   * Generates a new master key and wraps it with the user's password
+   * Generates a new random master key and wraps it with the user's password.
+   * @param password User's password for wrapping
+   * @param constants Configuration constants (defaults to Constants)
+   * @returns Object containing the master key and wrapped key metadata
+   * @throws {InvalidNewPasswordError} If password doesn't meet requirements
    */
   public wrapNewMasterKey(
     password: SecureString,
@@ -56,7 +94,12 @@ export class KeyWrappingService {
   }
 
   /**
-   * Wraps an existing master key with a password-derived key
+   * Wraps an existing master key with a password-derived key using AES-256-GCM.
+   * @param masterKey Master key to wrap
+   * @param password User's password for wrapping
+   * @param constants Configuration constants (defaults to Constants)
+   * @returns Wrapped key metadata including salt, IV, auth tag, and encrypted key
+   * @throws {InvalidNewPasswordError} If password doesn't meet requirements
    */
   public wrapMasterKey(
     masterKey: SecureBuffer,
@@ -104,7 +147,12 @@ export class KeyWrappingService {
   }
 
   /**
-   * Unwraps a master key using the user's password
+   * Unwraps a master key using the user's password (synchronous).
+   * @param wrappedKey Wrapped key metadata
+   * @param password User's password for unwrapping
+   * @param constants Configuration constants (defaults to Constants)
+   * @returns Unwrapped master key in a SecureBuffer
+   * @throws {InvalidPasswordError} If password is incorrect or decryption fails
    */
   public unwrapMasterKey(
     wrappedKey: WrappedKey,
@@ -152,6 +200,11 @@ export class KeyWrappingService {
   /**
    * Async version of unwrapMasterKey that uses libuv threadpool via crypto.pbkdf2
    * to avoid blocking the event loop during password verification.
+   * @param wrappedKey Wrapped key metadata
+   * @param password User's password (SecureString or raw string)
+   * @param constants Configuration constants (defaults to Constants)
+   * @returns Promise resolving to unwrapped master key in a SecureBuffer
+   * @throws {InvalidPasswordError} If password is incorrect or decryption fails
    */
   public async unwrapMasterKeyAsync(
     wrappedKey: WrappedKey,
@@ -220,7 +273,12 @@ export class KeyWrappingService {
 
   /**
    * Deduplicated async unwrap that coalesces concurrent identical PBKDF2 operations.
-   * Keyed by salt + iterations + a short hash of the password. Entry is removed after resolve/reject.
+   * Keyed by salt + iterations + password hash to avoid redundant computation.
+   * @param wrappedKey Wrapped key metadata
+   * @param password User's password as string
+   * @param constants Configuration constants (defaults to Constants)
+   * @returns Promise resolving to unwrapped master key in a SecureBuffer
+   * @throws {InvalidPasswordError} If password is incorrect or decryption fails
    */
   public async unwrapMasterKeyAsyncDedup(
     wrappedKey: WrappedKey,
@@ -266,7 +324,14 @@ export class KeyWrappingService {
   }
 
   /**
-   * Changes password by re-wrapping the master key
+   * Changes password by re-wrapping the master key with a new password.
+   * @param wrappedKey Current wrapped key metadata
+   * @param oldPassword Current password
+   * @param newPassword New password
+   * @param constants Configuration constants (defaults to Constants)
+   * @returns New wrapped key metadata
+   * @throws {InvalidPasswordError} If old password is incorrect
+   * @throws {InvalidNewPasswordError} If new password doesn't meet requirements
    */
   public changePassword(
     wrappedKey: WrappedKey,
@@ -286,7 +351,12 @@ export class KeyWrappingService {
   }
 
   /**
-   * Wraps arbitrary secret bytes with a password-derived key (AES-256-GCM)
+   * Wraps arbitrary secret bytes with a password-derived key using AES-256-GCM.
+   * @param secret Secret data to wrap
+   * @param password User's password for wrapping
+   * @param constants Configuration constants (defaults to Constants)
+   * @returns Password-wrapped secret metadata
+   * @throws {InvalidNewPasswordError} If password doesn't meet requirements
    */
   public wrapSecret(
     secret: SecureBuffer,
@@ -332,7 +402,12 @@ export class KeyWrappingService {
   }
 
   /**
-   * Unwraps a password-wrapped secret (sync)
+   * Unwraps a password-wrapped secret (synchronous).
+   * @param wrapped Password-wrapped secret metadata
+   * @param password User's password for unwrapping
+   * @param constants Configuration constants (defaults to Constants)
+   * @returns Unwrapped secret in a SecureBuffer
+   * @throws {InvalidPasswordError} If password is incorrect or decryption fails
    */
   public unwrapSecret(
     wrapped: PasswordWrappedSecret,
@@ -375,7 +450,13 @@ export class KeyWrappingService {
   }
 
   /**
-   * Unwraps a password-wrapped secret (async PBKDF2)
+   * Unwraps a password-wrapped secret using async PBKDF2 to avoid blocking.
+   * @param wrapped Password-wrapped secret metadata
+   * @param password User's password (SecureString or raw string)
+   * @param constants Configuration constants (defaults to Constants)
+   * @returns Promise resolving to unwrapped secret in a SecureBuffer
+   * @throws {InvalidPasswordError} If password is incorrect or decryption fails
+   * @throws {Error} If password is undefined, null, or invalid type
    */
   public async unwrapSecretAsync(
     wrapped: PasswordWrappedSecret,

@@ -1,3 +1,9 @@
+/**
+ * @fileoverview JWT token service for authentication and authorization.
+ * Handles JWT token generation, signing, and verification with role-based access control.
+ * @module services/jwt
+ */
+
 import {
   ITokenRole,
   ITokenRoleDTO,
@@ -28,6 +34,16 @@ const verifyAsync = promisify<
   JwtPayload | string
 >(verify);
 
+/**
+ * Service for JWT token operations including generation, signing, and verification.
+ * Integrates with role service to embed user roles in JWT tokens.
+ * @template I - Platform ID type (defaults to Buffer)
+ * @template D - Date type (defaults to Date)
+ * @template TTokenRole - Token role interface type
+ * @template TTokenUser - Token user interface type
+ * @template TApplication - Application interface type
+ * @extends {BaseService<I, TApplication>}
+ */
 export class JwtService<
   I extends PlatformID = Buffer,
   D extends Date = Date,

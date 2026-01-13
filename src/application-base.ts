@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Base application class with core functionality.
+ * Provides database connection, schema management, and plugin support.
+ * @module application-base
+ */
+
 // Avoid importing from the barrel (../index) here to prevent circular deps
 import mongoose, { Model } from '@digitaldefiance/mongoose-types';
 import {

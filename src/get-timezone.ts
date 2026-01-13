@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Timezone detection and configuration utilities.
+ * Sets global admin timezone from environment or command-line arguments.
+ * @module get-timezone
+ */
+
 import type { Timezone as TimezoneType } from '@digitaldefiance/i18n-lib';
 import {
   GlobalActiveContext,
@@ -9,7 +15,11 @@ import { existsSync, readFileSync } from 'fs';
 // Type for Timezone constructor
 type TimezoneConstructor = new (tz: string) => TimezoneType;
 
-// Helper to create Timezone from the same module instance as GlobalActiveContext
+/**
+ * Creates a Timezone instance from the same module as GlobalActiveContext.
+ * @param {string} tz - Timezone string
+ * @returns {TimezoneType} Timezone instance
+ */
 function createTimezone(tz: string): TimezoneType {
   const context = GlobalActiveContext.getInstance<
     string,
@@ -21,6 +31,11 @@ function createTimezone(tz: string): TimezoneType {
   return new TimezoneConstructor(tz);
 }
 
+/**
+ * Sets global admin timezone from process arguments, environment, or system configuration.
+ * Prioritizes: --timezone argument > TZ env var > /etc/timezone > existing context.
+ * @returns {string} The configured timezone string
+ */
 export function setGlobalActiveContextAdminTimezoneFromProcessArgvOrEnv(): string {
   const systemTz = existsSync('/etc/timezone')
     ? readFileSync('/etc/timezone', 'utf8').trim()

@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Main application class with Express server.
+ * Extends BaseApplication with HTTP/HTTPS server and routing.
+ * @module application
+ */
+
 import { HandleableError } from '@digitaldefiance/i18n-lib';
 import mongoose from '@digitaldefiance/mongoose-types';
 import {

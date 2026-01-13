@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Application router for serving React frontend and API routes.
+ * Handles static file serving, EJS template rendering, and catch-all routing.
+ * @module routers/app
+ */
+
 import {
   CoreI18nComponentId,
   TranslatableGenericError,
@@ -22,27 +28,45 @@ import { debugLog, handleError, sendApiMessageResponse } from '../utils';
 import { BaseRouter } from './base';
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 
+/**
+ * Dummy function to ensure EJS is included in the bundle.
+ * @private
+ */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function keepEJS() {
   ejs.compile(''); // Compile an empty string, doesn't generate anything meaningful
 }
 
 /**
- * Application router
- * Sets up the API and static file serving
+ * Application router for serving React frontend and API routes.
+ * Sets up static file serving, EJS template rendering, and catch-all routing for SPA.
+ * @template I Platform-specific ID type
+ * @template TApplication Application instance type
  */
 export class AppRouter<
   I extends PlatformID = Buffer,
   TApplication extends IApplication<I> = IApplication<I>,
 > {
+  /** Path to EJS views directory */
   protected readonly viewsPath: string;
+  /** Path to index.html file */
   protected readonly indexPath: string;
+  /** Path to assets directory */
   protected readonly assetsDir: string;
+  /** Path to React distribution directory */
   protected readonly reactDistDir: string;
 
+  /** API router instance */
   protected readonly apiRouter: BaseRouter<I, TApplication>;
+  /** Application instance */
   protected readonly application: TApplication;
 
+  /**
+   * Creates a new application router instance.
+   * Validates and resolves all paths to prevent directory traversal attacks.
+   * @param apiRouter API router instance to mount under /api
+   * @throws {TranslatableSuiteError} If paths contain invalid traversal sequences
+   */
   constructor(apiRouter: BaseRouter<I, TApplication>) {
     this.application = apiRouter.application;
     this.apiRouter = apiRouter;
@@ -99,6 +123,12 @@ export class AppRouter<
     this.assetsDir = assetsPath;
   }
 
+  /**
+   * Gets the filename of an asset matching a pattern.
+   * @param assetDir Directory to search in
+   * @param pattern Regular expression pattern to match
+   * @returns Filename if found, undefined otherwise
+   */
   public getAssetFilename(
     assetDir: string,
     pattern: RegExp,
@@ -120,7 +150,13 @@ export class AppRouter<
     }
   }
 
-  // Allow subclasses to register additional catch-all handlers before rendering the index page.
+  /**
+   * Gets base view locals for EJS template rendering.
+   * Subclasses can override to add additional locals.
+   * @param req Express request
+   * @param res Express response
+   * @returns Object containing base template variables
+   */
   protected getBaseViewLocals(
     req: Request,
     res: Response,
@@ -148,6 +184,14 @@ export class AppRouter<
     };
   }
 
+  /**
+   * Renders an EJS template with the provided locals.
+   * @param req Express request
+   * @param res Express response
+   * @param next Express next function
+   * @param template Template name to render
+   * @param locals Template variables
+   */
   protected renderTemplate(
     req: Request,
     res: Response,
@@ -197,6 +241,12 @@ export class AppRouter<
     });
   }
 
+  /**
+   * Creates a view renderer function for a specific template.
+   * @param template Template name to render
+   * @param localsFactory Optional function to generate additional locals
+   * @returns Express middleware function
+   */
   protected createViewRenderer(
     template: string,
     localsFactory?: (req: Request, res: Response) => Record<string, unknown>,
@@ -213,11 +263,18 @@ export class AppRouter<
 
   /**
    * Override to register additional routes (e.g. other EJS pages) before the index catch-all.
+   * @param app Express application
    */
   protected registerAdditionalRenderHooks(app: Application): void {
     void app;
   }
 
+  /**
+   * Renders the index.html page with injected asset paths.
+   * @param req Express request
+   * @param res Express response
+   * @param next Express next function
+   */
   public renderIndex(req: Request, res: Response, next: NextFunction): void {
     if (req.url.endsWith('.js')) {
       res.type('application/javascript');
@@ -235,9 +292,10 @@ export class AppRouter<
   }
 
   /**
-   * Initialize the application router
+   * Initializes the application router with all routes and middleware.
+   * Sets up API routes, static file serving, and catch-all routing.
    * @param app Express application
-   * @param debugRoutes Whether to log routes
+   * @throws {TranslatableGenericError} If index file not found or invalid paths
    */
   public init(app: Application) {
     const reactDistHasDistSegment = this.reactDistDir

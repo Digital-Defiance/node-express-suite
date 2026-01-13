@@ -1,4 +1,10 @@
 /**
+ * @fileoverview Type-safe environment variable access utilities.
+ * Provides utilities for safely accessing environment variables.
+ * @module types/environment-variables
+ */
+
+/**
  * Type-safe environment variable access utilities
  */
 

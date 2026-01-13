@@ -1,9 +1,17 @@
+/**
+ * @fileoverview Schema interface for Mongoose model registration.
+ * Defines structure for schema map entries with models and discriminators.
+ * @module interfaces/schema
+ */
+
 import { Model, Schema } from '@digitaldefiance/mongoose-types';
 import { IBaseDocument } from '../documents/base';
 import { IDiscriminatorCollections } from '../interfaces/discriminator-collections';
 
 /**
- * Interface for each schema in the schema map
+ * Interface for each schema in the schema map.
+ * Combines Mongoose schema, model, and collection metadata with optional discriminators.
+ * @template T - Document type extending IBaseDocument
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface ISchema<T extends IBaseDocument<any>> {

@@ -1,3 +1,9 @@
+/**
+ * @fileoverview API router configuration with dependency injection and service registration.
+ * Manages user controller and all required services for API endpoints.
+ * @module routers/api
+ */
+
 import { IECIESConfig } from '@digitaldefiance/ecies-lib';
 import { ECIESService, PlatformID } from '@digitaldefiance/node-ecies-lib';
 import {
@@ -21,7 +27,19 @@ import { UserService } from '../services/user';
 import { BaseRouter } from './base';
 
 /**
- * Router for the API
+ * Router for the API endpoints.
+ * Manages user controller and registers all required services via dependency injection.
+ * @template I Platform-specific ID type
+ * @template D Date type
+ * @template S Site language string literal type
+ * @template A Account status string literal type
+ * @template TUser User base type
+ * @template TTokenRole Token role type
+ * @template TBaseDocument Base document type
+ * @template TTokenUser Token user type
+ * @template TConstants Constants type
+ * @template TEnvironment Environment type
+ * @template TApplication Application type
  */
 export class ApiRouter<
   I extends PlatformID,
@@ -36,6 +54,7 @@ export class ApiRouter<
   TEnvironment extends Environment<I> = Environment<I>,
   TApplication extends IApplication<I> = IApplication<I>,
 > extends BaseRouter<I, TApplication> {
+  /** User controller for handling user-related API endpoints */
   private readonly userController: UserController<
     I,
     D,
@@ -46,6 +65,7 @@ export class ApiRouter<
     TTokenUser,
     TApplication
   >;
+  /** JWT service for token generation and validation */
   private readonly jwtService: JwtService<
     I,
     D,
@@ -53,7 +73,9 @@ export class ApiRouter<
     TTokenUser,
     TApplication
   >;
+  /** Email service for sending emails */
   private readonly emailService: IEmailService;
+  /** User service for user management operations */
   private readonly userService: UserService<
     any,
     I,
@@ -67,9 +89,13 @@ export class ApiRouter<
     TTokenRole,
     TApplication
   >;
+  /** Role service for role management operations */
   private readonly roleService: RoleService<I, D, TTokenRole>;
+  /** Key wrapping service for password-based encryption */
   private readonly keyWrappingService: KeyWrappingService;
+  /** ECIES service for elliptic curve encryption */
   private readonly eciesService: ECIESService;
+  /** Backup code service for generating and validating backup codes */
   private readonly backupCodeService: BackupCodeService<
     I,
     D,
@@ -77,9 +103,9 @@ export class ApiRouter<
     TApplication
   >;
   /**
-   * Constructor for the API router
-   * @param connection The mongoose connection
-   * @param getModel The function to get a mongoose model by name
+   * Creates a new API router instance.
+   * Registers all required services and initializes the user controller.
+   * @param application Application instance with database connection and configuration
    */
   constructor(application: TApplication) {
     super(application);
@@ -113,6 +139,11 @@ export class ApiRouter<
     this.router.use('/user', this.userController.router);
   }
 
+  /**
+   * Registers all required services in the application service container.
+   * Services are registered as singletons and lazily instantiated.
+   * @private
+   */
   private registerServices(): void {
     const app = this.application;
 

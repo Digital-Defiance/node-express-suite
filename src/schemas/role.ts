@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Role schema factory for MongoDB with RBAC support.
+ * Creates schema for role management with validation and immutability.
+ * @module schemas/role
+ */
+
 import {
   CallbackWithoutResultAndOptionalError,
   Schema,
@@ -11,7 +17,9 @@ import { BaseModelName } from '../enumerations';
 import { IConstants } from '../interfaces';
 
 /**
- * Configuration options for creating a role schema
+ * Configuration options for creating a role schema.
+ * @template TRole - Role enum type (defaults to Role)
+ * @template TModelName - Model name type (defaults to BaseModelName)
  */
 export interface RoleSchemaOptions<
   TRole extends string = Role,
@@ -31,7 +39,14 @@ export interface RoleSchemaOptions<
 }
 
 /**
- * Factory function to create an extensible role schema
+ * Factory function to create an extensible role schema.
+ * Includes pre-save validation to prevent invalid role combinations.
+ * @template TRole - Role enum type (defaults to Role)
+ * @template TModelName - Model name type (defaults to BaseModelName)
+ * @template TConstants - Constants type (defaults to IConstants)
+ * @param {RoleSchemaOptions<TRole, TModelName>} options - Schema configuration options
+ * @param {TConstants} _constants - Optional constants (reserved for future use)
+ * @returns {Schema} Configured role schema with validation hooks
  */
 export function createRoleSchema<
   TRole extends string = Role,
@@ -132,6 +147,7 @@ export function createRoleSchema<
 }
 
 /**
- * Default role schema with base configuration
+ * Default role schema with base configuration.
+ * Pre-configured schema with Role enum and validation hooks.
  */
 export const RoleSchema = createRoleSchema();

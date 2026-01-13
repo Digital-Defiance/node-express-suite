@@ -1,3 +1,10 @@
+/**
+ * @fileoverview Comprehensive user management service.
+ * Handles user authentication, registration, password management, email verification,
+ * mnemonic recovery, backup codes, and all user-related operations.
+ * @module services/user
+ */
+
 import {
   EmailString,
   IECIESConfig,
@@ -82,6 +89,23 @@ import { SystemUserService } from './system-user';
 
 type ProjectionObject = Record<string, 0 | 1 | -1 | boolean>;
 
+/**
+ * Comprehensive service for user management and authentication.
+ * Provides methods for user creation, authentication (mnemonic/password/challenge),
+ * email verification, password reset, backup code recovery, and settings management.
+ * @template T - User document type
+ * @template I - Platform ID type
+ * @template D - Date type
+ * @template S - String type for site language
+ * @template A - String type for account status
+ * @template _TEnvironment - Environment type
+ * @template _TConstants - Constants type
+ * @template _TBaseDocument - Base document type
+ * @template TUser - User base interface type
+ * @template TTokenRole - Token role interface type
+ * @template TApplication - Application interface type
+ * @extends {BaseService<I, TApplication>}
+ */
 export class UserService<
   T,
   I extends PlatformID,

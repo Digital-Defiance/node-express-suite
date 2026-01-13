@@ -1,3 +1,8 @@
+/**
+ * @fileoverview Concrete implementation of the Application class for testing and development.
+ * @module application-concrete
+ */
+
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 import { Application } from './application';
 import { LocalhostConstants } from './constants';
@@ -10,7 +15,10 @@ import { DatabaseInitializationService } from './services';
 import { DummyEmailService } from './services/dummy-email-service';
 
 /**
- * Test application concrete class
+ * Concrete implementation of the Application class for testing and development purposes.
+ * Provides a ready-to-use application instance with default configuration and dummy email service.
+ *
+ * @template TID - Platform ID type (Buffer, ObjectId, etc.)
  */
 export class ApplicationConcrete<
   TID extends PlatformID = Buffer,
@@ -22,6 +30,12 @@ export class ApplicationConcrete<
   IConstants,
   AppRouter<TID>
 > {
+  /**
+   * Creates a new concrete application instance.
+   *
+   * @param environment - Application environment configuration
+   * @param constants - Application constants (defaults to LocalhostConstants)
+   */
   constructor(
     environment: Environment<TID>,
     constants: IConstants = LocalhostConstants,

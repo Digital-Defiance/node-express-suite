@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Default runtime configuration for Express application constants.
+ * Provides configuration registry and factory functions for creating customized constant sets.
+ * @module defaults
+ */
+
 import {
   ECIES as BaseECIES,
   IIdProviderBase,

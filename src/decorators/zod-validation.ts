@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Zod schema validation decorator.
+ * Converts Zod schemas to express-validator chains.
+ * @module decorators/zod-validation
+ */
+
 import { ValidationChain, body } from 'express-validator';
 import { z } from 'zod';
 

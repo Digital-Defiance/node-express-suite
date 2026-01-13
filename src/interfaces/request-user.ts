@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Request user interface for Express request object.
+ * Defines user data structure attached to authenticated requests.
+ * @module interfaces/request-user
+ */
+
 import {
   ICombinedRolePrivileges,
   IRoleDTO,
@@ -7,8 +13,12 @@ import { IRoleBackendObject } from './backend-objects/role';
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 
 /**
- * Interface for the user object stored in the request object
- * This is not used for mongoose but for request handling
+ * Interface for the user object stored in the request object.
+ * Used for request handling, not for Mongoose documents.
+ * @template I - Platform ID type (defaults to Buffer)
+ * @template R - Role array type (defaults to IRoleDTO[])
+ * @template S - String type for language (defaults to string)
+ * @template D - Date type (defaults to string)
  */
 export interface IRequestUser<
   I extends PlatformID = Buffer,

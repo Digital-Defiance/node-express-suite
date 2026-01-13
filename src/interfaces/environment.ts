@@ -1,8 +1,19 @@
+/**
+ * @fileoverview Environment interface defining application configuration and credentials.
+ * Contains all environment variables, database configuration, and user credentials.
+ * @module interfaces/environment
+ */
+
 import { SecureBuffer, SecureString } from '@digitaldefiance/ecies-lib';
 import { BackupCode } from '../backup-code';
 import { IMongoEnvironment } from './environment-mongo';
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 
+/**
+ * Environment configuration interface for the application.
+ * Contains all configuration values, credentials, and environment-specific settings.
+ * @template I Platform-specific ID type (Buffer, ObjectId, etc.)
+ */
 export interface IEnvironment<I extends PlatformID = Buffer> {
   /**
    * Whether to use a memory database for local development (eg with MongoMemoryServer)

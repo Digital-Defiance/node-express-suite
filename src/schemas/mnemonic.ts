@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Mnemonic schema factory for MongoDB.
+ * Creates schema for storing HMAC-protected mnemonic hashes.
+ * @module schemas/mnemonic
+ */
+
 import { Schema } from '@digitaldefiance/mongoose-types';
 import {
   getSuiteCoreTranslation,
@@ -7,7 +13,11 @@ import { LocalhostConstants as AppConstants } from '../constants';
 import { IConstants } from '../interfaces/constants';
 
 /**
- * Create a mnemonic schema with custom or default constants
+ * Creates a mnemonic schema with custom or default constants.
+ * @template T - Constants type extending IConstants
+ * @param {Function} [validationMessage] - Optional custom validation message function
+ * @param {T} constants - Constants for validation (defaults to AppConstants)
+ * @returns {Schema} Configured mnemonic schema
  */
 export function createMnemonicSchema<T extends IConstants = IConstants>(
   validationMessage?: () => string,
@@ -32,6 +42,7 @@ export function createMnemonicSchema<T extends IConstants = IConstants>(
 }
 
 /**
- * Default mnemonic schema using AppConstants
+ * Default mnemonic schema using AppConstants.
+ * Pre-configured schema for standard mnemonic storage.
  */
 export const MnemonicSchema = createMnemonicSchema();

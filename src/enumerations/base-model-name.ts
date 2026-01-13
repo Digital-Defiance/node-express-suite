@@ -1,4 +1,10 @@
 /**
+ * @fileoverview Base model name enumeration for MongoDB collections.
+ * Defines standard model names used throughout the application.
+ * @module enumerations/base-model-name
+ */
+
+/**
  * Base enumeration of required model names for the node-express-suite.
  */
 export enum BaseModelName {

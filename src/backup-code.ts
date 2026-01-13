@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Backup code implementation with v1.0.0 encryption scheme.
+ * Provides secure backup code generation, encryption, validation using Argon2id and HKDF-SHA256.
+ * @module backup-code
+ */
+
 import { MemberType } from '@digitaldefiance/ecies-lib';
 import {
   Constants as ApiConstants,

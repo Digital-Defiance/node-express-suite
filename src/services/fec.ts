@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Forward Error Correction (FEC) service using Reed-Solomon erasure coding.
+ * Provides parity data creation, file recovery, and integrity verification for distributed storage.
+ * @module services/fec
+ */
+
 import { FecError, FecErrorType } from '@digitaldefiance/suite-core-lib';
 import { ReedSolomonErasure } from '@subspace/reed-solomon-erasure.wasm';
 import { FEC } from '../constants';
@@ -16,19 +22,37 @@ import { IFECConsts } from '../interfaces';
  * 3. Recover lost shards using parity
  */
 
+/**
+ * Represents parity data for a specific shard index.
+ */
 export interface ParityData {
+  /** Parity data buffer */
   data: Buffer;
+  /** Index of the parity shard */
   index: number;
 }
 
+/**
+ * Result of a file recovery operation.
+ */
 export interface RecoveryResult {
+  /** Recovered file data */
   data: Buffer;
+  /** Whether parity data was used for recovery */
   recovered: boolean;
 }
+
 export class FecService {
   /**
-   * Given a data buffer, encode it using Reed-Solomon erasure coding.
-   * This will produce a buffer of size (shardSize * (dataShards + parityShards)) or (shardSize * parityShards) if fecOnly is true.
+   * Encodes data using Reed-Solomon erasure coding.
+   * @param data Data buffer to encode
+   * @param shardSize Size of each shard in bytes
+   * @param dataShards Number of data shards
+   * @param parityShards Number of parity shards
+   * @param fecOnly If true, returns only parity shards; otherwise returns all shards
+   * @param fecConstants FEC constants (defaults to FEC)
+   * @returns Encoded buffer containing shards
+   * @throws {FecError} If parameters are invalid or encoding fails
    */
   public async encode(
     data: Buffer,
@@ -81,8 +105,14 @@ export class FecService {
   }
 
   /**
-   * Given a data buffer, reconstruct/repair it using Reed-Solomon erasure coding.
-   * This will produce a buffer of size (shardSize * dataShards).
+   * Decodes/reconstructs data using Reed-Solomon erasure coding.
+   * @param data Encoded data buffer containing all shards
+   * @param shardSize Size of each shard in bytes
+   * @param dataShards Number of data shards
+   * @param parityShards Number of parity shards
+   * @param shardsAvailable Boolean array indicating which shards are available
+   * @returns Reconstructed data buffer
+   * @throws {FecError} If parameters are invalid or decoding fails
    */
   public async decode(
     data: Buffer,
@@ -137,7 +167,12 @@ export class FecService {
   }
 
   /**
-   * Create parity data for a file buffer.
+   * Creates parity data for a file buffer.
+   * @param fileData File data to create parity for
+   * @param parityCount Number of parity shards to create
+   * @param fecConstants FEC constants (defaults to FEC)
+   * @returns Array of parity data objects
+   * @throws {FecError} If parameters are invalid or encoding fails
    */
   public async createParityData(
     fileData: Buffer,
@@ -206,7 +241,13 @@ export class FecService {
   }
 
   /**
-   * Recover file data using parity data. Pass null for corrupted data.
+   * Recovers file data using parity data. Pass null for corrupted data.
+   * @param corruptedData Corrupted file data or null if completely lost
+   * @param parityData Array of parity data objects
+   * @param originalSize Original file size in bytes
+   * @param fecConstants FEC constants (defaults to FEC)
+   * @returns Recovery result with data and recovery status
+   * @throws {FecError} If parameters are invalid or recovery fails
    */
   public async recoverFileData(
     corruptedData: Buffer | null,
@@ -329,7 +370,10 @@ export class FecService {
   }
 
   /**
-   * Verify file integrity using parity data.
+   * Verifies file integrity using parity data.
+   * @param fileData File data to verify
+   * @param parityData Array of parity data objects
+   * @returns True if file integrity is verified, false otherwise
    */
   public async verifyFileIntegrity(
     fileData: Buffer,

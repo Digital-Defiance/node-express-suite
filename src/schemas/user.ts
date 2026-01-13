@@ -1,3 +1,9 @@
+/**
+ * @fileoverview User schema factory for MongoDB with comprehensive validation.
+ * Creates schema for user management with authentication and preferences.
+ * @module schemas/user
+ */
+
 import { isValidTimezone, LanguageCodes } from '@digitaldefiance/i18n-lib';
 import { Schema } from '@digitaldefiance/mongoose-types';
 import {
@@ -11,6 +17,19 @@ import { LocalhostConstants as AppConstants } from '../constants';
 import { BaseModelName } from '../enumerations';
 import { IConstants } from '../interfaces/constants';
 
+/**
+ * Creates a user schema with custom or default constants.
+ * Includes validation for username, email, timezone, currency, and language.
+ * @template T - Constants type extending IConstants
+ * @param {Function} [usernameValidationMessage] - Custom username validation message
+ * @param {Function} [emailValidationMessage] - Custom email validation message
+ * @param {Function} [timezoneValidationMessage] - Custom timezone validation message
+ * @param {Function} [currencyValidationMessage] - Custom currency validation message
+ * @param {readonly string[]} [supportedLanguages] - Supported language codes
+ * @param {any} idType - ID type for references (defaults to ObjectId)
+ * @param {T} constants - Constants for validation (defaults to AppConstants)
+ * @returns {Schema} Configured user schema with timestamps
+ */
 export function createUserSchema<T extends IConstants = IConstants>(
   usernameValidationMessage?: () => string,
   emailValidationMessage?: () => string,
@@ -219,6 +238,7 @@ export function createUserSchema<T extends IConstants = IConstants>(
 }
 
 /**
- * Default user schema with base configuration
+ * Default user schema with base configuration.
+ * Pre-configured schema with standard validation and supported languages.
  */
 export const UserSchema = createUserSchema();

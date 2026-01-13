@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Application constants including checksum, JWT, FEC, and ECIES configurations.
+ * Provides factory functions for creating environment-specific constant sets.
+ * @module constants
+ */
+
 import { ECIES as ECIESDefaults } from '@digitaldefiance/ecies-lib';
 import { Constants as NodeEciesConstants } from '@digitaldefiance/node-ecies-lib';
 import {

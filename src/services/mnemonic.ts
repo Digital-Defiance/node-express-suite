@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Mnemonic phrase management service.
+ * Securely stores mnemonic HMACs for uniqueness checking without exposing phrases.
+ * @module services/mnemonic
+ */
+
 import { SecureBuffer, SecureString } from '@digitaldefiance/ecies-lib';
 import { ClientSession, Model } from '@digitaldefiance/mongoose-types';
 import {
@@ -10,8 +16,9 @@ import { IConstants } from '../interfaces';
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 
 /**
- * Encrypts and stores mnemonics securely, using an HMAC to check for
- * uniqueness without exposing the mnemonic itself.
+ * Service for secure mnemonic phrase storage and validation.
+ * Uses HMAC for uniqueness checking without storing actual mnemonics.
+ * @template I - Platform ID type (defaults to Buffer)
  */
 export class MnemonicService<I extends PlatformID = Buffer> {
   private readonly hmacSecret: SecureBuffer;

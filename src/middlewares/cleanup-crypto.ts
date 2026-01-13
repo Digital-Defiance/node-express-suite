@@ -1,8 +1,18 @@
+/**
+ * @fileoverview Cleanup middleware for disposing cryptographic resources.
+ * Ensures private keys and sensitive material are properly disposed after request completion.
+ * @module middlewares/cleanup-crypto
+ */
+
 import { NextFunction, Request, Response } from 'express';
 
 /**
- * Middleware to clean up crypto resources after request completion
- * Should be used after crypto operations to ensure private keys are disposed
+ * Express middleware to cleanup cryptographic resources after request completion.
+ * Wraps response.end() to dispose of req.eciesUser before sending response.
+ * Should be registered early in middleware chain to ensure cleanup on all responses.
+ * @param {Request} req - Express request object
+ * @param {Response} res - Express response object
+ * @param {NextFunction} next - Express next function
  */
 export function cleanupCrypto(
   req: Request,

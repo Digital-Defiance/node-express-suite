@@ -1,4 +1,10 @@
 /**
+ * @fileoverview Type-safe helpers for Mongoose operations.
+ * Provides utility types for Mongoose queries and projections.
+ * @module types/mongoose-helpers
+ */
+
+/**
  * Type-safe helpers for Mongoose operations
  */
 

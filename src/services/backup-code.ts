@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Backup code service for secure account recovery.
+ * Implements v1.0.0 backup code scheme with Argon2id KDF and HKDF-SHA256 checksums.
+ * @module services/backup-code
+ */
+
 import {
   EmailString,
   MemberType,
@@ -28,14 +34,13 @@ import { SymmetricService } from './symmetric';
 import { SystemUserService } from './system-user';
 
 /**
- * Service handling generation, storage, validation, consumption, and recovery using backup codes.
- *
- * v1 scheme:
- * - Code: 32 lowercase alphanumerics (a–z0–9), displayed as 8 groups of 4: xxxx-xxxx-xxxx-xxxx-xxxx-xxxx-xxxx-xxxx
- * - Checksum/tag: HKDF-SHA256(codeUtf8, salt, "backup-checksum") → 32 bytes (stored as hex)
- * - KDF for encryption key: Argon2id(codeUtf8, salt) → 32 bytes
- * - Encryption: SymmetricService AEAD (encryptedData must embed IV + authTag + ciphertext)
- * - Wrapping: AEAD blob wrapped with system user's asymmetric key (ECIES)
+ * Service for backup code generation, validation, and key recovery.
+ * Implements secure backup code scheme with constant-time validation and key wrapping.
+ * @template I - Platform ID type (defaults to Buffer)
+ * @template D - Date type (defaults to Date)
+ * @template TTokenRole - Token role interface type
+ * @template TApplication - Application interface type
+ * @extends {BaseService<I>}
  */
 export class BackupCodeService<
   I extends PlatformID = Buffer,

@@ -1,9 +1,18 @@
+/**
+ * @fileoverview User-role relationship document interface for MongoDB collections.
+ * Combines base document properties with user-role association fields.
+ * @module documents/user-role
+ */
+
 import { IUserRoleBase } from '@digitaldefiance/suite-core-lib';
 import { IBaseDocument } from './base';
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 
 /**
- * Composite interface for user-role collection documents
+ * Composite interface for user-role collection documents.
+ * Extends base document with user-role relationship properties linking users to their assigned roles.
+ * Supports many-to-many relationships between users and roles with timestamps.
+ * @template I Platform-specific ID type (Buffer, ObjectId, etc.)
  */
 export type IUserRoleDocument<I extends PlatformID = Buffer> = IBaseDocument<
   IUserRoleBase<I, Date>,

@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Base service class providing common functionality for all services.
+ * Includes transaction management utilities.
+ * @module services/base
+ */
+
 import { ClientSession } from '@digitaldefiance/mongoose-types';
 import { IApplication } from '../interfaces/application';
 import { TransactionCallback } from '../types';
@@ -7,6 +13,12 @@ import {
 } from '../utils';
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 
+/**
+ * Base service class providing common functionality for all services.
+ * Includes transaction wrapper for database operations.
+ * @template TID - Platform ID type (defaults to Buffer)
+ * @template TApplication - Application interface type
+ */
 export class BaseService<
   TID extends PlatformID = Buffer,
   TApplication extends IApplication<TID> = IApplication<TID>,

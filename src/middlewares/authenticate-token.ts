@@ -1,3 +1,9 @@
+/**
+ * @fileoverview JWT token authentication middleware.
+ * Validates bearer tokens, loads user data, and sets up request context.
+ * @module middlewares/authenticate-token
+ */
+
 import type { Timezone as TimezoneType } from '@digitaldefiance/i18n-lib';
 import { GlobalActiveContext } from '@digitaldefiance/i18n-lib';
 import { ClientSession } from '@digitaldefiance/mongoose-types';
@@ -32,9 +38,9 @@ function createTimezone(tz: string): TimezoneType {
 }
 
 /**
- * Find the auth token in the headers
- * @param headers The headers
- * @returns The auth token
+ * Extracts bearer token from HTTP request headers.
+ * @param {IncomingHttpHeaders} headers - HTTP request headers
+ * @returns {string | null} Bearer token if found, null otherwise
  */
 export function findAuthToken(headers: IncomingHttpHeaders): string | null {
   const authHeader = headers['Authorization'] || headers['authorization'];
@@ -48,12 +54,20 @@ export function findAuthToken(headers: IncomingHttpHeaders): string | null {
 }
 
 /**
- * Middleware to authenticate a token
- * @param application The application
- * @param req The request
- * @param res The response
- * @param next The next function
- * @returns The response
+ * Express middleware for JWT token authentication.
+ * Validates token, loads user from database, checks account status,
+ * and populates req.user with authenticated user data.
+ * @template I - Platform ID type (defaults to Buffer)
+ * @template D - Date type (defaults to Date)
+ * @template TTokenRole - Token role interface type
+ * @template TTokenUser - Token user interface type
+ * @template TApplication - Application interface type
+ * @param {TApplication} application - Application instance
+ * @param {Request} req - Express request object
+ * @param {Response} res - Express response object
+ * @param {NextFunction} next - Express next function
+ * @returns {Promise<Response>} Response object
+ * @throws {TokenExpiredError} When token has expired
  */
 export async function authenticateToken<
   I extends PlatformID = Buffer,

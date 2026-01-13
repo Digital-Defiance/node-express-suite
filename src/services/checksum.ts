@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Service for calculating and validating SHA3-512 checksums.
+ * Provides checksum operations for buffers, strings, files, and streams.
+ * @module services/checksum
+ */
+
 import {
   ChecksumBuffer,
   ChecksumString,
@@ -8,10 +14,21 @@ import { CHECKSUM } from '../constants';
 import { IChecksumConfig } from '../interfaces/checksum-config';
 import { IChecksumConsts } from '../interfaces/checksum-consts';
 
+/**
+ * Service for calculating and validating SHA3-512 checksums.
+ * Supports multiple input types including buffers, strings, files, and streams.
+ */
 export class ChecksumService {
+  /** Checksum configuration (algorithm and encoding) */
   private readonly config: IChecksumConfig;
+  /** Checksum constants (buffer lengths and defaults) */
   protected readonly constants: IChecksumConsts;
 
+  /**
+   * Creates a new checksum service instance.
+   * @param config Optional configuration overrides
+   * @param constants Checksum constants (defaults to CHECKSUM)
+   */
   constructor(
     config?: Partial<IChecksumConfig>,
     constants: IChecksumConsts = CHECKSUM,
@@ -25,9 +42,9 @@ export class ChecksumService {
   }
 
   /**
-   * Calculate a checksum for a buffer
-   * @param data - The data to calculate the checksum for
-   * @returns The checksum as a Buffer
+   * Calculates a checksum for a buffer.
+   * @param data Buffer to calculate checksum for
+   * @returns Checksum as a Buffer
    */
   public calculateChecksum(data: Buffer): ChecksumBuffer {
     const hash = createHash(this.config.algorithm);
@@ -37,9 +54,9 @@ export class ChecksumService {
   }
 
   /**
-   * Calculate a checksum for multiple buffers
-   * @param buffers - The buffers to calculate the checksum for
-   * @returns The checksum as a Buffer
+   * Calculates a checksum for multiple buffers.
+   * @param buffers Array of buffers to calculate checksum for
+   * @returns Checksum as a Buffer
    */
   public calculateChecksumForBuffers(buffers: Buffer[]): ChecksumBuffer {
     const hash = createHash(this.config.algorithm);
@@ -51,19 +68,19 @@ export class ChecksumService {
   }
 
   /**
-   * Calculate a checksum for a string
-   * @param str - The string to calculate the checksum for
-   * @returns The checksum as a Buffer
+   * Calculates a checksum for a UTF-8 string.
+   * @param str String to calculate checksum for
+   * @returns Checksum as a Buffer
    */
   public calculateChecksumForString(str: string): ChecksumBuffer {
     return this.calculateChecksum(Buffer.from(str, 'utf8'));
   }
 
   /**
-   * Compare two checksums for equality
-   * @param checksum1 - The first checksum
-   * @param checksum2 - The second checksum
-   * @returns True if the checksums are equal, false otherwise
+   * Compares two checksums for equality.
+   * @param checksum1 First checksum
+   * @param checksum2 Second checksum
+   * @returns True if checksums are equal, false otherwise
    */
   public compareChecksums(
     checksum1: ChecksumBuffer,
@@ -79,18 +96,19 @@ export class ChecksumService {
   }
 
   /**
-   * Convert a checksum to a hex string
-   * @param checksum - The checksum to convert
-   * @returns The checksum as a hex string
+   * Converts a checksum buffer to a hex string.
+   * @param checksum Checksum buffer
+   * @returns Checksum as a hex string
    */
   public checksumToHexString(checksum: ChecksumBuffer): ChecksumString {
     return checksum.toString(this.constants.ENCODING) as ChecksumString;
   }
 
   /**
-   * Convert a hex string to a checksum
-   * @param hexString - The hex string to convert
-   * @returns The checksum as a Buffer
+   * Converts a hex string to a checksum buffer.
+   * @param hexString Hex string to convert
+   * @returns Checksum as a Buffer
+   * @throws {Error} If hex string length is invalid
    */
   public hexStringToChecksum(hexString: string): ChecksumBuffer {
     if (hexString.length !== this.constants.SHA3_BUFFER_LENGTH * 2) {
@@ -100,18 +118,19 @@ export class ChecksumService {
   }
 
   /**
-   * Validate a checksum buffer
-   * @param checksum - The checksum to validate
-   * @returns True if the checksum is valid, false otherwise
+   * Validates a checksum buffer length.
+   * @param checksum Checksum buffer to validate
+   * @returns True if checksum length is valid, false otherwise
    */
   public validateChecksum(checksum: ChecksumBuffer): boolean {
     return checksum.length === this.constants.SHA3_BUFFER_LENGTH;
   }
 
   /**
-   * Calculate a checksum for a file
-   * @param filePath - The path to the file
-   * @returns The checksum as a Buffer
+   * Calculates a checksum for a file.
+   * @param filePath Path to the file
+   * @returns Promise resolving to checksum as a Buffer
+   * @throws {Error} If file cannot be read
    */
   public async calculateChecksumForFile(
     filePath: string,
@@ -124,7 +143,10 @@ export class ChecksumService {
   }
 
   /**
-   * Internal file reading method
+   * Internal file reading method using fs.promises.
+   * @param filePath Path to the file
+   * @returns Promise resolving to file contents as Buffer
+   * @throws {Error} If file cannot be read
    * @private
    */
   private async readFile(filePath: string): Promise<Buffer> {
@@ -138,9 +160,9 @@ export class ChecksumService {
   }
 
   /**
-   * Calculate a checksum for a stream
-   * @param stream - The readable stream
-   * @returns The checksum as a Buffer
+   * Calculates a checksum for a readable stream.
+   * @param stream Readable stream to calculate checksum for
+   * @returns Promise resolving to checksum as a Buffer
    */
   public calculateChecksumForStream(
     stream: NodeJS.ReadableStream,

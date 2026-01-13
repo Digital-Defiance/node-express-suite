@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Schema map factory and base model document types.
+ * Creates Mongoose schema map with models for all base collections.
+ * @module schemas/schema
+ */
+
 import { Connection, Schema } from '@digitaldefiance/mongoose-types';
 import {
   IEmailTokenDocument,
@@ -27,6 +33,10 @@ import {
 import { UserSchema, createUserSchema } from './user';
 import { UserRoleSchema, createUserRoleSchema } from './user-role';
 
+/**
+ * Base model document types for all collections.
+ * Maps model names to their document interfaces.
+ */
 export interface BaseModelDocs {
   EmailToken: IEmailTokenDocument;
   Mnemonic: IMnemonicDocument;
@@ -36,6 +46,10 @@ export interface BaseModelDocs {
   UserRole: IUserRoleDocument;
 }
 
+/**
+ * Options for customizing schema map creation.
+ * Allows overriding constants, schemas, model names, and collection names.
+ */
 export interface SchemaMapOptions {
   constants?: IConstants;
   schemas?: {
@@ -64,6 +78,12 @@ export interface SchemaMapOptions {
   };
 }
 
+/**
+ * Creates a schema map with all base models.
+ * @param {Connection} connection - Mongoose connection instance
+ * @param {SchemaMapOptions} options - Optional customization options
+ * @returns {SchemaMap<BaseModelDocs>} Complete schema map with models
+ */
 export function getSchemaMap(
   connection: Connection,
   options: SchemaMapOptions = {},

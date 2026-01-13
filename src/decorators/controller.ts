@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Controller and route decorators.
+ * Provides TypeScript decorators for defining Express routes.
+ * @module decorators/controller
+ */
+
 import { CoreLanguageCode } from '@digitaldefiance/i18n-lib';
 import { RequestHandler } from 'express';
 import { ValidationChain } from 'express-validator';

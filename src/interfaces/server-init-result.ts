@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Server initialization result interface.
+ * Defines structure for test server initialization with admin, member, and system users.
+ * @module interfaces/server-init-result
+ */
+
 import { Member, PlatformID } from '@digitaldefiance/node-ecies-lib';
 import { IRoleDocument } from '../documents/role';
 import { IUserDocument } from '../documents/user';
@@ -6,6 +12,11 @@ import { IUserRoleDocument } from '../documents/user-role';
 // Re-export essential document types
 export type { IRoleDocument, IUserDocument, IUserRoleDocument };
 
+/**
+ * Result of server initialization for testing.
+ * Contains admin, member, and system user accounts with credentials and roles.
+ * @template I - Platform ID type (defaults to Buffer)
+ */
 export interface IServerInitResult<I extends PlatformID = Buffer> {
   adminRole: IRoleDocument<I>;
   adminUser: IUserDocument<string, I>;

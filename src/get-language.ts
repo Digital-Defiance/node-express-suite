@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Language detection and configuration utilities.
+ * Sets global admin language from environment or command-line arguments.
+ * @module get-language
+ */
+
 import {
   GlobalActiveContext,
   IActiveContext,
@@ -9,6 +15,11 @@ import {
 } from '@digitaldefiance/suite-core-lib';
 import { debugLog } from './utils';
 
+/**
+ * Sets global admin language from process arguments or environment variables.
+ * Prioritizes command-line --language argument, then LANGUAGE env var, then existing context.
+ * @returns {string} The configured language code
+ */
 export function setGlobalActiveContextAdminLanguageFromProcessArgvOrEnv(): string {
   const consoleLanguageEnv = process.env['LANGUAGE'];
   const consoleLanguageArgv = process.argv.find((arg) =>

@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Controller configuration interface.
+ * Defines type configuration for controllers with platform-specific types.
+ * @module interfaces/controller-config
+ */
+
 import {
   ITokenRole,
   ITokenUser,
@@ -9,6 +15,14 @@ import { IApplication } from './application';
 import { IConstants } from './constants';
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 
+/**
+ * Configuration interface for controller type parameters.
+ * Defines all type parameters used across controllers.
+ * @template I - Platform ID type (defaults to Buffer)
+ * @template D - Date type (defaults to Date)
+ * @template S - String type (defaults to string)
+ * @template A - Account status type (defaults to string)
+ */
 export interface IControllerConfig<
   I extends PlatformID = Buffer,
   D extends Date = Date,
@@ -28,6 +42,10 @@ export interface IControllerConfig<
   applicationType: IApplication;
 }
 
+/**
+ * Default controller configuration with standard types.
+ * Uses Buffer for IDs, Date for dates, and string for language/status.
+ */
 export type DefaultControllerConfig = IControllerConfig<
   Buffer,
   Date,

@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Cryptographic authentication middleware for operations requiring private keys.
+ * Validates mnemonic or password to unlock user's private key for sensitive operations.
+ * @module middlewares/authenticate-crypto
+ */
+
 import { SecureString } from '@digitaldefiance/ecies-lib';
 import { ClientSession } from '@digitaldefiance/mongoose-types';
 import {
@@ -19,8 +25,20 @@ import { IApplication } from '../interfaces/application';
 import { withTransaction } from '../utils';
 
 /**
- * Middleware to authenticate crypto operations requiring private key access
- * Expects mnemonic or password in request body for fresh authentication
+ * Express middleware for cryptographic authentication.
+ * Requires mnemonic or password in request body to unlock user's private key.
+ * Attaches authenticated BackendMember with private key to req.eciesUser.
+ * Used for operations requiring cryptographic signing or decryption.
+ * @template I - Platform ID type (defaults to Buffer)
+ * @template TAccountStatus - Account status type (defaults to AccountStatus)
+ * @param {IApplication<I>} application - Application instance
+ * @param {Request} req - Express request object
+ * @param {Response} res - Express response object
+ * @param {NextFunction} next - Express next function
+ * @param {TAccountStatus} [activeStatusValue] - Expected active account status
+ * @returns {Promise<Response | void>} Response or void if successful
+ * @throws {InvalidCredentialsError} When credentials are invalid
+ * @throws {InvalidPasswordError} When password is incorrect
  */
 export async function authenticateCrypto<
   I extends PlatformID = Buffer,

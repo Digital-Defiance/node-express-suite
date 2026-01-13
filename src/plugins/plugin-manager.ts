@@ -1,7 +1,17 @@
+/**
+ * @fileoverview Plugin manager for application plugins.
+ * Manages registration and lifecycle of application plugins.
+ * @module plugins/plugin-manager
+ */
+
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 import { IApplication } from '../interfaces/application';
 import { IApplicationPlugin } from './plugin-interface';
 
+/**
+ * Manager for application plugins.
+ * @template TID - Platform ID type (defaults to Buffer)
+ */
 export class PluginManager<TID extends PlatformID = Buffer> {
   private plugins = new Map<string, IApplicationPlugin<TID>>();
   private initialized = false;

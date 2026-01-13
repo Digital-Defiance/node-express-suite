@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Constants interface combining all library constants.
+ * Aggregates constants from ECIES, Node ECIES, Suite Core, and Node Express Suite.
+ * @module interfaces/constants
+ */
+
 import { IECIESConstants, IPBkdf2Consts } from '@digitaldefiance/ecies-lib';
 import {
   IEncryptionConsts,
@@ -13,8 +19,8 @@ import { IFECConsts } from './fec-consts';
 import { IJwtConsts } from './jwt-consts';
 
 /**
- * Combination of all constants from all libraries
- * Ecies, Node Ecies, Suite Core, and Node Express Suite
+ * Combination of all constants from all libraries.
+ * Extends base constants with ECIES, Node ECIES, Suite Core, and Node Express Suite constants.
  */
 export interface IConstants extends IBaseConstants {
   UINT8_SIZE: number;

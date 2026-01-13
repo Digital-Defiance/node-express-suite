@@ -1,8 +1,16 @@
+/**
+ * @fileoverview User model interfaces for frontend and backend.
+ * Defines type aliases for user documents with platform-specific IDs.
+ * @module interfaces/models/user
+ */
+
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 import { AccountStatus, IUserBase } from '@digitaldefiance/suite-core-lib';
 
 /**
- * Front-end Base interface for user collection documents
+ * Front-end interface for user collection documents.
+ * Uses string IDs for browser compatibility.
+ * @template TLanguage - Language code type
  */
 export type IFrontendUser<TLanguage extends string> = IUserBase<
   string,
@@ -11,7 +19,10 @@ export type IFrontendUser<TLanguage extends string> = IUserBase<
   AccountStatus
 >;
 /**
- * Back-end Base interface for user collection documents
+ * Back-end interface for user collection documents.
+ * Uses platform-specific IDs (Buffer, ObjectId, etc.).
+ * @template TLanguage - Language code type
+ * @template I - Platform ID type (defaults to Buffer)
  */
 export type IBackendUser<
   TLanguage extends string,

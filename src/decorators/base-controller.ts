@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Base controller with decorator support.
+ * Extends BaseController to support route decorators.
+ * @module decorators/base-controller
+ */
+
 import { CoreLanguageCode } from '@digitaldefiance/i18n-lib';
 import 'reflect-metadata';
 import { BaseController } from '../controllers/base';
@@ -11,6 +17,12 @@ import {
 import { zodToExpressValidator } from './zod-validation';
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 
+/**
+ * Abstract base controller with decorator support.
+ * Automatically initializes routes from decorator metadata.
+ * @template TLanguage - Language code type (defaults to CoreLanguageCode)
+ * @template TID - Platform ID type (defaults to Buffer)
+ */
 export abstract class DecoratorBaseController<
   TLanguage extends CoreLanguageCode = CoreLanguageCode,
   TID extends PlatformID = Buffer,

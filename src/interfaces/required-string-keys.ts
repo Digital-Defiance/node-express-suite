@@ -1,6 +1,12 @@
 /**
- * Base interface defining the minimum required string keys that must be implemented
- * by any application using this library
+ * @fileoverview Required string keys interface for i18n.
+ * Defines minimum required translation keys for the library.
+ * @module interfaces/required-string-keys
+ */
+
+/**
+ * Base interface defining the minimum required string keys.
+ * Must be implemented by any application using this library.
  */
 export interface RequiredStringKeys {
   Common_UnexpectedError: string;
@@ -20,7 +26,8 @@ export interface RequiredStringKeys {
 }
 
 /**
- * Type constraint to ensure user's string key enum extends the required keys
+ * Type constraint to ensure user's string key enum extends the required keys.
+ * @template T - String key type
  */
 export type ExtendedStringKeys<T extends string> =
   T extends keyof RequiredStringKeys ? T : T | keyof RequiredStringKeys;

@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Middleware initialization utilities.
+ * Configures Express middleware including Helmet, CORS, and body parsers.
+ * @module middleware-utils
+ */
+
 import {
   SuiteCoreStringKey,
   TranslatableSuiteError,
@@ -16,6 +22,11 @@ import helmet, { HelmetOptions } from 'helmet';
 import { IncomingMessage, ServerResponse } from 'http';
 import { ISimpleCSPDef, isSimpleCSPDef } from './interfaces/csp-definition';
 
+/**
+ * Creates a CORS options delegate function.
+ * @param {string[]} corsWhitelist - Array of allowed origins
+ * @returns {Function} CORS options delegate
+ */
 export const corsOptionsDelegate = (corsWhitelist: string[]) => {
   return (
     req: cors.CorsRequest,
@@ -44,6 +55,11 @@ export const corsOptionsDelegate = (corsWhitelist: string[]) => {
   };
 };
 
+/**
+ * Type guard to check if object is HelmetOptions.
+ * @param {unknown} obj - Object to check
+ * @returns {boolean} True if object is HelmetOptions
+ */
 export const isHelmetOptions = (obj: unknown): obj is HelmetOptions => {
   // A very basic check; in real scenarios, you might want to be more thorough
   return !!(
@@ -58,6 +74,14 @@ export const isHelmetOptions = (obj: unknown): obj is HelmetOptions => {
   );
 };
 
+/**
+ * Initializes Express middleware stack.
+ * Configures Helmet for security headers, CORS, and body parsers.
+ * @param {Application} app - Express application instance
+ * @param {string[]} corsWhitelist - Array of allowed CORS origins
+ * @param {ISimpleCSPDef | HelmetOptions} csp - CSP configuration or Helmet options
+ * @throws {TranslatableSuiteError} If invalid CSP configuration provided
+ */
 export const initMiddleware = (
   app: Application,
   corsWhitelist: string[],

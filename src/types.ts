@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Type definitions and Express module augmentation.
+ * Defines core types for routing, validation, and API responses.
+ * @module types
+ */
+
 import { ClientSession } from '@digitaldefiance/mongoose-types';
 import { Member, PlatformID } from '@digitaldefiance/node-ecies-lib';
 import { IRequestUserDTO } from '@digitaldefiance/suite-core-lib';
@@ -118,6 +124,15 @@ export interface RouteConfig<H extends object, TLanguage extends string> {
   transactionTimeout?: number;
 }
 
+/**
+ * Creates a route configuration object.
+ * @template T - Handler object type
+ * @template TLanguage - Language code type
+ * @param {HttpMethod} method - HTTP method
+ * @param {string} path - Route path
+ * @param {object} options - Route options
+ * @returns {RouteConfig<T, TLanguage>} Route configuration
+ */
 export function routeConfig<T extends object, TLanguage extends string>(
   method: 'get' | 'post' | 'put' | 'delete' | 'patch',
   path: string,

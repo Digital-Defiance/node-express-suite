@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Base controller class providing common functionality for all API controllers.
+ * Handles routing, validation, authentication, transactions, and error handling.
+ * @module controllers/base
+ */
+
 import {
   GlobalActiveContext,
   HandleableError,
@@ -54,6 +60,14 @@ import {
 } from '../utils';
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 
+/**
+ * Abstract base controller for all API controllers.
+ * Provides routing, validation, authentication, transaction management, and error handling.
+ * @template T API response type
+ * @template H Handler object type
+ * @template TLanguage Language code type
+ * @template I Platform ID type
+ */
 export abstract class BaseController<
   T extends ApiResponse,
   H extends object,

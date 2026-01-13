@@ -1,4 +1,10 @@
 /**
+ * @fileoverview Schema collection name enumeration for MongoDB collections.
+ * Defines standardized collection names used throughout the application.
+ * @module enumerations/schema-collection
+ */
+
+/**
  * Enumerations for the schema collections.
  */
 export enum SchemaCollection {

@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Email token document interface for MongoDB collections.
+ * Combines base document properties with email token-specific fields.
+ * @module documents/email-token
+ */
+
 import {
   EmailTokenType,
   IEmailTokenBase,
@@ -6,7 +12,9 @@ import { IBaseDocument } from './base';
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 
 /**
- * Composite interface for email token collection documents
+ * Composite interface for email token collection documents.
+ * Extends base document with email token properties including token type, user ID, and expiration.
+ * @template I Platform-specific ID type (Buffer, ObjectId, etc.)
  */
 export type IEmailTokenDocument<I extends PlatformID = Buffer> = IBaseDocument<
   IEmailTokenBase<I, Date, EmailTokenType>,

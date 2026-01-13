@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Application builder for fluent application construction.
+ * Provides builder pattern for creating Application instances.
+ * @module builders/application-builder
+ */
+
 import mongoose from '@digitaldefiance/mongoose-types';
 import {
   SuiteCoreStringKey,
@@ -22,6 +28,13 @@ import { BaseRouter } from '../routers/base';
 import { SchemaMap } from '../types';
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 
+/**
+ * Builder for constructing Application instances with fluent API.
+ * @template TID - Platform ID type
+ * @template TModelDocs - Model documents type
+ * @template TInitResults - Initialization results type
+ * @template TConstants - Constants type (defaults to IConstants)
+ */
 export class ApplicationBuilder<
   TID extends PlatformID,
   TModelDocs extends Record<string, IBaseDocument<any, TID>>,

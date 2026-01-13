@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Service for initializing the database with default users, roles, and relationships.
+ * Handles creation of system, admin, and member users with encrypted credentials and backup codes.
+ * @module services/database-initialization
+ */
+
 import {
   ECIES,
   EmailString,
@@ -49,13 +55,30 @@ import { MnemonicService } from './mnemonic';
 import { RoleService } from './role';
 import { SystemUserService } from './system-user';
 
+/**
+ * Service for initializing the database with default users, roles, and relationships.
+ * Manages creation of system, admin, and member accounts with encrypted credentials.
+ */
 export abstract class DatabaseInitializationService {
-  // Static initialization state management
+  /**
+   * Static initialization state management to prevent concurrent initialization.
+   * @private
+   */
   protected static initializationPromises = new Map<
     string,
     Promise<IFailableResult<IServerInitResult>>
   >();
+  /** Initialization lock to prevent race conditions */
   protected static initializationLock = new Map<string, boolean>();
+
+  /**
+   * Default i18n translation function for database initialization messages.
+   * @param str String key to translate
+   * @param variables Template variables
+   * @param language Target language
+   * @param application Application instance
+   * @returns Translated string
+   */
   protected static defaultI18nTFunc(
     str: string,
     variables?: Record<string, unknown>,
@@ -69,10 +92,11 @@ export abstract class DatabaseInitializationService {
   }
 
   /**
-   * Get the mnemonic or generate a new one if not present
-   * @param mnemonic The existing mnemonic or undefined
-   * @param eciesService The ECIES service to generate a new mnemonic
-   * @returns The existing or new mnemonic
+   * Gets the mnemonic or generates a new one if not present.
+   * @template I Platform-specific ID type
+   * @param mnemonic Existing mnemonic or undefined
+   * @param eciesService ECIES service to generate a new mnemonic
+   * @returns Existing or new mnemonic
    */
   public static mnemonicOrNew<I extends PlatformID = Buffer>(
     mnemonic: SecureString | undefined,
@@ -83,12 +107,13 @@ export abstract class DatabaseInitializationService {
       : eciesService.generateNewMnemonic();
   }
   /**
-   * Generate a cache key for a user based on their details
-   * @param username The username
-   * @param email The email address
-   * @param mnemonic The mnemonic
-   * @param id The user ID
-   * @returns The generated cache key
+   * Generates a cache key for a user based on their details.
+   * @template I Platform-specific ID type
+   * @param username Username
+   * @param email Email address
+   * @param mnemonic Mnemonic
+   * @param id User ID
+   * @returns Generated cache key as hex string
    */
   public static cacheKey<I extends PlatformID = Buffer>(
     username: string,
@@ -105,15 +130,16 @@ export abstract class DatabaseInitializationService {
     return crcHash.toString(16).padStart(8, '0');
   }
   /**
-   * Get a cached BackendMember or create a new one if not cached
-   * @param username The username
-   * @param email The email address
-   * @param mnemonic The mnemonic or undefined to generate a new one
-   * @param memberType The type of member (Admin, Member, System)
-   * @param eciesService The ECIES service to handle key generation
+   * Gets a cached BackendMember or creates a new one if not cached.
+   * @template I Platform-specific ID type
+   * @param username Username
+   * @param email Email address
+   * @param mnemonic Mnemonic or undefined to generate a new one
+   * @param memberType Type of member (Admin, Member, System)
+   * @param eciesService ECIES service to handle key generation
    * @param memberId Optional specific member ID to use
    * @param createdBy Optional ID of the user who created this member
-   * @returns The cached or newly created BackendMember and the mnemonic used
+   * @returns Cached or newly created BackendMember and the mnemonic used
    */
   public static cacheOrNew<I extends PlatformID = Buffer>(
     username: string,
@@ -183,9 +209,9 @@ export abstract class DatabaseInitializationService {
   }
 
   /**
-   * Generate a random password
-   * @param length The length of the password
-   * @returns The generated password
+   * Generates a random password meeting security requirements.
+   * @param length Length of the password
+   * @returns Generated password string
    */
   public static generatePassword(length: number): string {
     const specialCharacters = "!@#$%^&*()_+-=[]{};':|,.<>/?";
@@ -223,8 +249,8 @@ export abstract class DatabaseInitializationService {
   }
 
   /**
-   * Drops the database
-   * @param connection The database connection
+   * Drops the database.
+   * @param connection Database connection
    * @returns True if the database was dropped, false if not connected
    */
   public static async dropDatabase(connection: Connection): Promise<boolean> {
@@ -330,14 +356,15 @@ export abstract class DatabaseInitializationService {
   }
 
   /**
-   * Initialize the user database with default users and roles (with dependency injection)
-   * @param application The application
-   * @param keyWrappingService The key wrapping service
-   * @param mnemonicService The mnemonic service
-   * @param eciesService The ECIES service
-   * @param roleService The role service
-   * @param backupCodeService The backup code service
-   * @returns The result of the initialization
+   * Initializes the user database with default users and roles using dependency injection.
+   * @template I Platform-specific ID type
+   * @param application Application instance
+   * @param keyWrappingService Key wrapping service
+   * @param mnemonicService Mnemonic service
+   * @param eciesService ECIES service
+   * @param roleService Role service
+   * @param backupCodeService Backup code service
+   * @returns Result of the initialization
    */
   public static async initUserDbWithServices<I extends PlatformID = Buffer>(
     application: IApplication<I>,
@@ -1575,10 +1602,11 @@ SYSTEM_PASSWORD="${serverInitResult.systemPassword}"
   }
 
   /**
-   * Initialize the user database with default users and roles (convenience method)
-   * This method creates the necessary services and calls initUserDbWithServices
-   * @param application The application
-   * @returns The result of the initialization
+   * Initializes the user database with default users and roles (convenience method).
+   * Creates necessary services and calls initUserDbWithServices.
+   * @template I Platform-specific ID type
+   * @param application Application instance
+   * @returns Result of the initialization
    */
   public static async initUserDb<I extends PlatformID = Buffer>(
     application: IApplication<I>,

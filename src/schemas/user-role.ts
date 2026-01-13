@@ -1,9 +1,16 @@
+/**
+ * @fileoverview User-role relationship schema factory for MongoDB.
+ * Creates schema for many-to-many user-role associations.
+ * @module schemas/user-role
+ */
+
 import { Schema } from '@digitaldefiance/mongoose-types';
 import { BaseModelName } from '../enumerations';
 import { IConstants } from '../interfaces';
 
 /**
- * Configuration options for creating a user-role schema
+ * Configuration options for creating a user-role schema.
+ * @template TModelName - Model name type (defaults to BaseModelName)
  */
 export interface UserRoleSchemaOptions<
   TModelName extends string = BaseModelName,
@@ -17,7 +24,13 @@ export interface UserRoleSchemaOptions<
 }
 
 /**
- * Factory function to create an extensible user-role schema
+ * Factory function to create an extensible user-role schema.
+ * Includes compound unique index and separate indexes for queries.
+ * @template TModelName - Model name type (defaults to BaseModelName)
+ * @template TConstants - Constants type (defaults to IConstants)
+ * @param {UserRoleSchemaOptions<TModelName>} options - Schema configuration options
+ * @param {TConstants} [_constants] - Optional constants (reserved for future use)
+ * @returns {Schema} Configured user-role schema with indexes
  */
 export function createUserRoleSchema<
   TModelName extends string = BaseModelName,
@@ -74,6 +87,7 @@ export function createUserRoleSchema<
 }
 
 /**
- * Default user-role schema with base configuration
+ * Default user-role schema with base configuration.
+ * Pre-configured schema with compound unique index on userId and roleId.
  */
 export const UserRoleSchema = createUserRoleSchema();

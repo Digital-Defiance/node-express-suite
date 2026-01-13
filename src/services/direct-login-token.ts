@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Service for managing direct login token usage and preventing token reuse.
+ * Tracks used tokens in the database to ensure one-time use security.
+ * @module services/direct-login-token
+ */
+
 import { ClientSession } from '@digitaldefiance/mongoose-types';
 import {
   DirectTokenUsedError,
@@ -9,7 +15,24 @@ import { IApplication } from '../interfaces/application';
 import { ModelRegistry } from '../model-registry';
 import { withTransaction } from '../utils';
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
+
+/**
+ * Service for managing direct login token usage.
+ * Ensures tokens can only be used once by tracking them in the database.
+ */
 export abstract class DirectLoginTokenService {
+  /**
+   * Marks a direct login token as used in the database.
+   * Prevents token reuse by checking for existing usage and creating a new record.
+   * @template I Platform-specific ID type
+   * @param app Application instance with database connection
+   * @param userId User ID associated with the token
+   * @param token Direct login token to mark as used
+   * @param session Optional MongoDB session for transaction support
+   * @returns Promise that resolves when token is successfully marked as used
+   * @throws {DirectTokenUsedError} If token has already been used
+   * @throws {FailedToUseDirectTokenError} If token creation fails
+   */
   public static async useToken<I extends PlatformID = Buffer>(
     app: IApplication<I>,
     userId: I,

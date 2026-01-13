@@ -1,6 +1,23 @@
+/**
+ * @fileoverview Simple CSP directive definition interface.
+ * Defines Content Security Policy directives with static and dynamic sources.
+ * @module interfaces/csp-definition
+ */
+
 import { HelmetOptions } from 'helmet';
 import { IncomingMessage, ServerResponse } from 'http';
 
+/**
+ * Simplified Content Security Policy directive definition.
+ * Each directive accepts static strings or dynamic functions for request-specific values.
+ * @property {Array<string | Function>} defaultSrc - Default source directive
+ * @property {Array<string | Function>} imgSrc - Image source directive
+ * @property {Array<string | Function>} connectSrc - Connect source directive (XHR, WebSocket)
+ * @property {Array<string | Function>} scriptSrc - Script source directive
+ * @property {Array<string | Function>} styleSrc - Style source directive
+ * @property {Array<string | Function>} fontSrc - Font source directive
+ * @property {Array<string | Function>} frameSrc - Frame source directive
+ */
 export interface ISimpleCSPDef {
   defaultSrc: (
     | string
@@ -26,6 +43,11 @@ export interface ISimpleCSPDef {
   )[];
 }
 
+/**
+ * Type guard to check if object is simple CSP definition.
+ * @param {ISimpleCSPDef | HelmetOptions} obj - Object to validate
+ * @returns {boolean} True if object matches ISimpleCSPDef interface
+ */
 export const isSimpleCSPDef = (
   obj: ISimpleCSPDef | HelmetOptions,
 ): obj is ISimpleCSPDef => {

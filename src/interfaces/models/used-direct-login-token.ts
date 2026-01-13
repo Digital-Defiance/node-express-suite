@@ -1,12 +1,21 @@
+/**
+ * @fileoverview Used direct login token model interfaces for frontend and backend.
+ * Defines type aliases for tracking consumed direct login tokens.
+ * @module interfaces/models/used-direct-login-token
+ */
+
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 import { IUsedDirectLoginTokenBase } from '@digitaldefiance/suite-core-lib';
 
 /**
- * Base interface for front-end used direct login token collection documents
+ * Front-end interface for used direct login token documents.
+ * Uses string IDs for browser compatibility.
  */
 export type IFrontendUsedDirectLoginToken = IUsedDirectLoginTokenBase<string>;
 /**
- * Base interface for back-end used direct login token collection documents
+ * Back-end interface for used direct login token documents.
+ * Uses platform-specific IDs (Buffer, ObjectId, etc.).
+ * @template I - Platform ID type (defaults to Buffer)
  */
 export type IBackendUsedDirectLoginToken<I extends PlatformID = Buffer> =
   IUsedDirectLoginTokenBase<I>;

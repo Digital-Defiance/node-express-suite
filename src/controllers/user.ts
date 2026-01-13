@@ -1,3 +1,9 @@
+/**
+ * @fileoverview User controller handling authentication, registration, and user management endpoints.
+ * Provides comprehensive user operations including login, password management, and settings.
+ * @module controllers/user
+ */
+
 import { ECIES, SecureString, UINT64_SIZE } from '@digitaldefiance/ecies-lib';
 import {
   CoreLanguageCode,
@@ -80,6 +86,19 @@ const DirectLoginChallengeSchema = z.object({
   username: z.string().optional(),
 });
 
+/**
+ * User controller handling all user-related API endpoints.
+ * Manages authentication, registration, password operations, settings, and backup codes.
+ * @template I Platform ID type
+ * @template D Date type
+ * @template S Site language string type
+ * @template A Account status string type
+ * @template TUser User base type
+ * @template TTokenRole Token role type
+ * @template TTokenUser Token user type
+ * @template TApplication Application type
+ * @template TLanguage Language code type
+ */
 @Controller()
 export class UserController<
   I extends PlatformID = Buffer,

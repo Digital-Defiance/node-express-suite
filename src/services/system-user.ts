@@ -1,3 +1,9 @@
+/**
+ * @fileoverview System user singleton service.
+ * Manages the system-level cryptographic member for server operations.
+ * @module services/system-user
+ */
+
 import {
   EmailString,
   MemberType,
@@ -17,7 +23,8 @@ import { Environment } from '../environment';
 import { IConstants } from '../interfaces/constants';
 
 /**
- * Service to manage the system member's wallet.
+ * Service for managing the system user singleton.
+ * Provides access to system-level cryptographic operations and key management.
  */
 export class SystemUserService {
   private static systemUser: BackendMember<PlatformID> | null = null;

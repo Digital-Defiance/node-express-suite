@@ -1,13 +1,23 @@
+/**
+ * @fileoverview Example usage patterns for the Forward Error Correction (FEC) service.
+ * @module services/fec-usage-example
+ */
+
 import { FecService } from './fec';
 
 /**
- * Example usage of the adapted FEC service for filesystem/S3 objects
+ * Example usage of the adapted FEC service for filesystem/S3 objects.
+ * Demonstrates creating parity data, recovering corrupted files, and verifying integrity.
  */
 export class FecUsageExample {
   private fecService = new FecService();
 
   /**
-   * Example: Create parity data for a file and store it separately
+   * Creates parity data for a file and returns it for separate storage.
+   *
+   * @param fileData - Original file data to protect
+   * @param parityCount - Number of parity blocks to create (default: 2)
+   * @returns Object containing original data, parity data, and original size
    */
   async createFileWithParity(fileData: Buffer, parityCount: number = 2) {
     // Create parity data
@@ -29,7 +39,12 @@ export class FecUsageExample {
   }
 
   /**
-   * Example: Recover a corrupted file using parity data
+   * Recovers a corrupted file using parity data.
+   *
+   * @param parityData - Array of parity blocks with their indices
+   * @param originalSize - Original file size in bytes
+   * @returns Recovered file data
+   * @throws Error if file recovery fails
    */
   async recoverCorruptedFile(
     parityData: Array<{ data: Buffer; index: number }>,
@@ -51,7 +66,11 @@ export class FecUsageExample {
   }
 
   /**
-   * Example: Verify file integrity using parity data
+   * Verifies file integrity using parity data.
+   *
+   * @param fileData - File data to verify
+   * @param parityData - Array of parity blocks with their indices
+   * @returns True if file integrity is valid, false otherwise
    */
   async verifyFile(
     fileData: Buffer,
@@ -61,7 +80,9 @@ export class FecUsageExample {
   }
 
   /**
-   * Complete example workflow
+   * Demonstrates a complete FEC workflow including creation, verification, corruption, and recovery.
+   *
+   * @returns Object containing original file, recovered file, parity data, and recovery status
    */
   async demonstrateWorkflow() {
     // Original file data

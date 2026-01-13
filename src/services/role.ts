@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Role-based access control (RBAC) service.
+ * Manages roles, user-role relationships, and permission checks.
+ * @module services/role
+ */
+
 import { MemberType } from '@digitaldefiance/ecies-lib';
 import {
   GlobalActiveContext,
@@ -28,7 +34,12 @@ import {
 } from '@digitaldefiance/node-ecies-lib';
 
 /**
- * Service for managing roles
+ * Service for managing roles and role-based access control.
+ * Handles role creation, user-role assignments, and permission queries.
+ * @template I - Platform ID type (defaults to Buffer)
+ * @template D - Date type (defaults to Date)
+ * @template TTokenRole - Token role interface type
+ * @extends {BaseService<I>}
  */
 export class RoleService<
   I extends PlatformID = Buffer,

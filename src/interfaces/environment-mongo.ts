@@ -1,5 +1,15 @@
+/**
+ * @fileoverview MongoDB environment configuration interface.
+ * Defines comprehensive MongoDB connection and behavior settings.
+ * @module interfaces/environment-mongo
+ */
+
 import { ReadConcernLike, WriteConcern } from 'mongodb';
 
+/**
+ * MongoDB environment configuration.
+ * Defines connection pool, timeout, transaction, and consistency settings.
+ */
 export interface IMongoEnvironment {
   /**
    * The URI of the MongoDB database

@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Environment configuration class.
+ * Loads and validates environment variables for application configuration.
+ * @module environment
+ */
+
 import { SecureBuffer, SecureString } from '@digitaldefiance/ecies-lib';
 import {
   getSuiteCoreTranslation,

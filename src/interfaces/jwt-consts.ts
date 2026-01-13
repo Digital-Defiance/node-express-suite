@@ -1,3 +1,13 @@
+/**
+ * @fileoverview JWT constants interface.
+ * Defines configuration constants for JWT token generation and validation.
+ * @module interfaces/jwt-consts
+ */
+
+/**
+ * Constants for JWT token configuration.
+ * Defines algorithm and expiration settings.
+ */
 export interface IJwtConsts {
   /**
    * Algorithm to use for JWT

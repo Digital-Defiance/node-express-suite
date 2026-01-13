@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Service for transforming user documents into request user DTOs and backend objects.
+ * Handles serialization and deserialization of user data for API requests and JWT tokens.
+ * @module services/request-user
+ */
+
 import {
   IRequestUserDTO,
   IRoleDTO,
@@ -11,14 +17,27 @@ import {
   PlatformID,
 } from '@digitaldefiance/node-ecies-lib';
 
+/**
+ * Service for converting between user documents, DTOs, and backend objects.
+ * Provides transformation methods for user data in different contexts (API, JWT, database).
+ * @template I Platform-specific ID type (Buffer, ObjectId, etc.)
+ * @template _TTokenRole Token role type implementing ITokenRole
+ */
 export class RequestUserService<
   I extends PlatformID,
   _TTokenRole extends ITokenRole<I>,
 > {
   /**
-   * Given a user document and an array of role documents, create the IRequestUser
-   * @param userDoc
-   * @returns
+   * Converts a user document and roles into a request user DTO for API responses.
+   * Calculates combined role privileges and serializes IDs to strings.
+   * @template I Platform-specific ID type
+   * @template S Site language string literal type
+   * @template TTokenRole Token role type
+   * @template TRequestUserDTO Request user DTO type
+   * @param userDoc User document from database
+   * @param roles Array of token roles for the user
+   * @returns Request user DTO suitable for API responses
+   * @throws {Error} If user document is missing _id
    */
   public static makeRequestUserDTO<
     I extends PlatformID,
@@ -63,9 +82,13 @@ export class RequestUserService<
   }
 
   /**
-   * Given a request user, reconstitute dates, objectids, and enums
-   * @param requestUser a RequestUser DTO
-   * @returns An IRequestUserBackendObject
+   * Hydrates a request user DTO back into a backend object with typed IDs and dates.
+   * Converts string IDs to platform-specific types and reconstitutes Date objects.
+   * @template I Platform-specific ID type
+   * @template S Site language string literal type
+   * @template TRequestUserDTO Request user DTO type with site language
+   * @param requestUser Request user DTO from API or JWT
+   * @returns Backend object with typed IDs and dates
    */
   public static hydrateRequestUser<
     I extends PlatformID,

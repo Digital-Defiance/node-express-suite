@@ -1,3 +1,13 @@
+/**
+ * @fileoverview Checksum constants interface.
+ * Defines configuration constants for SHA3 checksum operations.
+ * @module interfaces/checksum-consts
+ */
+
+/**
+ * Constants for checksum generation and validation.
+ * Defines SHA3 algorithm parameters and encoding settings.
+ */
 export interface IChecksumConsts {
   /** Default hash bits for SHA3 */
   SHA3_DEFAULT_HASH_BITS: number;
