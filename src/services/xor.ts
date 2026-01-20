@@ -4,7 +4,10 @@
  * @module services/xor
  */
 
-import { SuiteCoreStringKey, TranslatableSuiteError } from '@digitaldefiance/suite-core-lib';
+import {
+  SuiteCoreStringKey,
+  TranslatableSuiteError,
+} from '@digitaldefiance/suite-core-lib';
 import { randomBytes } from 'crypto';
 
 /**
@@ -23,7 +26,9 @@ export class XorService {
    */
   public static xor(data: Buffer, key: Buffer): Buffer {
     if (data.length != key.length) {
-      throw new TranslatableSuiteError(SuiteCoreStringKey.Error_ArrayLengthMismatch);
+      throw new TranslatableSuiteError(
+        SuiteCoreStringKey.Error_ArrayLengthMismatch,
+      );
     }
     const result = Buffer.alloc(data.length);
     for (let i = 0; i < data.length; i++) {
