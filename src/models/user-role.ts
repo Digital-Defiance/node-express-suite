@@ -15,22 +15,26 @@ import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
  * Creates a Mongoose model for user-role relationship documents.
  * @template TModelName - Model name type (defaults to BaseModelName)
  * @template TCollection - Collection name type (defaults to SchemaCollection)
- * @template I - Platform ID type (defaults to Buffer)
+ * @template TID - Platform ID type (defaults to Buffer)
  * @param {Connection} connection - Mongoose connection instance
  * @param {TModelName} modelName - Model name (defaults to 'UserRole')
  * @param {TCollection} collection - Collection name (defaults to 'userRoles')
  * @param {Schema} schema - Mongoose schema (defaults to UserRoleSchema)
- * @returns {Model<IUserRoleDocument<I>>} Configured Mongoose model
+ * @returns {Model<IUserRoleDocument<TID>>} Configured Mongoose model
  */
 export default function UserRoleModel<
   TModelName extends string = BaseModelName,
   TCollection extends string = SchemaCollection,
-  I extends PlatformID = Buffer,
+  TID extends PlatformID = Buffer,
 >(
   connection: Connection,
   modelName: TModelName = BaseModelName.UserRole as TModelName,
   collection: TCollection = SchemaCollection.UserRole as TCollection,
   schema: Schema = UserRoleSchema,
-): Model<IUserRoleDocument<I>> {
-  return connection.model<IUserRoleDocument<I>>(modelName, schema, collection);
+): Model<IUserRoleDocument<TID>> {
+  return connection.model<IUserRoleDocument<TID>>(
+    modelName,
+    schema,
+    collection,
+  );
 }

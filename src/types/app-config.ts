@@ -12,18 +12,18 @@ import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
  * Application configuration interface.
  * @template TModelDocs - Model documents type
  * @template TInitResults - Initialization results type
- * @template I - Platform ID type (defaults to Buffer)
+ * @template TID - Platform ID type (defaults to Buffer)
  */
 export interface AppConfig<
   TModelDocs = unknown,
   TInitResults = unknown,
-  I extends PlatformID = Buffer,
+  TID extends PlatformID = Buffer,
 > {
   environment: Environment;
   constants: IConstants;
   models: TModelDocs;
   initResults: TInitResults;
-  idType: I;
+  idType: TID;
   dateType: Date;
 }
 

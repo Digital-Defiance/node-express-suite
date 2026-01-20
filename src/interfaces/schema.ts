@@ -7,6 +7,7 @@
 import { Model, Schema } from '@digitaldefiance/mongoose-types';
 import { IBaseDocument } from '../documents/base';
 import { IDiscriminatorCollections } from '../interfaces/discriminator-collections';
+import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 
 /**
  * Interface for each schema in the schema map.
@@ -14,7 +15,10 @@ import { IDiscriminatorCollections } from '../interfaces/discriminator-collectio
  * @template T - Document type extending IBaseDocument
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export interface ISchema<T extends IBaseDocument<any>> {
+export interface ISchema<
+  TID extends PlatformID,
+  T extends IBaseDocument<any, TID>,
+> {
   /**
    * The name of the collection, eg 'models'
    */
@@ -35,5 +39,5 @@ export interface ISchema<T extends IBaseDocument<any>> {
   /**
    * Discriminators for the model
    */
-  discriminators?: IDiscriminatorCollections<T>;
+  discriminators?: IDiscriminatorCollections<TID, T>;
 }

@@ -12,9 +12,9 @@ import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 /**
  * Environment configuration interface for the application.
  * Contains all configuration values, credentials, and environment-specific settings.
- * @template I Platform-specific ID type (Buffer, ObjectId, etc.)
+ * @template TID Platform-specific ID type (Buffer, ObjectId, etc.)
  */
-export interface IEnvironment<I extends PlatformID = Buffer> {
+export interface IEnvironment<TID extends PlatformID = Buffer> {
   /**
    * Whether to use a memory database for local development (eg with MongoMemoryServer)
    * If set, this will create a new in-memory database instance on application start with the given database name
@@ -83,7 +83,7 @@ export interface IEnvironment<I extends PlatformID = Buffer> {
   /**
    * The ID of the admin user
    */
-  adminId?: I;
+  adminId?: TID;
   /**
    * The creation date of the admin user
    */
@@ -95,11 +95,11 @@ export interface IEnvironment<I extends PlatformID = Buffer> {
   /**
    * The ID of the admin user role object
    */
-  adminRoleId?: I;
+  adminRoleId?: TID;
   /**
    * The ID of the admin user's user role object
    */
-  adminUserRoleId?: I;
+  adminUserRoleId?: TID;
   /**
    * Backup codes for the admin user
    */
@@ -111,7 +111,7 @@ export interface IEnvironment<I extends PlatformID = Buffer> {
   /**
    * The ID of the member user
    */
-  memberId?: I;
+  memberId?: TID;
   /**
    * The creation date of the member user
    */
@@ -123,11 +123,11 @@ export interface IEnvironment<I extends PlatformID = Buffer> {
   /**
    * The ID of the member user role object
    */
-  memberRoleId?: I;
+  memberRoleId?: TID;
   /**
    * The ID of the member user's user role object
    */
-  memberUserRoleId?: I;
+  memberUserRoleId?: TID;
   /**
    * Backup codes for the member user
    */
@@ -139,7 +139,7 @@ export interface IEnvironment<I extends PlatformID = Buffer> {
   /**
    * The ID of the system user
    */
-  systemId?: I;
+  systemId?: TID;
   /**
    * The creation date of the system user
    */
@@ -155,11 +155,11 @@ export interface IEnvironment<I extends PlatformID = Buffer> {
   /**
    * The ID of the system user role object
    */
-  systemRoleId?: I;
+  systemRoleId?: TID;
   /**
    * The ID of the system user's user role object
    */
-  systemUserRoleId?: I;
+  systemUserRoleId?: TID;
   /**
    * Backup codes for the system user
    */

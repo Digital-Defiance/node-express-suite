@@ -15,7 +15,7 @@ export type IFrontendUsedDirectLoginToken = IUsedDirectLoginTokenBase<string>;
 /**
  * Back-end interface for used direct login token documents.
  * Uses platform-specific IDs (Buffer, ObjectId, etc.).
- * @template I - Platform ID type (defaults to Buffer)
+ * @template TID - Platform ID type (defaults to Buffer)
  */
-export type IBackendUsedDirectLoginToken<I extends PlatformID = Buffer> =
-  IUsedDirectLoginTokenBase<I>;
+export type IBackendUsedDirectLoginToken<TID extends PlatformID = Buffer> =
+  IUsedDirectLoginTokenBase<TID>;

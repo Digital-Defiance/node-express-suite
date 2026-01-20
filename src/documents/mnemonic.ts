@@ -12,9 +12,9 @@ import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
  * Composite interface for mnemonic collection documents.
  * Extends base document with mnemonic properties including HMAC-protected mnemonic phrases.
  * Used for secure storage and retrieval of user recovery mnemonics.
- * @template I Platform-specific ID type (Buffer, ObjectId, etc.)
+ * @template TID Platform-specific ID type (Buffer, ObjectId, etc.)
  */
-export type IMnemonicDocument<I extends PlatformID = Buffer> = IBaseDocument<
-  IMnemonicBase<I>,
-  I
+export type IMnemonicDocument<TID extends PlatformID = Buffer> = IBaseDocument<
+  IMnemonicBase<TID>,
+  TID
 >;

@@ -29,9 +29,9 @@ import { withTransaction } from '../utils';
  * Requires mnemonic or password in request body to unlock user's private key.
  * Attaches authenticated BackendMember with private key to req.eciesUser.
  * Used for operations requiring cryptographic signing or decryption.
- * @template I - Platform ID type (defaults to Buffer)
+ * @template TID - Platform ID type (defaults to Buffer)
  * @template TAccountStatus - Account status type (defaults to AccountStatus)
- * @param {IApplication<I>} application - Application instance
+ * @param {IApplication<TID>} application - Application instance
  * @param {Request} req - Express request object
  * @param {Response} res - Express response object
  * @param {NextFunction} next - Express next function
@@ -41,10 +41,10 @@ import { withTransaction } from '../utils';
  * @throws {InvalidPasswordError} When password is incorrect
  */
 export async function authenticateCrypto<
-  I extends PlatformID = Buffer,
+  TID extends PlatformID = Buffer,
   TAccountStatus extends string = AccountStatus,
 >(
-  application: IApplication<I>,
+  application: IApplication<TID>,
   req: Request,
   res: Response,
   next: NextFunction,
@@ -90,7 +90,7 @@ export async function authenticateCrypto<
       ),
     });
   }
-  const UserModel = application.getModel<IUserDocument<string, I>>(
+  const UserModel = application.getModel<IUserDocument<string, TID>>(
     BaseModelName.User,
   );
   const userService = application.services.get(ServiceKeys.USER) as {

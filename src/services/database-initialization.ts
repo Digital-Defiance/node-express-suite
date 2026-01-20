@@ -93,14 +93,14 @@ export abstract class DatabaseInitializationService {
 
   /**
    * Gets the mnemonic or generates a new one if not present.
-   * @template I Platform-specific ID type
+   * @template TID Platform-specific ID type
    * @param mnemonic Existing mnemonic or undefined
    * @param eciesService ECIES service to generate a new mnemonic
    * @returns Existing or new mnemonic
    */
-  public static mnemonicOrNew<I extends PlatformID = Buffer>(
+  public static mnemonicOrNew<TID extends PlatformID = Buffer>(
     mnemonic: SecureString | undefined,
-    eciesService: ECIESService<I>,
+    eciesService: ECIESService<TID>,
   ): SecureString {
     return mnemonic && mnemonic.hasValue
       ? mnemonic
@@ -108,20 +108,20 @@ export abstract class DatabaseInitializationService {
   }
   /**
    * Generates a cache key for a user based on their details.
-   * @template I Platform-specific ID type
+   * @template TID Platform-specific ID type
    * @param username Username
    * @param email Email address
    * @param mnemonic Mnemonic
    * @param id User ID
    * @returns Generated cache key as hex string
    */
-  public static cacheKey<I extends PlatformID = Buffer>(
+  public static cacheKey<TID extends PlatformID = Buffer>(
     username: string,
     email: EmailString,
     mnemonic: SecureString,
-    id: I,
+    id: TID,
   ): string {
-    const idProvider = getEnhancedNodeIdProvider<I>();
+    const idProvider = getEnhancedNodeIdProvider<TID>();
     const combined = `${username}|${email.email}|${mnemonic.value}|${idProvider.idToString(
       id,
     )}`;
@@ -131,7 +131,7 @@ export abstract class DatabaseInitializationService {
   }
   /**
    * Gets a cached BackendMember or creates a new one if not cached.
-   * @template I Platform-specific ID type
+   * @template TID Platform-specific ID type
    * @param username Username
    * @param email Email address
    * @param mnemonic Mnemonic or undefined to generate a new one
@@ -141,22 +141,22 @@ export abstract class DatabaseInitializationService {
    * @param createdBy Optional ID of the user who created this member
    * @returns Cached or newly created BackendMember and the mnemonic used
    */
-  public static cacheOrNew<I extends PlatformID = Buffer>(
+  public static cacheOrNew<TID extends PlatformID = Buffer>(
     username: string,
     email: EmailString,
     mnemonic: SecureString | undefined,
     memberType: MemberType,
-    eciesService: ECIESService<I>,
-    memberId?: I,
-    createdBy?: I,
+    eciesService: ECIESService<TID>,
+    memberId?: TID,
+    createdBy?: TID,
   ): {
-    member: BackendMember<I>;
+    member: BackendMember<TID>;
     mnemonic: SecureString;
   } {
-    const idProvider = getEnhancedNodeIdProvider<I>();
+    const idProvider = getEnhancedNodeIdProvider<TID>();
     const m = this.mnemonicOrNew(mnemonic, eciesService);
 
-    const newId: I = memberId ? memberId : idProvider.generateTyped();
+    const newId: TID = memberId ? memberId : idProvider.generateTyped();
     const key = DatabaseInitializationService.cacheKey(
       username,
       email,
@@ -167,7 +167,7 @@ export abstract class DatabaseInitializationService {
       global.__MEMBER_CACHE__ = new Map<
         string,
         {
-          member: BackendMember<I>;
+          member: BackendMember<TID>;
           mnemonic: SecureString;
         }
       >();
@@ -182,7 +182,7 @@ export abstract class DatabaseInitializationService {
         Buffer.from(privateKey),
       );
 
-      const user: BackendMember<I> = new BackendMember<I>(
+      const user: BackendMember<TID> = new BackendMember<TID>(
         eciesService,
         memberType,
         username,
@@ -197,13 +197,13 @@ export abstract class DatabaseInitializationService {
       );
       global.__MEMBER_CACHE__.set(key, {
         mnemonic: m,
-        member: user as unknown as BackendMember<I>,
+        member: user as unknown as BackendMember<TID>,
       });
       return { mnemonic: m, member: user };
     } else {
       return global.__MEMBER_CACHE__.get(key)! as {
         mnemonic: SecureString;
-        member: BackendMember<I>;
+        member: BackendMember<TID>;
       };
     }
   }
@@ -263,29 +263,29 @@ export abstract class DatabaseInitializationService {
     return connection.db.dropDatabase();
   }
 
-  public static getInitOptions<I extends PlatformID = Buffer>(
-    application: IApplication<I>,
+  public static getInitOptions<TID extends PlatformID = Buffer>(
+    application: IApplication<TID>,
   ): {
-    adminId?: I;
+    adminId?: TID;
     adminMnemonic?: SecureString;
     adminPassword?: SecureString;
-    adminRoleId?: I;
-    adminUserRoleId?: I;
+    adminRoleId?: TID;
+    adminUserRoleId?: TID;
     adminBackupCodes?: BackupCode[];
-    memberId?: I;
+    memberId?: TID;
     memberMnemonic?: SecureString;
     memberPassword?: SecureString;
-    memberRoleId?: I;
-    memberUserRoleId?: I;
+    memberRoleId?: TID;
+    memberUserRoleId?: TID;
     memberBackupCodes?: BackupCode[];
-    systemId?: I;
+    systemId?: TID;
     systemMnemonic?: SecureString;
     systemPassword?: SecureString;
-    systemRoleId?: I;
-    systemUserRoleId?: I;
+    systemRoleId?: TID;
+    systemUserRoleId?: TID;
     systemBackupCodes?: BackupCode[];
   } {
-    const env = application.environment as Environment<I>;
+    const env = application.environment as Environment<TID>;
     return {
       adminId: env.adminId,
       adminMnemonic: env.adminMnemonic?.hasValue
@@ -294,7 +294,7 @@ export abstract class DatabaseInitializationService {
       adminPassword: env.adminPassword?.hasValue
         ? env.adminPassword
         : undefined,
-      adminRoleId: env.adminRoleId as I,
+      adminRoleId: env.adminRoleId as TID,
       adminUserRoleId: env.adminUserRoleId,
       adminBackupCodes: env.adminBackupCodes,
       memberId: env.memberId,
@@ -304,7 +304,7 @@ export abstract class DatabaseInitializationService {
       memberPassword: env.memberPassword?.hasValue
         ? env.memberPassword
         : undefined,
-      memberRoleId: env.memberRoleId as I,
+      memberRoleId: env.memberRoleId as TID,
       memberUserRoleId: env.memberUserRoleId,
       memberBackupCodes: env.memberBackupCodes,
       systemId: env.systemId,
@@ -314,38 +314,38 @@ export abstract class DatabaseInitializationService {
       systemPassword: env.systemPassword?.hasValue
         ? env.systemPassword
         : undefined,
-      systemRoleId: env.systemRoleId as I,
+      systemRoleId: env.systemRoleId as TID,
       systemUserRoleId: env.systemUserRoleId,
       systemBackupCodes: env.systemBackupCodes,
     };
   }
 
-  public static serverInitResultHash<I extends PlatformID = Buffer>(
-    serverInitResult: IServerInitResult<I>,
+  public static serverInitResultHash<TID extends PlatformID = Buffer>(
+    serverInitResult: IServerInitResult<TID>,
   ): string {
     const h = createHash('sha256');
-    const idProvider = getEnhancedNodeIdProvider<I>();
-    h.update(idProvider.idToString(serverInitResult.adminUser._id as I));
-    h.update(idProvider.idToString(serverInitResult.adminRole._id as I));
-    h.update(idProvider.idToString(serverInitResult.adminUserRole._id as I));
+    const idProvider = getEnhancedNodeIdProvider<TID>();
+    h.update(idProvider.idToString(serverInitResult.adminUser._id as TID));
+    h.update(idProvider.idToString(serverInitResult.adminRole._id as TID));
+    h.update(idProvider.idToString(serverInitResult.adminUserRole._id as TID));
     h.update(serverInitResult.adminUsername);
     h.update(serverInitResult.adminEmail);
     h.update(serverInitResult.adminMnemonic);
     h.update(serverInitResult.adminPassword);
     h.update(serverInitResult.adminUser.publicKey);
     serverInitResult.adminBackupCodes.map((bc) => h.update(bc));
-    h.update(idProvider.idToString(serverInitResult.memberUser._id as I));
-    h.update(idProvider.idToString(serverInitResult.memberRole._id as I));
-    h.update(idProvider.idToString(serverInitResult.memberUserRole._id as I));
+    h.update(idProvider.idToString(serverInitResult.memberUser._id as TID));
+    h.update(idProvider.idToString(serverInitResult.memberRole._id as TID));
+    h.update(idProvider.idToString(serverInitResult.memberUserRole._id as TID));
     h.update(serverInitResult.memberUsername);
     h.update(serverInitResult.memberEmail);
     h.update(serverInitResult.memberMnemonic);
     h.update(serverInitResult.memberPassword);
     h.update(serverInitResult.memberUser.publicKey);
     serverInitResult.memberBackupCodes.map((bc) => h.update(bc));
-    h.update(idProvider.idToString(serverInitResult.systemUser._id as I));
-    h.update(idProvider.idToString(serverInitResult.systemRole._id as I));
-    h.update(idProvider.idToString(serverInitResult.systemUserRole._id as I));
+    h.update(idProvider.idToString(serverInitResult.systemUser._id as TID));
+    h.update(idProvider.idToString(serverInitResult.systemRole._id as TID));
+    h.update(idProvider.idToString(serverInitResult.systemUserRole._id as TID));
     h.update(serverInitResult.systemUsername);
     h.update(serverInitResult.systemEmail);
     h.update(serverInitResult.systemMnemonic);
@@ -357,7 +357,7 @@ export abstract class DatabaseInitializationService {
 
   /**
    * Initializes the user database with default users and roles using dependency injection.
-   * @template I Platform-specific ID type
+   * @template TID Platform-specific ID type
    * @param application Application instance
    * @param keyWrappingService Key wrapping service
    * @param mnemonicService Mnemonic service
@@ -366,39 +366,39 @@ export abstract class DatabaseInitializationService {
    * @param backupCodeService Backup code service
    * @returns Result of the initialization
    */
-  public static async initUserDbWithServices<I extends PlatformID = Buffer>(
-    application: IApplication<I>,
+  public static async initUserDbWithServices<TID extends PlatformID = Buffer>(
+    application: IApplication<TID>,
     keyWrappingService: KeyWrappingService,
-    mnemonicService: MnemonicService<I>,
-    eciesService: ECIESService<I>,
-    roleService: RoleService<I>,
-    backupCodeService: BackupCodeService<I>,
-  ): Promise<IDBInitResult<IServerInitResult<I>>> {
+    mnemonicService: MnemonicService<TID>,
+    eciesService: ECIESService<TID>,
+    roleService: RoleService<TID>,
+    backupCodeService: BackupCodeService<TID>,
+  ): Promise<IDBInitResult<IServerInitResult<TID>>> {
     const engine = getSuiteCoreI18nEngine({ constants: application.constants });
     const isTestEnvironment = process.env['NODE_ENV'] === 'test';
     const options =
-      DatabaseInitializationService.getInitOptions<I>(application);
-    const effectiveIdGenerator: () => I = (() =>
+      DatabaseInitializationService.getInitOptions<TID>(application);
+    const effectiveIdGenerator: () => TID = (() =>
       application.constants.idProvider.fromBytes(
         application.constants.idProvider.generate(),
-      ) as I) as () => I;
+      ) as TID) as () => TID;
     const UserModel = ModelRegistry.instance.getTypedModel<
-      IUserDocument<string, I>
+      IUserDocument<string, TID>
     >(BaseModelName.User);
-    const RoleModel = ModelRegistry.instance.getTypedModel<IRoleDocument<I>>(
+    const RoleModel = ModelRegistry.instance.getTypedModel<IRoleDocument<TID>>(
       BaseModelName.Role,
     );
-    const adminUserId: I = options.adminId ?? effectiveIdGenerator();
-    const adminRoleId: I = options.adminRoleId ?? effectiveIdGenerator();
-    const adminUserRoleId: I =
+    const adminUserId: TID = options.adminId ?? effectiveIdGenerator();
+    const adminRoleId: TID = options.adminRoleId ?? effectiveIdGenerator();
+    const adminUserRoleId: TID =
       options.adminUserRoleId ?? effectiveIdGenerator();
-    const memberUserId: I = options.memberId ?? effectiveIdGenerator();
-    const memberRoleId: I = options.memberRoleId ?? effectiveIdGenerator();
-    const memberUserRoleId: I =
+    const memberUserId: TID = options.memberId ?? effectiveIdGenerator();
+    const memberRoleId: TID = options.memberRoleId ?? effectiveIdGenerator();
+    const memberUserRoleId: TID =
       options.memberUserRoleId ?? effectiveIdGenerator();
-    const systemUserId: I = options.systemId ?? effectiveIdGenerator();
-    const systemRoleId: I = options.systemRoleId ?? effectiveIdGenerator();
-    const systemUserRoleId: I =
+    const systemUserId: TID = options.systemId ?? effectiveIdGenerator();
+    const systemRoleId: TID = options.systemRoleId ?? effectiveIdGenerator();
+    const systemUserRoleId: TID =
       options.systemUserRoleId ?? effectiveIdGenerator();
 
     // Check for existing users and roles with optimized queries
@@ -444,7 +444,7 @@ export abstract class DatabaseInitializationService {
         // Try to construct a minimal result from existing data
         // Note: This is a fallback case and some data may not be available
         const UserRoleModel = ModelRegistry.instance.getTypedModel<
-          IUserRoleDocument<I>
+          IUserRoleDocument<TID>
         >(BaseModelName.UserRole);
         const [
           adminRole,
@@ -483,7 +483,7 @@ export abstract class DatabaseInitializationService {
               adminMnemonic: '', // Not available in fallback
               adminPassword: '', // Not available in fallback
               adminBackupCodes: [], // Not available in fallback
-              adminMember: {} as BackendMember<I>, // Not available in fallback
+              adminMember: {} as BackendMember<TID>, // Not available in fallback
               memberRole,
               memberUserRole,
               memberUser: memberUserDoc,
@@ -492,7 +492,7 @@ export abstract class DatabaseInitializationService {
               memberMnemonic: '', // Not available in fallback
               memberPassword: '', // Not available in fallback
               memberBackupCodes: [], // Not available in fallback
-              memberMember: {} as BackendMember<I>, // Not available in fallback
+              memberMember: {} as BackendMember<TID>, // Not available in fallback
               systemRole,
               systemUserRole,
               systemUser: systemUserDoc,
@@ -501,7 +501,7 @@ export abstract class DatabaseInitializationService {
               systemMnemonic: '', // Not available in fallback
               systemPassword: '', // Not available in fallback
               systemBackupCodes: [], // Not available in fallback
-              systemMember: {} as BackendMember<I>, // Not available in fallback
+              systemMember: {} as BackendMember<TID>, // Not available in fallback
             },
             message: engine.translate(
               SuiteCoreComponentId,
@@ -557,27 +557,27 @@ export abstract class DatabaseInitializationService {
         : { timeoutMs: 120000 }; // Keep original production timeout
 
       const result = await withTransaction<{
-        adminRole: IRoleDocument<I>;
-        memberRole: IRoleDocument<I>;
-        systemRole: IRoleDocument<I>;
-        systemDoc: IUserDocument<string, I>;
-        systemUserRoleDoc: IUserRoleDocument<I>;
+        adminRole: IRoleDocument<TID>;
+        memberRole: IRoleDocument<TID>;
+        systemRole: IRoleDocument<TID>;
+        systemDoc: IUserDocument<string, TID>;
+        systemUserRoleDoc: IUserRoleDocument<TID>;
         systemPassword: string;
         systemMnemonic: string;
         systemBackupCodes: BackupCode[];
-        systemMember: BackendMember<I>;
-        adminDoc: IUserDocument<string, I>;
-        adminUserRoleDoc: IUserRoleDocument<I>;
+        systemMember: BackendMember<TID>;
+        adminDoc: IUserDocument<string, TID>;
+        adminUserRoleDoc: IUserRoleDocument<TID>;
         adminPassword: string;
         adminMnemonic: string;
         adminBackupCodes: BackupCode[];
-        adminMember: BackendMember<I>;
-        memberDoc: IUserDocument<string, I>;
-        memberUserRoleDoc: IUserRoleDocument<I>;
+        adminMember: BackendMember<TID>;
+        memberDoc: IUserDocument<string, TID>;
+        memberUserRoleDoc: IUserRoleDocument<TID>;
         memberPassword: string;
         memberMnemonic: string;
         memberBackupCodes: BackupCode[];
-        memberUser: BackendMember<I>;
+        memberUser: BackendMember<TID>;
       }>(
         application.db.connection,
         application.environment.mongo.useTransactions,
@@ -591,7 +591,7 @@ export abstract class DatabaseInitializationService {
             const adminRoleDocs = await RoleModel.create(
               [
                 {
-                  _id: adminRoleId as I,
+                  _id: adminRoleId as TID,
                   name: application.constants.AdministratorRole,
                   admin: true,
                   member: true,
@@ -599,8 +599,8 @@ export abstract class DatabaseInitializationService {
                   child: false,
                   createdAt: now,
                   updatedAt: now,
-                  createdBy: systemUserId as I,
-                  updatedBy: systemUserId as I,
+                  createdBy: systemUserId as TID,
+                  updatedBy: systemUserId as TID,
                 },
               ],
               { session: sess },
@@ -624,7 +624,7 @@ export abstract class DatabaseInitializationService {
             const memberRoleDocs = await RoleModel.create(
               [
                 {
-                  _id: memberRoleId as I,
+                  _id: memberRoleId as TID,
                   name: application.constants.MemberRole,
                   admin: false,
                   member: true,
@@ -632,8 +632,8 @@ export abstract class DatabaseInitializationService {
                   system: false,
                   createdAt: now,
                   updatedAt: now,
-                  createdBy: systemUserId as I,
-                  updatedBy: systemUserId as I,
+                  createdBy: systemUserId as TID,
+                  updatedBy: systemUserId as TID,
                 },
               ],
               { session: sess },
@@ -660,7 +660,7 @@ export abstract class DatabaseInitializationService {
             const systemRoleDocs = await RoleModel.create(
               [
                 {
-                  _id: systemRoleId as I,
+                  _id: systemRoleId as TID,
                   name: application.constants.SystemRole,
                   admin: true,
                   member: true,
@@ -668,8 +668,8 @@ export abstract class DatabaseInitializationService {
                   child: false,
                   createdAt: now,
                   updatedAt: now,
-                  createdBy: systemUserId as I,
-                  updatedBy: systemUserId as I,
+                  createdBy: systemUserId as TID,
+                  updatedBy: systemUserId as TID,
                 },
               ],
               { session: sess },
@@ -682,14 +682,14 @@ export abstract class DatabaseInitializationService {
             systemRole = systemRoleDocs[0];
           }
 
-          const systemUser = DatabaseInitializationService.cacheOrNew<I>(
+          const systemUser = DatabaseInitializationService.cacheOrNew<TID>(
             application.constants.SystemUser,
             new EmailString(application.constants.SystemEmail),
             options.systemMnemonic!,
             MemberType.System,
             eciesService,
-            systemUserId as I,
-            systemUserId as I,
+            systemUserId as TID,
+            systemUserId as TID,
           );
           backupCodeService.setSystemUser(systemUser.member);
           SystemUserService.setSystemUser(
@@ -738,7 +738,7 @@ export abstract class DatabaseInitializationService {
           const systemDocs = await UserModel.create(
             [
               {
-                _id: systemUserId as I,
+                _id: systemUserId as TID,
                 username: application.constants.SystemUser,
                 email: application.constants.SystemEmail,
                 publicKey: systemUser.member.publicKey.toString('hex'),
@@ -755,8 +755,8 @@ export abstract class DatabaseInitializationService {
                 directChallenge: true, // allow direct challenge login by default
                 createdAt: now,
                 updatedAt: now,
-                createdBy: systemUserId as I,
-                updatedBy: systemUserId as I,
+                createdBy: systemUserId as TID,
+                updatedBy: systemUserId as TID,
               },
             ],
             { session: sess },
@@ -780,9 +780,9 @@ export abstract class DatabaseInitializationService {
 
           // Create admin user-role relationship
           const systemUserRoleDoc = await roleService.addUserToRole(
-            systemRoleId as I,
-            systemUserId as I,
-            systemUserId as I,
+            systemRoleId as TID,
+            systemUserId as TID,
+            systemUserId as TID,
             sess,
             systemUserRoleId,
           );
@@ -799,13 +799,13 @@ export abstract class DatabaseInitializationService {
             );
           }
 
-          const adminUser = DatabaseInitializationService.cacheOrNew<I>(
+          const adminUser = DatabaseInitializationService.cacheOrNew<TID>(
             application.constants.AdministratorUser,
             new EmailString(application.constants.AdministratorEmail),
             options.adminMnemonic,
             MemberType.User,
             eciesService,
-            adminUserId as I,
+            adminUserId as TID,
             systemDoc._id,
           );
           // Encrypt mnemonic for recovery
@@ -848,7 +848,7 @@ export abstract class DatabaseInitializationService {
           const adminDocs = await UserModel.create(
             [
               {
-                _id: adminUserId as I,
+                _id: adminUserId as TID,
                 username: application.constants.AdministratorUser,
                 email: application.constants.AdministratorEmail,
                 publicKey: adminUser.member.publicKey.toString('hex'),
@@ -864,8 +864,8 @@ export abstract class DatabaseInitializationService {
                 directChallenge: true,
                 createdAt: now,
                 updatedAt: now,
-                createdBy: systemUserId as I,
-                updatedBy: systemUserId as I,
+                createdBy: systemUserId as TID,
+                updatedBy: systemUserId as TID,
               },
             ],
             { session: sess },
@@ -889,9 +889,9 @@ export abstract class DatabaseInitializationService {
 
           // Create admin user-role relationship
           const adminUserRoleDoc = await roleService.addUserToRole(
-            adminRoleId as I,
-            adminUserId as I,
-            systemUserId as I,
+            adminRoleId as TID,
+            adminUserId as TID,
+            systemUserId as TID,
             sess,
             adminUserRoleId,
           );
@@ -911,13 +911,13 @@ export abstract class DatabaseInitializationService {
             );
           }
 
-          const memberUser = DatabaseInitializationService.cacheOrNew<I>(
+          const memberUser = DatabaseInitializationService.cacheOrNew<TID>(
             application.constants.MemberUser,
             new EmailString(application.constants.MemberEmail),
             options.memberMnemonic,
             MemberType.User,
             eciesService,
-            memberUserId as I,
+            memberUserId as TID,
             systemDoc._id,
           );
           const memberPasswordSecure = options.memberPassword
@@ -962,7 +962,7 @@ export abstract class DatabaseInitializationService {
           const memberDocs = await UserModel.create(
             [
               {
-                _id: memberUserId as I,
+                _id: memberUserId as TID,
                 username: application.constants.MemberUser,
                 email: application.constants.MemberEmail,
                 publicKey: memberUser.member.publicKey.toString('hex'),
@@ -978,8 +978,8 @@ export abstract class DatabaseInitializationService {
                 directChallenge: true,
                 createdAt: now,
                 updatedAt: now,
-                createdBy: systemUserId as I,
-                updatedBy: systemUserId as I,
+                createdBy: systemUserId as TID,
+                updatedBy: systemUserId as TID,
               },
             ],
             { session: sess },
@@ -1003,9 +1003,9 @@ export abstract class DatabaseInitializationService {
 
           // Create member user-role relationship
           const memberUserRoleDoc = await roleService.addUserToRole(
-            memberRoleId as I,
-            memberUserId as I,
-            systemUserId as I,
+            memberRoleId as TID,
+            memberUserId as TID,
+            systemUserId as TID,
             sess,
             memberUserRoleId,
           );
@@ -1125,34 +1125,34 @@ export abstract class DatabaseInitializationService {
     }
   }
 
-  public static serverInitResultsToDotEnv<I extends PlatformID = Buffer>(
-    serverInitResult: IServerInitResult<I>,
+  public static serverInitResultsToDotEnv<TID extends PlatformID = Buffer>(
+    serverInitResult: IServerInitResult<TID>,
   ): string {
-    const idProvider = getEnhancedNodeIdProvider<I>();
-    return `ADMIN_ID="${idProvider.idToString(serverInitResult.adminUser._id as I)}"
+    const idProvider = getEnhancedNodeIdProvider<TID>();
+    return `ADMIN_ID="${idProvider.idToString(serverInitResult.adminUser._id as TID)}"
 ADMIN_MNEMONIC="${serverInitResult.adminMnemonic}"
-ADMIN_ROLE_ID="${idProvider.idToString(serverInitResult.adminRole._id as I)}"
-ADMIN_USER_ROLE_ID="${idProvider.idToString(serverInitResult.adminUserRole._id as I)}"
+ADMIN_ROLE_ID="${idProvider.idToString(serverInitResult.adminRole._id as TID)}"
+ADMIN_USER_ROLE_ID="${idProvider.idToString(serverInitResult.adminUserRole._id as TID)}"
 ADMIN_PASSWORD="${serverInitResult.adminPassword}"
-MEMBER_ID="${idProvider.idToString(serverInitResult.memberUser._id as I)}"
+MEMBER_ID="${idProvider.idToString(serverInitResult.memberUser._id as TID)}"
 MEMBER_MNEMONIC="${serverInitResult.memberMnemonic}"
-MEMBER_ROLE_ID="${idProvider.idToString(serverInitResult.memberRole._id as I)}"
-MEMBER_USER_ROLE_ID="${idProvider.idToString(serverInitResult.memberUserRole._id as I)}"
+MEMBER_ROLE_ID="${idProvider.idToString(serverInitResult.memberRole._id as TID)}"
+MEMBER_USER_ROLE_ID="${idProvider.idToString(serverInitResult.memberUserRole._id as TID)}"
 MEMBER_PASSWORD="${serverInitResult.memberPassword}"
-SYSTEM_ID="${idProvider.idToString(serverInitResult.systemUser._id as I)}"
+SYSTEM_ID="${idProvider.idToString(serverInitResult.systemUser._id as TID)}"
 SYSTEM_MNEMONIC="${serverInitResult.systemMnemonic}"
 SYSTEM_PUBLIC_KEY="${serverInitResult.systemUser.publicKey}"
-SYSTEM_ROLE_ID="${idProvider.idToString(serverInitResult.systemRole._id as I)}"
-SYSTEM_USER_ROLE_ID="${idProvider.idToString(serverInitResult.systemUserRole._id as I)}"
+SYSTEM_ROLE_ID="${idProvider.idToString(serverInitResult.systemRole._id as TID)}"
+SYSTEM_USER_ROLE_ID="${idProvider.idToString(serverInitResult.systemUserRole._id as TID)}"
 SYSTEM_PASSWORD="${serverInitResult.systemPassword}"
 `;
   }
 
-  public static printServerInitResults<I extends PlatformID = Buffer>(
-    result: IServerInitResult<I>,
+  public static printServerInitResults<TID extends PlatformID = Buffer>(
+    result: IServerInitResult<TID>,
     printDotEnv: boolean = true,
   ): void {
-    const idProvider = getEnhancedNodeIdProvider<I>();
+    const idProvider = getEnhancedNodeIdProvider<TID>();
     debugLog(
       true,
       'log',
@@ -1166,7 +1166,7 @@ SYSTEM_PASSWORD="${serverInitResult.systemPassword}"
       this.defaultI18nTFunc(
         '{{SuiteCoreStringKey.Common_System}} {{SuiteCoreStringKey.Common_ID}}: {id}',
         {
-          id: idProvider.idToString(result.systemUser._id as I),
+          id: idProvider.idToString(result.systemUser._id as TID),
         },
       ),
     );
@@ -1186,7 +1186,7 @@ SYSTEM_PASSWORD="${serverInitResult.systemPassword}"
       this.defaultI18nTFunc(
         '{{SuiteCoreStringKey.Common_System}} {{SuiteCoreStringKey.Common_Role}} {{SuiteCoreStringKey.Common_ID}}: {roleId}',
         {
-          roleId: idProvider.idToString(result.systemRole._id as I),
+          roleId: idProvider.idToString(result.systemRole._id as TID),
         },
       ),
     );
@@ -1196,7 +1196,7 @@ SYSTEM_PASSWORD="${serverInitResult.systemPassword}"
       this.defaultI18nTFunc(
         '{{SuiteCoreStringKey.Common_System}} {{SuiteCoreStringKey.Common_User}} {{SuiteCoreStringKey.Common_Role}} {{SuiteCoreStringKey.Common_ID}}: {userRoleId}',
         {
-          userRoleId: idProvider.idToString(result.systemUserRole._id as I),
+          userRoleId: idProvider.idToString(result.systemUserRole._id as TID),
         },
       ),
     );
@@ -1264,7 +1264,7 @@ SYSTEM_PASSWORD="${serverInitResult.systemPassword}"
       this.defaultI18nTFunc(
         '{{SuiteCoreStringKey.Common_Admin}} {{SuiteCoreStringKey.Common_ID}}: {id}',
         {
-          id: idProvider.idToString(result.adminUser._id as I),
+          id: idProvider.idToString(result.adminUser._id as TID),
         },
       ),
     );
@@ -1284,7 +1284,7 @@ SYSTEM_PASSWORD="${serverInitResult.systemPassword}"
       this.defaultI18nTFunc(
         '{{SuiteCoreStringKey.Common_Admin}} {{SuiteCoreStringKey.Common_Role}} {{SuiteCoreStringKey.Common_ID}}: {roleId}',
         {
-          roleId: idProvider.idToString(result.adminRole._id as I),
+          roleId: idProvider.idToString(result.adminRole._id as TID),
         },
       ),
     );
@@ -1294,7 +1294,7 @@ SYSTEM_PASSWORD="${serverInitResult.systemPassword}"
       this.defaultI18nTFunc(
         '{{SuiteCoreStringKey.Common_Admin}} {{SuiteCoreStringKey.Common_User}} {{SuiteCoreStringKey.Common_Role}} {{SuiteCoreStringKey.Common_ID}}: {userRoleId}',
         {
-          userRoleId: idProvider.idToString(result.adminUserRole._id as I),
+          userRoleId: idProvider.idToString(result.adminUserRole._id as TID),
         },
       ),
     );
@@ -1362,7 +1362,7 @@ SYSTEM_PASSWORD="${serverInitResult.systemPassword}"
       this.defaultI18nTFunc(
         '{{SuiteCoreStringKey.Common_Member}} {{SuiteCoreStringKey.Common_ID}}: {id}',
         {
-          id: idProvider.idToString(result.memberUser._id as I),
+          id: idProvider.idToString(result.memberUser._id as TID),
         },
       ),
     );
@@ -1382,7 +1382,7 @@ SYSTEM_PASSWORD="${serverInitResult.systemPassword}"
       this.defaultI18nTFunc(
         '{{SuiteCoreStringKey.Common_Member}} {{SuiteCoreStringKey.Common_Role}} {{SuiteCoreStringKey.Common_ID}}: {roleId}',
         {
-          roleId: idProvider.idToString(result.memberRole._id as I),
+          roleId: idProvider.idToString(result.memberRole._id as TID),
         },
       ),
     );
@@ -1392,7 +1392,7 @@ SYSTEM_PASSWORD="${serverInitResult.systemPassword}"
       this.defaultI18nTFunc(
         '{{SuiteCoreStringKey.Common_Member}} {{SuiteCoreStringKey.Common_User}} {{SuiteCoreStringKey.Common_Role}} {{SuiteCoreStringKey.Common_ID}}: {userRoleId}',
         {
-          userRoleId: idProvider.idToString(result.memberUserRole._id as I),
+          userRoleId: idProvider.idToString(result.memberUserRole._id as TID),
         },
       ),
     );
@@ -1480,45 +1480,47 @@ SYSTEM_PASSWORD="${serverInitResult.systemPassword}"
     }
   }
 
-  public static setEnvFromInitResults<I extends PlatformID = Buffer>(
-    result: IServerInitResult<I>,
+  public static setEnvFromInitResults<TID extends PlatformID = Buffer>(
+    result: IServerInitResult<TID>,
   ): void {
-    const idProvider = getEnhancedNodeIdProvider<I>();
-    process.env['ADMIN_ID'] = idProvider.idToString(result.adminUser._id as I);
+    const idProvider = getEnhancedNodeIdProvider<TID>();
+    process.env['ADMIN_ID'] = idProvider.idToString(
+      result.adminUser._id as TID,
+    );
     process.env['ADMIN_PUBLIC_KEY'] = result.adminUser.publicKey;
     process.env['ADMIN_MNEMONIC'] = result.adminMnemonic;
     process.env['ADMIN_PASSWORD'] = result.adminPassword;
     process.env['ADMIN_ROLE_ID'] = idProvider.idToString(
-      result.adminRole._id as I,
+      result.adminRole._id as TID,
     );
     process.env['ADMIN_USER_ROLE_ID'] = idProvider.idToString(
-      result.adminUserRole._id as I,
+      result.adminUserRole._id as TID,
     );
     //
     process.env['MEMBER_ID'] = idProvider.idToString(
-      result.memberUser._id as I,
+      result.memberUser._id as TID,
     );
     process.env['MEMBER_PUBLIC_KEY'] = result.memberUser.publicKey;
     process.env['MEMBER_MNEMONIC'] = result.memberMnemonic;
     process.env['MEMBER_PASSWORD'] = result.memberPassword;
     process.env['MEMBER_ROLE_ID'] = idProvider.idToString(
-      result.memberRole._id as I,
+      result.memberRole._id as TID,
     );
     process.env['MEMBER_USER_ROLE_ID'] = idProvider.idToString(
-      result.memberUserRole._id as I,
+      result.memberUserRole._id as TID,
     );
     //
     process.env['SYSTEM_ID'] = idProvider.idToString(
-      result.systemUser._id as I,
+      result.systemUser._id as TID,
     );
     process.env['SYSTEM_PUBLIC_KEY'] = result.systemUser.publicKey;
     process.env['SYSTEM_MNEMONIC'] = result.systemMnemonic;
     process.env['SYSTEM_PASSWORD'] = result.systemPassword;
     process.env['SYSTEM_ROLE_ID'] = idProvider.idToString(
-      result.systemRole._id as I,
+      result.systemRole._id as TID,
     );
     process.env['SYSTEM_USER_ROLE_ID'] = idProvider.idToString(
-      result.systemUserRole._id as I,
+      result.systemUserRole._id as TID,
     );
   }
 
@@ -1529,11 +1531,11 @@ SYSTEM_PASSWORD="${serverInitResult.systemPassword}"
    * @param result The initialization results containing credentials
    * @param idToString Function to convert IDs to strings
    */
-  public static writeEnvFile<I extends PlatformID = Buffer>(
+  public static writeEnvFile<TID extends PlatformID = Buffer>(
     envFilePath: string,
-    result: IServerInitResult<I>,
+    result: IServerInitResult<TID>,
   ): void {
-    const idProvider = getEnhancedNodeIdProvider<I>();
+    const idProvider = getEnhancedNodeIdProvider<TID>();
     // Ensure the directory exists
     const dir = path.dirname(envFilePath);
     if (!fs.existsSync(dir)) {
@@ -1548,24 +1550,26 @@ SYSTEM_PASSWORD="${serverInitResult.systemPassword}"
 
     // Define the credentials to update
     const credentials = {
-      ADMIN_ID: idProvider.idToString(result.adminUser._id as I),
+      ADMIN_ID: idProvider.idToString(result.adminUser._id as TID),
       ADMIN_MNEMONIC: result.adminMnemonic,
-      ADMIN_ROLE_ID: idProvider.idToString(result.adminRole._id as I),
-      ADMIN_USER_ROLE_ID: idProvider.idToString(result.adminUserRole._id as I),
+      ADMIN_ROLE_ID: idProvider.idToString(result.adminRole._id as TID),
+      ADMIN_USER_ROLE_ID: idProvider.idToString(
+        result.adminUserRole._id as TID,
+      ),
       ADMIN_PASSWORD: result.adminPassword,
-      MEMBER_ID: idProvider.idToString(result.memberUser._id as I),
+      MEMBER_ID: idProvider.idToString(result.memberUser._id as TID),
       MEMBER_MNEMONIC: result.memberMnemonic,
-      MEMBER_ROLE_ID: idProvider.idToString(result.memberRole._id as I),
+      MEMBER_ROLE_ID: idProvider.idToString(result.memberRole._id as TID),
       MEMBER_USER_ROLE_ID: idProvider.idToString(
-        result.memberUserRole._id as I,
+        result.memberUserRole._id as TID,
       ),
       MEMBER_PASSWORD: result.memberPassword,
-      SYSTEM_ID: idProvider.idToString(result.systemUser._id as I),
+      SYSTEM_ID: idProvider.idToString(result.systemUser._id as TID),
       SYSTEM_MNEMONIC: result.systemMnemonic,
       SYSTEM_PUBLIC_KEY: result.systemUser.publicKey,
-      SYSTEM_ROLE_ID: idProvider.idToString(result.systemRole._id as I),
+      SYSTEM_ROLE_ID: idProvider.idToString(result.systemRole._id as TID),
       SYSTEM_USER_ROLE_ID: idProvider.idToString(
-        result.systemUserRole._id as I,
+        result.systemUserRole._id as TID,
       ),
       SYSTEM_PASSWORD: result.systemPassword,
     };
@@ -1604,15 +1608,15 @@ SYSTEM_PASSWORD="${serverInitResult.systemPassword}"
   /**
    * Initializes the user database with default users and roles (convenience method).
    * Creates necessary services and calls initUserDbWithServices.
-   * @template I Platform-specific ID type
+   * @template TID Platform-specific ID type
    * @param application Application instance
    * @returns Result of the initialization
    */
-  public static async initUserDb<I extends PlatformID = Buffer>(
-    application: IApplication<I>,
-  ): Promise<IFailableResult<IServerInitResult<I>>> {
+  public static async initUserDb<TID extends PlatformID = Buffer>(
+    application: IApplication<TID>,
+  ): Promise<IFailableResult<IServerInitResult<TID>>> {
     const mnemonicModel = ModelRegistry.instance.getTypedModel<
-      IMnemonicDocument<I>
+      IMnemonicDocument<TID>
     >(BaseModelName.Mnemonic);
     const mnemonicService = new MnemonicService(
       mnemonicModel,
@@ -1627,17 +1631,17 @@ SYSTEM_PASSWORD="${serverInitResult.systemPassword}"
       symmetricKeyBits: ECIES.SYMMETRIC.KEY_BITS,
       symmetricKeyMode: ECIES.SYMMETRIC.MODE,
     };
-    const eciesService = new ECIESService<I>(config);
-    const roleService = new RoleService<I>(application);
+    const eciesService = new ECIESService<TID>(config);
+    const roleService = new RoleService<TID>(application);
     const keyWrappingService = new KeyWrappingService();
-    const backupCodeService = new BackupCodeService<I>(
+    const backupCodeService = new BackupCodeService<TID>(
       application,
       eciesService,
       keyWrappingService,
       roleService,
     );
 
-    return this.initUserDbWithServices<I>(
+    return this.initUserDbWithServices<TID>(
       application,
       keyWrappingService,
       mnemonicService,

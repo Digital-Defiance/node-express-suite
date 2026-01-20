@@ -89,67 +89,70 @@ const DirectLoginChallengeSchema = z.object({
 /**
  * User controller handling all user-related API endpoints.
  * Manages authentication, registration, password operations, settings, and backup codes.
- * @template I Platform ID type
- * @template D Date type
- * @template S Site language string type
- * @template A Account status string type
+ * @template TID Platform ID type
+ * @template TDate Date type
+ * @template TLanguage Site language string type
+ * @template TAccountStatus Account status string type
  * @template TUser User base type
  * @template TTokenRole Token role type
  * @template TTokenUser Token user type
  * @template TApplication Application type
- * @template TLanguage Language code type
  */
 @Controller()
 export class UserController<
-  I extends PlatformID = Buffer,
-  D extends Date = Date,
-  S extends string = string,
-  A extends string = string,
-  TUser extends IUserBase<I, D, S, A> = IUserBase<I, D, S, A>,
-  TTokenRole extends ITokenRole<I, D> = ITokenRole<I, D>,
-  TTokenUser extends ITokenUser = ITokenUser,
-  TApplication extends IApplication<I> = IApplication<I>,
+  TID extends PlatformID = Buffer,
+  TDate extends Date = Date,
   TLanguage extends CoreLanguageCode = CoreLanguageCode,
-> extends DecoratorBaseController<TLanguage, I> {
+  TAccountStatus extends string = string,
+  TUser extends IUserBase<TID, TDate, TLanguage, TAccountStatus> = IUserBase<
+    TID,
+    TDate,
+    TLanguage,
+    TAccountStatus
+  >,
+  TTokenRole extends ITokenRole<TID, TDate> = ITokenRole<TID, TDate>,
+  TTokenUser extends ITokenUser = ITokenUser,
+  TApplication extends IApplication<TID> = IApplication<TID>,
+> extends DecoratorBaseController<TLanguage, TID> {
   protected readonly userService: UserService<
     IUserDocument,
-    I,
-    D,
-    S,
-    A,
-    Environment<I>,
+    TID,
+    TDate,
+    TLanguage,
+    TAccountStatus,
+    Environment<TID>,
     IConstants,
-    IBaseDocument<IUserDocument, I>,
+    IBaseDocument<IUserDocument, TID>,
     TUser,
     TTokenRole,
     TApplication
   >;
   protected readonly jwtService: JwtService<
-    I,
-    D,
+    TID,
+    TDate,
     TTokenRole,
     TTokenUser,
     TApplication
   >;
   protected readonly backupCodeService: BackupCodeService<
-    I,
-    D,
+    TID,
+    TDate,
     TTokenRole,
     TApplication
   >;
-  protected readonly roleService: RoleService<I, D, TTokenRole>;
-  protected readonly eciesService: ECIESService;
-  protected readonly systemUser: BackendMember<I>;
+  protected readonly roleService: RoleService<TID, TDate, TTokenRole>;
+  protected readonly eciesService: ECIESService<TID>;
+  protected readonly systemUser: BackendMember<TID>;
 
   constructor(
-    application: IApplication<I>,
-    jwtService: JwtService<I, D, TTokenRole, TTokenUser, TApplication>,
+    application: IApplication<TID>,
+    jwtService: JwtService<TID, TDate, TTokenRole, TTokenUser, TApplication>,
     userService: UserService<
       any,
-      I,
-      D,
-      S,
-      A,
+      TID,
+      TDate,
+      TLanguage,
+      TAccountStatus,
       any,
       any,
       any,
@@ -157,9 +160,9 @@ export class UserController<
       TTokenRole,
       TApplication
     >,
-    backupCodeService: BackupCodeService<I, D, TTokenRole, TApplication>,
-    roleService: RoleService<I, D, TTokenRole>,
-    eciesService: ECIESService,
+    backupCodeService: BackupCodeService<TID, TDate, TTokenRole, TApplication>,
+    roleService: RoleService<TID, TDate, TTokenRole>,
+    eciesService: ECIESService<TID>,
   ) {
     super(application);
     this.jwtService = jwtService;
@@ -167,7 +170,7 @@ export class UserController<
     this.backupCodeService = backupCodeService;
     this.roleService = roleService;
     this.eciesService = eciesService;
-    this.systemUser = SystemUserService.getSystemUser<I>(
+    this.systemUser = SystemUserService.getSystemUser<TID>(
       application.environment,
       application.constants,
     );
@@ -234,7 +237,7 @@ export class UserController<
       );
     }
 
-    const UserModel = this.application.getModel<IUserDocument<string, I>>(
+    const UserModel = this.application.getModel<IUserDocument<string, TID>>(
       BaseModelName.User,
     );
     const userDoc = await UserModel.findById(tokenUser.userId).select(
@@ -567,7 +570,7 @@ export class UserController<
       );
     }
 
-    const UserModel = this.application.getModel<IUserDocument<string, I>>(
+    const UserModel = this.application.getModel<IUserDocument<string, TID>>(
       BaseModelName.User,
     );
     const userDoc = await UserModel.findById(req.user.id);
@@ -694,7 +697,7 @@ export class UserController<
             ...(email !== undefined && { email: email as string }),
             ...(timezone !== undefined && { timezone: timezone as string }),
             ...(siteLanguage !== undefined && {
-              siteLanguage: siteLanguage as S,
+              siteLanguage: siteLanguage as TLanguage,
             }),
             ...(currency !== undefined && { currency: currency as string }),
             ...(darkMode !== undefined && { darkMode: darkMode as boolean }),
@@ -733,7 +736,7 @@ export class UserController<
       );
     }
 
-    const UserModel = this.application.getModel<IUserDocument<string, I>>(
+    const UserModel = this.application.getModel<IUserDocument<string, TID>>(
       BaseModelName.User,
     );
     const user = await UserModel.findById(req.user.id);
@@ -805,7 +808,7 @@ export class UserController<
     }
 
     const newBackupCodes = await this.userService.resetUserBackupCodes(
-      req.eciesUser as BackendMember<I>,
+      req.eciesUser as BackendMember<TID>,
       this.systemUser,
     );
     const codes = newBackupCodes.map((c) => c.notNullValue);
@@ -877,7 +880,7 @@ export class UserController<
             ),
           );
         }
-        const provider = getEnhancedNodeIdProvider<I>();
+        const provider = getEnhancedNodeIdProvider<TID>();
         const userDoc = await this.userService.findUserById(
           provider.idFromString(req.user.id),
           true,
@@ -1338,7 +1341,7 @@ export class UserController<
           email?: unknown;
         };
 
-        const UserModel = this.application.getModel<IUserDocument<string, I>>(
+        const UserModel = this.application.getModel<IUserDocument<string, TID>>(
           BaseModelName.User,
         );
         const query: { username?: string; email?: string } = {};
@@ -1532,7 +1535,7 @@ export class UserController<
       async (sess) => {
         const { email } = this.validatedBody as { email?: unknown };
 
-        const UserModel = this.application.getModel<IUserDocument<string, I>>(
+        const UserModel = this.application.getModel<IUserDocument<string, TID>>(
           BaseModelName.User,
         );
         if (!isString(email)) {
@@ -1561,7 +1564,7 @@ export class UserController<
         // Mongoose document type doesn't exactly match IUserDocument generic signature
         // but the document has all required properties
         await this.userService.createAndSendEmailToken(
-          user as unknown as IUserDocument<S, I>,
+          user as unknown as IUserDocument<TLanguage, TID>,
           EmailTokenType.PasswordReset,
           sess,
           this.application.environment.debug,

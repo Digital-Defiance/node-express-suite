@@ -15,34 +15,34 @@ export type { IRoleDocument, IUserDocument, IUserRoleDocument };
 /**
  * Result of server initialization for testing.
  * Contains admin, member, and system user accounts with credentials and roles.
- * @template I - Platform ID type (defaults to Buffer)
+ * @template TID - Platform ID type (defaults to Buffer)
  */
-export interface IServerInitResult<I extends PlatformID = Buffer> {
-  adminRole: IRoleDocument<I>;
-  adminUser: IUserDocument<string, I>;
+export interface IServerInitResult<TID extends PlatformID = Buffer> {
+  adminRole: IRoleDocument<TID>;
+  adminUser: IUserDocument<string, TID>;
   adminUsername: string;
   adminEmail: string;
   adminMnemonic: string;
   adminPassword: string;
   adminBackupCodes: Array<string>;
-  adminMember: Member<I>;
-  adminUserRole: IUserRoleDocument<I>;
-  memberRole: IRoleDocument<I>;
-  memberUser: IUserDocument<string, I>;
+  adminMember: Member<TID>;
+  adminUserRole: IUserRoleDocument<TID>;
+  memberRole: IRoleDocument<TID>;
+  memberUser: IUserDocument<string, TID>;
   memberUsername: string;
   memberEmail: string;
   memberMnemonic: string;
   memberPassword: string;
   memberBackupCodes: Array<string>;
-  memberMember: Member<I>;
-  memberUserRole: IUserRoleDocument<I>;
-  systemRole: IRoleDocument<I>;
-  systemUser: IUserDocument<string, I>;
+  memberMember: Member<TID>;
+  memberUserRole: IUserRoleDocument<TID>;
+  systemRole: IRoleDocument<TID>;
+  systemUser: IUserDocument<string, TID>;
   systemUsername: string;
   systemEmail: string;
   systemMnemonic: string;
   systemPassword: string;
   systemBackupCodes: Array<string>;
-  systemMember: Member<I>;
-  systemUserRole: IUserRoleDocument<I>;
+  systemMember: Member<TID>;
+  systemUserRole: IUserRoleDocument<TID>;
 }

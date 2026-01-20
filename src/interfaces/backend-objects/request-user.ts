@@ -10,10 +10,10 @@ import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 
 /**
  * Backend request user object type.
- * @template S - String type for language
- * @template I - Platform ID type (defaults to Buffer)
+ * @template TLanguage - String type for language
+ * @template TID - Platform ID type (defaults to Buffer)
  */
 export type IRequestUserBackendObject<
-  S extends string,
-  I extends PlatformID = Buffer,
-> = IRequestUser<I, Array<IRoleBackendObject<any>>, S, Date>;
+  TLanguage extends string,
+  TID extends PlatformID = Buffer,
+> = IRequestUser<TID, Array<IRoleBackendObject<any>>, TLanguage, Date>;

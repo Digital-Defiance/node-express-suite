@@ -24,7 +24,7 @@ export abstract class DirectLoginTokenService {
   /**
    * Marks a direct login token as used in the database.
    * Prevents token reuse by checking for existing usage and creating a new record.
-   * @template I Platform-specific ID type
+   * @template TID Platform-specific ID type
    * @param app Application instance with database connection
    * @param userId User ID associated with the token
    * @param token Direct login token to mark as used
@@ -33,9 +33,9 @@ export abstract class DirectLoginTokenService {
    * @throws {DirectTokenUsedError} If token has already been used
    * @throws {FailedToUseDirectTokenError} If token creation fails
    */
-  public static async useToken<I extends PlatformID = Buffer>(
-    app: IApplication<I>,
-    userId: I,
+  public static async useToken<TID extends PlatformID = Buffer>(
+    app: IApplication<TID>,
+    userId: TID,
     token: string,
     session?: ClientSession,
   ): Promise<void> {
@@ -45,7 +45,7 @@ export abstract class DirectLoginTokenService {
       session,
       async (sess) => {
         const UsedDirectLoginTokenModel = ModelRegistry.instance.get<
-          IUsedDirectLoginTokenBase<I>,
+          IUsedDirectLoginTokenBase<TID>,
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           any
         >(BaseModelName.UsedDirectLoginToken).model;

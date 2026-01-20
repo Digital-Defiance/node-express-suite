@@ -31,9 +31,9 @@ import {
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 
 export class Environment<
-  I extends PlatformID = Buffer,
-> implements IEnvironment<I> {
-  private readonly _environment: IEnvironment<I>;
+  TID extends PlatformID = Buffer,
+> implements IEnvironment<TID> {
+  private readonly _environment: IEnvironment<TID>;
   private readonly _envObject: EnvironmentVariables;
   public static requireEnv<T>(key: string, obj: EnvironmentVariables): T {
     if (!Object.prototype.hasOwnProperty.call(obj, key)) {
@@ -210,22 +210,22 @@ export class Environment<
       adminId: envObj['ADMIN_ID']
         ? (constants.idProvider.fromBytes(
             constants.idProvider.deserialize(envObj['ADMIN_ID']),
-          ) as I)
+          ) as TID)
         : (constants.idProvider.fromBytes(
             constants.idProvider.generate(),
-          ) as I),
+          ) as TID),
       adminPassword: envObj['ADMIN_PASSWORD']
         ? new SecureString(envObj['ADMIN_PASSWORD'])
         : undefined,
       adminRoleId: envObj['ADMIN_ROLE_ID']
         ? (constants.idProvider.fromBytes(
             constants.idProvider.deserialize(envObj['ADMIN_ROLE_ID']),
-          ) as I)
+          ) as TID)
         : undefined,
       adminUserRoleId: envObj['ADMIN_ROLE_ID']
         ? (constants.idProvider.fromBytes(
             constants.idProvider.deserialize(envObj['ADMIN_ROLE_ID']),
-          ) as I)
+          ) as TID)
         : undefined,
       adminBackupCodes: envObj['ADMIN_BACKUP_CODES']
         ? parseBackupCodes('admin', envObj)
@@ -237,22 +237,22 @@ export class Environment<
       memberId: envObj['MEMBER_ID']
         ? (constants.idProvider.fromBytes(
             constants.idProvider.deserialize(envObj['MEMBER_ID']),
-          ) as I)
+          ) as TID)
         : (constants.idProvider.fromBytes(
             constants.idProvider.generate(),
-          ) as I),
+          ) as TID),
       memberPassword: envObj['MEMBER_PASSWORD']
         ? new SecureString(envObj['MEMBER_PASSWORD'])
         : undefined,
       memberRoleId: envObj['MEMBER_ROLE_ID']
         ? (constants.idProvider.fromBytes(
             constants.idProvider.deserialize(envObj['MEMBER_ROLE_ID']),
-          ) as I)
+          ) as TID)
         : undefined,
       memberUserRoleId: envObj['MEMBER_USER_ROLE_ID']
         ? (constants.idProvider.fromBytes(
             constants.idProvider.deserialize(envObj['MEMBER_USER_ROLE_ID']),
-          ) as I)
+          ) as TID)
         : undefined,
       memberBackupCodes: envObj['MEMBER_BACKUP_CODES']
         ? parseBackupCodes('member', envObj)
@@ -264,10 +264,10 @@ export class Environment<
       systemId: envObj['SYSTEM_ID']
         ? (constants.idProvider.fromBytes(
             constants.idProvider.deserialize(envObj['SYSTEM_ID']),
-          ) as I)
+          ) as TID)
         : (constants.idProvider.fromBytes(
             constants.idProvider.generate(),
-          ) as I),
+          ) as TID),
       systemPublicKeyHex: envObj['SYSTEM_PUBLIC_KEY'] ?? undefined,
       systemPassword: envObj['SYSTEM_PASSWORD']
         ? new SecureString(envObj['SYSTEM_PASSWORD'])
@@ -275,12 +275,12 @@ export class Environment<
       systemRoleId: envObj['SYSTEM_ROLE_ID']
         ? (constants.idProvider.fromBytes(
             constants.idProvider.deserialize(envObj['SYSTEM_ROLE_ID']),
-          ) as I)
+          ) as TID)
         : undefined,
       systemUserRoleId: envObj['SYSTEM_ROLE_ID']
         ? (constants.idProvider.fromBytes(
             constants.idProvider.deserialize(envObj['SYSTEM_ROLE_ID']),
-          ) as I)
+          ) as TID)
         : undefined,
       systemBackupCodes: envObj['SYSTEM_BACKUP_CODES']
         ? parseBackupCodes('system', envObj)
@@ -601,7 +601,7 @@ export class Environment<
   /**
    * The ID of the admin user
    */
-  public get adminId(): I | undefined {
+  public get adminId(): TID | undefined {
     return this._environment.adminId;
   }
 
@@ -615,14 +615,14 @@ export class Environment<
   /**
    * The role ID of the admin user
    */
-  public get adminRoleId(): I | undefined {
+  public get adminRoleId(): TID | undefined {
     return this._environment.adminRoleId;
   }
 
   /**
    * The user role ID of the admin user
    */
-  public get adminUserRoleId(): I | undefined {
+  public get adminUserRoleId(): TID | undefined {
     return this._environment.adminUserRoleId;
   }
 
@@ -650,7 +650,7 @@ export class Environment<
   /**
    * The date the member user was created
    */
-  public get memberId(): I | undefined {
+  public get memberId(): TID | undefined {
     return this._environment.memberId;
   }
 
@@ -664,14 +664,14 @@ export class Environment<
   /**
    * The role ID of the member user
    */
-  public get memberRoleId(): I | undefined {
+  public get memberRoleId(): TID | undefined {
     return this._environment.memberRoleId;
   }
 
   /**
    * The user role ID of the member user
    */
-  public get memberUserRoleId(): I | undefined {
+  public get memberUserRoleId(): TID | undefined {
     return this._environment.memberUserRoleId;
   }
 
@@ -699,7 +699,7 @@ export class Environment<
   /**
    * The ID of the system user
    */
-  public get systemId(): I | undefined {
+  public get systemId(): TID | undefined {
     return this._environment.systemId;
   }
 
@@ -720,14 +720,14 @@ export class Environment<
   /**
    * The role ID of the system user
    */
-  public get systemRoleId(): I | undefined {
+  public get systemRoleId(): TID | undefined {
     return this._environment.systemRoleId;
   }
 
   /**
    * The user role ID of the system user
    */
-  public get systemUserRoleId(): I | undefined {
+  public get systemUserRoleId(): TID | undefined {
     return this._environment.systemUserRoleId;
   }
 

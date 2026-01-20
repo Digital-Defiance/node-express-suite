@@ -9,10 +9,10 @@ import { IRoleBase, Role } from '@digitaldefiance/suite-core-lib';
 
 /**
  * Backend role object type.
- * @template I - Platform ID type (defaults to Buffer)
+ * @template TID - Platform ID type (defaults to Buffer)
  */
-export type IRoleBackendObject<I extends PlatformID = Buffer> = IRoleBase<
-  I,
+export type IRoleBackendObject<TID extends PlatformID = Buffer> = IRoleBase<
+  TID,
   Date,
   Role
 >;

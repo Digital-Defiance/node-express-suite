@@ -40,12 +40,12 @@ function keepEJS() {
 /**
  * Application router for serving React frontend and API routes.
  * Sets up static file serving, EJS template rendering, and catch-all routing for SPA.
- * @template I Platform-specific ID type
+ * @template TID Platform-specific ID type
  * @template TApplication Application instance type
  */
 export class AppRouter<
-  I extends PlatformID = Buffer,
-  TApplication extends IApplication<I> = IApplication<I>,
+  TID extends PlatformID = Buffer,
+  TApplication extends IApplication<TID> = IApplication<TID>,
 > {
   /** Path to EJS views directory */
   protected readonly viewsPath: string;
@@ -57,7 +57,7 @@ export class AppRouter<
   protected readonly reactDistDir: string;
 
   /** API router instance */
-  protected readonly apiRouter: BaseRouter<I, TApplication>;
+  protected readonly apiRouter: BaseRouter<TID, TApplication>;
   /** Application instance */
   protected readonly application: TApplication;
 
@@ -67,7 +67,7 @@ export class AppRouter<
    * @param apiRouter API router instance to mount under /api
    * @throws {TranslatableSuiteError} If paths contain invalid traversal sequences
    */
-  constructor(apiRouter: BaseRouter<I, TApplication>) {
+  constructor(apiRouter: BaseRouter<TID, TApplication>) {
     this.application = apiRouter.application;
     this.apiRouter = apiRouter;
 

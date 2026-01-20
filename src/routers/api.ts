@@ -25,14 +25,15 @@ import { KeyWrappingService } from '../services/key-wrapping';
 import { RoleService } from '../services/role';
 import { UserService } from '../services/user';
 import { BaseRouter } from './base';
+import { CoreLanguageCode } from '@digitaldefiance/i18n-lib';
 
 /**
  * Router for the API endpoints.
  * Manages user controller and registers all required services via dependency injection.
- * @template I Platform-specific ID type
- * @template D Date type
- * @template S Site language string literal type
- * @template A Account status string literal type
+ * @template TID Platform-specific ID type
+ * @template TDate Date type
+ * @template TLanguage Site language string literal type
+ * @template TAccountStatus Account status string literal type
  * @template TUser User base type
  * @template TTokenRole Token role type
  * @template TBaseDocument Base document type
@@ -42,24 +43,29 @@ import { BaseRouter } from './base';
  * @template TApplication Application type
  */
 export class ApiRouter<
-  I extends PlatformID,
-  D extends Date,
-  S extends string,
-  A extends string,
-  TUser extends IUserBase<I, D, S, A> = IUserBase<I, D, S, A>,
-  TTokenRole extends ITokenRole<I, D> = ITokenRole<I, D>,
-  TBaseDocument extends IBaseDocument<any, I> = IBaseDocument<any, I>,
+  TID extends PlatformID,
+  TDate extends Date,
+  TLanguage extends CoreLanguageCode,
+  TAccountStatus extends string,
+  TUser extends IUserBase<TID, TDate, TLanguage, TAccountStatus> = IUserBase<
+    TID,
+    TDate,
+    TLanguage,
+    TAccountStatus
+  >,
+  TTokenRole extends ITokenRole<TID, TDate> = ITokenRole<TID, TDate>,
+  TBaseDocument extends IBaseDocument<any, TID> = IBaseDocument<any, TID>,
   TTokenUser extends ITokenUser = ITokenUser,
   TConstants extends IConstants = IConstants,
-  TEnvironment extends Environment<I> = Environment<I>,
-  TApplication extends IApplication<I> = IApplication<I>,
-> extends BaseRouter<I, TApplication> {
+  TEnvironment extends Environment<TID> = Environment<TID>,
+  TApplication extends IApplication<TID> = IApplication<TID>,
+> extends BaseRouter<TID, TApplication> {
   /** User controller for handling user-related API endpoints */
   private readonly userController: UserController<
-    I,
-    D,
-    S,
-    A,
+    TID,
+    TDate,
+    TLanguage,
+    TAccountStatus,
     TUser,
     TTokenRole,
     TTokenUser,
@@ -67,8 +73,8 @@ export class ApiRouter<
   >;
   /** JWT service for token generation and validation */
   private readonly jwtService: JwtService<
-    I,
-    D,
+    TID,
+    TDate,
     TTokenRole,
     TTokenUser,
     TApplication
@@ -78,10 +84,10 @@ export class ApiRouter<
   /** User service for user management operations */
   private readonly userService: UserService<
     any,
-    I,
-    D,
-    S,
-    A,
+    TID,
+    TDate,
+    TLanguage,
+    TAccountStatus,
     TEnvironment,
     TConstants,
     TBaseDocument,
@@ -90,15 +96,15 @@ export class ApiRouter<
     TApplication
   >;
   /** Role service for role management operations */
-  private readonly roleService: RoleService<I, D, TTokenRole>;
+  private readonly roleService: RoleService<TID, TDate, TTokenRole>;
   /** Key wrapping service for password-based encryption */
   private readonly keyWrappingService: KeyWrappingService;
   /** ECIES service for elliptic curve encryption */
-  private readonly eciesService: ECIESService;
+  private readonly eciesService: ECIESService<TID>;
   /** Backup code service for generating and validating backup codes */
   private readonly backupCodeService: BackupCodeService<
-    I,
-    D,
+    TID,
+    TDate,
     TTokenRole,
     TApplication
   >;
@@ -120,10 +126,10 @@ export class ApiRouter<
     this.backupCodeService = application.services.get(ServiceKeys.BACKUP_CODE);
     this.userService = application.services.get(ServiceKeys.USER);
     this.userController = new UserController<
-      I,
-      D,
-      S,
-      A,
+      TID,
+      TDate,
+      TLanguage,
+      TAccountStatus,
       TUser,
       TTokenRole,
       TTokenUser,
@@ -150,13 +156,14 @@ export class ApiRouter<
     if (!app.services.has(ServiceKeys.JWT)) {
       app.services.register(
         ServiceKeys.JWT,
-        () => new JwtService<I, D, TTokenRole, TTokenUser, TApplication>(app),
+        () =>
+          new JwtService<TID, TDate, TTokenRole, TTokenUser, TApplication>(app),
       );
     }
     if (!app.services.has(ServiceKeys.ROLE)) {
       app.services.register(
         ServiceKeys.ROLE,
-        () => new RoleService<I, D, TTokenRole>(app),
+        () => new RoleService<TID, TDate, TTokenRole>(app),
       );
     }
     if (!app.services.has(ServiceKeys.EMAIL)) {
@@ -189,7 +196,7 @@ export class ApiRouter<
       app.services.register(
         ServiceKeys.BACKUP_CODE,
         () =>
-          new BackupCodeService<I, D, TTokenRole, TApplication>(
+          new BackupCodeService<TID, TDate, TTokenRole, TApplication>(
             app,
             app.services.get(ServiceKeys.ECIES),
             app.services.get(ServiceKeys.KEY_WRAPPING),
@@ -203,10 +210,10 @@ export class ApiRouter<
         () =>
           new UserService<
             any,
-            I,
-            D,
-            S,
-            A,
+            TID,
+            TDate,
+            TLanguage,
+            TAccountStatus,
             TEnvironment,
             TConstants,
             TBaseDocument,

@@ -22,9 +22,9 @@ export type IFrontendUser<TLanguage extends string> = IUserBase<
  * Back-end interface for user collection documents.
  * Uses platform-specific IDs (Buffer, ObjectId, etc.).
  * @template TLanguage - Language code type
- * @template I - Platform ID type (defaults to Buffer)
+ * @template TID - Platform ID type (defaults to Buffer)
  */
 export type IBackendUser<
   TLanguage extends string,
-  I extends PlatformID = Buffer,
-> = IUserBase<I, Date, TLanguage, AccountStatus>;
+  TID extends PlatformID = Buffer,
+> = IUserBase<TID, Date, TLanguage, AccountStatus>;

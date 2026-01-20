@@ -55,7 +55,7 @@ export class BaseApplication<
    */
   private readonly _schemaMapFactory: (
     connection: mongoose.Connection,
-  ) => SchemaMap<TModelDocs>;
+  ) => SchemaMap<TID, TModelDocs>;
   /**
    * Function to initialize the database with default data
    */
@@ -104,8 +104,8 @@ export class BaseApplication<
   /**
    * Schema map for all models
    */
-  protected _schemaMap: SchemaMap<TModelDocs> | undefined;
-  public get schemaMap(): SchemaMap<TModelDocs> {
+  protected _schemaMap: SchemaMap<TID, TModelDocs> | undefined;
+  public get schemaMap(): SchemaMap<TID, TModelDocs> {
     if (!this._schemaMap) {
       throw new TranslatableSuiteError(
         SuiteCoreStringKey.Admin_Error_SchemaMapIsNotLoadedYet,
@@ -152,7 +152,7 @@ export class BaseApplication<
     environment: Environment<TID>,
     schemaMapFactory: (
       connection: mongoose.Connection,
-    ) => SchemaMap<TModelDocs>,
+    ) => SchemaMap<TID, TModelDocs>,
     databaseInitFunction: (
       application: BaseApplication<TID, TModelDocs, TInitResults>,
     ) => Promise<IFailableResult<TInitResults>>,
@@ -293,18 +293,21 @@ export class BaseApplication<
     }
 
     if (debug) {
-      (Object.values(this._schemaMap) as ISchema<IBaseDocument<any>>[]).forEach(
-        (schema) => {
-          console.log(
-            engine.t(
-              `[ {{SuiteCoreStringKey.Common_Loaded}} ] {{SuiteCoreStringKey.Common_Schema}} '${schema.modelName.replace(
-                /[\r\n]/g,
-                '',
-              )}'`,
-            ),
-          );
-        },
-      );
+      (
+        Object.values(this._schemaMap) as ISchema<
+          TID,
+          IBaseDocument<any, TID>
+        >[]
+      ).forEach((schema) => {
+        console.log(
+          engine.t(
+            `[ {{SuiteCoreStringKey.Common_Loaded}} ] {{SuiteCoreStringKey.Common_Schema}} '${schema.modelName.replace(
+              /[\r\n]/g,
+              '',
+            )}'`,
+          ),
+        );
+      });
     }
 
     if (!this._db.connection.db) {
@@ -533,7 +536,9 @@ export class BaseApplication<
    * @param modelName Name of the model
    * @returns
    */
-  public getModel<T extends IBaseDocument<any>>(modelName: string): Model<T> {
+  public getModel<T extends IBaseDocument<any, TID>>(
+    modelName: string,
+  ): Model<T> {
     // if (!this.db) {
     //   throw new TranslatableError('Admin_Error_DatabaseNotConnectedYet');
     // }

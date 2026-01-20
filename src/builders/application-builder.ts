@@ -46,7 +46,7 @@ export class ApplicationBuilder<
   private appRouterFactory?: (apiRouter: BaseRouter<TID>) => AppRouter<TID>;
   private schemaMapFactory?: (
     connection: mongoose.Connection,
-  ) => SchemaMap<TModelDocs>;
+  ) => SchemaMap<TID, TModelDocs>;
   private databaseInitFunction?: (
     app: BaseApplication<TID, TModelDocs, TInitResults>,
   ) => Promise<IFailableResult<TInitResults>>;
@@ -71,7 +71,7 @@ export class ApplicationBuilder<
   }
 
   withSchemaMap(
-    factory: (connection: mongoose.Connection) => SchemaMap<TModelDocs>,
+    factory: (connection: mongoose.Connection) => SchemaMap<TID, TModelDocs>,
   ): this {
     this.schemaMapFactory = factory;
     return this;

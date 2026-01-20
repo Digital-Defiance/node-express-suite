@@ -14,9 +14,7 @@ import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 /**
  * Composite interface for email token collection documents.
  * Extends base document with email token properties including token type, user ID, and expiration.
- * @template I Platform-specific ID type (Buffer, ObjectId, etc.)
+ * @template TID Platform-specific ID type (Buffer, ObjectId, etc.)
  */
-export type IEmailTokenDocument<I extends PlatformID = Buffer> = IBaseDocument<
-  IEmailTokenBase<I, Date, EmailTokenType>,
-  I
->;
+export type IEmailTokenDocument<TID extends PlatformID = Buffer> =
+  IBaseDocument<IEmailTokenBase<TID, Date, EmailTokenType>, TID>;

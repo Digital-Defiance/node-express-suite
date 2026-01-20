@@ -57,7 +57,7 @@ export function findAuthToken(headers: IncomingHttpHeaders): string | null {
  * Express middleware for JWT token authentication.
  * Validates token, loads user from database, checks account status,
  * and populates req.user with authenticated user data.
- * @template I - Platform ID type (defaults to Buffer)
+ * @template TID - Platform ID type (defaults to Buffer)
  * @template D - Date type (defaults to Date)
  * @template TTokenRole - Token role interface type
  * @template TTokenUser - Token user interface type
@@ -70,18 +70,18 @@ export function findAuthToken(headers: IncomingHttpHeaders): string | null {
  * @throws {TokenExpiredError} When token has expired
  */
 export async function authenticateToken<
-  I extends PlatformID = Buffer,
+  TID extends PlatformID = Buffer,
   D extends Date = Date,
-  TTokenRole extends ITokenRole<I, D> = ITokenRole<I, D>,
+  TTokenRole extends ITokenRole<TID, D> = ITokenRole<TID, D>,
   TTokenUser extends ITokenUser = ITokenUser,
-  TApplication extends IApplication<I> = IApplication<I>,
+  TApplication extends IApplication<TID> = IApplication<TID>,
 >(
   application: TApplication,
   req: Request,
   res: Response,
   next: NextFunction,
 ): Promise<Response> {
-  const UserModel = application.getModel<IUserDocument<string, I>>(
+  const UserModel = application.getModel<IUserDocument<string, TID>>(
     BaseModelName.User,
   );
   const token = findAuthToken(req.headers);
@@ -100,7 +100,7 @@ export async function authenticateToken<
       undefined,
       async (sess: ClientSession | undefined) => {
         const jwtService = new JwtService<
-          I,
+          TID,
           D,
           TTokenRole,
           TTokenUser,
@@ -123,8 +123,8 @@ export async function authenticateToken<
             getSuiteCoreTranslation(SuiteCoreStringKey.Validation_UserNotFound),
           );
         }
-        const roleService = new RoleService<I, D, TTokenRole>(application);
-        const roles = await roleService.getUserRoles(userDoc._id as I, sess);
+        const roleService = new RoleService<TID, D, TTokenRole>(application);
+        const roles = await roleService.getUserRoles(userDoc._id as TID, sess);
         const tokenRoles = roleService.rolesToTokenRoles(roles);
         req.user = RequestUserService.makeRequestUserDTO(userDoc, tokenRoles);
         const context = GlobalActiveContext.getInstance();

@@ -12,7 +12,7 @@ import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
  * Composite interface for used direct login token collection documents.
  * Extends base document with used token tracking properties to ensure one-time token usage.
  * Prevents replay attacks by recording consumed tokens with user ID and timestamp.
- * @template I Platform-specific ID type (Buffer, ObjectId, etc.)
+ * @template TID Platform-specific ID type (Buffer, ObjectId, etc.)
  */
-export type IUsedDirectLoginTokenDocument<I extends PlatformID = Buffer> =
-  IBaseDocument<IUsedDirectLoginTokenBase<I>, I>;
+export type IUsedDirectLoginTokenDocument<TID extends PlatformID = Buffer> =
+  IBaseDocument<IUsedDirectLoginTokenBase<TID>, TID>;

@@ -10,7 +10,8 @@ import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 /**
  * Base document interface combining Mongoose Document with custom type.
  * @template T - Document data type
- * @template I - Platform ID type (defaults to Buffer)
+ * @template TID - Platform ID type (defaults to Buffer)
  * @typedef {Document<I> & T} IBaseDocument
  */
-export type IBaseDocument<T, I extends PlatformID = Buffer> = Document<I> & T;
+export type IBaseDocument<T, TID extends PlatformID = Buffer> = Document<TID> &
+  T;

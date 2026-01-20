@@ -32,6 +32,7 @@ import {
 } from './used-direct-login-token';
 import { UserSchema, createUserSchema } from './user';
 import { UserRoleSchema, createUserRoleSchema } from './user-role';
+import { PlatformID } from '@digitaldefiance/node-ecies-lib';
 
 /**
  * Base model document types for all collections.
@@ -82,12 +83,12 @@ export interface SchemaMapOptions {
  * Creates a schema map with all base models.
  * @param {Connection} connection - Mongoose connection instance
  * @param {SchemaMapOptions} options - Optional customization options
- * @returns {SchemaMap<BaseModelDocs>} Complete schema map with models
+ * @returns {SchemaMap<TID, BaseModelDocs>} Complete schema map with models
  */
-export function getSchemaMap(
+export function getSchemaMap<TID extends PlatformID>(
   connection: Connection,
   options: SchemaMapOptions = {},
-): SchemaMap<BaseModelDocs> {
+): SchemaMap<TID, BaseModelDocs> {
   const schemas = options.schemas ?? {
     EmailToken: createEmailTokenSchema(undefined, options?.constants),
     Mnemonic: createMnemonicSchema(undefined, options?.constants),
@@ -180,5 +181,5 @@ export function getSchemaMap(
       modelName: modelNames.UserRole ?? BaseModelName.UserRole,
       schema: schemas.UserRole ?? UserRoleSchema,
     },
-  } as unknown as SchemaMap<BaseModelDocs>;
+  } as unknown as SchemaMap<TID, BaseModelDocs>;
 }

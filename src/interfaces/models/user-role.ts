@@ -15,9 +15,9 @@ export type IFrontendUserRole = IUserRoleBase<string, Date>;
 /**
  * Back-end interface for user role collection documents.
  * Uses platform-specific IDs (Buffer, ObjectId, etc.).
- * @template I - Platform ID type (defaults to Buffer)
+ * @template TID - Platform ID type (defaults to Buffer)
  */
-export type IBackendUserRole<I extends PlatformID = Buffer> = IUserRoleBase<
-  I,
+export type IBackendUserRole<TID extends PlatformID = Buffer> = IUserRoleBase<
+  TID,
   Date
 >;

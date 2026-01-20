@@ -11,13 +11,18 @@ import {
 } from '@digitaldefiance/mongoose-types';
 import { IBaseDocument } from './documents/base';
 import { InvalidModelError } from './errors';
+import { PlatformID } from '@digitaldefiance/node-ecies-lib';
 
 /**
  * Model registration information.
- * @template T - Document ID type
+ * @template T - Document Data type
  * @template U - Document type extending IBaseDocument
  */
-export type ModelRegistration<T, U extends IBaseDocument<T>> = {
+export type ModelRegistration<
+  TID extends PlatformID,
+  T,
+  U extends IBaseDocument<T, TID>,
+> = {
   modelName: string;
   schema: Schema;
   model: Model<U>;
@@ -29,10 +34,12 @@ export type ModelRegistration<T, U extends IBaseDocument<T>> = {
  * Singleton registry for Mongoose models.
  * Manages model registration and retrieval across the application.
  */
-class ModelRegistry {
-  protected static _instance: ModelRegistry;
-  protected _models: Map<string, ModelRegistration<any, IBaseDocument<any>>> =
-    new Map();
+class ModelRegistry<TID extends PlatformID> {
+  protected static _instance: ModelRegistry<PlatformID>;
+  protected _models: Map<
+    string,
+    ModelRegistration<TID, any, IBaseDocument<any, TID>>
+  > = new Map();
 
   private constructor() {}
 
@@ -40,7 +47,7 @@ class ModelRegistry {
    * Gets the singleton instance of ModelRegistry.
    * @returns {ModelRegistry} The singleton instance
    */
-  public static get instance(): ModelRegistry {
+  public static get instance(): ModelRegistry<PlatformID> {
     if (!ModelRegistry._instance) {
       ModelRegistry._instance = new ModelRegistry();
     }
@@ -53,12 +60,12 @@ class ModelRegistry {
    * @template U - Document type extending IBaseDocument
    * @param {ModelRegistration<T, U>} registration - Model registration information
    */
-  public register<T, U extends IBaseDocument<T>>(
-    registration: ModelRegistration<T, U>,
+  public register<T, U extends IBaseDocument<T, TID>>(
+    registration: ModelRegistration<TID, T, U>,
   ): void {
     this._models.set(
       registration.modelName,
-      registration as ModelRegistration<T, U>,
+      registration as ModelRegistration<TID, T, U>,
     );
   }
 
@@ -70,10 +77,10 @@ class ModelRegistry {
    * @returns {ModelRegistration<T, U>} Model registration
    * @throws {InvalidModelError} If model is not registered
    */
-  public get<T, U extends IBaseDocument<T>>(
+  public get<T, U extends IBaseDocument<T, TID>>(
     modelName: string,
-  ): ModelRegistration<T, U> {
-    const result = this._models.get(modelName) as ModelRegistration<T, U>;
+  ): ModelRegistration<TID, T, U> {
+    const result = this._models.get(modelName) as ModelRegistration<TID, T, U>;
     if (result === undefined) {
       throw new InvalidModelError(modelName);
     }

@@ -18,28 +18,28 @@ import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 /**
  * Configuration interface for controller type parameters.
  * Defines all type parameters used across controllers.
- * @template I - Platform ID type (defaults to Buffer)
- * @template D - Date type (defaults to Date)
- * @template S - String type (defaults to string)
- * @template A - Account status type (defaults to string)
+ * @template TID - Platform ID type (defaults to Buffer)
+ * @template TDate - Date type (defaults to Date)
+ * @template TLanguage - String type (defaults to string)
+ * @template TAccountStatus - Account status type (defaults to string)
  */
 export interface IControllerConfig<
-  I extends PlatformID = Buffer,
-  D extends Date = Date,
-  S extends string = string,
-  A extends string = string,
+  TID extends PlatformID = Buffer,
+  TDate extends Date = Date,
+  TLanguage extends string = string,
+  TAccountStatus extends string = string,
 > {
-  idType: I;
-  dateType: D;
-  stringType: S;
-  accountStatusType: A;
-  userType: IUserBase<I, D, S, A>;
-  tokenRoleType: ITokenRole<I, D>;
+  idType: TID;
+  dateType: TDate;
+  stringType: TLanguage;
+  accountStatusType: TAccountStatus;
+  userType: IUserBase<TID, TDate, TLanguage, TAccountStatus>;
+  tokenRoleType: ITokenRole<TID, TDate>;
   tokenUserType: ITokenUser;
-  baseDocumentType: IBaseDocument<any, I>;
-  environmentType: Environment;
+  baseDocumentType: IBaseDocument<any, TID>;
+  environmentType: Environment<TID>;
   constantsType: IConstants;
-  applicationType: IApplication;
+  applicationType: IApplication<TID>;
 }
 
 /**

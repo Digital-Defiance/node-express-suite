@@ -51,7 +51,7 @@ type ServerWithOptionalClose = Server & { closeAllConnections?: () => void };
 
 export class Application<
   TInitResults extends IServerInitResult<TID>,
-  TModelDocs extends Record<string, IBaseDocument<any>>,
+  TModelDocs extends Record<string, IBaseDocument<any, TID>>,
   TID extends PlatformID = Buffer,
   TEnvironment extends Environment<TID> = Environment<TID>,
   TConstants extends IConstants = IConstants,
@@ -86,7 +86,7 @@ export class Application<
     apiRouterFactory: (app: IApplication<TID>) => BaseRouter<TID>,
     schemaMapFactory: (
       connection: mongoose.Connection,
-    ) => SchemaMap<TModelDocs>,
+    ) => SchemaMap<TID, TModelDocs>,
     databaseInitFunction: (
       application: BaseApplication<TID, TModelDocs, TInitResults>,
     ) => Promise<IFailableResult<TInitResults>>,

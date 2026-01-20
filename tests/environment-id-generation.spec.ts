@@ -1,13 +1,31 @@
 import { Types } from '@digitaldefiance/mongoose-types';
 import { registerNodeRuntimeConfiguration } from '@digitaldefiance/node-ecies-lib';
+import { existsSync, mkdirSync, rmSync } from 'fs';
 import { Environment } from '../src/environment';
 import { LocalhostConstants } from '../src/constants';
 
 describe('Environment ID Generation', () => {
   let originalEnv: NodeJS.ProcessEnv;
+  const tempApiDistDir = '/tmp/api-dist';
+  const tempReactDistDir = '/tmp/react-dist';
 
   beforeAll(() => {
     registerNodeRuntimeConfiguration();
+    if (!existsSync(tempApiDistDir)) {
+      mkdirSync(tempApiDistDir, { recursive: true });
+    }
+    if (!existsSync(tempReactDistDir)) {
+      mkdirSync(tempReactDistDir, { recursive: true });
+    }
+  });
+
+  afterAll(() => {
+    if (existsSync(tempApiDistDir)) {
+      rmSync(tempApiDistDir, { recursive: true, force: true });
+    }
+    if (existsSync(tempReactDistDir)) {
+      rmSync(tempReactDistDir, { recursive: true, force: true });
+    }
   });
 
   beforeEach(() => {
@@ -24,8 +42,8 @@ describe('Environment ID Generation', () => {
       '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
     process.env.MNEMONIC_ENCRYPTION_KEY =
       'fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210';
-    process.env.API_DIST_DIR = '/tmp/api-dist';
-    process.env.REACT_DIST_DIR = '/tmp/react-dist';
+    process.env.API_DIST_DIR = tempApiDistDir;
+    process.env.REACT_DIST_DIR = tempReactDistDir;
   });
 
   afterEach(() => {

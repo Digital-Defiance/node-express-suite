@@ -36,31 +36,31 @@ import {
 /**
  * Service for managing roles and role-based access control.
  * Handles role creation, user-role assignments, and permission queries.
- * @template I - Platform ID type (defaults to Buffer)
- * @template D - Date type (defaults to Date)
+ * @template TID - Platform ID type (defaults to Buffer)
+ * @template TDate - Date type (defaults to Date)
  * @template TTokenRole - Token role interface type
- * @extends {BaseService<I>}
+ * @extends {BaseService<TID>}
  */
 export class RoleService<
-  I extends PlatformID = Buffer,
-  D extends Date = Date,
-  TTokenRole extends ITokenRole<I, D> = ITokenRole<I, D>,
-> extends BaseService<I> {
+  TID extends PlatformID = Buffer,
+  TDate extends Date = Date,
+  TTokenRole extends ITokenRole<TID, TDate> = ITokenRole<TID, TDate>,
+> extends BaseService<TID> {
   /**
    * Constructor for the role service
    * @param application The application object
    */
-  constructor(application: IApplication<I>) {
+  constructor(application: IApplication<TID>) {
     super(application);
   }
 
   public static roleToRoleDTO<
-    I extends PlatformID = Buffer,
-    D extends Date = Date,
+    TID extends PlatformID = Buffer,
+    TDate extends Date = Date,
   >(
-    role: ITokenRole<I, D> | IRoleDocument<I> | Partial<IRoleBase<I>>,
+    role: ITokenRole<TID, TDate> | IRoleDocument<TID> | Partial<IRoleBase<TID>>,
   ): ITokenRoleDTO {
-    const provider = getEnhancedNodeIdProvider<I>();
+    const provider = getEnhancedNodeIdProvider<TID>();
     const roleObj = role instanceof Document ? role.toObject() : role;
     return {
       _id: provider.idToString(roleObj._id),
@@ -99,10 +99,10 @@ export class RoleService<
    * @param role The Role DTO
    * @returns An IRoleBackendObject
    */
-  public static hydrateRoleDTOToBackend<I extends PlatformID = Buffer>(
+  public static hydrateRoleDTOToBackend<TID extends PlatformID = Buffer>(
     role: ITokenRoleDTO,
-  ): IRoleBackendObject<I> {
-    const idProvider = getEnhancedNodeIdProvider<I>();
+  ): IRoleBackendObject<TID> {
+    const idProvider = getEnhancedNodeIdProvider<TID>();
     const convert = (id: string) => idProvider.idFromString(id);
     return {
       ...(omit<ITokenRoleDTO, 'translatedName'>(role, [
@@ -120,7 +120,7 @@ export class RoleService<
             deletedBy: convert(role.deletedBy),
           }
         : {}),
-    } as IRoleBackendObject<I>;
+    } as IRoleBackendObject<TID>;
   }
 
   /**
@@ -131,7 +131,7 @@ export class RoleService<
   public async getRoleIdByName(
     roleName: Role,
     session?: ClientSession,
-  ): Promise<I | null> {
+  ): Promise<TID | null> {
     const RoleModel = ModelRegistry.instance.get<any, any>(
       BaseModelName.Role,
     ).model;
@@ -141,7 +141,7 @@ export class RoleService<
     if (!role) {
       return null;
     }
-    return role._id as I;
+    return role._id as TID;
   }
 
   /**
@@ -151,15 +151,15 @@ export class RoleService<
    * @returns The created role document
    */
   public async createRole(
-    roleData: IRoleBase<I, D, Role>,
+    roleData: IRoleBase<TID, TDate, Role>,
     session?: ClientSession | null,
-  ): Promise<IRoleDocument<I>> {
+  ): Promise<IRoleDocument<TID>> {
     const RoleModel = ModelRegistry.instance.get<any, any>(
       BaseModelName.Role,
     ).model;
     const role = new RoleModel(roleData);
     const savedRole = await role.save(session ? { session } : {});
-    return savedRole as IRoleDocument<I>;
+    return savedRole as IRoleDocument<TID>;
   }
 
   /**
@@ -170,12 +170,12 @@ export class RoleService<
    * @param session Optional mongoose session
    */
   public async addUserToRole(
-    roleId: I,
-    userId: I,
-    createdBy: I,
+    roleId: TID,
+    userId: TID,
+    createdBy: TID,
     session?: ClientSession,
-    overrideId?: I,
-  ): Promise<IUserRoleDocument<I>> {
+    overrideId?: TID,
+  ): Promise<IUserRoleDocument<TID>> {
     const UserRoleModel = ModelRegistry.instance.get<any, any>(
       BaseModelName.UserRole,
     ).model;
@@ -212,9 +212,9 @@ export class RoleService<
    * @throws LastAdminError if attempting to remove the last admin
    */
   public async removeUserFromRole(
-    roleId: I,
-    userId: I,
-    deletedBy: I,
+    roleId: TID,
+    userId: TID,
+    deletedBy: TID,
     session?: ClientSession,
   ): Promise<void> {
     const RoleModel = ModelRegistry.instance.get<any, any>(
@@ -250,8 +250,8 @@ export class RoleService<
    * @param session Optional mongoose session
    */
   public async deleteRole(
-    roleId: I,
-    deleter: I,
+    roleId: TID,
+    deleter: TID,
     hardDelete: boolean,
     session?: ClientSession,
   ): Promise<void> {
@@ -275,9 +275,9 @@ export class RoleService<
    * @returns The roles the user is a member of
    */
   public async getUserRoles(
-    userId: I,
+    userId: TID,
     session?: ClientSession,
-  ): Promise<IRoleDocument<I>[]> {
+  ): Promise<IRoleDocument<TID>[]> {
     const UserRoleModel = ModelRegistry.instance.get<any, any>(
       BaseModelName.UserRole,
     ).model;
@@ -298,7 +298,7 @@ export class RoleService<
     return (await RoleModel.find({
       _id: { $in: roleIds },
       deletedAt: { $exists: false },
-    }).session(session ?? null)) as IRoleDocument<I>[];
+    }).session(session ?? null)) as IRoleDocument<TID>[];
   }
 
   /**
@@ -307,7 +307,10 @@ export class RoleService<
    * @param session Optional mongoose session
    * @returns The user IDs that are members of the role
    */
-  public async getRoleUsers(roleId: I, session?: ClientSession): Promise<I[]> {
+  public async getRoleUsers(
+    roleId: TID,
+    session?: ClientSession,
+  ): Promise<TID[]> {
     const UserRoleModel = ModelRegistry.instance.get<any, any>(
       BaseModelName.UserRole,
     ).model;
@@ -325,7 +328,7 @@ export class RoleService<
 
   /** Convert roles to translated TokenRoles */
   public rolesToTokenRoles(
-    roles: Array<IRoleBackendObject<I>>,
+    roles: Array<IRoleBackendObject<TID>>,
     overrideLanguage?: string,
   ): Array<TTokenRole> {
     return roles.map((role) => {
@@ -346,9 +349,9 @@ export class RoleService<
   }
 
   public async isUserAdmin(
-    userDoc: IUserDocument<string, I>,
+    userDoc: IUserDocument<string, TID>,
     session?: ClientSession,
-    providedRoles?: Array<IRoleDocument<I>>,
+    providedRoles?: Array<IRoleDocument<TID>>,
   ): Promise<boolean> {
     const roles =
       providedRoles ?? (await this.getUserRoles(userDoc._id, session));
@@ -359,9 +362,9 @@ export class RoleService<
   }
 
   public async isUserMember(
-    userDoc: IUserDocument<string, I>,
+    userDoc: IUserDocument<string, TID>,
     session?: ClientSession,
-    providedRoles?: Array<IRoleDocument<I>>,
+    providedRoles?: Array<IRoleDocument<TID>>,
   ): Promise<boolean> {
     const roles =
       providedRoles ?? (await this.getUserRoles(userDoc._id, session));
@@ -372,9 +375,9 @@ export class RoleService<
   }
 
   public async isUserChild(
-    userDoc: IUserDocument<string, I>,
+    userDoc: IUserDocument<string, TID>,
     session?: ClientSession,
-    providedRoles?: Array<IRoleDocument<I>>,
+    providedRoles?: Array<IRoleDocument<TID>>,
   ): Promise<boolean> {
     const roles =
       providedRoles ?? (await this.getUserRoles(userDoc._id, session));
@@ -385,9 +388,9 @@ export class RoleService<
   }
 
   public async isSystemUser(
-    userDoc: IUserDocument<string, I>,
+    userDoc: IUserDocument<string, TID>,
     session?: ClientSession,
-    providedRoles?: Array<IRoleDocument<I>>,
+    providedRoles?: Array<IRoleDocument<TID>>,
   ): Promise<boolean> {
     const roles =
       providedRoles ?? (await this.getUserRoles(userDoc._id, session));
@@ -395,9 +398,9 @@ export class RoleService<
   }
 
   public async getMemberType(
-    userDoc: IUserDocument<string, I>,
+    userDoc: IUserDocument<string, TID>,
     session?: ClientSession,
-    providedRoles?: Array<IRoleDocument<I>>,
+    providedRoles?: Array<IRoleDocument<TID>>,
   ): Promise<MemberType> {
     const roles =
       providedRoles ?? (await this.getUserRoles(userDoc._id, session));

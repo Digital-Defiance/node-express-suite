@@ -36,31 +36,31 @@ import { SystemUserService } from './system-user';
 /**
  * Service for backup code generation, validation, and key recovery.
  * Implements secure backup code scheme with constant-time validation and key wrapping.
- * @template I - Platform ID type (defaults to Buffer)
- * @template D - Date type (defaults to Date)
+ * @template TID - Platform ID type (defaults to Buffer)
+ * @template TDate - Date type (defaults to Date)
  * @template TTokenRole - Token role interface type
  * @template TApplication - Application interface type
- * @extends {BaseService<I>}
+ * @extends {BaseService<TID>}
  */
 export class BackupCodeService<
-  I extends PlatformID = Buffer,
-  D extends Date = Date,
-  TTokenRole extends ITokenRole<I, D> = ITokenRole<I, D>,
-  TApplication extends IApplication<I> = IApplication<I>,
-> extends BaseService<I> {
-  private readonly eciesService: ECIESService<I>;
-  private systemUser?: BackendMember<I>;
+  TID extends PlatformID = Buffer,
+  TDate extends Date = Date,
+  TTokenRole extends ITokenRole<TID, TDate> = ITokenRole<TID, TDate>,
+  TApplication extends IApplication<TID> = IApplication<TID>,
+> extends BaseService<TID> {
+  private readonly eciesService: ECIESService<TID>;
+  private systemUser?: BackendMember<TID>;
   private readonly keyWrappingService: KeyWrappingService;
-  private readonly roleService: RoleService<I, D, TTokenRole>;
+  private readonly roleService: RoleService<TID, TDate, TTokenRole>;
 
   /**
    * Construct a BackupCodeService.
    */
   constructor(
     application: TApplication,
-    eciesService: ECIESService<I>,
+    eciesService: ECIESService<TID>,
     keyWrappingService: KeyWrappingService,
-    roleService: RoleService<I, D, TTokenRole>,
+    roleService: RoleService<TID, TDate, TTokenRole>,
   ) {
     super(application);
     this.eciesService = eciesService;
@@ -71,14 +71,14 @@ export class BackupCodeService<
   /**
    * Get the lazily-initialized system user for key wrapping/unwrapping.
    */
-  private getSystemUser(): BackendMember<I> {
+  private getSystemUser(): BackendMember<TID> {
     if (!this.systemUser) {
       // System user is always created with Buffer IDs, but we need to cast to the generic type I
       // This is safe because the system user's ID type is compatible with all ID types
       this.systemUser = SystemUserService.getSystemUser(
         this.application.environment,
         this.application.constants,
-      ) as unknown as BackendMember<I>;
+      ) as unknown as BackendMember<TID>;
     }
     return this.systemUser;
   }
@@ -87,7 +87,7 @@ export class BackupCodeService<
    * Forcibly set the system user (for database initialization)
    * @param user
    */
-  public setSystemUser(user: BackendMember<I>): void {
+  public setSystemUser(user: BackendMember<TID>): void {
     this.systemUser = user;
   }
 
@@ -160,19 +160,19 @@ export class BackupCodeService<
    * v1: Recover a user's private key using a backup code.
    */
   public async recoverKeyWithBackupCodeV1(
-    userDoc: IUserDocument<string, I>,
+    userDoc: IUserDocument<string, TID>,
     backupCode: string,
     newPassword?: SecureString,
     session?: ClientSession,
   ): Promise<{
-    userDoc: IUserDocument<string, I>;
-    user: BackendMember<I>;
+    userDoc: IUserDocument<string, TID>;
+    user: BackendMember<TID>;
     codeCount: number;
   }> {
     const normalizedCode = BackupCode.normalizeCode(backupCode);
     return await this.withTransaction<{
-      userDoc: IUserDocument<string, I>;
-      user: BackendMember<I>;
+      userDoc: IUserDocument<string, TID>;
+      user: BackendMember<TID>;
       codeCount: number;
     }>(
       async (sess: ClientSession | undefined) => {
@@ -246,13 +246,13 @@ export class BackupCodeService<
    * Recover a user's private key using a backup code (version-dispatched).
    */
   public async recoverKeyWithBackupCode(
-    userDoc: IUserDocument<string, I>,
+    userDoc: IUserDocument<string, TID>,
     backupCode: string,
     newPassword?: SecureString,
     session?: ClientSession,
   ): Promise<{
-    userDoc: IUserDocument<string, I>;
-    user: BackendMember<I>;
+    userDoc: IUserDocument<string, TID>;
+    user: BackendMember<TID>;
     codeCount: number;
   }> {
     const version = BackupCode.detectBackupCodeVersion(
@@ -279,8 +279,8 @@ export class BackupCodeService<
     fetchBatch: (
       afterId?: string,
       limit?: number,
-    ) => Promise<IUserDocument<string, I>[]>,
-    saveUser: (user: IUserDocument<string, I>) => Promise<void>,
+    ) => Promise<IUserDocument<string, TID>[]>,
+    saveUser: (user: IUserDocument<string, TID>) => Promise<void>,
     oldSystem: BackendMember,
     newSystem: BackendMember,
     options?: { batchSize?: number; onProgress?: (count: number) => void },

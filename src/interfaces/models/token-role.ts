@@ -15,9 +15,9 @@ export type IFrontendTokenRole = ITokenRole<string, Date>;
 /**
  * Back-end interface for token role collection documents.
  * Uses platform-specific IDs (Buffer, ObjectId, etc.).
- * @template I - Platform ID type (defaults to Buffer)
+ * @template TID - Platform ID type (defaults to Buffer)
  */
-export type IBackendTokenRole<I extends PlatformID = Buffer> = ITokenRole<
-  I,
+export type IBackendTokenRole<TID extends PlatformID = Buffer> = ITokenRole<
+  TID,
   Date
 >;

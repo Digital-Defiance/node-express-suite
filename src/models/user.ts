@@ -15,24 +15,24 @@ import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
  * Creates a Mongoose model for user documents.
  * @template TModelName - Model name type (defaults to BaseModelName)
  * @template TCollection - Collection name type (defaults to SchemaCollection)
- * @template I - Platform ID type (defaults to Buffer)
+ * @template TID - Platform ID type (defaults to Buffer)
  * @param {Connection} connection - Mongoose connection instance
  * @param {TModelName} modelName - Model name (defaults to 'User')
  * @param {TCollection} collection - Collection name (defaults to 'users')
  * @param {Schema} schema - Mongoose schema (defaults to UserSchema)
- * @returns {Model<IUserDocument<string, I>>} Configured Mongoose model
+ * @returns {Model<IUserDocument<string, TID>>} Configured Mongoose model
  */
 export function UserModel<
   TModelName extends string = BaseModelName,
   TCollection extends string = SchemaCollection,
-  I extends PlatformID = Buffer,
+  TID extends PlatformID = Buffer,
 >(
   connection: Connection,
   modelName: TModelName = BaseModelName.User as TModelName,
   collection: TCollection = SchemaCollection.User as TCollection,
   schema: Schema = UserSchema,
-): Model<IUserDocument<string, I>> {
-  return connection.model<IUserDocument<string, I>>(
+): Model<IUserDocument<string, TID>> {
+  return connection.model<IUserDocument<string, TID>>(
     modelName,
     schema,
     collection,

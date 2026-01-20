@@ -64,22 +64,22 @@ import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
  * Abstract base controller for all API controllers.
  * Provides routing, validation, authentication, transaction management, and error handling.
  * @template T API response type
- * @template H Handler object type
+ * @template THandler Handler object type
  * @template TLanguage Language code type
- * @template I Platform ID type
+ * @template TID Platform ID type
  */
 export abstract class BaseController<
   T extends ApiResponse,
-  H extends object,
+  THandler extends object,
   TLanguage extends string,
-  I extends PlatformID = Buffer,
+  TID extends PlatformID = Buffer,
 > {
   public readonly router: Router;
   private activeRequest: Request | null = null;
   private activeResponse: Response | null = null;
   private activeSession: ClientSession | undefined = undefined;
-  public readonly application: IApplication<I>;
-  protected routeDefinitions: RouteConfig<H, TLanguage>[] = [];
+  public readonly application: IApplication<TID>;
+  protected routeDefinitions: RouteConfig<THandler, TLanguage>[] = [];
   protected get constants(): IConstants {
     if (!this.application.constants) {
       throw new Error('Constants not initialized');
@@ -89,16 +89,16 @@ export abstract class BaseController<
   protected get pluginEngine(): PluginI18nEngine<TLanguage> {
     return PluginI18nEngine.getInstance<TLanguage>();
   }
-  protected handlers: H;
+  protected handlers: THandler;
   // Allowlist of registered validation functions to prevent code injection
   // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
   private static validationRegistry = new WeakSet<Function>();
   protected transactionManager: TransactionManager;
 
-  public constructor(application: IApplication<I>) {
+  public constructor(application: IApplication<TID>) {
     this.application = application;
     this.router = Router();
-    this.handlers = {} as H;
+    this.handlers = {} as THandler;
     this.transactionManager = new TransactionManager(
       application.db.connection,
       application.environment.mongo.useTransactions,
@@ -124,7 +124,7 @@ export abstract class BaseController<
   protected abstract initRouteDefinitions(): void;
 
   private getAuthenticationMiddleware(
-    route: RouteConfig<H, TLanguage>,
+    route: RouteConfig<THandler, TLanguage>,
   ): RequestHandler[] {
     if (route.useAuthentication) {
       return [
@@ -142,7 +142,7 @@ export abstract class BaseController<
   }
 
   private getCryptoAuthenticationMiddleware(
-    route: RouteConfig<H, TLanguage>,
+    route: RouteConfig<THandler, TLanguage>,
   ): RequestHandler[] {
     if (route.useCryptoAuthentication) {
       return [
@@ -160,7 +160,7 @@ export abstract class BaseController<
   }
 
   private getValidationMiddleware(
-    route: RouteConfig<H, TLanguage>,
+    route: RouteConfig<THandler, TLanguage>,
   ): RequestHandler[] {
     if (Array.isArray(route.validation) && route.validation.length > 0) {
       return [
@@ -220,7 +220,7 @@ export abstract class BaseController<
   }
 
   private createRequestHandler(
-    config: RouteConfig<H, TLanguage>,
+    config: RouteConfig<THandler, TLanguage>,
   ): RequestHandler {
     return async (req: Request, res: Response<T>, next: NextFunction) => {
       this.activeRequest = req;
@@ -306,7 +306,7 @@ export abstract class BaseController<
    */
   private initializeRoutes(): void {
     Object.values(this.routeDefinitions).forEach(
-      (config: RouteConfig<H, TLanguage>) => {
+      (config: RouteConfig<THandler, TLanguage>) => {
         this.router[config.method](
           config.path,
           ...[
@@ -330,14 +330,14 @@ export abstract class BaseController<
    * @param next The next function
    */
   protected async authenticateRequest(
-    route: RouteConfig<H, TLanguage>,
+    route: RouteConfig<THandler, TLanguage>,
     req: Request,
     res: Response<T>,
     next: NextFunction,
   ): Promise<void> {
     // Pass the real `next` function directly to the middleware.
     // It will now correctly control the request lifecycle.
-    await authenticateToken<I>(this.application, req, res, next);
+    await authenticateToken<TID>(this.application, req, res, next);
   }
 
   private handleBooleanFields(
@@ -468,9 +468,9 @@ export abstract class BaseController<
 
   protected async validateAndFetchRequestUser(
     req: Request,
-  ): Promise<IUserDocument<TLanguage, I>> {
+  ): Promise<IUserDocument<TLanguage, TID>> {
     const UserModel = ModelRegistry.instance.getTypedModel<
-      IUserDocument<TLanguage, I>
+      IUserDocument<TLanguage, TID>
     >(BaseModelName.User);
     if (!req.user) {
       throw new HandleableError(
@@ -497,10 +497,10 @@ export abstract class BaseController<
   public async withTransaction<T>(
     callback: TransactionCallback<T>,
     session?: ClientSession,
-    options?: TransactionOptions<I>,
+    options?: TransactionOptions<TID>,
     ...args: any
   ) {
-    return await utilsWithTransaction<T, I>(
+    return await utilsWithTransaction<T, TID>(
       this.application.db.connection,
       this.application.environment.mongo.useTransactions,
       session,

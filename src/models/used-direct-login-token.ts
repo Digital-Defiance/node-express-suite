@@ -15,31 +15,31 @@ import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
  * Creates a Mongoose model for used direct login token documents.
  * @template TModelName - Model name type (defaults to BaseModelName)
  * @template TCollection - Collection name type (defaults to SchemaCollection)
- * @template I - Platform ID type (defaults to Buffer)
+ * @template TID - Platform ID type (defaults to Buffer)
  * @param {Connection} connection - Mongoose connection instance
  * @param {TModelName} [modelName] - Model name (defaults to 'UsedDirectLoginToken')
  * @param {TCollection} [collection] - Collection name (defaults to 'usedDirectLoginTokens')
  * @param {Schema} [schema] - Mongoose schema (defaults to UsedDirectLoginTokenSchema)
- * @returns {Model<IUsedDirectLoginTokenDocument<I>>} Configured Mongoose model
+ * @returns {Model<IUsedDirectLoginTokenDocument<TID>>} Configured Mongoose model
  */
 export function UsedDirectLoginTokenModel<
   TModelName extends string = BaseModelName,
   TCollection extends string = SchemaCollection,
-  I extends PlatformID = Buffer,
+  TID extends PlatformID = Buffer,
 >(
   connection: Connection,
   modelName?: TModelName,
   collection?: TCollection,
   schema?: Schema,
-): Model<IUsedDirectLoginTokenDocument<I>>;
+): Model<IUsedDirectLoginTokenDocument<TID>>;
 
-export function UsedDirectLoginTokenModel<I extends PlatformID = Buffer>(
+export function UsedDirectLoginTokenModel<TID extends PlatformID = Buffer>(
   connection: Connection,
   modelName?: string,
   collection?: string,
   schema?: Schema,
-): Model<IUsedDirectLoginTokenDocument<I>> {
-  return connection.model<IUsedDirectLoginTokenDocument<I>>(
+): Model<IUsedDirectLoginTokenDocument<TID>> {
+  return connection.model<IUsedDirectLoginTokenDocument<TID>>(
     modelName ?? BaseModelName.UsedDirectLoginToken,
     schema ?? UsedDirectLoginTokenSchema,
     collection ?? SchemaCollection.UsedDirectLoginToken,

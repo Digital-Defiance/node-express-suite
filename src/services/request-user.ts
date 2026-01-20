@@ -20,18 +20,18 @@ import {
 /**
  * Service for converting between user documents, DTOs, and backend objects.
  * Provides transformation methods for user data in different contexts (API, JWT, database).
- * @template I Platform-specific ID type (Buffer, ObjectId, etc.)
+ * @template TID Platform-specific ID type (Buffer, ObjectId, etc.)
  * @template _TTokenRole Token role type implementing ITokenRole
  */
 export class RequestUserService<
-  I extends PlatformID,
-  _TTokenRole extends ITokenRole<I>,
+  TID extends PlatformID,
+  _TTokenRole extends ITokenRole<TID>,
 > {
   /**
    * Converts a user document and roles into a request user DTO for API responses.
    * Calculates combined role privileges and serializes IDs to strings.
-   * @template I Platform-specific ID type
-   * @template S Site language string literal type
+   * @template TID Platform-specific ID type
+   * @template TLanguage Site language string literal type
    * @template TTokenRole Token role type
    * @template TRequestUserDTO Request user DTO type
    * @param userDoc User document from database
@@ -40,14 +40,17 @@ export class RequestUserService<
    * @throws {Error} If user document is missing _id
    */
   public static makeRequestUserDTO<
-    I extends PlatformID,
-    S extends string,
-    TTokenRole extends ITokenRole<I>,
+    TID extends PlatformID,
+    TLanguage extends string,
+    TTokenRole extends ITokenRole<TID>,
     TRequestUserDTO extends IRequestUserDTO,
   >(
     userDoc:
-      | IUserDocument<S, I>
-      | (Pick<IUserDocument<S, I>, keyof IUserDocument<S, I>> & {
+      | IUserDocument<TLanguage, TID>
+      | (Pick<
+          IUserDocument<TLanguage, TID>,
+          keyof IUserDocument<TLanguage, TID>
+        > & {
           _id: PlatformID;
         }),
     roles: TTokenRole[],
@@ -64,7 +67,7 @@ export class RequestUserService<
       system: roles.some((r) => r.system),
     };
 
-    const provider = getEnhancedNodeIdProvider<I>();
+    const provider = getEnhancedNodeIdProvider<TID>();
     return {
       id: provider.idToString(userDoc._id),
       email: userDoc.email,
@@ -84,24 +87,24 @@ export class RequestUserService<
   /**
    * Hydrates a request user DTO back into a backend object with typed IDs and dates.
    * Converts string IDs to platform-specific types and reconstitutes Date objects.
-   * @template I Platform-specific ID type
-   * @template S Site language string literal type
+   * @template TID Platform-specific ID type
+   * @template TLanguage Site language string literal type
    * @template TRequestUserDTO Request user DTO type with site language
    * @param requestUser Request user DTO from API or JWT
    * @returns Backend object with typed IDs and dates
    */
   public static hydrateRequestUser<
-    I extends PlatformID,
-    S extends string,
-    TRequestUserDTO extends IRequestUserDTO & { siteLanguage: S },
-  >(requestUser: TRequestUserDTO): IRequestUserBackendObject<S, I> {
-    const provider = getEnhancedNodeIdProvider<I>();
+    TID extends PlatformID,
+    TLanguage extends string,
+    TRequestUserDTO extends IRequestUserDTO & { siteLanguage: TLanguage },
+  >(requestUser: TRequestUserDTO): IRequestUserBackendObject<TLanguage, TID> {
+    const provider = getEnhancedNodeIdProvider<TID>();
     const convert = (id: string) => provider.idFromString(id);
     const hydratedRoles = requestUser.roles.map((role: IRoleDTO) =>
-      RoleService.hydrateRoleDTOToBackend<I>(role),
+      RoleService.hydrateRoleDTOToBackend<TID>(role),
     );
 
-    const hydratedUser: IRequestUserBackendObject<S, I> = {
+    const hydratedUser: IRequestUserBackendObject<TLanguage, TID> = {
       id: convert(requestUser.id),
       email: requestUser.email,
       roles: hydratedRoles,

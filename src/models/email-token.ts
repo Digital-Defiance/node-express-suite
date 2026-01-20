@@ -15,31 +15,31 @@ import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
  * Creates a Mongoose model for email token documents.
  * @template TModelName - Model name type (defaults to BaseModelName)
  * @template TCollection - Collection name type (defaults to SchemaCollection)
- * @template I - Platform ID type (defaults to Buffer)
+ * @template TID - Platform ID type (defaults to Buffer)
  * @param {Connection} connection - Mongoose connection instance
  * @param {TModelName} [modelName] - Model name (defaults to 'EmailToken')
  * @param {TCollection} [collection] - Collection name (defaults to 'emailTokens')
  * @param {Schema} [schema] - Mongoose schema (defaults to EmailTokenSchema)
- * @returns {Model<IEmailTokenDocument<I>>} Configured Mongoose model
+ * @returns {Model<IEmailTokenDocument<TID>>} Configured Mongoose model
  */
 export function EmailTokenModel<
   TModelName extends string = BaseModelName,
   TCollection extends string = SchemaCollection,
-  I extends PlatformID = Buffer,
+  TID extends PlatformID = Buffer,
 >(
   connection: Connection,
   modelName?: TModelName,
   collection?: TCollection,
   schema?: Schema,
-): Model<IEmailTokenDocument<I>>;
+): Model<IEmailTokenDocument<TID>>;
 
-export function EmailTokenModel<I extends PlatformID = Buffer>(
+export function EmailTokenModel<TID extends PlatformID = Buffer>(
   connection: Connection,
   modelName: string = BaseModelName.EmailToken,
   collection: string = SchemaCollection.EmailToken,
   schema: Schema = EmailTokenSchema,
 ) {
-  return connection.model<IEmailTokenDocument<I>>(
+  return connection.model<IEmailTokenDocument<TID>>(
     modelName,
     schema,
     collection,

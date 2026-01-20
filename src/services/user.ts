@@ -94,39 +94,44 @@ type ProjectionObject = Record<string, 0 | 1 | -1 | boolean>;
  * Provides methods for user creation, authentication (mnemonic/password/challenge),
  * email verification, password reset, backup code recovery, and settings management.
  * @template T - User document type
- * @template I - Platform ID type
- * @template D - Date type
- * @template S - String type for site language
- * @template A - String type for account status
+ * @template TID - Platform ID type
+ * @template TDate - Date type
+ * @template TLanguage - String type for site language
+ * @template TAccountStatus - String type for account status
  * @template _TEnvironment - Environment type
  * @template _TConstants - Constants type
  * @template _TBaseDocument - Base document type
  * @template TUser - User base interface type
  * @template TTokenRole - Token role interface type
  * @template TApplication - Application interface type
- * @extends {BaseService<I, TApplication>}
+ * @extends {BaseService<TID, TApplication>}
  */
 export class UserService<
   T,
-  I extends PlatformID,
-  D extends Date,
-  S extends string,
-  A extends string,
-  _TEnvironment extends Environment<I> = Environment<I>,
+  TID extends PlatformID,
+  TDate extends Date,
+  TLanguage extends string,
+  TAccountStatus extends string,
+  _TEnvironment extends Environment<TID> = Environment<TID>,
   _TConstants extends IConstants = IConstants,
-  _TBaseDocument extends IBaseDocument<T, I> = IBaseDocument<T, I>,
-  TUser extends IUserBase<I, D, S, A> = IUserBase<I, D, S, A>,
-  TTokenRole extends ITokenRole<I, D> = ITokenRole<I, D>,
-  TApplication extends IApplication<I> = IApplication<I>,
-> extends BaseService<I, TApplication> {
-  protected readonly roleService: RoleService<I, D, TTokenRole>;
-  protected readonly eciesService: ECIESService<I>;
+  _TBaseDocument extends IBaseDocument<T, TID> = IBaseDocument<T, TID>,
+  TUser extends IUserBase<TID, TDate, TLanguage, TAccountStatus> = IUserBase<
+    TID,
+    TDate,
+    TLanguage,
+    TAccountStatus
+  >,
+  TTokenRole extends ITokenRole<TID, TDate> = ITokenRole<TID, TDate>,
+  TApplication extends IApplication<TID> = IApplication<TID>,
+> extends BaseService<TID, TApplication> {
+  protected readonly roleService: RoleService<TID, TDate, TTokenRole>;
+  protected readonly eciesService: ECIESService<TID>;
   protected readonly keyWrappingService: KeyWrappingService;
   protected readonly mnemonicService: MnemonicService;
   protected readonly emailService: IEmailService;
   protected readonly backupCodeService: BackupCodeService<
-    I,
-    D,
+    TID,
+    TDate,
     TTokenRole,
     TApplication
   >;
@@ -135,10 +140,10 @@ export class UserService<
 
   constructor(
     application: TApplication,
-    roleService: RoleService<I, D, TTokenRole>,
+    roleService: RoleService<TID, TDate, TTokenRole>,
     emailService: IEmailService,
     keyWrappingService: KeyWrappingService,
-    backupCodeService: BackupCodeService<I, D, TTokenRole, TApplication>,
+    backupCodeService: BackupCodeService<TID, TDate, TTokenRole, TApplication>,
   ) {
     super(application);
     this.roleService = roleService;
@@ -174,11 +179,12 @@ export class UserService<
    * @param user a User Document
    * @returns An IUserDTO
    */
-  public static userToUserDTO<S extends string, I extends PlatformID = Buffer>(
-    user: IUserDocument<S, I> | Record<string, unknown>,
-  ): IUserDTO {
-    const provider = getEnhancedNodeIdProvider<I>();
-    const userId = user._id as I;
+  public static userToUserDTO<
+    TLanguage extends string,
+    TID extends PlatformID = Buffer,
+  >(user: IUserDocument<TLanguage, TID> | Record<string, unknown>): IUserDTO {
+    const provider = getEnhancedNodeIdProvider<TID>();
+    const userId = user._id as TID;
     return {
       ...(user instanceof Document ? user.toObject() : user),
       _id:
@@ -188,14 +194,14 @@ export class UserService<
         ? user.createdAt.toString()
         : user.createdAt) as string,
       createdBy:
-        provider.validate(provider.toBytes(user.createdBy as I)) &&
-        provider.idToString(user.createdBy as I),
+        provider.validate(provider.toBytes(user.createdBy as TID)) &&
+        provider.idToString(user.createdBy as TID),
       updatedAt: (user.updatedAt instanceof Date
         ? user.updatedAt.toString()
         : user.updatedAt) as string,
       updatedBy:
-        provider.validate(provider.toBytes(user.updatedBy as I)) &&
-        provider.idToString(user.updatedBy as I),
+        provider.validate(provider.toBytes(user.updatedBy as TID)) &&
+        provider.idToString(user.updatedBy as TID),
       ...(user.lastLogin
         ? {
             lastLogin: (user.lastLogin instanceof Date
@@ -213,8 +219,8 @@ export class UserService<
       ...(user.deletedBy
         ? {
             deletedBy:
-              provider.validate(provider.toBytes(user.deletedBy as I)) &&
-              provider.idToString(user.deletedBy as I),
+              provider.validate(provider.toBytes(user.deletedBy as TID)) &&
+              provider.idToString(user.deletedBy as TID),
           }
         : {}),
     } as IUserDTO;
@@ -225,8 +231,10 @@ export class UserService<
    * @param user a User DTO
    * @returns An IUserBackendObject
    */
-  public hydrateUserDTOToBackend(user: IUserDTO): IUserBackendObject<S, I> {
-    const provider = getEnhancedNodeIdProvider<I>();
+  public hydrateUserDTOToBackend(
+    user: IUserDTO,
+  ): IUserBackendObject<TLanguage, TID> {
+    const provider = getEnhancedNodeIdProvider<TID>();
     return {
       ...user,
       _id: provider.idFromString(user._id),
@@ -244,7 +252,7 @@ export class UserService<
       ...(user.mnemonicId
         ? { mnemonicId: provider.idFromString(user.mnemonicId) }
         : {}),
-    } as IUserBackendObject<S, I>;
+    } as IUserBackendObject<TLanguage, TID>;
   }
 
   /**
@@ -255,7 +263,7 @@ export class UserService<
    * @returns The email token document
    */
   public async createEmailToken(
-    userDoc: IUserDocument<S, I>,
+    userDoc: IUserDocument<TLanguage, TID>,
     type: EmailTokenType,
     session?: ClientSession,
   ): Promise<IEmailTokenDocument> {
@@ -361,8 +369,11 @@ export class UserService<
    */
   public async createAndSendEmailToken(
     user:
-      | IUserDocument<S, I>
-      | (Pick<IUserDocument<S, I>, keyof IUserDocument<S, I>> & { _id: any }),
+      | IUserDocument<TLanguage, TID>
+      | (Pick<
+          IUserDocument<TLanguage, TID>,
+          keyof IUserDocument<TLanguage, TID>
+        > & { _id: any }),
     type: EmailTokenType = EmailTokenType.AccountVerification,
     session?: ClientSession,
     debug = false,
@@ -385,7 +396,7 @@ export class UserService<
    * @returns The email token document
    */
   public async createAndSendEmailTokenDirect(
-    user: IUserDocument<S, I>,
+    user: IUserDocument<TLanguage, TID>,
     type: EmailTokenType = EmailTokenType.AccountVerification,
     session: ClientSession,
     debug = false,
@@ -539,14 +550,14 @@ export class UserService<
     email?: string,
     username?: string,
     session?: ClientSession,
-  ): Promise<IUserDocument<S, I>> {
+  ): Promise<IUserDocument<TLanguage, TID>> {
     if (!email && !username) {
       throw new UsernameOrEmailRequiredError();
     }
-    const UserModel = ModelRegistry.instance.getTypedModel<IUserDocument<S, I>>(
-      BaseModelName.User,
-    );
-    let userDoc: IUserDocument<S, I> | null = null;
+    const UserModel = ModelRegistry.instance.getTypedModel<
+      IUserDocument<TLanguage, TID>
+    >(BaseModelName.User);
+    let userDoc: IUserDocument<TLanguage, TID> | null = null;
 
     try {
       if (email) {
@@ -584,7 +595,7 @@ export class UserService<
         throw new AccountStatusError(userDoc.accountStatus);
     }
 
-    return userDoc as IUserDocument<S, I>;
+    return userDoc as IUserDocument<TLanguage, TID>;
   }
 
   /**
@@ -595,14 +606,14 @@ export class UserService<
    * @returns The user document
    */
   public async findUserById(
-    userId: I,
+    userId: TID,
     throwIfNotActive: boolean,
     session?: ClientSession,
-    select?: ProjectionType<IUserDocument<S, I>>,
-  ): Promise<IUserDocument<S, I>> {
-    const UserModel = ModelRegistry.instance.getTypedModel<IUserDocument<S, I>>(
-      BaseModelName.User,
-    );
+    select?: ProjectionType<IUserDocument<TLanguage, TID>>,
+  ): Promise<IUserDocument<TLanguage, TID>> {
+    const UserModel = ModelRegistry.instance.getTypedModel<
+      IUserDocument<TLanguage, TID>
+    >(BaseModelName.User);
     const baseQuery = UserModel.findById(userId).session(session ?? null);
     if (select) {
       // Always include fields needed for status checks
@@ -612,7 +623,10 @@ export class UserService<
       ]);
       baseQuery.select(merged);
     }
-    const userDoc = (await baseQuery.exec()) as IUserDocument<S, I> | null;
+    const userDoc = (await baseQuery.exec()) as IUserDocument<
+      TLanguage,
+      TID
+    > | null;
     if (!userDoc || userDoc.deletedAt) {
       throw new UserNotFoundError();
     }
@@ -637,9 +651,9 @@ export class UserService<
    * For exclusion projections, ensures required fields are not excluded.
    */
   private ensureRequiredFieldsInProjection(
-    select: ProjectionType<IUserDocument<S, I>>,
+    select: ProjectionType<IUserDocument<TLanguage, TID>>,
     required: string[],
-  ): ProjectionType<IUserDocument<S, I>> {
+  ): ProjectionType<IUserDocument<TLanguage, TID>> {
     if (typeof select === 'string') {
       const parts = select
         .split(/\s+/)
@@ -673,7 +687,7 @@ export class UserService<
         );
         keysToRemove.forEach((key) => delete proj[key]);
       }
-      return proj as ProjectionType<IUserDocument<S, I>>;
+      return proj as ProjectionType<IUserDocument<TLanguage, TID>>;
     }
     return select;
   }
@@ -686,11 +700,11 @@ export class UserService<
    */
   public fillUserDefaults(
     newUser: ICreateUserBasics,
-    createdBy: I,
+    createdBy: TID,
     backupCodes: Array<IBackupCode>,
     encryptedMnemonic: string,
-    userId?: I,
-  ): IUserBackendObject<S, I> {
+    userId?: TID,
+  ): IUserBackendObject<TLanguage, TID> {
     return {
       ...(userId ? { _id: userId } : {}),
       timezone: 'UTC',
@@ -699,7 +713,7 @@ export class UserService<
       emailVerified: false,
       darkMode: false,
       accountStatus: AccountStatus.PendingEmailVerification,
-      siteLanguage: 'en-US' as S,
+      siteLanguage: 'en-US' as TLanguage,
       duressPasswords: [],
       publicKey: '',
       backupCodes,
@@ -710,7 +724,7 @@ export class UserService<
       createdBy: createdBy,
       updatedAt: new Date(),
       updatedBy: createdBy,
-    } as IUserBackendObject<S, I>;
+    } as IUserBackendObject<TLanguage, TID>;
   }
 
   /**
@@ -718,12 +732,14 @@ export class UserService<
    * @param newUser The user object
    * @returns The new user document
    */
-  public async makeUserDoc(newUser: TUser): Promise<IUserDocument<S, I>> {
-    const UserModel = ModelRegistry.instance.getTypedModel<IUserDocument<S, I>>(
-      BaseModelName.User,
-    );
+  public async makeUserDoc(
+    newUser: TUser,
+  ): Promise<IUserDocument<TLanguage, TID>> {
+    const UserModel = ModelRegistry.instance.getTypedModel<
+      IUserDocument<TLanguage, TID>
+    >(BaseModelName.User);
 
-    const newUserDoc: IUserDocument<S, I> = new UserModel(newUser);
+    const newUserDoc: IUserDocument<TLanguage, TID> = new UserModel(newUser);
 
     const validationError = newUserDoc.validateSync();
     if (validationError) {
@@ -747,20 +763,20 @@ export class UserService<
    * @returns The new user document
    */
   public async newUser(
-    systemUser: BackendMember<I>,
+    systemUser: BackendMember<TID>,
     userData: ICreateUserBasics,
-    createdBy?: I,
-    newUserId?: I,
+    createdBy?: TID,
+    newUserId?: TID,
     session?: ClientSession,
     debug = false,
     password?: string,
   ): Promise<{
-    user: IUserDocument<S, I>;
+    user: IUserDocument<TLanguage, TID>;
     mnemonic: string;
     backupCodes: Array<string>;
     password?: string;
   }> {
-    const provider = getEnhancedNodeIdProvider<I>();
+    const provider = getEnhancedNodeIdProvider<TID>();
     const _newUserId = newUserId ?? provider.generateTyped();
     if (!this.application.constants.UsernameRegex.test(userData.username)) {
       throw new InvalidUsernameError();
@@ -769,23 +785,23 @@ export class UserService<
       throw new InvalidNewPasswordError();
     }
 
-    const UserModel = ModelRegistry.instance.getTypedModel<IUserDocument<S, I>>(
-      BaseModelName.User,
-    );
+    const UserModel = ModelRegistry.instance.getTypedModel<
+      IUserDocument<TLanguage, TID>
+    >(BaseModelName.User);
     return await this.withTransaction<{
-      user: IUserDocument<S, I>;
+      user: IUserDocument<TLanguage, TID>;
       backupCodes: Array<string>;
       mnemonic: string;
     }>(
       async (sess: ClientSession | undefined) => {
-        const existingEmail: IUserDocument<S, I> | null =
+        const existingEmail: IUserDocument<TLanguage, TID> | null =
           await UserModel.findOne({
             email: userData.email.toLowerCase(),
           }).session(sess ?? null);
         if (existingEmail) {
           throw new EmailInUseError();
         }
-        const existingUsername: IUserDocument<S, I> | null =
+        const existingUsername: IUserDocument<TLanguage, TID> | null =
           await UserModel.findOne({
             username: { $regex: new RegExp(`^${userData.username}$`, 'i') },
           }).session(sess ?? null);
@@ -794,11 +810,11 @@ export class UserService<
         }
 
         let mnemonic: SecureString | undefined;
-        let member: BackendMember<I> | undefined;
+        let member: BackendMember<TID> | undefined;
         while (!mnemonic || !member) {
           try {
             const { member: newMember, mnemonic: newMnemonic } =
-              BackendMember.newMember<I>(
+              BackendMember.newMember<TID>(
                 this.eciesService,
                 MemberType.User,
                 userData.username,
@@ -859,7 +875,7 @@ export class UserService<
           sess,
         );
         if (newMnemonicDoc) {
-          newUserDoc.mnemonicId = newMnemonicDoc._id as I;
+          newUserDoc.mnemonicId = newMnemonicDoc._id as TID;
         }
 
         // If password provided, wrap the ECIES private key with the password (Option B)
@@ -924,7 +940,7 @@ export class UserService<
    * Requires the user not be deleted or inactive
    */
   public async getEncryptedUserBackupCodes(
-    userId: I,
+    userId: TID,
     session?: ClientSession,
   ): Promise<Array<IBackupCode>> {
     const userWithCodes = await this.findUserById(userId, true, session);
@@ -938,8 +954,8 @@ export class UserService<
    * @returns A promise of an array of backup codes
    */
   public async resetUserBackupCodes(
-    backupUser: BackendMember<I>,
-    systemUser: BackendMember<I>,
+    backupUser: BackendMember<TID>,
+    systemUser: BackendMember<TID>,
     session?: ClientSession,
   ): Promise<Array<BackupCode>> {
     if (!backupUser.hasPrivateKey) {
@@ -1003,15 +1019,15 @@ export class UserService<
    * @returns A promise containing the created Member
    */
   public async makeUserFromUserDoc(
-    userDoc: IUserDocument<S, I>,
+    userDoc: IUserDocument<TLanguage, TID>,
     privateKey?: SecureBuffer,
     publicKey?: Buffer,
     mnemonic?: SecureString,
     wallet?: Wallet,
     session?: ClientSession,
-  ): Promise<BackendMember<I>> {
+  ): Promise<BackendMember<TID>> {
     const memberType = await this.roleService.getMemberType(userDoc, session);
-    const user = new BackendMember<I>(
+    const user = new BackendMember<TID>(
       this.eciesService,
       memberType,
       userDoc.username,
@@ -1047,12 +1063,12 @@ export class UserService<
    * @throws AccountStatusError if the account status is invalid
    */
   public async challengeUserWithMnemonic(
-    userDoc: IUserDocument<S, I>,
+    userDoc: IUserDocument<TLanguage, TID>,
     mnemonic: SecureString,
     session?: ClientSession,
   ): Promise<{
-    userMember: BackendMember<I>;
-    adminMember: BackendMember<I>;
+    userMember: BackendMember<TID>;
+    adminMember: BackendMember<TID>;
   }> {
     try {
       // Verify provided mnemonic corresponds to the stored mnemonic HMAC (no password required)
@@ -1099,7 +1115,7 @@ export class UserService<
       }
 
       // Generate a nonce challenge to verify they can decrypt with their key
-      const adminMember = SystemUserService.getSystemUser<I>(
+      const adminMember = SystemUserService.getSystemUser<TID>(
         this.application.environment,
         this.application.constants,
       );
@@ -1154,9 +1170,9 @@ export class UserService<
     username?: string,
     session?: ClientSession,
   ): Promise<{
-    userDoc: IUserDocument<S, I>;
-    userMember: BackendMember<I>;
-    adminMember: BackendMember<I>;
+    userDoc: IUserDocument<TLanguage, TID>;
+    userMember: BackendMember<TID>;
+    adminMember: BackendMember<TID>;
   }> {
     const challengeBuffer = Buffer.from(challengeResponse, 'hex');
     // validate the expected challenge response length (8 + 32 + 64 = 104 bytes)
@@ -1186,7 +1202,7 @@ export class UserService<
       throw new InvalidUsernameError();
     }
     // re-sign the time + nonce and check if the signature matches
-    const adminMember = SystemUserService.getSystemUser<I>(
+    const adminMember = SystemUserService.getSystemUser<TID>(
       this.application.environment,
       this.application.constants,
     );
@@ -1221,11 +1237,11 @@ export class UserService<
     mnemonic: SecureString,
     session?: ClientSession,
   ): Promise<{
-    userDoc: IUserDocument<S, I>;
-    userMember: BackendMember<I>;
-    adminMember: BackendMember<I>;
+    userDoc: IUserDocument<TLanguage, TID>;
+    userMember: BackendMember<TID>;
+    adminMember: BackendMember<TID>;
   }> {
-    const UserModel = this.application.getModel<IUserDocument<S, I>>(
+    const UserModel = this.application.getModel<IUserDocument<TLanguage, TID>>(
       BaseModelName.User,
     );
     const userQuery = validator.isEmail(usernameOrEmail)
@@ -1297,7 +1313,7 @@ export class UserService<
         throw new InvalidCredentialsError();
       }
 
-      const adminMember = SystemUserService.getSystemUser<I>(
+      const adminMember = SystemUserService.getSystemUser<TID>(
         this.application.environment,
         this.application.constants,
       );
@@ -1329,13 +1345,13 @@ export class UserService<
     mnemonic: SecureString,
     session?: ClientSession,
   ): Promise<{
-    userDoc: IUserDocument<S, I>;
-    userMember: BackendMember<I>;
-    adminMember: BackendMember<I>;
+    userDoc: IUserDocument<TLanguage, TID>;
+    userMember: BackendMember<TID>;
+    adminMember: BackendMember<TID>;
   }> {
-    const UserModel = ModelRegistry.instance.getTypedModel<IUserDocument<S, I>>(
-      BaseModelName.User,
-    );
+    const UserModel = ModelRegistry.instance.getTypedModel<
+      IUserDocument<TLanguage, TID>
+    >(BaseModelName.User);
     const userQuery = validator.isEmail(usernameOrEmail)
       ? UserModel.findOne({ email: usernameOrEmail.toLowerCase() }).select(
           '_id username email accountStatus deletedAt mnemonicId publicKey passwordWrappedPrivateKey',
@@ -1380,11 +1396,11 @@ export class UserService<
     password: string,
     session?: ClientSession,
   ): Promise<{
-    userDoc: IUserDocument<S, I>;
-    userMember: BackendMember<I>;
-    adminMember: BackendMember<I>;
+    userDoc: IUserDocument<TLanguage, TID>;
+    userMember: BackendMember<TID>;
+    adminMember: BackendMember<TID>;
   }> {
-    const UserModel = this.application.getModel<IUserDocument<S, I>>(
+    const UserModel = this.application.getModel<IUserDocument<TLanguage, TID>>(
       BaseModelName.User,
     );
     const query = validator.isEmail(usernameOrEmail)
@@ -1394,7 +1410,7 @@ export class UserService<
           strength: 2,
         });
 
-    const userDoc: IUserDocument<S, I> | null = await query
+    const userDoc: IUserDocument<TLanguage, TID> | null = await query
       .session(session ?? null)
       .exec();
 
@@ -1437,7 +1453,7 @@ export class UserService<
     );
 
     // Generate a nonce challenge signed by system
-    const adminMember = SystemUserService.getSystemUser<I>(
+    const adminMember = SystemUserService.getSystemUser<TID>(
       this.application.environment,
       this.application.constants,
     );
@@ -1527,7 +1543,7 @@ export class UserService<
             BaseModelName.EmailToken,
           );
         const UserModel = ModelRegistry.instance.getTypedModel<
-          IUserDocument<S, I>
+          IUserDocument<TLanguage, TID>
         >(BaseModelName.User);
         const token: IEmailTokenDocument | null = await this.findEmailToken(
           emailToken,
@@ -1546,9 +1562,8 @@ export class UserService<
           throw new EmailTokenExpiredError();
         }
 
-        const user: IUserDocument<S, I> | null = await UserModel.findById(
-          token.userId,
-        ).session(sess ?? null);
+        const user: IUserDocument<TLanguage, TID> | null =
+          await UserModel.findById(token.userId).session(sess ?? null);
 
         if (!user || user.deletedAt) {
           throw new UserNotFoundError();
@@ -1655,11 +1670,11 @@ export class UserService<
     newLanguage: string,
     session?: ClientSession,
   ): Promise<IRequestUserDTO> {
-    const provider = getEnhancedNodeIdProvider<I>();
+    const provider = getEnhancedNodeIdProvider<TID>();
     return await this.withTransaction<IRequestUserDTO>(
       async (sess: ClientSession | undefined) => {
         const UserModel = ModelRegistry.instance.getTypedModel<
-          IUserDocument<S, I>
+          IUserDocument<TLanguage, TID>
         >(BaseModelName.User);
         const userDoc = await UserModel.findByIdAndUpdate(
           provider.idFromString(userId),
@@ -1694,11 +1709,11 @@ export class UserService<
     newDarkMode: boolean,
     session?: ClientSession,
   ): Promise<IRequestUserDTO> {
-    const provider = getEnhancedNodeIdProvider<I>();
+    const provider = getEnhancedNodeIdProvider<TID>();
     return await this.withTransaction<IRequestUserDTO>(
       async (sess: ClientSession | undefined) => {
         const UserModel = ModelRegistry.instance.getTypedModel<
-          IUserDocument<S, I>
+          IUserDocument<TLanguage, TID>
         >(BaseModelName.User);
         const userDoc = await UserModel.findByIdAndUpdate(
           provider.idFromString(userId),
@@ -1740,11 +1755,11 @@ export class UserService<
     },
     session?: ClientSession,
   ): Promise<IRequestUserDTO> {
-    const provider = getEnhancedNodeIdProvider<I>();
+    const provider = getEnhancedNodeIdProvider<TID>();
     return await this.withTransaction<IRequestUserDTO>(
       async (sess: ClientSession | undefined) => {
         const UserModel = ModelRegistry.instance.getTypedModel<
-          IUserDocument<S, I>
+          IUserDocument<TLanguage, TID>
         >(BaseModelName.User);
         const userDoc = await UserModel.findById(
           provider.idFromString(userId),
@@ -1779,7 +1794,7 @@ export class UserService<
         if (settings.timezone !== undefined)
           userDoc.timezone = settings.timezone;
         if (settings.siteLanguage !== undefined)
-          userDoc.siteLanguage = settings.siteLanguage as S;
+          userDoc.siteLanguage = settings.siteLanguage as TLanguage;
         if (settings.darkMode !== undefined)
           userDoc.darkMode = settings.darkMode;
         if (settings.currency !== undefined)
@@ -1814,11 +1829,11 @@ export class UserService<
     newPassword: string,
     session?: ClientSession,
   ): Promise<void> {
-    const provider = getEnhancedNodeIdProvider<I>();
+    const provider = getEnhancedNodeIdProvider<TID>();
     return await this.withTransaction<void>(
       async (sess: ClientSession | undefined) => {
         const UserModel = ModelRegistry.instance.getTypedModel<
-          IUserDocument<S, I>
+          IUserDocument<TLanguage, TID>
         >(BaseModelName.User);
         const userDoc = await UserModel.findById(
           provider.idFromString(userId),
@@ -1944,7 +1959,7 @@ export class UserService<
             BaseModelName.EmailToken,
           );
         const UserModel = ModelRegistry.instance.getTypedModel<
-          IUserDocument<S, I>
+          IUserDocument<TLanguage, TID>
         >(BaseModelName.User);
 
         // Find and validate the token
@@ -2046,7 +2061,7 @@ export class UserService<
    * @returns The login challenge in hex
    */
   public generateDirectLoginChallenge(): string {
-    const adminMember = SystemUserService.getSystemUser<I>(
+    const adminMember = SystemUserService.getSystemUser<TID>(
       this.application.environment,
       this.application.constants,
     );
@@ -2069,10 +2084,13 @@ export class UserService<
     username?: string,
     email?: string,
     session?: ClientSession,
-  ): Promise<{ userDoc: IUserDocument<S, I>; userMember: BackendMember<I> }> {
+  ): Promise<{
+    userDoc: IUserDocument<TLanguage, TID>;
+    userMember: BackendMember<TID>;
+  }> {
     return await this.withTransaction<{
-      userDoc: IUserDocument<S, I>;
-      userMember: BackendMember<I>;
+      userDoc: IUserDocument<TLanguage, TID>;
+      userMember: BackendMember<TID>;
     }>(
       async (sess: ClientSession | undefined) => {
         // serverSignedRequest is:
@@ -2115,7 +2133,7 @@ export class UserService<
           throw new LoginChallengeExpiredError();
         }
         // validate the server's signature on the time + nonce portion
-        const adminMember = SystemUserService.getSystemUser<I>(
+        const adminMember = SystemUserService.getSystemUser<TID>(
           this.application.environment,
           this.application.constants,
         );
@@ -2158,7 +2176,7 @@ export class UserService<
         }
 
         // if the user is valid, try to use the token (prevents replay attacks)
-        await DirectLoginTokenService.useToken<I>(
+        await DirectLoginTokenService.useToken<TID>(
           this.application,
           userDoc._id,
           nonce.toString('hex'),
@@ -2218,8 +2236,8 @@ export class UserService<
     token: string,
     signature: string,
     session?: ClientSession,
-  ): Promise<IUserDocument<S, I>> {
-    return this.withTransaction<IUserDocument<S, I>>(
+  ): Promise<IUserDocument<TLanguage, TID>> {
+    return this.withTransaction<IUserDocument<TLanguage, TID>>(
       async (sess: ClientSession | undefined) => {
         const emailToken = await this.findEmailToken(
           token,
@@ -2264,7 +2282,7 @@ export class UserService<
    * @param userId - The ID of the user
    * @returns void
    */
-  public async updateLastLogin(userId: I): Promise<void> {
+  public async updateLastLogin(userId: TID): Promise<void> {
     const UserModel = ModelRegistry.instance.get('User')?.model;
     try {
       // Check if the database connection is still open

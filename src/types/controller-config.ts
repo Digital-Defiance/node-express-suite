@@ -10,10 +10,10 @@ import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 
 /**
  * Controller configuration interface.
- * @template I - Platform ID type (defaults to Buffer)
+ * @template TID - Platform ID type (defaults to Buffer)
  */
-export interface ControllerConfig<I extends PlatformID = Buffer> {
-  idType: I;
+export interface ControllerConfig<TID extends PlatformID = Buffer> {
+  idType: TID;
   dateType: Date;
   constants: IConstants;
   environment: Environment;

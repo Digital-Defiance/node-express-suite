@@ -12,9 +12,9 @@ import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
  * Composite interface for user-role collection documents.
  * Extends base document with user-role relationship properties linking users to their assigned roles.
  * Supports many-to-many relationships between users and roles with timestamps.
- * @template I Platform-specific ID type (Buffer, ObjectId, etc.)
+ * @template TID Platform-specific ID type (Buffer, ObjectId, etc.)
  */
-export type IUserRoleDocument<I extends PlatformID = Buffer> = IBaseDocument<
-  IUserRoleBase<I, Date>,
-  I
+export type IUserRoleDocument<TID extends PlatformID = Buffer> = IBaseDocument<
+  IUserRoleBase<TID, Date>,
+  TID
 >;

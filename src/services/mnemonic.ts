@@ -18,15 +18,15 @@ import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 /**
  * Service for secure mnemonic phrase storage and validation.
  * Uses HMAC for uniqueness checking without storing actual mnemonics.
- * @template I - Platform ID type (defaults to Buffer)
+ * @template TID - Platform ID type (defaults to Buffer)
  */
-export class MnemonicService<I extends PlatformID = Buffer> {
+export class MnemonicService<TID extends PlatformID = Buffer> {
   private readonly hmacSecret: SecureBuffer;
-  private readonly MnemonicModel: Model<IMnemonicDocument<I>>;
+  private readonly MnemonicModel: Model<IMnemonicDocument<TID>>;
   private readonly constants: IConstants;
 
   constructor(
-    mnemonicModel: Model<IMnemonicDocument<I>>,
+    mnemonicModel: Model<IMnemonicDocument<TID>>,
     hmacSecret: SecureBuffer,
     constants: IConstants,
   ) {
@@ -81,7 +81,7 @@ export class MnemonicService<I extends PlatformID = Buffer> {
     _password: SecureString,
     session?: ClientSession,
   ): Promise<{
-    document: IMnemonicDocument<I> | null;
+    document: IMnemonicDocument<TID> | null;
   }> {
     if (!mnemonic.value || !this.constants.MnemonicRegex.test(mnemonic.value)) {
       throw new TranslatableSuiteError(
@@ -117,7 +117,7 @@ export class MnemonicService<I extends PlatformID = Buffer> {
   public async addMnemonic(
     mnemonic: SecureString,
     session?: ClientSession,
-  ): Promise<IMnemonicDocument<I> | null> {
+  ): Promise<IMnemonicDocument<TID> | null> {
     if (!mnemonic.value || !this.constants.MnemonicRegex.test(mnemonic.value)) {
       throw new TranslatableSuiteError(
         SuiteCoreStringKey.Validation_MnemonicRegex,
@@ -145,9 +145,9 @@ export class MnemonicService<I extends PlatformID = Buffer> {
    * @param session Optional Mongoose session for transaction support.
    */
   public async getMnemonicDocument(
-    mnemonicId: I,
+    mnemonicId: TID,
     session?: ClientSession,
-  ): Promise<IMnemonicDocument<I> | null> {
+  ): Promise<IMnemonicDocument<TID> | null> {
     return await this.MnemonicModel.findById(mnemonicId).session(
       session ?? null,
     );
@@ -164,7 +164,7 @@ export class MnemonicService<I extends PlatformID = Buffer> {
    * @param session Optional Mongoose session for transaction support.
    */
   public async deleteMnemonicDocument(
-    mnemonicId: I,
+    mnemonicId: TID,
     session?: ClientSession,
   ): Promise<void> {
     await this.MnemonicModel.findByIdAndDelete(mnemonicId).session(

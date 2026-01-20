@@ -37,21 +37,21 @@ const verifyAsync = promisify<
 /**
  * Service for JWT token operations including generation, signing, and verification.
  * Integrates with role service to embed user roles in JWT tokens.
- * @template I - Platform ID type (defaults to Buffer)
- * @template D - Date type (defaults to Date)
+ * @template TID - Platform ID type (defaults to Buffer)
+ * @template TDate - Date type (defaults to Date)
  * @template TTokenRole - Token role interface type
  * @template TTokenUser - Token user interface type
  * @template TApplication - Application interface type
- * @extends {BaseService<I, TApplication>}
+ * @extends {BaseService<TID, TApplication>}
  */
 export class JwtService<
-  I extends PlatformID = Buffer,
-  D extends Date = Date,
-  TTokenRole extends ITokenRole<I, D> = ITokenRole<I, D>,
+  TID extends PlatformID = Buffer,
+  TDate extends Date = Date,
+  TTokenRole extends ITokenRole<TID, TDate> = ITokenRole<TID, TDate>,
   TTokenUser extends ITokenUser = ITokenUser,
-  TApplication extends IApplication<I> = IApplication<I>,
-> extends BaseService<I, TApplication> {
-  private readonly roleService: RoleService<I, D, TTokenRole>;
+  TApplication extends IApplication<TID> = IApplication<TID>,
+> extends BaseService<TID, TApplication> {
+  private readonly roleService: RoleService<TID, TDate, TTokenRole>;
 
   /**
    * Constructor for the JWT service
@@ -59,7 +59,7 @@ export class JwtService<
    */
   constructor(application: TApplication) {
     super(application);
-    this.roleService = new RoleService<I, D, TTokenRole>(application);
+    this.roleService = new RoleService<TID, TDate, TTokenRole>(application);
   }
 
   /**
@@ -70,10 +70,10 @@ export class JwtService<
    * @returns The signed token
    */
   public async signToken(
-    userDoc: IUserDocument<string, I>,
+    userDoc: IUserDocument<string, TID>,
     jwtSecret: string,
     overrideLanguage?: string,
-  ): Promise<IJwtSignResponse<I, D, TTokenRole>> {
+  ): Promise<IJwtSignResponse<TID, TDate, TTokenRole>> {
     // look for roles the user is a member of (the role contains the user id in the user's roles array)
     const roles = await this.roleService.getUserRoles(userDoc._id);
     const tokenRoles: Array<TTokenRole> = this.roleService.rolesToTokenRoles(
@@ -81,7 +81,7 @@ export class JwtService<
       overrideLanguage,
     );
     const tokenRoleDTOs = tokenRoles.map((role) =>
-      RoleService.roleToRoleDTO<I, D>(role),
+      RoleService.roleToRoleDTO<TID, TDate>(role),
     );
     const roleTranslatedNames = tokenRoles.map((role) => role.translatedName);
     const roleNames = tokenRoles.map((role) => role.name);

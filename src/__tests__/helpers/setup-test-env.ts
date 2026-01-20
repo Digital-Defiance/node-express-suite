@@ -35,7 +35,7 @@ export async function setupTestEnvironment<
 >(
   constants: TConstants,
   apiRouterFactory: (app: IApplication<TID>) => BaseRouter<TID>,
-  schemaMapFactory: (connection: Connection) => SchemaMap<TModelDocs>,
+  schemaMapFactory: (connection: Connection) => SchemaMap<TID, TModelDocs>,
   appRouterFactory: (apiRouter: BaseRouter<TID>) => TAppRouter = (apiRouter) =>
     new AppRouter(apiRouter) as TAppRouter,
   customInitMiddleware: typeof initMiddleware = initMiddleware,

@@ -70,15 +70,24 @@ declare global {
 /**
  * Schema map interface
  */
-type ModelDocMap<TModelDocs extends Record<string, IBaseDocument<any>>> = {
+type ModelDocMap<
+  TID extends PlatformID,
+  TModelDocs extends Record<string, IBaseDocument<any, TID>>,
+> = {
   [K in keyof TModelDocs]: TModelDocs[K];
 };
 
-export type SchemaMap<TModelDocs extends Record<string, IBaseDocument<any>>> = {
+export type SchemaMap<
+  TID extends PlatformID,
+  TModelDocs extends Record<string, IBaseDocument<any, TID>>,
+> = {
   /**
    * For each model name, contains the corresponding schema and model
    */
-  [K in keyof ModelDocMap<TModelDocs>]: ISchema<ModelDocMap<TModelDocs>[K]>;
+  [K in keyof ModelDocMap<TID, TModelDocs>]: ISchema<
+    TID,
+    ModelDocMap<TID, TModelDocs>[K]
+  >;
 };
 
 export type ApiRequestHandler<T extends ApiResponse> = (
