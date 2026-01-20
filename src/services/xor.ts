@@ -4,6 +4,7 @@
  * @module services/xor
  */
 
+import { SuiteCoreStringKey, TranslatableSuiteError } from '@digitaldefiance/suite-core-lib';
 import { randomBytes } from 'crypto';
 
 /**
@@ -21,6 +22,9 @@ export class XorService {
    * @returns New Buffer containing the result of the XOR operation
    */
   public static xor(data: Buffer, key: Buffer): Buffer {
+    if (data.length != key.length) {
+      throw new TranslatableSuiteError(SuiteCoreStringKey.Error_ArrayLengthMismatch);
+    }
     const result = Buffer.alloc(data.length);
     for (let i = 0; i < data.length; i++) {
       result[i] = data[i] ^ key[i % key.length];
