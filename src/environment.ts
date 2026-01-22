@@ -56,6 +56,7 @@ export class Environment<
     initialization = false,
     override = true,
     constants: IConstants = LocalhostConstants,
+    fromObject?: EnvironmentVariables,
   ) {
     let envObj = process.env;
     let debug = envObj['DEBUG'] === 'true' || envObj['DEBUG'] === '1';
@@ -76,6 +77,9 @@ export class Environment<
       envObj = override
         ? { ...envObj, ...result.parsed }
         : { ...result.parsed, ...envObj };
+      if (fromObject) {
+        envObj = { ...fromObject };
+      }
       // debug / detailedDebug may have changed due to the env loading
       debug = envObj['DEBUG'] === 'true' || envObj['DEBUG'] === '1';
       detailedDebug =

@@ -29,7 +29,6 @@ const UINT32_MAX = 4294967295;
 const UINT64_SIZE = 8;
 const UINT64_MAX = 18446744073709551615n;
 const HEX_RADIX = 16;
-const OBJECT_ID_LENGTH = 24;
 
 const defaultConfig: IConstants = Object.freeze({
   ...CoreConstants,
@@ -42,7 +41,6 @@ const defaultConfig: IConstants = Object.freeze({
   UINT64_SIZE,
   UINT64_MAX,
   HEX_RADIX,
-  OBJECT_ID_LENGTH,
   MEMBER_ID_LENGTH: 8,
   KEYRING_ALGORITHM_CONFIGURATION,
   ECIES_VERSION_SIZE: 1,
@@ -206,13 +204,13 @@ export function createExpressRuntimeConfiguration(
         ...BaseECIES.SYMMETRIC,
         ...(overrides?.ECIES?.SYMMETRIC ?? {}),
       },
-      SIMPLE: {
-        ...BaseECIES.SIMPLE,
-        ...(overrides?.ECIES?.SIMPLE ?? {}),
+      BASIC: {
+        ...BaseECIES.BASIC,
+        ...(overrides?.ECIES?.BASIC ?? {}),
       },
-      SINGLE: {
-        ...BaseECIES.SINGLE,
-        ...(overrides?.ECIES?.SINGLE ?? {}),
+      WITH_LENGTH: {
+        ...BaseECIES.WITH_LENGTH,
+        ...(overrides?.ECIES?.WITH_LENGTH ?? {}),
       },
       MULTIPLE: {
         ...BaseECIES.MULTIPLE,
@@ -222,6 +220,10 @@ export function createExpressRuntimeConfiguration(
         ...BaseECIES.ENCRYPTION_TYPE,
         ...(overrides?.ECIES?.ENCRYPTION_TYPE ?? {}),
       },
+    },
+    ECIES_CONFIG: {
+      ...base.ECIES_CONFIG,
+      ...(overrides?.ECIES_CONFIG ?? {}),
     },
     FEC: {
       ...base.FEC,

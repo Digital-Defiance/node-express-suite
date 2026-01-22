@@ -8,7 +8,7 @@ const { ObjectId } = Types;
 
 describe('Cross-Platform ID Compatibility', () => {
   beforeAll(() => {
-    registerNodeRuntimeConfiguration();
+    registerNodeRuntimeConfiguration('default-config', {});
   });
 
   it('should convert ObjectId to bytes and back', () => {

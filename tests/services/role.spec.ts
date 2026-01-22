@@ -18,7 +18,7 @@ describe('RoleService', () => {
   let mockUserModel: any;
 
   beforeAll(() => {
-    registerNodeRuntimeConfiguration();
+    registerNodeRuntimeConfiguration('default-config', {});
   });
 
   beforeEach(() => {

@@ -10,7 +10,7 @@ describe('Environment ID Generation', () => {
   const tempReactDistDir = '/tmp/react-dist';
 
   beforeAll(() => {
-    registerNodeRuntimeConfiguration();
+    registerNodeRuntimeConfiguration('default-config', {});
     if (!existsSync(tempApiDistDir)) {
       mkdirSync(tempApiDistDir, { recursive: true });
     }

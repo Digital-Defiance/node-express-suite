@@ -4,62 +4,30 @@
  * @module interfaces/constants
  */
 
-import { IECIESConstants, IPBkdf2Consts } from '@digitaldefiance/ecies-lib';
 import {
+  IChecksumConsts,
   IEncryptionConsts,
   IKeyringConsts,
+  IConstants as INodeEciesConstants,
   IWrappedKeyConsts,
   PbkdfProfiles,
-  type IVotingConsts,
 } from '@digitaldefiance/node-ecies-lib';
-import { IConstants as IBaseConstants } from '@digitaldefiance/suite-core-lib';
-import { CipherGCMTypes } from 'crypto';
-import { IChecksumConsts } from './checksum-consts';
+import { IConstants as ISuiteCoreConstants } from '@digitaldefiance/suite-core-lib';
 import { IFECConsts } from './fec-consts';
 import { IJwtConsts } from './jwt-consts';
+import {
+  IECIESConstants,
+  IPBkdf2Consts,
+  IVotingConsts,
+} from '@digitaldefiance/ecies-lib';
+import { CipherGCMTypes } from 'crypto';
 
 /**
  * Combination of all constants from all libraries.
- * Extends base constants with ECIES, Node ECIES, Suite Core, and Node Express Suite constants.
+ * Extends Node ECIES constants (which includes ECIES_CONFIG and all crypto constants)
+ * and Suite Core constants (which includes site-specific configuration).
  */
-export interface IConstants extends IBaseConstants {
-  UINT8_SIZE: number;
-  UINT16_SIZE: number;
-  UINT16_MAX: number;
-  UINT32_SIZE: number;
-  UINT32_MAX: number;
-  UINT64_SIZE: number;
-  UINT64_MAX: bigint;
-  HEX_RADIX: number;
-  /**
-   * Number of rounds for bcrypt hashing. Higher values increase security but also consume more CPU resources.
-   */
-  BcryptRounds: number;
-  /**
-   * Minimum password length
-   */
-  PasswordMinLength: number;
-  /**
-   * The regular expression for valid passwords.
-   */
-  PasswordRegex: RegExp;
-  /**
-   * The regular expression for valid JWT tokens.
-   */
-  JwtSecretRegex: RegExp;
-  /**
-   * The regular expression for valid mnemonic phrases.
-   * BIP39
-   */
-  MnemonicRegex: RegExp;
-  /**
-   * The regular expression for valid HMAC keys.
-   */
-  MnemonicHmacRegex: RegExp;
-  /**
-   * The regular expression for valid encryption keys.
-   */
-  MnemonicEncryptionKeyRegex: RegExp;
+export interface IConstants extends INodeEciesConstants, ISuiteCoreConstants {
   /**
    * JWT constants
    */
@@ -72,10 +40,6 @@ export interface IConstants extends IBaseConstants {
    * ECIES encryption constants
    */
   ECIES: IECIESConstants;
-  /**
-   * The length of a raw object ID (not the hex string representation)
-   */
-  OBJECT_ID_LENGTH: number;
   /**
    * PBKDF2 key derivation function constants
    */

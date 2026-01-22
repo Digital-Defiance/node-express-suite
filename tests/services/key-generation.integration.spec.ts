@@ -51,14 +51,9 @@ describe('Key Generation Integration Tests', () => {
       const publicKey = eciesService.getPublicKey(privateKey);
 
       const message = Buffer.from('test message');
-      const encrypted = eciesService.encryptSimpleOrSingle(
-        true, // Simple encryption
-        publicKey,
-        message,
-      );
+      const encrypted = eciesService.encryptBasic(publicKey, message);
 
-      const decrypted = eciesService.decryptSimpleOrSingleWithHeader(
-        true,
+      const decrypted = eciesService.decryptBasicWithHeader(
         privateKey,
         encrypted,
       );
@@ -114,7 +109,7 @@ describe('Key Generation Integration Tests', () => {
 
       // Should be able to use this key for encryption
       const testData = Buffer.from('test');
-      const encrypted = eciesService.encryptSimpleOrSingle(true, pub, testData);
+      const encrypted = eciesService.encryptBasic(pub, testData);
       expect(encrypted).toBeDefined();
     });
   });

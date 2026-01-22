@@ -17,7 +17,7 @@ describe('authenticateToken success paths', () => {
   let mockUserModel: any;
 
   beforeAll(() => {
-    registerNodeRuntimeConfiguration();
+    registerNodeRuntimeConfiguration('default-config', {});
   });
 
   beforeEach(() => {

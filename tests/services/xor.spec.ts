@@ -1,22 +1,23 @@
+import { randomBytes } from 'crypto';
 import { XorService } from '../../src/services/xor';
 
 describe('XorService', () => {
   describe('xor', () => {
     it('should encrypt and decrypt data', () => {
-      const data = Buffer.from('secret data');
-      const key = Buffer.from('key123');
+      const data = randomBytes(16);
+      const key = randomBytes(16);
       const encrypted = XorService.xor(data, key);
       const decrypted = XorService.xor(encrypted, key);
+      expect(encrypted).not.toEqual(data);
       expect(decrypted).toEqual(data);
     });
 
-    it('should handle key shorter than data', () => {
+    it('should throw when key shorter than data', () => {
       const data = Buffer.from('long secret data');
       const key = Buffer.from('key');
-      const encrypted = XorService.xor(data, key);
-      expect(encrypted).not.toEqual(data);
-      const decrypted = XorService.xor(encrypted, key);
-      expect(decrypted).toEqual(data);
+      expect(() => {
+        const encrypted = XorService.xor(data, key);
+      }).toThrow('Arrays must be of equal length');
     });
   });
 

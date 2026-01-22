@@ -17,7 +17,7 @@ describe('Environment', () => {
 
   beforeAll(() => {
     // Initialize Node.js runtime configuration
-    registerNodeRuntimeConfiguration();
+    registerNodeRuntimeConfiguration('default-config', {});
     // Initialize i18n system
     LanguageRegistry['languages'].clear();
     LanguageRegistry.registerLanguage({

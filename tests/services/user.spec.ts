@@ -60,7 +60,7 @@ describe('UserService', () => {
   let mockMnemonicModel: any;
 
   beforeAll(() => {
-    registerNodeRuntimeConfiguration();
+    registerNodeRuntimeConfiguration('default-config', {});
   });
 
   beforeEach(() => {

@@ -7,7 +7,7 @@ const { ObjectId } = Types;
 
 describe('RequestUserService', () => {
   beforeAll(() => {
-    registerNodeRuntimeConfiguration();
+    registerNodeRuntimeConfiguration('default-config', {});
   });
 
   describe('makeRequestUserDTO', () => {

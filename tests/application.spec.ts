@@ -26,7 +26,7 @@ describe('Application', () => {
   let mockSchemaMap: SchemaMap<any>;
 
   beforeAll(() => {
-    registerNodeRuntimeConfiguration();
+    registerNodeRuntimeConfiguration('default-config', {});
   });
 
   beforeEach(() => {

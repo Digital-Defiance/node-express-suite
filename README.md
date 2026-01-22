@@ -11,9 +11,21 @@ It is an 'out of the box' solution with a specific recipe (Mongo, Express, React
 
 Part of [Express Suite](https://github.com/Digital-Defiance/express-suite)
 
-## What's New in v3.0
+## What's New in v3.8.0
 
-✨ **Major Dependency Upgrade** - Upgraded to `@digitaldefiance/suite-core-lib` v3.0.0 and `@digitaldefiance/ecies-lib` v4.1.0. This brings significant improvements in type safety, performance, and security.
+✨ **Dependency Upgrades & API Alignment** - Upgraded to `@digitaldefiance/ecies-lib` v4.13.0, `@digitaldefiance/node-ecies-lib` v4.13.0, and `@digitaldefiance/suite-core-lib` v3.7.0.
+
+**Breaking Changes:**
+- **Encryption API renamed**: `encryptSimpleOrSingle()` → `encryptBasic()` / `encryptWithLength()`
+- **Decryption API renamed**: `decryptSimpleOrSingleWithHeader()` → `decryptBasicWithHeader()` / `decryptWithLengthAndHeader()`
+- **Configuration change**: `registerNodeRuntimeConfiguration()` now requires a key parameter
+- **XorService behavior change**: Now throws error when key is shorter than data (previously cycled the key)
+- **Removed constants**: `OBJECT_ID_LENGTH` removed from `IConstants` - use `idProvider.byteLength` instead
+
+**Interface Changes:**
+- `IConstants` now extends both `INodeEciesConstants` and `ISuiteCoreConstants`
+- Added `ECIES_CONFIG` to configuration
+- Encryption mode constants renamed: `SIMPLE` → `BASIC`, `SINGLE` → `WITH_LENGTH`
 
 ## Features
 
@@ -298,15 +310,13 @@ const eciesService = new ECIESService();
 const mnemonic = eciesService.generateNewMnemonic();
 
 // Encrypt data
-const encrypted = await eciesService.encryptSimpleOrSingle(
-  false, // single mode
+const encrypted = await eciesService.encryptWithLength(
   recipientPublicKey,
   Buffer.from('secret message')
 );
 
 // Decrypt data
-const decrypted = await eciesService.decryptSimpleOrSingleWithHeader(
-  false,
+const decrypted = await eciesService.decryptWithLengthAndHeader(
   privateKey,
   encrypted
 );
@@ -1314,6 +1324,28 @@ The following v1.x patterns still work in v2.0:
 ---
 
 ## ChangeLog
+
+### Version 3.8.0
+
+**Breaking Changes:**
+- Updated encryption API to match ecies-lib v4.13.0:
+  - `encryptSimpleOrSingle(false, ...)` → `encryptWithLength(...)`
+  - `decryptSimpleOrSingleWithHeader(false, ...)` → `decryptWithLengthAndHeader(...)`
+  - `encryptSimpleOrSingle(true, ...)` → `encryptBasic(...)`
+  - `decryptSimpleOrSingleWithHeader(true, ...)` → `decryptBasicWithHeader(...)`
+- `registerNodeRuntimeConfiguration()` now requires a key parameter
+- `XorService.xor()` now throws error when key is shorter than data
+- Removed `OBJECT_ID_LENGTH` from `IConstants` interface
+
+**Interface Updates:**
+- `IConstants` now extends `INodeEciesConstants` and `ISuiteCoreConstants`
+- Added `ECIES_CONFIG` to runtime configuration
+- Encryption mode constants renamed: `SIMPLE` → `BASIC`, `SINGLE` → `WITH_LENGTH`
+
+**Dependencies:**
+- `@digitaldefiance/ecies-lib`: 4.12.8 → 4.13.0
+- `@digitaldefiance/node-ecies-lib`: 4.12.8 → 4.13.0
+- `@digitaldefiance/suite-core-lib`: 3.6.50 → 3.7.0
 
 ### Version 3.6.7
 

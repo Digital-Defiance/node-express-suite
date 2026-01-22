@@ -8,7 +8,7 @@ const { ObjectId } = Types;
 
 describe('Enhanced ID Provider Integration', () => {
   beforeAll(() => {
-    registerNodeRuntimeConfiguration();
+    registerNodeRuntimeConfiguration('default-config', {});
   });
 
   describe('getEnhancedNodeIdProvider', () => {
