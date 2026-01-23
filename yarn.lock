@@ -443,9 +443,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@digitaldefiance/node-ecies-lib@npm:4.13.7":
-  version: 4.13.7
-  resolution: "@digitaldefiance/node-ecies-lib@npm:4.13.7"
+"@digitaldefiance/node-ecies-lib@npm:4.13.8":
+  version: 4.13.8
+  resolution: "@digitaldefiance/node-ecies-lib@npm:4.13.8"
   dependencies:
     "@digitaldefiance/ecies-lib": "npm:4.13.7"
     "@digitaldefiance/express-suite-test-utils": "npm:1.0.14"
@@ -461,7 +461,7 @@ __metadata:
     paillier-bigint: "npm:^3.4.1"
     ts-brand: "npm:^0.2.0"
     uuid: "npm:^13.0.0"
-  checksum: 10c0/8bd8c998f6de1023deb4a4944f6029767338bfabe22a465a999c7b2edb1ee79ed71d615bcc2a1dc5d5f55839f1a9551fdb0b6bf8e3324913f8ba8bd1cfadf850
+  checksum: 10c0/e83e420bb46c185c214df935e902d1294bfcb0f5d5cfc5887c3110431cbb9f91bb99489fbc6bc0477f167ec2403f8d47d3ef7479e75e93b653163fa69707c6a6
   languageName: node
   linkType: hard
 
@@ -473,7 +473,7 @@ __metadata:
     "@digitaldefiance/express-suite-test-utils": "npm:1.0.13"
     "@digitaldefiance/i18n-lib": "npm:3.8.16"
     "@digitaldefiance/mongoose-types": "npm:8.20.9"
-    "@digitaldefiance/node-ecies-lib": "npm:4.13.7"
+    "@digitaldefiance/node-ecies-lib": "npm:4.13.8"
     "@digitaldefiance/suite-core-lib": "npm:3.7.7"
     "@noble/curves": "npm:^2.0.1"
     "@noble/hashes": "npm:^2.0.1"
