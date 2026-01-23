@@ -1,6 +1,6 @@
 {
   "name": "@digitaldefiance/node-express-suite",
-  "version": "3.8.1",
+  "version": "3.8.6",
   "homepage": "https://github.com/Digital-Defiance/node-express-suite",
   "repository": {
     "type": "git",
@@ -21,6 +21,7 @@
   },
   "scripts": {
     "build": "npx nx build digitaldefiance-node-express-suite",
+    "build:prod": "NODE_ENV=production npx nx build digitaldefiance-node-express-suite --configuration=production",
     "build:stream": "npx nx build --outputStyle=stream digitaldefiance-node-express-suite",
     "build:logged": "npx nx build --outputStyle=stream --skip-nx-cache digitaldefiance-node-express-suite 2>&1 | ansifilter -o build.log",
     "test": "npx nx test digitaldefiance-node-express-suite",
@@ -37,11 +38,11 @@
     "publish:public": "npm publish --access public"
   },
   "dependencies": {
-    "@digitaldefiance/ecies-lib": "4.13.1",
+    "@digitaldefiance/ecies-lib": "4.13.6",
     "@digitaldefiance/i18n-lib": "3.8.16",
     "@digitaldefiance/mongoose-types": "8.20.9",
-    "@digitaldefiance/node-ecies-lib": "4.13.1",
-    "@digitaldefiance/suite-core-lib": "3.7.1",
+    "@digitaldefiance/node-ecies-lib": "4.13.6",
+    "@digitaldefiance/suite-core-lib": "3.7.6",
     "@noble/curves": "^2.0.1",
     "@noble/hashes": "^2.0.1",
     "@subspace/reed-solomon-erasure.wasm": "^0.2.5",
