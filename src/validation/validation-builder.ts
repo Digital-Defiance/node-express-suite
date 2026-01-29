@@ -5,10 +5,8 @@
  */
 
 import { CoreLanguageCode } from '@digitaldefiance/i18n-lib';
-import {
-  getSuiteCoreTranslation,
-  SuiteCoreStringKey,
-} from '@digitaldefiance/suite-core-lib';
+import { getSuiteCoreTranslation } from '@digitaldefiance/suite-core-lib';
+import type { SuiteCoreStringKeyValue } from '@digitaldefiance/suite-core-lib';
 import { body, ValidationChain } from 'express-validator';
 import { IConstants } from '../interfaces';
 
@@ -93,8 +91,11 @@ export class FieldValidator<
     return this;
   }
 
-  /** Sets error message. @param {SuiteCoreStringKey} key - Translation key @param {Record<string, string>} [params] - Message parameters @returns {this} This validator for chaining */
-  withMessage(key: SuiteCoreStringKey, params?: Record<string, string>): this {
+  /** Sets error message. @param {SuiteCoreStringKeyValue} key - Translation key @param {Record<string, string>} [params] - Message parameters @returns {this} This validator for chaining */
+  withMessage(
+    key: SuiteCoreStringKeyValue,
+    params?: Record<string, string>,
+  ): this {
     const message = getSuiteCoreTranslation(
       key,
       params,

@@ -13,6 +13,7 @@ import {
   SuiteCoreStringKey,
   TranslatableSuiteError,
 } from '@digitaldefiance/suite-core-lib';
+import type { SuiteCoreStringKeyValue } from '@digitaldefiance/suite-core-lib';
 import ejs from 'ejs';
 import {
   Application,
@@ -303,14 +304,14 @@ export class AppRouter<
       .filter((segment) => segment.length > 0)
       .some((segment) => segment.toLowerCase() === 'dist');
     if (!reactDistHasDistSegment) {
-      throw new TranslatableGenericError<SuiteCoreStringKey>(
+      throw new TranslatableGenericError<SuiteCoreStringKeyValue>(
         CoreI18nComponentId,
         SuiteCoreStringKey.Error_AppDoesNotAppearToBeRunningWithinDistTemplate,
         { dir: this.apiRouter.application.environment.reactDistDir },
       );
     }
     if (!existsSync(this.indexPath)) {
-      throw new TranslatableGenericError<SuiteCoreStringKey>(
+      throw new TranslatableGenericError<SuiteCoreStringKeyValue>(
         CoreI18nComponentId,
         SuiteCoreStringKey.Error_IndexFileNotFoundTemplate,
         { path: this.indexPath },

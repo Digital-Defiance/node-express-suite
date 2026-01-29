@@ -9,13 +9,14 @@ import {
   SuiteCoreComponentId,
   SuiteCoreStringKey,
 } from '@digitaldefiance/suite-core-lib';
+import type { SuiteCoreStringKeyValue } from '@digitaldefiance/suite-core-lib';
 import { Result, ValidationError } from 'express-validator';
 
 /**
  * Error thrown when express-validator validation fails.
  * Contains the validation errors and sets HTTP status code to 422 (Unprocessable Entity).
  */
-export class ExpressValidationError extends TranslatableGenericError<SuiteCoreStringKey> {
+export class ExpressValidationError extends TranslatableGenericError<SuiteCoreStringKeyValue> {
   /** Validation errors from express-validator */
   public readonly errors: Result<ValidationError> | ValidationError[];
   /** HTTP status code (422 for validation errors) */

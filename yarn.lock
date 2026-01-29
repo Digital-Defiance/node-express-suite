@@ -374,11 +374,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@digitaldefiance/ecies-lib@npm:4.13.8":
-  version: 4.13.8
-  resolution: "@digitaldefiance/ecies-lib@npm:4.13.8"
+"@digitaldefiance/branded-enum@npm:0.0.6":
+  version: 0.0.6
+  resolution: "@digitaldefiance/branded-enum@npm:0.0.6"
+  checksum: 10c0/1b70a5a3089c1a4673df9ea4f51cb9d3818291c3170e56fb211372dd4ac7e95b941b0bd95f4982d1f927ae13fca7ad156d360eca1053adbe066af1b282877230
+  languageName: node
+  linkType: hard
+
+"@digitaldefiance/ecies-lib@npm:4.14.3":
+  version: 4.14.3
+  resolution: "@digitaldefiance/ecies-lib@npm:4.14.3"
   dependencies:
-    "@digitaldefiance/i18n-lib": "npm:3.8.16"
+    "@digitaldefiance/i18n-lib": "npm:4.0.3"
     "@ethereumjs/wallet": "npm:^10.0.0"
     "@noble/curves": "npm:1.9.0"
     "@noble/hashes": "npm:1.8.0"
@@ -388,7 +395,7 @@ __metadata:
     js-sha3: "npm:^0.9.3"
     paillier-bigint: "npm:^3.4.1"
     ts-brand: "npm:^0.2.0"
-  checksum: 10c0/57cdd711a5b2e7de997ad6b1aa7b8f2dc132a46c603639719cb1bbbbb602e3f8771958331e26cae2ec7f9d2e0969b1e8126ffc6fbb82a9aaf8698e79cf1587a7
+  checksum: 10c0/fe88ae12b72cf9e6dae4fe2fbbb786dc4a990ab36c86e55cf676d09f4fa333127ed6123faebbc72831155e3605119450dc9c5d2cb88498854c47fca5c5af0def
   languageName: node
   linkType: hard
 
@@ -420,15 +427,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@digitaldefiance/i18n-lib@npm:3.8.16":
-  version: 3.8.16
-  resolution: "@digitaldefiance/i18n-lib@npm:3.8.16"
+"@digitaldefiance/i18n-lib@npm:4.0.3":
+  version: 4.0.3
+  resolution: "@digitaldefiance/i18n-lib@npm:4.0.3"
   dependencies:
+    "@digitaldefiance/branded-enum": "npm:0.0.6"
     currency-codes: "npm:^2.2.0"
     lru-cache: "npm:^5.1.1"
     moment: "npm:^2.30.1"
     moment-timezone: "npm:^0.6.0"
-  checksum: 10c0/21288d1fa56bb75cf71b234705c9f3ba0fba1e5a5a8511b1e669dac4960ff92b95bbf3a57e57aa3b6c2061cc5629207843e058efb1474a99ed8b222c6df6202a
+  checksum: 10c0/2ea410e619accbcb46c66a16b05c7268c47298844f05a324b307beec3fdeb4d518903b238419767c9f918b5ab2e03c6a38ddd38a758d68c26678e7c648c62f49
   languageName: node
   linkType: hard
 
@@ -443,13 +451,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@digitaldefiance/node-ecies-lib@npm:4.13.9":
-  version: 4.13.9
-  resolution: "@digitaldefiance/node-ecies-lib@npm:4.13.9"
+"@digitaldefiance/node-ecies-lib@npm:4.14.2":
+  version: 4.14.2
+  resolution: "@digitaldefiance/node-ecies-lib@npm:4.14.2"
   dependencies:
-    "@digitaldefiance/ecies-lib": "npm:4.13.8"
+    "@digitaldefiance/ecies-lib": "npm:4.14.3"
     "@digitaldefiance/express-suite-test-utils": "npm:1.0.14"
-    "@digitaldefiance/i18n-lib": "npm:3.8.16"
+    "@digitaldefiance/i18n-lib": "npm:4.0.3"
     "@ethereumjs/wallet": "npm:^10.0.0"
     "@noble/curves": "npm:1.9.0"
     "@noble/hashes": "npm:1.8.0"
@@ -461,7 +469,7 @@ __metadata:
     paillier-bigint: "npm:^3.4.1"
     ts-brand: "npm:^0.2.0"
     uuid: "npm:^13.0.0"
-  checksum: 10c0/e3bed317a5f93433b0c672ab45ce245271c89d8300bac351bab400197963f15622b474882410c7924a51eafa3de1a809298ab4d313d9a6ed3c2dfd373ccca83d
+  checksum: 10c0/2e8b4e82094b9385c4e776cb88eb34aee5bf49df87df1b12d21dedb6c2847eaf71c9d58465f84157192007346aa657247f972b5b46a987d7a0855986bb6fe993
   languageName: node
   linkType: hard
 
@@ -469,12 +477,12 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@digitaldefiance/node-express-suite@workspace:."
   dependencies:
-    "@digitaldefiance/ecies-lib": "npm:4.13.8"
+    "@digitaldefiance/ecies-lib": "npm:4.14.3"
     "@digitaldefiance/express-suite-test-utils": "npm:1.0.13"
-    "@digitaldefiance/i18n-lib": "npm:3.8.16"
+    "@digitaldefiance/i18n-lib": "npm:4.0.3"
     "@digitaldefiance/mongoose-types": "npm:8.20.9"
-    "@digitaldefiance/node-ecies-lib": "npm:4.13.9"
-    "@digitaldefiance/suite-core-lib": "npm:3.7.8"
+    "@digitaldefiance/node-ecies-lib": "npm:4.14.2"
+    "@digitaldefiance/suite-core-lib": "npm:3.8.1"
     "@noble/curves": "npm:^2.0.1"
     "@noble/hashes": "npm:^2.0.1"
     "@subspace/reed-solomon-erasure.wasm": "npm:^0.2.5"
@@ -499,13 +507,13 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@digitaldefiance/suite-core-lib@npm:3.7.8":
-  version: 3.7.8
-  resolution: "@digitaldefiance/suite-core-lib@npm:3.7.8"
+"@digitaldefiance/suite-core-lib@npm:3.8.1":
+  version: 3.8.1
+  resolution: "@digitaldefiance/suite-core-lib@npm:3.8.1"
   dependencies:
-    "@digitaldefiance/ecies-lib": "npm:4.13.8"
-    "@digitaldefiance/i18n-lib": "npm:3.8.16"
-  checksum: 10c0/3e44c68ffd71f19f52ce18d922b93a623c4c38b463a0adbf2a234ec270d54ce06d7f0b63d24947a0ba542e79fd79594c2e20b35ddb63c3576ba28af8534090b8
+    "@digitaldefiance/ecies-lib": "npm:4.14.3"
+    "@digitaldefiance/i18n-lib": "npm:4.0.3"
+  checksum: 10c0/6d12c71426869c5df8999eefbfa507a4ae6210f4e5c9b6cbccd8e836d9bf2e17418ca8e481b4705761e8ae6cec59b4c6c24b000443f09faf9796664c8ad5ae36
   languageName: node
   linkType: hard
 

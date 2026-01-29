@@ -20,6 +20,7 @@ import {
   TranslatableSuiteError,
   UserNotFoundError,
 } from '@digitaldefiance/suite-core-lib';
+import type { SuiteCoreStringKeyValue } from '@digitaldefiance/suite-core-lib';
 import {
   NextFunction,
   Request,
@@ -415,13 +416,13 @@ export abstract class BaseController<
 
   public get user(): IRequestUserDTO {
     if (!this.activeRequest) {
-      throw new TranslatableGenericError<SuiteCoreStringKey>(
+      throw new TranslatableGenericError<SuiteCoreStringKeyValue>(
         SuiteCoreComponentId,
         SuiteCoreStringKey.Common_NoActiveRequest,
       );
     }
     if (!this.activeRequest.user) {
-      throw new TranslatableGenericError<SuiteCoreStringKey>(
+      throw new TranslatableGenericError<SuiteCoreStringKeyValue>(
         SuiteCoreComponentId,
         SuiteCoreStringKey.Common_NoUserOnRequest,
       );
@@ -431,7 +432,7 @@ export abstract class BaseController<
 
   public get validatedBody(): Record<string, unknown> {
     if (!this.activeRequest) {
-      throw new TranslatableGenericError<SuiteCoreStringKey>(
+      throw new TranslatableGenericError<SuiteCoreStringKeyValue>(
         SuiteCoreComponentId,
         SuiteCoreStringKey.Common_NoActiveRequest,
       );
@@ -444,7 +445,7 @@ export abstract class BaseController<
 
   public get req(): Request {
     if (!this.activeRequest) {
-      throw new TranslatableGenericError<SuiteCoreStringKey>(
+      throw new TranslatableGenericError<SuiteCoreStringKeyValue>(
         SuiteCoreComponentId,
         SuiteCoreStringKey.Common_NoActiveRequest,
       );
@@ -454,7 +455,7 @@ export abstract class BaseController<
 
   public get res(): Response {
     if (!this.activeResponse) {
-      throw new TranslatableGenericError<SuiteCoreStringKey>(
+      throw new TranslatableGenericError<SuiteCoreStringKeyValue>(
         SuiteCoreComponentId,
         SuiteCoreStringKey.Common_NoActiveResponse,
       );

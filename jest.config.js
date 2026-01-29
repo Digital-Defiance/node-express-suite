@@ -30,7 +30,7 @@ module.exports = {
     ],
   },
   transformIgnorePatterns: [
-    'node_modules/(?!([^/]*/)*((@faker-js|@scure|@noble|@ethereumjs)))',
+    'node_modules/(?!([^/]*/)*((@faker-js|@scure|@noble|@ethereumjs|uuid)))',
     'node_modules/@digitaldefiance/mongoose-types',
   ],
 

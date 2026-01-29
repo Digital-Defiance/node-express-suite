@@ -5,10 +5,8 @@
  */
 
 import { CoreLanguageCode } from '@digitaldefiance/i18n-lib';
-import {
-  getSuiteCoreTranslation,
-  SuiteCoreStringKey,
-} from '@digitaldefiance/suite-core-lib';
+import { getSuiteCoreTranslation } from '@digitaldefiance/suite-core-lib';
+import type { SuiteCoreStringKeyValue } from '@digitaldefiance/suite-core-lib';
 import { IStatusCodeResponse } from '../interfaces';
 import { ApiResponse } from '../types';
 
@@ -121,7 +119,7 @@ export class ResponseBuilder<T extends ApiResponse = ApiResponse> {
    * @returns {this} This builder instance for chaining
    */
   message(
-    key: SuiteCoreStringKey,
+    key: SuiteCoreStringKeyValue,
     params?: Record<string, string>,
     language?: string,
   ): this {

@@ -8,6 +8,7 @@ import {
   SuiteCoreStringKey,
   TranslatableSuiteHandleableError,
 } from '@digitaldefiance/suite-core-lib';
+import type { SuiteCoreStringKeyValue } from '@digitaldefiance/suite-core-lib';
 
 /**
  * Error thrown when validated data is missing from the request.
@@ -29,7 +30,7 @@ export class MissingValidatedDataError<
    * @param data Field name(s) that are missing
    */
   constructor(data?: string | string[]) {
-    let message: SuiteCoreStringKey;
+    let message: SuiteCoreStringKeyValue;
     let fields: string[] | undefined;
     let field: string;
     if (data && Array.isArray(data)) {

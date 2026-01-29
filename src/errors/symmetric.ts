@@ -9,6 +9,7 @@ import {
   SuiteCoreComponentId,
   SuiteCoreStringKey,
 } from '@digitaldefiance/suite-core-lib';
+import type { SuiteCoreStringKeyValue } from '@digitaldefiance/suite-core-lib';
 import { LocalhostConstants } from '../constants';
 import { SymmetricErrorType } from '../enumerations/symmetric-error-type';
 import { IConstants } from '../interfaces/constants';
@@ -20,7 +21,7 @@ import { SymmetricService } from '../services/symmetric';
  */
 export class SymmetricError extends PluginTypedError<
   typeof SymmetricErrorType,
-  SuiteCoreStringKey
+  SuiteCoreStringKeyValue
 > {
   /**
    * Creates a new symmetric encryption error.

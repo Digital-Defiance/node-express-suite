@@ -1,3 +1,4 @@
+import { resetRegistry } from '@digitaldefiance/branded-enum';
 import { SecureBuffer } from '@digitaldefiance/ecies-lib';
 import express from 'express';
 import request from 'supertest';
@@ -13,6 +14,9 @@ import { createApplicationMock } from '../__tests__/helpers/application.mock';
 jest.mock('../../src/services/system-user');
 
 describe('ApiRouter', () => {
+  beforeEach(() => {
+    resetRegistry();
+  });
   it('mounts user controller under /user and responds for known routes', async () => {
     // Mock SystemUserService.getSystemUser to return a minimal mock
     (SystemUserService.getSystemUser as jest.Mock).mockReturnValue({

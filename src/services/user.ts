@@ -55,6 +55,9 @@ import {
   SuiteCoreStringKey,
   TranslatableSuiteError,
   TranslatableSuiteHandleableError,
+} from '@digitaldefiance/suite-core-lib';
+import type { SuiteCoreStringKeyValue } from '@digitaldefiance/suite-core-lib';
+import {
   UsernameInUseError,
   UsernameOrEmailRequiredError,
   UserNotFoundError,
@@ -483,8 +486,8 @@ export class UserService<
       throw new EmailTokenSentTooRecentlyError(emailToken.lastSent);
     }
 
-    let subjectString: SuiteCoreStringKey;
-    let bodyString: SuiteCoreStringKey;
+    let subjectString: SuiteCoreStringKeyValue;
+    let bodyString: SuiteCoreStringKeyValue;
     let url: string;
     switch (emailToken.type) {
       case EmailTokenType.AccountVerification:
