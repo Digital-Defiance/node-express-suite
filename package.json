@@ -1,6 +1,6 @@
 {
   "name": "@digitaldefiance/node-express-suite",
-  "version": "3.10.1",
+  "version": "3.10.2",
   "homepage": "https://github.com/Digital-Defiance/node-express-suite",
   "repository": {
     "type": "git",
@@ -38,11 +38,11 @@
     "publish:public": "npm publish --access public"
   },
   "dependencies": {
-    "@digitaldefiance/ecies-lib": "4.15.1",
-    "@digitaldefiance/i18n-lib": "4.0.3",
+    "@digitaldefiance/ecies-lib": "4.15.2",
+    "@digitaldefiance/i18n-lib": "4.0.4",
     "@digitaldefiance/mongoose-types": "8.20.9",
-    "@digitaldefiance/node-ecies-lib": "4.15.1",
-    "@digitaldefiance/suite-core-lib": "3.9.1",
+    "@digitaldefiance/node-ecies-lib": "4.15.2",
+    "@digitaldefiance/suite-core-lib": "3.9.2",
     "@noble/curves": "^1.4.2",
     "@noble/hashes": "^1.4.0",
     "@subspace/reed-solomon-erasure.wasm": "^0.2.5",
