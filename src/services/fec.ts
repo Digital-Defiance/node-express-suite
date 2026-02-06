@@ -5,7 +5,7 @@
  */
 
 import { FecError, FecErrorType } from '@digitaldefiance/suite-core-lib';
-import { ReedSolomonErasure } from '@subspace/reed-solomon-erasure.wasm';
+import { ReedSolomonErasure } from '@digitaldefiance/reed-solomon-erasure.wasm';
 import { FEC } from '../constants';
 import { IFECConsts } from '../interfaces';
 
