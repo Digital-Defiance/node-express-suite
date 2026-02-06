@@ -9,7 +9,6 @@ import mongoose from '@digitaldefiance/mongoose-types';
 import {
   Constants,
   getSuiteCoreI18nEngine,
-  SuiteCoreComponentId,
   SuiteCoreStringKey,
   TranslatableSuiteError,
 } from '@digitaldefiance/suite-core-lib';
@@ -181,16 +180,14 @@ export class Application<
               );
             } catch {
               res.status(500).json({
-                message: engine.translate(
-                  SuiteCoreComponentId,
+                message: engine.translateStringKey(
                   SuiteCoreStringKey.Error_RecursiveErrorHandlingDetected,
                 ),
                 error: {
                   message:
                     err instanceof Error
                       ? err.message
-                      : engine.translate(
-                          SuiteCoreComponentId,
+                      : engine.translateStringKey(
                           SuiteCoreStringKey.Common_UnexpectedError,
                         ),
                 },
@@ -212,8 +209,7 @@ export class Application<
               debugLog(
                 this.environment.debug,
                 'log',
-                `[ ${engine.translate(
-                  SuiteCoreComponentId,
+                `[ ${engine.translateStringKey(
                   SuiteCoreStringKey.Common_Ready,
                 )} ] http://${this.environment.host}:${this.environment.port}`,
               );
@@ -252,8 +248,7 @@ export class Application<
                 this.environment.host,
                 () => {
                   console.log(
-                    `[ ${engine.translate(
-                      SuiteCoreComponentId,
+                    `[ ${engine.translateStringKey(
                       SuiteCoreStringKey.Common_Ready,
                     )} ] https://${this.environment.host}:${
                       this.environment.httpsDevPort
@@ -273,8 +268,7 @@ export class Application<
       this._ready = true;
     } catch (err) {
       console.error(
-        engine.translate(
-          SuiteCoreComponentId,
+        engine.translateStringKey(
           SuiteCoreStringKey.Error_FailedToStartApplication,
         ),
         err,
@@ -292,11 +286,9 @@ export class Application<
       debugLog(
         this.environment.debug,
         'log',
-        `[ ${engine.translate(
-          SuiteCoreComponentId,
+        `[ ${engine.translateStringKey(
           SuiteCoreStringKey.Common_Stopping,
-        )} ] ${engine.translate(
-          SuiteCoreComponentId,
+        )} ] ${engine.translateStringKey(
           SuiteCoreStringKey.Common_ApplicationAndDatabase,
         )}`,
       );
@@ -318,11 +310,9 @@ export class Application<
     debugLog(
       this.environment.debug,
       'log',
-      `[ ${engine.translate(
-        SuiteCoreComponentId,
+      `[ ${engine.translateStringKey(
         SuiteCoreStringKey.Common_Stopped,
-      )} ] ${engine.translate(
-        SuiteCoreComponentId,
+      )} ] ${engine.translateStringKey(
         SuiteCoreStringKey.Common_ApplicationAndDatabase,
       )}`,
     );

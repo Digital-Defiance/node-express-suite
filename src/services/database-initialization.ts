@@ -28,7 +28,6 @@ import {
   AccountStatus,
   getSuiteCoreI18nEngine,
   IFailableResult,
-  SuiteCoreComponentId,
   SuiteCoreStringKey,
   TranslatableSuiteError,
   TranslatableSuiteHandleableError,
@@ -503,13 +502,11 @@ export abstract class DatabaseInitializationService {
               systemBackupCodes: [], // Not available in fallback
               systemMember: {} as BackendMember<TID>, // Not available in fallback
             },
-            message: engine.translate(
-              SuiteCoreComponentId,
+            message: engine.translateStringKey(
               SuiteCoreStringKey.Admin_DatabaseAlreadyInitialized,
             ),
             error: new Error(
-              engine.translate(
-                SuiteCoreComponentId,
+              engine.translateStringKey(
                 SuiteCoreStringKey.Admin_DatabaseAlreadyInitialized,
               ),
             ),
@@ -521,13 +518,11 @@ export abstract class DatabaseInitializationService {
       return {
         alreadyInitialized: true,
         success: false,
-        message: engine.translate(
-          SuiteCoreComponentId,
+        message: engine.translateStringKey(
           SuiteCoreStringKey.Admin_DatabaseAlreadyInitialized,
         ),
         error: new Error(
-          engine.translate(
-            SuiteCoreComponentId,
+          engine.translateStringKey(
             SuiteCoreStringKey.Admin_DatabaseAlreadyInitialized,
           ),
         ),
@@ -537,8 +532,7 @@ export abstract class DatabaseInitializationService {
     debugLog(
       application.environment.detailedDebug,
       'log',
-      engine.translate(
-        SuiteCoreComponentId,
+      engine.translateStringKey(
         SuiteCoreStringKey.Admin_SettingUpUsersAndRoles,
       ),
     );
@@ -642,8 +636,7 @@ export abstract class DatabaseInitializationService {
               throw new TranslatableSuiteError(
                 SuiteCoreStringKey.Error_FailedToCreateRoleTemplate,
                 {
-                  NAME: engine.translate(
-                    SuiteCoreComponentId,
+                  NAME: engine.translateStringKey(
                     SuiteCoreStringKey.Common_Member,
                   ),
                 },
@@ -706,12 +699,10 @@ export abstract class DatabaseInitializationService {
           );
           if (!systemMnemonicDoc) {
             throw new Error(
-              engine.translate(
-                SuiteCoreComponentId,
+              engine.translateStringKey(
                 SuiteCoreStringKey.Error_FailedToStoreUserMnemonicTemplate,
                 {
-                  NAME: engine.translate(
-                    SuiteCoreComponentId,
+                  NAME: engine.translateStringKey(
                     SuiteCoreStringKey.Common_System,
                   ),
                 },
@@ -763,12 +754,10 @@ export abstract class DatabaseInitializationService {
           );
           if (systemDocs.length !== 1) {
             throw new Error(
-              engine.translate(
-                SuiteCoreComponentId,
+              engine.translateStringKey(
                 SuiteCoreStringKey.Error_FailedToCreateUserTemplate,
                 {
-                  NAME: engine.translate(
-                    SuiteCoreComponentId,
+                  NAME: engine.translateStringKey(
                     SuiteCoreStringKey.Common_System,
                   ),
                 },
@@ -789,8 +778,7 @@ export abstract class DatabaseInitializationService {
 
           if (!systemUser.mnemonic.value) {
             throw new Error(
-              engine.translate(
-                SuiteCoreComponentId,
+              engine.translateStringKey(
                 SuiteCoreStringKey.Error_MnemonicIsNullTemplate,
                 {
                   NAME: SuiteCoreStringKey.Common_System,
@@ -818,12 +806,10 @@ export abstract class DatabaseInitializationService {
           );
           if (!adminMnemonicDoc) {
             throw new Error(
-              engine.translate(
-                SuiteCoreComponentId,
+              engine.translateStringKey(
                 SuiteCoreStringKey.Error_FailedToStoreUserMnemonicTemplate,
                 {
-                  NAME: engine.translate(
-                    SuiteCoreComponentId,
+                  NAME: engine.translateStringKey(
                     SuiteCoreStringKey.Common_Admin,
                   ),
                 },
@@ -872,12 +858,10 @@ export abstract class DatabaseInitializationService {
           );
           if (adminDocs.length !== 1) {
             throw new Error(
-              engine.translate(
-                SuiteCoreComponentId,
+              engine.translateStringKey(
                 SuiteCoreStringKey.Error_FailedToCreateUserTemplate,
                 {
-                  NAME: engine.translate(
-                    SuiteCoreComponentId,
+                  NAME: engine.translateStringKey(
                     SuiteCoreStringKey.Common_Admin,
                   ),
                 },
@@ -898,12 +882,10 @@ export abstract class DatabaseInitializationService {
 
           if (!adminUser.mnemonic.value) {
             throw new Error(
-              engine.translate(
-                SuiteCoreComponentId,
+              engine.translateStringKey(
                 SuiteCoreStringKey.Error_MnemonicIsNullTemplate,
                 {
-                  NAME: engine.translate(
-                    SuiteCoreComponentId,
+                  NAME: engine.translateStringKey(
                     SuiteCoreStringKey.Common_Admin,
                   ),
                 },
@@ -930,12 +912,10 @@ export abstract class DatabaseInitializationService {
           );
           if (!memberMnemonicDoc) {
             throw new Error(
-              engine.translate(
-                SuiteCoreComponentId,
+              engine.translateStringKey(
                 SuiteCoreStringKey.Error_FailedToStoreUserMnemonicTemplate,
                 {
-                  NAME: engine.translate(
-                    SuiteCoreComponentId,
+                  NAME: engine.translateStringKey(
                     SuiteCoreStringKey.Common_Member,
                   ),
                 },
@@ -986,12 +966,10 @@ export abstract class DatabaseInitializationService {
           );
           if (memberDocs.length !== 1) {
             throw new Error(
-              engine.translate(
-                SuiteCoreComponentId,
+              engine.translateStringKey(
                 SuiteCoreStringKey.Error_FailedToCreateUserTemplate,
                 {
-                  NAME: engine.translate(
-                    SuiteCoreComponentId,
+                  NAME: engine.translateStringKey(
                     SuiteCoreStringKey.Common_Member,
                   ),
                 },
@@ -1012,12 +990,10 @@ export abstract class DatabaseInitializationService {
 
           if (!memberUser.mnemonic.value) {
             throw new Error(
-              engine.translate(
-                SuiteCoreComponentId,
+              engine.translateStringKey(
                 SuiteCoreStringKey.Error_MnemonicIsNullTemplate,
                 {
-                  NAME: engine.translate(
-                    SuiteCoreComponentId,
+                  NAME: engine.translateStringKey(
                     SuiteCoreStringKey.Common_Member,
                   ),
                 },
@@ -1108,16 +1084,14 @@ export abstract class DatabaseInitializationService {
       return {
         alreadyInitialized: false,
         success: false,
-        message: engine.translate(
-          SuiteCoreComponentId,
+        message: engine.translateStringKey(
           SuiteCoreStringKey.Admin_Error_FailedToInitializeUserDatabase,
         ),
         error:
           error instanceof Error
             ? error
             : new Error(
-                engine.translate(
-                  SuiteCoreComponentId,
+                engine.translateStringKey(
                   SuiteCoreStringKey.Admin_Error_FailedToInitializeUserDatabase,
                 ),
               ),

@@ -10,7 +10,6 @@ import {
   Constants,
   getSuiteCoreI18nEngine,
   getSuiteCoreTranslation,
-  SuiteCoreComponentId,
   SuiteCoreStringKey,
   TranslatableSuiteError,
 } from '@digitaldefiance/suite-core-lib';
@@ -312,8 +311,7 @@ export class BaseApplication<
 
     if (!this._db.connection.db) {
       console.error(
-        engine.translate(
-          SuiteCoreComponentId,
+        engine.translateStringKey(
           SuiteCoreStringKey.Admin_Error_FailedToSetTransactionTimeout,
         ),
       );
@@ -346,8 +344,7 @@ export class BaseApplication<
       debugLog(
         debug,
         'log',
-        engine.translate(
-          SuiteCoreComponentId,
+        engine.translateStringKey(
           SuiteCoreStringKey.Admin_SetTransactionTimeoutSuccessfully,
         ),
       );
@@ -366,13 +363,9 @@ export class BaseApplication<
     debugLog(
       debug,
       'log',
-      `[ ${engine.translate(
-        SuiteCoreComponentId,
+      `[ ${engine.translateStringKey(
         SuiteCoreStringKey.Common_Disconnected,
-      )} ] ${engine.translate(
-        SuiteCoreComponentId,
-        SuiteCoreStringKey.Common_MongoDB,
-      )}`,
+      )} ] ${engine.translateStringKey(SuiteCoreStringKey.Common_MongoDB)}`,
     );
   }
 
@@ -405,22 +398,14 @@ export class BaseApplication<
     debugLog(
       this._environment.debug,
       'log',
-      `${engine.translate(
-        SuiteCoreComponentId,
+      `${engine.translateStringKey(
         SuiteCoreStringKey.Admin_StartingDatabaseInitialization,
-      )}: ${engine.translate(
-        SuiteCoreComponentId,
+      )}: ${engine.translateStringKey(
         SuiteCoreStringKey.Admin_TransactionsEnabledDisabledTemplate,
         {
           STATE: this._environment.mongo.useTransactions
-            ? engine.translate(
-                SuiteCoreComponentId,
-                SuiteCoreStringKey.Common_Enabled,
-              )
-            : engine.translate(
-                SuiteCoreComponentId,
-                SuiteCoreStringKey.Common_Disabled,
-              ),
+            ? engine.translateStringKey(SuiteCoreStringKey.Common_Enabled)
+            : engine.translateStringKey(SuiteCoreStringKey.Common_Disabled),
         },
       )}`,
     );
@@ -432,8 +417,7 @@ export class BaseApplication<
         this._databaseInitFunction(this),
         new Promise<never>((_, reject) => {
           initTimeout = setTimeout(() => {
-            const logMsg = engine.translate(
-              SuiteCoreComponentId,
+            const logMsg = engine.translateStringKey(
               SuiteCoreStringKey.Admin_Error_FailedToInitializeUserDatabaseTimeoutTemplate,
               { timeMs: initTimeoutMs.toString() },
             );
@@ -451,8 +435,7 @@ export class BaseApplication<
         debugLog(
           true,
           'log',
-          engine.translate(
-            SuiteCoreComponentId,
+          engine.translateStringKey(
             SuiteCoreStringKey.Admin_DatabaseInitializedWithOptionsHashTemplate,
             { hash: initHash },
           ),

@@ -1,4 +1,3 @@
-import { I18nEngine } from '@digitaldefiance/i18n-lib';
 import { ECIESService } from '@digitaldefiance/node-ecies-lib';
 import {
   AccountLockedError,
@@ -8,6 +7,7 @@ import {
   InvalidUsernameError,
   UsernameOrEmailRequiredError,
 } from '@digitaldefiance/suite-core-lib';
+import { setupI18nForTests } from '@digitaldefiance/express-suite-test-utils';
 import { ModelRegistry } from '../../src/model-registry';
 import { BackupCodeService } from '../../src/services/backup-code';
 import { DummyEmailService } from '../../src/services/dummy-email-service';
@@ -16,7 +16,12 @@ import { RoleService } from '../../src/services/role';
 import { UserService } from '../../src/services/user';
 import { createApplicationMock } from '../__tests__/helpers/application.mock';
 
+let cleanupI18n: () => void;
+
 beforeAll(() => {
+  // Initialize all available i18n engines for error messages
+  cleanupI18n = setupI18nForTests();
+
   const mockModel = {
     findOne: jest.fn().mockReturnValue({
       session: jest.fn().mockResolvedValue(null),
@@ -29,11 +34,10 @@ beforeAll(() => {
     model: mockModel,
     schema: {} as any,
   } as any);
+});
 
-  // Mock I18nEngine for InvalidEmailError
-  jest.spyOn(I18nEngine, 'getInstance').mockReturnValue({
-    translate: jest.fn().mockReturnValue('Invalid email'),
-  } as any);
+afterAll(() => {
+  cleanupI18n();
 });
 
 function makeService(userDoc: unknown | null) {

@@ -8,7 +8,6 @@ import { CoreLanguageCode, HandleableError } from '@digitaldefiance/i18n-lib';
 import { Error } from '@digitaldefiance/mongoose-types';
 import {
   getSuiteCoreI18nEngine,
-  SuiteCoreComponentId,
   SuiteCoreStringKey,
 } from '@digitaldefiance/suite-core-lib';
 import { IApplication } from '../interfaces';
@@ -41,8 +40,7 @@ export class MongooseValidationError extends HandleableError {
     );
     super(
       new Error(
-        `${coreEngine.translate(
-          SuiteCoreComponentId,
+        `${coreEngine.translateStringKey(
           SuiteCoreStringKey.Validation_MongooseValidationError,
           undefined,
           language,

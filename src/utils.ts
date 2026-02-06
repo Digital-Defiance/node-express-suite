@@ -314,8 +314,7 @@ export async function withTransaction<T, TID extends PlatformID = Buffer>(
     debugLog(
       debugLogEnabled === true,
       'warn',
-      engine.translate(
-        SuiteCoreComponentId,
+      engine.translateStringKey(
         SuiteCoreStringKey.Admin_NoMongoDbClientFoundFallingBack,
       ),
     );
@@ -337,8 +336,7 @@ export async function withTransaction<T, TID extends PlatformID = Buffer>(
         setTimeout(() => {
           reject(
             new Error(
-              engine.translate(
-                SuiteCoreComponentId,
+              engine.translateStringKey(
                 SuiteCoreStringKey.Admin_TransactionTimeoutTemplate,
                 { timeMs: timeoutMs },
               ),
@@ -389,8 +387,7 @@ export async function withTransaction<T, TID extends PlatformID = Buffer>(
         debugLog(
           debugLogEnabled === true,
           'warn',
-          engine.translate(
-            SuiteCoreComponentId,
+          engine.translateStringKey(
             SuiteCoreStringKey.Admin_TransactionFailedTransientTemplate,
             {
               delayMs: delay,
@@ -476,10 +473,7 @@ export function sendApiExpressValidationErrorResponse(
   sendApiMessageResponse<IApiExpressValidationErrorResponse>(
     status,
     {
-      message: engine.translate(
-        SuiteCoreComponentId,
-        SuiteCoreStringKey.ValidationError,
-      ),
+      message: engine.translateStringKey(SuiteCoreStringKey.ValidationError),
       errors,
     },
     res,
@@ -546,8 +540,7 @@ function getSafeErrorMessage(
     application ? { constants: application.constants } : undefined,
   );
   try {
-    const translated = engine.translate(
-      SuiteCoreComponentId,
+    const translated = engine.translateStringKey(
       SuiteCoreStringKey.Common_UnexpectedError,
     );
     return translated &&
@@ -611,7 +604,7 @@ function sendErrorResponse<TStringKey extends keyof RequiredStringKeys>(
     send(
       handleableError.statusCode,
       {
-        message: engine.translate('core', 'ValidationError' as TStringKey),
+        message: engine.translateStringKey('ValidationError' as TStringKey),
         errors:
           error.errors instanceof Result ? error.errors.array() : error.errors,
         errorType: 'ExpressValidationError',
@@ -623,7 +616,7 @@ function sendErrorResponse<TStringKey extends keyof RequiredStringKeys>(
     send(
       handleableError.statusCode,
       {
-        message: engine.translate('core', 'ValidationError' as TStringKey),
+        message: engine.translateStringKey('ValidationError' as TStringKey),
         errors: error.errors,
         errorType: 'MongooseValidationError',
       },
@@ -823,7 +816,6 @@ export function decodeLengthEncodedData(buffer: Buffer): {
 import { HandleableError } from '@digitaldefiance/i18n-lib';
 import {
   getSuiteCoreI18nEngine,
-  SuiteCoreComponentId,
   SuiteCoreStringKey,
   TranslatableSuiteError,
 } from '@digitaldefiance/suite-core-lib';

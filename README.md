@@ -11,6 +11,23 @@ It is an 'out of the box' solution with a specific recipe (Mongo, Express, React
 
 Part of [Express Suite](https://github.com/Digital-Defiance/express-suite)
 
+## What's New in v3.11.25
+
+✨ **String Key Enum Registration & i18n v4 Integration** - Upgraded to `@digitaldefiance/i18n-lib` v4.0.5 with branded enum translation support and `translateStringKey()` for automatic component ID resolution.
+
+**New Features:**
+- **Direct String Key Translation**: Use `translateStringKey()` without specifying component IDs
+- **Automatic Component Routing**: Branded enums resolve to their registered components automatically
+- **Safe Translation**: `safeTranslateStringKey()` returns placeholder on failure instead of throwing
+
+**Dependencies:**
+- `@digitaldefiance/ecies-lib`: 4.15.1 → 4.16.0
+- `@digitaldefiance/i18n-lib`: 4.0.3 → 4.0.5
+- `@digitaldefiance/node-ecies-lib`: 4.15.1 → 4.16.0
+- `@digitaldefiance/suite-core-lib`: 3.9.1 → 3.10.0
+- `@noble/curves`: 1.4.2 → 1.9.0
+- `@noble/hashes`: 1.4.0 → 1.8.0
+
 ## What's New in v3.8.0
 
 ✨ **Dependency Upgrades & API Alignment** - Upgraded to `@digitaldefiance/ecies-lib` v4.13.0, `@digitaldefiance/node-ecies-lib` v4.13.0, and `@digitaldefiance/suite-core-lib` v3.7.0.
@@ -511,7 +528,8 @@ import { CoreLanguage } from '@digitaldefiance/i18n-lib';
 // Get the global i18n engine
 const i18n = getGlobalI18nEngine();
 
-// Translate strings
+// Translate strings using branded string keys (v3.11.0+)
+// Component ID is automatically resolved from the branded enum
 const message = translateExpressSuite(
   ExpressSuiteStringKey.Common_Ready,
   {},
@@ -521,6 +539,23 @@ const message = translateExpressSuite(
 
 // Change language globally
 i18n.setLanguage(CoreLanguage.Spanish);
+```
+
+### Direct String Key Translation
+
+Starting with v3.11.0, the library uses `translateStringKey()` internally for automatic component ID resolution from branded enums. This means you can also use the engine directly:
+
+```typescript
+import { getGlobalI18nEngine } from '@digitaldefiance/node-express-suite';
+import { ExpressSuiteStringKey } from '@digitaldefiance/node-express-suite';
+
+const engine = getGlobalI18nEngine();
+
+// Direct translation - component ID resolved automatically
+const text = engine.translateStringKey(ExpressSuiteStringKey.Common_Ready);
+
+// Safe version returns placeholder on failure
+const safe = engine.safeTranslateStringKey(ExpressSuiteStringKey.Common_Ready);
 ```
 
 ### Supported Languages
@@ -1324,6 +1359,53 @@ The following v1.x patterns still work in v2.0:
 ---
 
 ## ChangeLog
+
+### Version 3.11.x (3.11.0 - 3.11.20)
+
+**String Key Enum Registration & translateStringKey Support**
+
+- Upgraded to `@digitaldefiance/i18n-lib` v4.0.5+ with branded enum translation support
+- Upgraded to `@digitaldefiance/suite-core-lib` v3.10.0 with `registerStringKeyEnum()` and `translateStringKey()` support
+- Upgraded to `@digitaldefiance/ecies-lib` v4.16.0 and `@digitaldefiance/node-ecies-lib` v4.16.0
+- Updated `@noble/curves` to v1.9.0 and `@noble/hashes` to v1.8.0
+
+**Dependencies:**
+- `@digitaldefiance/ecies-lib`: 4.15.1 → 4.16.0
+- `@digitaldefiance/i18n-lib`: 4.0.3 → 4.0.5
+- `@digitaldefiance/node-ecies-lib`: 4.15.1 → 4.16.0
+- `@digitaldefiance/suite-core-lib`: 3.9.1 → 3.10.0
+
+### Version 3.10.x (3.10.1 - 3.10.5)
+
+**Dependency Updates & Cleanup**
+
+- Removed showcase yarn.lock files (moved to separate showcase directory)
+- Updated dependencies for compatibility with suite-core-lib v3.9.x
+
+### Version 3.9.0
+
+**I18n v4 Upgrade & Branded Enum Support**
+
+- Upgraded to `@digitaldefiance/i18n-lib` v4.0.3 with branded enum support
+- Upgraded to `@digitaldefiance/suite-core-lib` v3.8.1 with improved i18n integration
+- Upgraded to `@digitaldefiance/ecies-lib` v4.14.3 and `@digitaldefiance/node-ecies-lib` v4.14.2
+- Added `build:prod` script for production builds
+- Updated validation builder for i18n v4 compatibility
+- Updated response builder for i18n v4 compatibility
+- Updated base controller for i18n v4 compatibility
+- Updated error classes for i18n v4 compatibility
+
+**Dependencies:**
+- `@digitaldefiance/ecies-lib`: 4.13.0 → 4.14.3
+- `@digitaldefiance/i18n-lib`: 3.8.16 → 4.0.3
+- `@digitaldefiance/node-ecies-lib`: 4.13.0 → 4.14.2
+- `@digitaldefiance/suite-core-lib`: 3.7.0 → 3.8.1
+
+### Version 3.8.x (3.8.1 - 3.8.9)
+
+**Patch Releases**
+
+- Various bug fixes and dependency updates between v3.8.0 and v3.9.0
 
 ### Version 3.8.0
 
