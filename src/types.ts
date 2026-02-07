@@ -16,6 +16,7 @@ import {
   IApiMessageResponse,
   IApiMongoValidationErrorResponse,
   IStatusCodeResponse,
+  OpenAPIRouteMetadata,
 } from './interfaces';
 import { ISchema } from './interfaces/schema';
 
@@ -131,6 +132,7 @@ export interface RouteConfig<H extends object, TLanguage extends string> {
   authFailureStatusCode?: number;
   useTransaction?: boolean;
   transactionTimeout?: number;
+  openapi?: OpenAPIRouteMetadata;
 }
 
 /**

@@ -28,7 +28,7 @@ export * from './registry';
 export * from './responses';
 export * from './routers';
 export { RouteBuilder } from './routing';
-export type { RouteConfig as RoutingRouteConfig } from './routing';
+export type { BuilderRouteConfig } from './routing';
 export * from './schemas';
 export * from './services';
 export * from './transactions';

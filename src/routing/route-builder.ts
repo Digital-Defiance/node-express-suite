@@ -168,10 +168,10 @@ export class RouteBuilder<TLanguage extends string = string> {
   /**
    * Builds the route configuration with handler.
    * @param {RequestHandler} handler - Route handler function
-   * @returns {RouteConfig<TLanguage>} Complete route configuration
+   * @returns {BuilderRouteConfig<TLanguage>} Complete route configuration
    * @throws {Error} If method or path not set
    */
-  handle(handler: RequestHandler): RouteConfig<TLanguage> {
+  handle(handler: RequestHandler): BuilderRouteConfig<TLanguage> {
     if (!this.config.method || !this.config.path) {
       throw new Error('Method and path must be set before calling handle()');
     }
@@ -194,10 +194,10 @@ export class RouteBuilder<TLanguage extends string = string> {
 }
 
 /**
- * Route configuration interface.
+ * Route configuration output from RouteBuilder.
  * @template TLanguage - Language code type (defaults to string)
  */
-export interface RouteConfig<TLanguage extends string = string> {
+export interface BuilderRouteConfig<TLanguage extends string = string> {
   method: 'get' | 'post' | 'put' | 'delete' | 'patch';
   path: string;
   handler: RequestHandler;
