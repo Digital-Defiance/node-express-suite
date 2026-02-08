@@ -16,6 +16,7 @@
  * @property {number} [maxLength] - Maximum length for string types
  * @property {string} [pattern] - Regex pattern for string validation
  * @property {OpenAPIParameterSchema} [items] - Schema for array items
+ * @property {boolean} [nullable] - Whether the value can be null (OpenAPI 3.0)
  */
 export interface OpenAPIParameterSchema {
   type: string;
@@ -28,6 +29,7 @@ export interface OpenAPIParameterSchema {
   maxLength?: number;
   pattern?: string;
   items?: OpenAPIParameterSchema;
+  nullable?: boolean;
 }
 
 /**
@@ -67,6 +69,9 @@ export function isOpenAPIParameterSchema(
     return false;
   }
   if (schema.items !== undefined && !isOpenAPIParameterSchema(schema.items)) {
+    return false;
+  }
+  if (schema.nullable !== undefined && typeof schema.nullable !== 'boolean') {
     return false;
   }
   return true;

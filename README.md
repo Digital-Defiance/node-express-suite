@@ -11,6 +11,46 @@ It is an 'out of the box' solution with a specific recipe (Mongo, Express, React
 
 Part of [Express Suite](https://github.com/Digital-Defiance/express-suite)
 
+## What's New in v3.12.0
+
+✨ **Comprehensive Decorator API for Express Controllers** - A complete decorator-based API for defining controllers, routes, validation, and OpenAPI documentation with automatic spec generation.
+
+**New Decorators:**
+
+| Category | Decorators |
+|----------|------------|
+| Controller | `@Controller`, `@ApiController` |
+| HTTP Methods | `@Get`, `@Post`, `@Put`, `@Delete`, `@Patch` (enhanced with OpenAPI support) |
+| Authentication | `@RequireAuth`, `@RequireCryptoAuth`, `@Public`, `@AuthFailureStatus` |
+| Parameters | `@Param`, `@Body`, `@Query`, `@Header`, `@CurrentUser`, `@EciesUser`, `@Req`, `@Res`, `@Next` |
+| Validation | `@ValidateBody`, `@ValidateParams`, `@ValidateQuery` (Zod & express-validator) |
+| Response | `@Returns`, `@ResponseDoc`, `@RawJson`, `@Paginated` |
+| Middleware | `@UseMiddleware`, `@CacheResponse`, `@RateLimit` |
+| Transaction | `@Transactional` |
+| OpenAPI | `@ApiOperation`, `@ApiTags`, `@ApiSummary`, `@ApiDescription`, `@Deprecated`, `@ApiOperationId`, `@ApiExample` |
+| OpenAPI Params | `@ApiParam`, `@ApiQuery`, `@ApiHeader`, `@ApiRequestBody` |
+| Lifecycle | `@OnSuccess`, `@OnError`, `@Before`, `@After` |
+| Schema | `@ApiSchema`, `@ApiProperty` |
+
+**Key Features:**
+- **Full RouteConfig Parity**: Every feature available in manual `RouteConfig` has a decorator equivalent
+- **Automatic OpenAPI Generation**: Decorators automatically generate complete OpenAPI 3.0.3 specifications
+- **Zod Integration**: Zod schemas are automatically converted to OpenAPI request body schemas
+- **Metadata Merging**: Multiple decorators on the same method merge their OpenAPI metadata
+- **Class-Level Inheritance**: Class-level decorators (auth, tags, middleware) apply to all methods unless overridden
+- **Parameter Injection**: Clean, typed parameter injection with `@Param`, `@Body`, `@Query`, `@Header`
+- **Lifecycle Hooks**: `@Before`, `@After`, `@OnSuccess`, `@OnError` for request lifecycle management
+
+**Documentation Middleware:**
+- `SwaggerUIMiddleware` - Serve Swagger UI with customization options
+- `ReDocMiddleware` - Serve ReDoc documentation
+- `generateMarkdownDocs()` - Generate markdown documentation from OpenAPI spec
+
+**Migration Support:**
+- Full backward compatibility with existing `RouteConfig` approach
+- Comprehensive migration guide in `docs/DECORATOR_MIGRATION.md`
+- Mixed usage supported (decorated + manual routes in same controller)
+
 ## What's New in v3.11.25
 
 ✨ **String Key Enum Registration & i18n v4 Integration** - Upgraded to `@digitaldefiance/i18n-lib` v4.0.5 with branded enum translation support and `translateStringKey()` for automatic component ID resolution.
@@ -919,6 +959,710 @@ describe('Cross-Package Integration', () => {
 });
 ```
 
+## Decorator API
+
+The decorator API provides a declarative, type-safe approach to building Express APIs with automatic OpenAPI documentation generation. Decorators eliminate boilerplate while maintaining full feature parity with manual `RouteConfig`.
+
+### Overview
+
+| Category | Decorators | Purpose |
+|----------|------------|---------|
+| Controller | `@Controller`, `@ApiController` | Define controller base path and OpenAPI metadata |
+| HTTP Methods | `@Get`, `@Post`, `@Put`, `@Delete`, `@Patch` | Define route handlers with OpenAPI support |
+| Authentication | `@RequireAuth`, `@RequireCryptoAuth`, `@Public`, `@AuthFailureStatus` | Control authentication requirements |
+| Parameters | `@Param`, `@Body`, `@Query`, `@Header`, `@CurrentUser`, `@EciesUser`, `@Req`, `@Res`, `@Next` | Inject request data into handler parameters |
+| Validation | `@ValidateBody`, `@ValidateParams`, `@ValidateQuery` | Validate request data with Zod or express-validator |
+| Response | `@Returns`, `@ResponseDoc`, `@RawJson`, `@Paginated` | Document response types for OpenAPI |
+| Middleware | `@UseMiddleware`, `@CacheResponse`, `@RateLimit` | Attach middleware to routes |
+| Transaction | `@Transactional` | Wrap handlers in MongoDB transactions |
+| OpenAPI | `@ApiOperation`, `@ApiTags`, `@ApiSummary`, `@ApiDescription`, `@Deprecated`, `@ApiOperationId`, `@ApiExample` | Add OpenAPI documentation |
+| OpenAPI Params | `@ApiParam`, `@ApiQuery`, `@ApiHeader`, `@ApiRequestBody` | Document parameters with full OpenAPI metadata |
+| Lifecycle | `@OnSuccess`, `@OnError`, `@Before`, `@After` | Hook into request lifecycle events |
+| Handler Args | `@HandlerArgs` | Pass additional arguments to handlers |
+| Schema | `@ApiSchema`, `@ApiProperty` | Register OpenAPI schemas from classes |
+
+### Quick Start Example
+
+```typescript
+import {
+  ApiController,
+  Get,
+  Post,
+  Put,
+  Delete,
+  RequireAuth,
+  Public,
+  Param,
+  Body,
+  Query,
+  ValidateBody,
+  Returns,
+  ApiTags,
+  Transactional,
+  DecoratorBaseController,
+} from '@digitaldefiance/node-express-suite';
+import { z } from 'zod';
+
+// Define validation schema
+const CreateUserSchema = z.object({
+  name: z.string().min(1).max(100),
+  email: z.string().email(),
+  role: z.enum(['admin', 'user']).optional(),
+});
+
+@RequireAuth() // All routes require authentication by default
+@ApiTags('Users')
+@ApiController('/api/users', {
+  description: 'User management endpoints',
+})
+class UserController extends DecoratorBaseController {
+  @Public() // Override class-level auth - this route is public
+  @Returns(200, 'User[]', { description: 'List of users' })
+  @Get('/')
+  async listUsers(
+    @Query('page', { schema: { type: 'integer' } }) page: number = 1,
+    @Query('limit') limit: number = 20,
+  ) {
+    return this.userService.findAll({ page, limit });
+  }
+
+  @Returns(200, 'User', { description: 'User details' })
+  @Returns(404, 'ErrorResponse', { description: 'User not found' })
+  @Get('/:id')
+  async getUser(@Param('id', { description: 'User ID' }) id: string) {
+    return this.userService.findById(id);
+  }
+
+  @ValidateBody(CreateUserSchema)
+  @Transactional()
+  @Returns(201, 'User', { description: 'Created user' })
+  @Post('/')
+  async createUser(@Body() data: z.infer<typeof CreateUserSchema>) {
+    return this.userService.create(data);
+  }
+
+  @Transactional()
+  @Returns(200, 'User', { description: 'Updated user' })
+  @Put('/:id')
+  async updateUser(
+    @Param('id') id: string,
+    @Body() data: Partial<z.infer<typeof CreateUserSchema>>,
+  ) {
+    return this.userService.update(id, data);
+  }
+
+  @Transactional()
+  @Returns(204, undefined, { description: 'User deleted' })
+  @Delete('/:id')
+  async deleteUser(@Param('id') id: string) {
+    await this.userService.delete(id);
+  }
+}
+```
+
+### Controller Decorators
+
+```typescript
+// Basic controller (no OpenAPI metadata)
+@Controller('/api/items')
+class ItemController {}
+
+// OpenAPI-enabled controller with metadata
+@ApiController('/api/users', {
+  tags: ['Users', 'Admin'],
+  description: 'User management endpoints',
+  deprecated: false,
+  name: 'UserController', // Optional, defaults to class name
+})
+class UserController extends DecoratorBaseController {}
+```
+
+### HTTP Method Decorators
+
+All HTTP method decorators support inline OpenAPI options:
+
+```typescript
+@Get('/users/:id', {
+  summary: 'Get user by ID',
+  description: 'Retrieves a user by their unique identifier',
+  tags: ['Users'],
+  operationId: 'getUserById',
+  deprecated: false,
+  auth: true,           // Shorthand for @RequireAuth()
+  cryptoAuth: false,    // Shorthand for @RequireCryptoAuth()
+  rawJson: false,       // Shorthand for @RawJson()
+  transaction: false,   // Shorthand for @Transactional()
+  middleware: [],       // Express middleware array
+  validation: [],       // express-validator chains
+  schema: zodSchema,    // Zod schema for body validation
+})
+async getUser() {}
+```
+
+### Authentication Decorators
+
+```typescript
+// Require JWT authentication
+@RequireAuth()
+@ApiController('/api/secure')
+class SecureController {
+  @Get('/data')
+  getData() {} // Requires auth (inherited from class)
+
+  @Public()
+  @Get('/public')
+  getPublic() {} // No auth required (overrides class-level)
+}
+
+// Require ECIES crypto authentication
+@RequireCryptoAuth()
+@Post('/encrypted')
+async createEncrypted() {}
+
+// Custom auth failure status code
+@AuthFailureStatus(403)
+@Get('/admin')
+getAdmin() {} // Returns 403 instead of 401 on auth failure
+```
+
+### Parameter Injection Decorators
+
+```typescript
+@Get('/:id')
+async getUser(
+  // Path parameter with OpenAPI documentation
+  @Param('id', { description: 'User ID', schema: { type: 'string', format: 'uuid' } }) id: string,
+  
+  // Query parameters
+  @Query('include', { description: 'Fields to include' }) include?: string,
+  
+  // Header value
+  @Header('X-Request-ID') requestId?: string,
+  
+  // Authenticated user from JWT
+  @CurrentUser() user: AuthenticatedUser,
+  
+  // ECIES authenticated member
+  @EciesUser() member: EciesMember,
+  
+  // Raw Express objects (use sparingly)
+  @Req() req: Request,
+  @Res() res: Response,
+  @Next() next: NextFunction,
+) {}
+
+@Post('/')
+async createUser(
+  // Entire request body
+  @Body() data: CreateUserDto,
+  
+  // Specific field from body
+  @Body('email') email: string,
+) {}
+```
+
+### Validation Decorators
+
+```typescript
+// Zod schema validation
+const CreateUserSchema = z.object({
+  name: z.string().min(1),
+  email: z.string().email(),
+});
+
+@ValidateBody(CreateUserSchema)
+@Post('/')
+async createUser(@Body() data: z.infer<typeof CreateUserSchema>) {}
+
+// express-validator chains
+@ValidateBody([
+  body('name').isString().notEmpty(),
+  body('email').isEmail(),
+])
+@Post('/')
+async createUser() {}
+
+// Language-aware validation with constants
+@ValidateBody(function(lang) {
+  return [
+    body('username')
+      .matches(this.constants.UsernameRegex)
+      .withMessage(getTranslation(lang, 'invalidUsername')),
+  ];
+})
+@Post('/')
+async createUser() {}
+
+// Validate path parameters
+@ValidateParams(z.object({ id: z.string().uuid() }))
+@Get('/:id')
+async getUser() {}
+
+// Validate query parameters
+@ValidateQuery(z.object({
+  page: z.coerce.number().int().positive().optional(),
+  limit: z.coerce.number().int().max(100).optional(),
+}))
+@Get('/')
+async listUsers() {}
+```
+
+### Response Decorators
+
+```typescript
+// Document response types (stackable for multiple status codes)
+@Returns(200, 'User', { description: 'User found' })
+@Returns(404, 'ErrorResponse', { description: 'User not found' })
+@Get('/:id')
+async getUser() {}
+
+// Inline schema for simple responses
+@ResponseDoc(200, {
+  description: 'Health check response',
+  schema: {
+    type: 'object',
+    properties: {
+      status: { type: 'string' },
+      timestamp: { type: 'string', format: 'date-time' },
+    },
+  },
+})
+@Get('/health')
+healthCheck() {}
+
+// Raw JSON response (bypasses response wrapper)
+@RawJson()
+@Get('/raw')
+getRawData() {}
+
+// Paginated endpoint (adds page/limit query params to OpenAPI)
+@Paginated({ defaultPageSize: 20, maxPageSize: 100 })
+@Returns(200, 'User[]')
+@Get('/')
+async listUsers() {}
+
+// Offset-based pagination
+@Paginated({ useOffset: true, defaultPageSize: 20 })
+@Get('/items')
+async listItems() {}
+```
+
+### Middleware Decorators
+
+```typescript
+// Attach middleware (class or method level)
+@UseMiddleware(loggerMiddleware)
+@ApiController('/api/data')
+class DataController {
+  @UseMiddleware([validateMiddleware, sanitizeMiddleware])
+  @Post('/')
+  createData() {}
+}
+
+// Response caching
+@CacheResponse({ ttl: 60 }) // Cache for 60 seconds
+@Get('/static')
+getStaticData() {}
+
+@CacheResponse({
+  ttl: 300,
+  varyByUser: true,        // Different cache per user
+  varyByQuery: ['page'],   // Different cache per query param
+  keyPrefix: 'users',      // Custom cache key prefix
+})
+@Get('/user-data')
+getUserData() {}
+
+// Rate limiting (auto-adds 429 response to OpenAPI)
+@RateLimit({ requests: 5, window: 60 }) // 5 requests per minute
+@Post('/login')
+login() {}
+
+@RateLimit({
+  requests: 100,
+  window: 3600,
+  byUser: true,                    // Limit per user instead of IP
+  message: 'Hourly limit exceeded',
+  keyGenerator: (req) => req.ip,   // Custom key generator
+})
+@Get('/api-data')
+getApiData() {}
+```
+
+### Transaction Decorator
+
+```typescript
+// Basic transaction
+@Transactional()
+@Post('/')
+async createOrder() {
+  // this.session available automatically in DecoratorBaseController
+  await this.orderService.create(data, this.session);
+}
+
+// Transaction with timeout
+@Transactional({ timeout: 30000 }) // 30 second timeout
+@Post('/bulk')
+async bulkCreate() {}
+```
+
+### OpenAPI Operation Decorators
+
+```typescript
+// Full operation metadata
+@ApiOperation({
+  summary: 'Get user by ID',
+  description: 'Retrieves a user by their unique identifier',
+  tags: ['Users'],
+  operationId: 'getUserById',
+  deprecated: false,
+})
+@Get('/:id')
+getUser() {}
+
+// Individual decorators (composable)
+@ApiSummary('Get user by ID')
+@ApiDescription('Retrieves a user by their unique identifier')
+@ApiTags('Users', 'Public')
+@ApiOperationId('getUserById')
+@Deprecated()
+@Get('/:id')
+getUser() {}
+
+// Class-level tags apply to all methods
+@ApiTags('Users')
+@ApiController('/api/users')
+class UserController {
+  @ApiTags('Admin') // Adds to class tags: ['Users', 'Admin']
+  @Get('/admin')
+  adminEndpoint() {}
+}
+
+// Add examples
+@ApiExample({
+  name: 'validUser',
+  summary: 'A valid user response',
+  value: { id: '123', name: 'John Doe', email: 'john@example.com' },
+  type: 'response',
+  statusCode: 200,
+})
+@Get('/:id')
+getUser() {}
+```
+
+### OpenAPI Parameter Decorators
+
+```typescript
+// Document path parameter with full metadata
+@ApiParam('id', {
+  description: 'User ID',
+  schema: { type: 'string', format: 'uuid' },
+  example: '123e4567-e89b-12d3-a456-426614174000',
+})
+@Get('/:id')
+getUser(@Param('id') id: string) {}
+
+// Document query parameters
+@ApiQuery('page', {
+  description: 'Page number',
+  schema: { type: 'integer', minimum: 1 },
+  required: false,
+  example: 1,
+})
+@ApiQuery('sort', {
+  description: 'Sort field',
+  enum: ['name', 'date', 'id'],
+})
+@Get('/')
+listUsers() {}
+
+// Document headers
+@ApiHeader('X-Request-ID', {
+  description: 'Request tracking ID',
+  schema: { type: 'string', format: 'uuid' },
+  required: true,
+})
+@Get('/')
+getData() {}
+
+// Document request body
+@ApiRequestBody({
+  schema: 'CreateUserDto',  // Reference to registered schema
+  description: 'User data to create',
+  required: true,
+  example: { name: 'John', email: 'john@example.com' },
+})
+@Post('/')
+createUser() {}
+
+// Or with Zod schema
+@ApiRequestBody({
+  schema: CreateUserSchema,  // Zod schema
+  description: 'User data',
+})
+@Post('/')
+createUser() {}
+```
+
+### Lifecycle Decorators
+
+```typescript
+// Execute after successful response
+@OnSuccess(({ req, result }) => {
+  console.log(`User ${req.params.id} fetched:`, result);
+})
+@Get('/:id')
+getUser() {}
+
+// Execute on error
+@OnError(({ req, error }) => {
+  logger.error(`Error on ${req.path}:`, error);
+})
+@Get('/:id')
+getUser() {}
+
+// Execute before handler
+@Before(({ req }) => {
+  console.log(`Incoming request to ${req.path}`);
+})
+@Get('/')
+listUsers() {}
+
+// Execute after handler (success or error)
+@After(({ req, result, error }) => {
+  metrics.recordRequest(req.path, error ? 'error' : 'success');
+})
+@Get('/')
+listUsers() {}
+
+// Class-level hooks apply to all methods
+@OnError(({ error }) => logger.error(error))
+@ApiController('/api/users')
+class UserController {}
+```
+
+### Handler Args Decorator
+
+```typescript
+// Pass additional arguments to handler
+@HandlerArgs({ maxItems: 100 })
+@Get('/')
+listItems(req: Request, config: { maxItems: number }) {
+  // config.maxItems === 100
+}
+
+// Multiple arguments
+@HandlerArgs('prefix', 42, { option: true })
+@Post('/')
+createItem(req: Request, prefix: string, count: number, options: object) {}
+```
+
+### Schema Decorators
+
+```typescript
+// Register class as OpenAPI schema
+@ApiSchema({ description: 'User entity' })
+class User {
+  @ApiProperty({
+    type: 'string',
+    format: 'uuid',
+    description: 'Unique identifier',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  id: string;
+
+  @ApiProperty({
+    type: 'string',
+    format: 'email',
+    required: true,
+  })
+  email: string;
+
+  @ApiProperty({
+    type: 'integer',
+    minimum: 0,
+    maximum: 150,
+  })
+  age?: number;
+
+  @ApiProperty({
+    type: 'array',
+    items: 'Role',  // Reference to another schema
+  })
+  roles: Role[];
+}
+
+// Inheritance is supported
+@ApiSchema()
+class AdminUser extends User {
+  @ApiProperty({ type: 'string' })
+  adminLevel: string;
+}
+```
+
+### Decorator Composition and Stacking
+
+Decorators can be freely composed and stacked. Order matters for some decorators:
+
+```typescript
+// Middleware executes top to bottom
+@UseMiddleware(first)
+@UseMiddleware(second)
+@UseMiddleware(third)
+@Get('/')
+handler() {} // Executes: first → second → third → handler
+
+// Multiple @Returns accumulate (don't replace)
+@Returns(200, 'User')
+@Returns(400, 'ValidationError')
+@Returns(404, 'NotFoundError')
+@Returns(500, 'ServerError')
+@Get('/:id')
+getUser() {}
+
+// Tags merge (class + method)
+@ApiTags('Users')
+@ApiController('/api/users')
+class UserController {
+  @ApiTags('Admin')
+  @Get('/admin')
+  admin() {} // Tags: ['Users', 'Admin']
+}
+
+// Method-level overrides class-level for same field
+@RequireAuth()
+@ApiController('/api/data')
+class DataController {
+  @Get('/private')
+  private() {} // Requires auth (inherited)
+
+  @Public()
+  @Get('/public')
+  public() {} // No auth (overridden)
+}
+```
+
+### Comparison: Manual RouteConfig vs Decorators
+
+| RouteConfig Field | Decorator Equivalent |
+|-------------------|---------------------|
+| `method` | `@Get`, `@Post`, `@Put`, `@Delete`, `@Patch` |
+| `path` | Decorator path argument |
+| `handlerKey` | Decorated method name (automatic) |
+| `handlerArgs` | `@HandlerArgs(...args)` |
+| `useAuthentication` | `@RequireAuth()` |
+| `useCryptoAuthentication` | `@RequireCryptoAuth()` |
+| `middleware` | `@UseMiddleware(...)` |
+| `validation` | `@ValidateBody()`, `@ValidateParams()`, `@ValidateQuery()` |
+| `rawJsonHandler` | `@RawJson()` |
+| `authFailureStatusCode` | `@AuthFailureStatus(code)` |
+| `useTransaction` | `@Transactional()` |
+| `transactionTimeout` | `@Transactional({ timeout })` |
+| `openapi.summary` | `@ApiSummary(text)` |
+| `openapi.description` | `@ApiDescription(text)` |
+| `openapi.tags` | `@ApiTags(...tags)` |
+| `openapi.operationId` | `@ApiOperationId(id)` |
+| `openapi.deprecated` | `@Deprecated()` |
+| `openapi.requestBody` | `@ApiRequestBody(options)` |
+| `openapi.responses` | `@Returns(code, schema)` |
+| `openapi.parameters` | `@ApiParam()`, `@ApiQuery()`, `@ApiHeader()` |
+
+### Decorator Options TypeScript Types
+
+```typescript
+// Controller options
+interface ApiControllerOptions {
+  tags?: string[];
+  description?: string;
+  deprecated?: boolean;
+  name?: string;
+}
+
+// Route decorator options
+interface RouteDecoratorOptions<TLanguage> {
+  validation?: ValidationChain[] | ((lang: TLanguage) => ValidationChain[]);
+  schema?: z.ZodSchema;
+  middleware?: RequestHandler[];
+  auth?: boolean;
+  cryptoAuth?: boolean;
+  rawJson?: boolean;
+  transaction?: boolean;
+  transactionTimeout?: number;
+  summary?: string;
+  description?: string;
+  tags?: string[];
+  operationId?: string;
+  deprecated?: boolean;
+  openapi?: OpenAPIRouteMetadata;
+}
+
+// Parameter decorator options
+interface ParamDecoratorOptions {
+  description?: string;
+  example?: unknown;
+  required?: boolean;
+  schema?: OpenAPIParameterSchema;
+}
+
+// Cache options
+interface CacheDecoratorOptions {
+  ttl: number;              // Time to live in seconds
+  keyPrefix?: string;
+  varyByUser?: boolean;
+  varyByQuery?: string[];
+}
+
+// Rate limit options
+interface RateLimitDecoratorOptions {
+  requests: number;         // Max requests
+  window: number;           // Time window in seconds
+  message?: string;
+  byUser?: boolean;
+  keyGenerator?: (req: Request) => string;
+}
+
+// Pagination options
+interface PaginatedDecoratorOptions {
+  defaultPageSize?: number;
+  maxPageSize?: number;
+  useOffset?: boolean;      // Use offset/limit instead of page/limit
+}
+
+// Transaction options
+interface TransactionalDecoratorOptions {
+  timeout?: number;         // Timeout in milliseconds
+}
+```
+
+### Troubleshooting
+
+**Decorators not working?**
+- Ensure `experimentalDecorators: true` and `emitDecoratorMetadata: true` in tsconfig.json
+- Import `reflect-metadata` at the top of your entry file
+- Extend `DecoratorBaseController` for full decorator support
+
+**OpenAPI metadata not appearing?**
+- Use `@ApiController` instead of `@Controller` for OpenAPI support
+- Ensure decorators are applied before HTTP method decorators (bottom-up execution)
+- Check that schemas are registered with `@ApiSchema` or `OpenAPISchemaRegistry`
+
+**Authentication not enforced?**
+- Verify `@RequireAuth()` is applied at class or method level
+- Check that `@Public()` isn't overriding at method level
+- Ensure auth middleware is configured in your application
+
+**Validation errors not returning 400?**
+- Validation decorators automatically add 400 response to OpenAPI
+- Ensure validation middleware is properly configured
+- Check that Zod schemas or express-validator chains are valid
+
+**Parameter injection not working?**
+- Parameter decorators must be on method parameters, not properties
+- Ensure the handler is called through the decorated controller
+- Check parameter index matches the decorator position
+
+For detailed migration instructions, see [docs/DECORATOR_MIGRATION.md](./docs/DECORATOR_MIGRATION.md).
+
 ## Documentation
 
 📚 **Comprehensive documentation is available in the [`docs/`](./docs) directory.**
@@ -1359,6 +2103,120 @@ The following v1.x patterns still work in v2.0:
 ---
 
 ## ChangeLog
+
+### Version 3.12.0
+
+**Comprehensive Decorator API for Express Controllers**
+
+This release introduces a complete decorator-based API for defining controllers, routes, validation, and OpenAPI documentation. The decorator system provides a declarative, type-safe approach to building Express APIs with automatic OpenAPI 3.0.3 specification generation.
+
+**New Decorator Categories:**
+
+*Controller Decorators:*
+- `@Controller(basePath)` - Define controller base path (existing, preserved for backward compatibility)
+- `@ApiController(basePath, options?)` - Define controller with OpenAPI metadata (tags, description, deprecated)
+
+*HTTP Method Decorators (Enhanced):*
+- `@Get`, `@Post`, `@Put`, `@Delete`, `@Patch` - Now support inline OpenAPI options (summary, description, tags, operationId, deprecated)
+
+*Authentication Decorators:*
+- `@RequireAuth()` - Require JWT authentication (auto-adds 401 response to OpenAPI)
+- `@RequireCryptoAuth()` - Require ECIES crypto authentication
+- `@Public()` - Mark route as public (overrides class-level auth)
+- `@AuthFailureStatus(code)` - Set custom auth failure status code
+
+*Parameter Injection Decorators:*
+- `@Param(name, options?)` - Inject path parameter (auto-adds to OpenAPI)
+- `@Body(field?)` - Inject request body or specific field
+- `@Query(name, options?)` - Inject query parameter (auto-adds to OpenAPI)
+- `@Header(name, options?)` - Inject header value (auto-adds to OpenAPI)
+- `@CurrentUser()` - Inject authenticated user (`req.user`)
+- `@EciesUser()` - Inject ECIES authenticated member (`req.eciesUser`)
+- `@Req()`, `@Res()`, `@Next()` - Inject Express request/response/next
+
+*Validation Decorators:*
+- `@ValidateBody(schema)` - Validate request body with Zod or express-validator (auto-adds 400 response)
+- `@ValidateParams(schema)` - Validate path parameters
+- `@ValidateQuery(schema)` - Validate query parameters
+
+*Response Decorators:*
+- `@Returns(statusCode, schema, options?)` - Document response type (stackable for multiple status codes)
+- `@ResponseDoc(responses)` - Document multiple responses at once
+- `@RawJson()` - Bypass standard response wrapper
+- `@Paginated(options?)` - Add pagination query parameters and response envelope
+
+*Middleware Decorators:*
+- `@UseMiddleware(...middleware)` - Attach Express middleware (class or method level)
+- `@CacheResponse(options)` - Add response caching middleware
+- `@RateLimit(options)` - Add rate limiting middleware (auto-adds 429 response)
+
+*Transaction Decorator:*
+- `@Transactional(options?)` - Wrap handler in MongoDB transaction with optional timeout
+
+*OpenAPI Operation Decorators:*
+- `@ApiOperation(metadata)` - Set full OpenAPI operation metadata
+- `@ApiTags(...tags)` - Add tags (class or method level, additive)
+- `@ApiSummary(text)` - Set operation summary
+- `@ApiDescription(text)` - Set operation description
+- `@Deprecated()` - Mark operation as deprecated
+- `@ApiOperationId(id)` - Set unique operation ID
+- `@ApiExample(example)` - Add request/response examples
+
+*OpenAPI Parameter Decorators:*
+- `@ApiParam(name, options)` - Document path parameter with full OpenAPI metadata
+- `@ApiQuery(name, options)` - Document query parameter
+- `@ApiHeader(name, options)` - Document header parameter
+- `@ApiRequestBody(options)` - Document request body with schema, example, description
+
+*Lifecycle Decorators:*
+- `@OnSuccess(callback)` - Execute after successful response
+- `@OnError(callback)` - Execute when error occurs
+- `@Before(callback)` - Execute before handler
+- `@After(callback)` - Execute after handler (success or error)
+
+*Handler Args Decorator:*
+- `@HandlerArgs(...args)` - Pass additional arguments to handler
+
+*Schema Decorators:*
+- `@ApiSchema(name?)` - Register class as OpenAPI schema
+- `@ApiProperty(options)` - Add property metadata (type, description, required, example)
+
+**New Documentation Middleware:**
+- `SwaggerUIMiddleware(options)` - Serve Swagger UI with customization (title, favicon, CSS, JS)
+- `ReDocMiddleware(options)` - Serve ReDoc documentation with customization
+- `generateMarkdownDocs(spec)` - Generate markdown documentation from OpenAPI spec
+
+**New Infrastructure:**
+- `src/decorators/metadata-keys.ts` - Symbol constants for all decorator metadata
+- `src/decorators/metadata-collector.ts` - Utility for metadata operations
+- `src/interfaces/openApi/decoratorOptions.ts` - All decorator option interfaces
+- Enhanced `DecoratorBaseController` with full metadata collection and parameter injection
+
+**Zod Integration:**
+- Comprehensive Zod to OpenAPI schema conversion
+- Support for nested objects, arrays, unions, enums
+- Automatic extraction of descriptions and examples from Zod schemas
+
+**Key Features:**
+- Full feature parity with manual `RouteConfig` approach
+- Automatic OpenAPI 3.0.3 specification generation
+- Metadata merging from multiple decorators
+- Class-level decorator inheritance with method-level overrides
+- Backward compatible - existing code continues to work unchanged
+
+**Documentation:**
+- Updated README with comprehensive Decorator API section
+- New `docs/DECORATOR_MIGRATION.md` with complete migration guide
+- Updated `docs/CONTROLLERS.md` featuring decorator-based approach
+- JSDoc documentation on all public decorators and types
+
+**Testing:**
+- Property-based tests for decorator correctness properties
+- Integration tests for full controller with all decorators
+- E2E tests for HTTP requests to decorated endpoints
+
+**Deprecations:**
+- None. This release is fully backward compatible with existing code.
 
 ### Version 3.11.x (3.11.0 - 3.11.20)
 

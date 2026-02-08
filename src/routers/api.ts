@@ -26,6 +26,7 @@ import { RoleService } from '../services/role';
 import { UserService } from '../services/user';
 import { BaseRouter } from './base';
 import { CoreLanguageCode } from '@digitaldefiance/i18n-lib';
+import { OpenApiController } from '../controllers/openapi';
 
 /**
  * Router for the API endpoints.
@@ -60,6 +61,7 @@ export class ApiRouter<
   TEnvironment extends Environment<TID> = Environment<TID>,
   TApplication extends IApplication<TID> = IApplication<TID>,
 > extends BaseRouter<TID, TApplication> {
+  private readonly openApiController: OpenApiController<TID>;
   /** User controller for handling user-related API endpoints */
   private readonly userController: UserController<
     TID,
@@ -113,7 +115,10 @@ export class ApiRouter<
    * Registers all required services and initializes the user controller.
    * @param application Application instance with database connection and configuration
    */
-  constructor(application: TApplication) {
+  constructor(
+    application: TApplication,
+    docsRoute: string | undefined = '/openapi',
+  ) {
     super(application);
     this.registerServices();
     this.jwtService = application.services.get(ServiceKeys.JWT);
@@ -142,7 +147,11 @@ export class ApiRouter<
       this.roleService,
       this.eciesService,
     );
+    this.openApiController = new OpenApiController(application);
     this.router.use('/user', this.userController.router);
+    if (docsRoute !== undefined && docsRoute !== '') {
+      this.router.use(docsRoute, this.openApiController.router);
+    }
   }
 
   /**

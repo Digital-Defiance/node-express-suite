@@ -33,6 +33,7 @@ export * from './schemas';
 export * from './services';
 export * from './transactions';
 export * from './types';
+export * from './openapi';
 export {
   type DEBUG_TYPE,
   debugLog,

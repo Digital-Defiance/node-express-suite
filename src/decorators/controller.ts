@@ -10,10 +10,21 @@ import { ValidationChain } from 'express-validator';
 import 'reflect-metadata';
 import { z } from 'zod';
 import { IConstants } from '../interfaces';
+import { ApiControllerOptions } from '../interfaces/openApi/decoratorOptions';
+import {
+  CONTROLLER_METADATA,
+  OPENAPI_CONTROLLER_METADATA,
+} from './metadata-keys';
 
-// Metadata keys for storing decorator information
-export const CONTROLLER_METADATA = Symbol('controller');
-export const ROUTES_METADATA = Symbol('routes');
+// Re-export metadata keys for backward compatibility
+export {
+  CONTROLLER_METADATA,
+  OPENAPI_CONTROLLER_METADATA,
+  ROUTES_METADATA,
+} from './metadata-keys';
+
+// Re-export ApiControllerOptions for convenience
+export type { ApiControllerOptions } from '../interfaces/openApi/decoratorOptions';
 
 // Validation context with constants - all properties are guaranteed to exist at runtime
 // The constants object is injected by the base controller during route initialization
@@ -51,80 +62,109 @@ export interface RouteMetadata<
   options: RouteOptions<TLanguage>;
 }
 
-// Controller decorator
+/**
+ * Controller metadata structure stored by @Controller and @ApiController decorators.
+ */
+export interface ControllerMetadata {
+  /** Base path for all routes in this controller */
+  basePath: string;
+  /** Optional controller name (defaults to class name) */
+  name?: string;
+}
+
+/**
+ * OpenAPI controller metadata structure stored by @ApiController decorator.
+ */
+export interface OpenApiControllerMetadata {
+  /** Tags to apply to all routes in this controller */
+  tags?: string[];
+  /** Description of the controller for OpenAPI documentation */
+  description?: string;
+  /** Whether all routes in this controller are deprecated */
+  deprecated?: boolean;
+}
+
+/**
+ * Basic controller decorator for defining route base path.
+ * Use @ApiController for OpenAPI-enabled controllers.
+ *
+ * @param basePath - Base path for all routes in this controller
+ * @returns Class decorator function
+ *
+ * @example
+ * ```typescript
+ * @Controller('/api/users')
+ * class UserController {
+ *   @Get('/:id')
+ *   getUser() {}
+ * }
+ * ```
+ */
 export function Controller(basePath: string = '') {
   // eslint-disable-next-line @typescript-eslint/no-empty-object-type
   return function <T extends { new (...args: any[]): {} }>(constructor: T) {
-    Reflect.defineMetadata(CONTROLLER_METADATA, { basePath }, constructor);
+    const metadata: ControllerMetadata = { basePath };
+    Reflect.defineMetadata(CONTROLLER_METADATA, metadata, constructor);
     return constructor;
   };
 }
 
-// HTTP method decorators
-export function Get<TLanguage extends CoreLanguageCode = CoreLanguageCode>(
-  path: string,
-  options: RouteOptions<TLanguage> = {},
+/**
+ * Enhanced controller decorator with OpenAPI support.
+ * Registers the controller with both base path and OpenAPI metadata.
+ *
+ * @param basePath - Base path for all routes in this controller
+ * @param options - Optional OpenAPI configuration (tags, description, deprecated, name)
+ * @returns Class decorator function
+ *
+ * @example
+ * ```typescript
+ * @ApiController('/api/users', {
+ *   tags: ['Users'],
+ *   description: 'User management endpoints',
+ * })
+ * class UserController {
+ *   @Get('/:id')
+ *   getUser() {}
+ * }
+ * ```
+ */
+export function ApiController(
+  basePath: string = '',
+  options: ApiControllerOptions = {},
 ) {
-  return createRouteDecorator('get', path, options);
-}
-
-export function Post<TLanguage extends CoreLanguageCode = CoreLanguageCode>(
-  path: string,
-  options: RouteOptions<TLanguage> = {},
-) {
-  return createRouteDecorator('post', path, options);
-}
-
-export function Put<TLanguage extends CoreLanguageCode = CoreLanguageCode>(
-  path: string,
-  options: RouteOptions<TLanguage> = {},
-) {
-  return createRouteDecorator('put', path, options);
-}
-
-export function Delete<TLanguage extends CoreLanguageCode = CoreLanguageCode>(
-  path: string,
-  options: RouteOptions<TLanguage> = {},
-) {
-  return createRouteDecorator('delete', path, options);
-}
-
-export function Patch<TLanguage extends CoreLanguageCode = CoreLanguageCode>(
-  path: string,
-  options: RouteOptions<TLanguage> = {},
-) {
-  return createRouteDecorator('patch', path, options);
-}
-
-// Helper to create route decorators
-function createRouteDecorator<
-  TLanguage extends CoreLanguageCode = CoreLanguageCode,
->(
-  method: 'get' | 'post' | 'put' | 'delete' | 'patch',
-  path: string,
-  options: RouteOptions<TLanguage>,
-) {
-  return function (
-    target: any,
-    propertyKey: string,
-    descriptor: PropertyDescriptor,
-  ) {
-    const existingRoutes: RouteMetadata<CoreLanguageCode>[] =
-      Reflect.getMetadata(ROUTES_METADATA, target.constructor) || [];
-
-    const route: RouteMetadata<CoreLanguageCode> = {
-      method,
-      path,
-      handlerName: propertyKey,
-      options: options as RouteOptions<CoreLanguageCode>,
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+  return function <T extends { new (...args: any[]): {} }>(constructor: T) {
+    // Store base controller metadata (basePath and optional name)
+    const controllerMetadata: ControllerMetadata = {
+      basePath,
+      name: options.name ?? constructor.name,
     };
+    Reflect.defineMetadata(
+      CONTROLLER_METADATA,
+      controllerMetadata,
+      constructor,
+    );
 
-    existingRoutes.push(route);
-    Reflect.defineMetadata(ROUTES_METADATA, existingRoutes, target.constructor);
+    // Store OpenAPI-specific controller metadata
+    const openApiMetadata: OpenApiControllerMetadata = {
+      tags: options.tags,
+      description: options.description,
+      deprecated: options.deprecated,
+    };
+    Reflect.defineMetadata(
+      OPENAPI_CONTROLLER_METADATA,
+      openApiMetadata,
+      constructor,
+    );
 
-    return descriptor;
+    return constructor;
   };
 }
+
+// Re-export enhanced HTTP method decorators from http-methods.ts
+// These provide OpenAPI metadata support while maintaining backward compatibility
+export { Delete, Get, Patch, Post, Put } from './http-methods';
 
 // Convenience decorators
 export function Auth(_cryptoAuth: boolean = false) {

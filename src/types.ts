@@ -152,6 +152,7 @@ export function routeConfig<T extends object, TLanguage extends string>(
     validation?: (validationLanguage: TLanguage) => ValidationChain[];
     useAuthentication: boolean;
     useCryptoAuthentication: boolean;
+    openapi?: OpenAPIRouteMetadata;
   },
 ): RouteConfig<T, TLanguage> {
   return {
@@ -161,6 +162,7 @@ export function routeConfig<T extends object, TLanguage extends string>(
     validation: options.validation,
     useAuthentication: options.useAuthentication,
     useCryptoAuthentication: options.useCryptoAuthentication,
+    openapi: options.openapi,
   };
 }
 

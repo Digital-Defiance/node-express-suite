@@ -9,6 +9,10 @@ import {
   isOpenAPIParameterSchema,
 } from './parameterSchema';
 
+// Re-export OpenAPIParameterSchema for convenience
+export type { OpenAPIParameterSchema } from './parameterSchema';
+export { isOpenAPIParameterSchema } from './parameterSchema';
+
 /**
  * Valid locations for OpenAPI parameters.
  */
