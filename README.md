@@ -1,7 +1,7 @@
 # @digitaldefiance/node-express-suite
 
 [![npm version](https://badge.fury.io/js/%40digitaldefiance%2Fnode-express-suite.svg)](https://badge.fury.io/js/%40digitaldefiance%2Fnode-express-suite)
-[![Tests](https://img.shields.io/badge/tests-604%20passing-brightgreen)]()
+[![Tests](https://img.shields.io/badge/tests-2541%20passing-brightgreen)]()
 [![Coverage](https://img.shields.io/badge/coverage-57.86%25-yellow)]()
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
@@ -115,7 +115,7 @@ yarn add @digitaldefiance/node-express-suite
 
 ```typescript
 import { Application, DatabaseInitializationService, emailServiceRegistry } from '@digitaldefiance/node-express-suite';
-import { CoreLanguage } from '@digitaldefiance/i18n-lib';
+import { LanguageCodes } from '@digitaldefiance/i18n-lib';
 import { EmailService } from './services/email'; // Your concrete implementation
 
 // Create application instance
@@ -123,7 +123,7 @@ const app = new Application({
   port: 3000,
   mongoUri: 'mongodb://localhost:27017/myapp',
   jwtSecret: process.env.JWT_SECRET,
-  defaultLanguage: CoreLanguage.EnglishUS
+  defaultLanguage: LanguageCodes.EN_US
 });
 
 // Configure email service (required before using middleware)
@@ -563,7 +563,7 @@ Built-in support for multiple languages using the plugin-based i18n architecture
 
 ```typescript
 import { getGlobalI18nEngine, translateExpressSuite } from '@digitaldefiance/node-express-suite';
-import { CoreLanguage } from '@digitaldefiance/i18n-lib';
+import { LanguageCodes } from '@digitaldefiance/i18n-lib';
 
 // Get the global i18n engine
 const i18n = getGlobalI18nEngine();
@@ -573,12 +573,12 @@ const i18n = getGlobalI18nEngine();
 const message = translateExpressSuite(
   ExpressSuiteStringKey.Common_Ready,
   {},
-  CoreLanguage.French
+  LanguageCodes.FR
 );
 // "Prêt"
 
 // Change language globally
-i18n.setLanguage(CoreLanguage.Spanish);
+i18n.setLanguage(LanguageCodes.ES);
 ```
 
 ### Direct String Key Translation
@@ -637,7 +637,7 @@ try {
 
 ## Testing
 
-Comprehensive test suite with 604 passing tests:
+Comprehensive test suite with 2541 passing tests:
 
 ```bash
 # Run all tests
@@ -680,7 +680,7 @@ yarn add -D @faker-js/faker
 
 ### Test Coverage (v2.1)
 
-- **604 tests** passing (100% success rate)
+- **2541 tests** passing (100% success rate)
 - **57.86%** overall coverage
 - **11 modules** at 100% coverage
 - All critical paths tested (validation, auth, services)
@@ -765,6 +765,14 @@ yarn add -D @faker-js/faker
 - `BackupCodeService` - Backup code management
 - `MnemonicService` - Mnemonic storage and retrieval
 - `SystemUserService` - System user operations
+- `DatabaseInitializationService` - Database initialization with default users and roles
+- `DirectLoginTokenService` - One-time login token management
+- `RequestUserService` - Extract user from request context
+- `ChecksumService` - CRC checksum operations
+- `SymmetricService` - Symmetric encryption operations
+- `XorService` - XOR cipher operations
+- `FecService` - Forward error correction
+- `DummyEmailService` - Test email service implementation
 
 ### Utilities
 
