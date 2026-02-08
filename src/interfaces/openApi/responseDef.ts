@@ -6,12 +6,12 @@
 
 /**
  * OpenAPI response definition.
- * @property {string} [schema] - Reference name for the response schema
+ * @property {string | Record<string, unknown>} [schema] - Reference name for the response schema or inline schema object
  * @property {string} [description] - Description of the response
  * @property {unknown} [example] - Example value for documentation
  */
 export interface OpenAPIResponseDef {
-  schema?: string;
+  schema?: string | Record<string, unknown>;
   description?: string;
   example?: unknown;
 }
@@ -26,7 +26,11 @@ export function isOpenAPIResponseDef(obj: unknown): obj is OpenAPIResponseDef {
     return false;
   }
   const response = obj as Record<string, unknown>;
-  if (response.schema !== undefined && typeof response.schema !== 'string') {
+  if (
+    response.schema !== undefined &&
+    typeof response.schema !== 'string' &&
+    typeof response.schema !== 'object'
+  ) {
     return false;
   }
   if (

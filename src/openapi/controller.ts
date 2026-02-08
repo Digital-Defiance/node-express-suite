@@ -12,8 +12,9 @@ import { OpenAPIBuilder, OpenAPIBuilderConfig, OpenAPISpec } from './builder';
 
 /**
  * Response type for the OpenAPI endpoint.
+ * This is the HTTP response structure returned by the /openapi endpoint.
  */
-export interface OpenAPIResponse {
+export interface OpenAPIEndpointResponse {
   message: string;
   openapi: string;
   info: OpenAPISpec['info'];
@@ -144,7 +145,7 @@ export class OpenAPIController<TID extends PlatformID = Buffer> {
         spec = this.filterSpecByTags(spec, tags);
       }
 
-      const response: OpenAPIResponse = {
+      const response: OpenAPIEndpointResponse = {
         message: 'OpenAPI specification',
         openapi: spec.openapi,
         info: spec.info,

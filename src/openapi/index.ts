@@ -7,27 +7,22 @@
 // Re-export builder class
 export { OpenAPIBuilder } from './builder';
 
-// Re-export builder types with explicit names to avoid conflicts
+// Re-export builder types (excluding types already exported from interfaces)
 export type {
   OpenAPIBuilderConfig,
   OpenAPISpec,
   OpenAPIExternalDocs,
   OpenAPITagDefinition,
   OpenAPIOperationMetadata,
-  // These types are also in interfaces/openApi, so we alias them
-  OpenAPIParameter as BuilderOpenAPIParameter,
-  OpenAPIParameterSchema as BuilderOpenAPIParameterSchema,
-  OpenAPIRequestBody as BuilderOpenAPIRequestBody,
-  OpenAPIResponse as BuilderOpenAPIResponse,
 } from './builder';
 
 // Re-export controller class
 export { OpenAPIController } from './controller';
 
-// Re-export controller types with explicit names
+// Re-export controller types
 export type {
   OpenAPIControllerOptions,
-  OpenAPIResponse as ControllerOpenAPIResponse,
+  OpenAPIEndpointResponse,
 } from './controller';
 
 // Schema registry

@@ -11,6 +11,7 @@ import {
 } from '../registry/controller-registry';
 import { RouteConfig } from '../types';
 import { OpenAPISchemaRegistry } from './schemas';
+import { OpenAPIResponseDef } from '../interfaces/openApi/responseDef';
 
 /**
  * Type alias for RouteConfig with generic handler type.
@@ -19,7 +20,8 @@ import { OpenAPISchemaRegistry } from './schemas';
 type AnyRouteConfig = RouteConfig<Record<string, unknown>, string>;
 
 /**
- * OpenAPI parameter definition.
+ * OpenAPI parameter definition for the builder.
+ * More flexible than the interface version to support various OpenAPI patterns.
  */
 export interface OpenAPIParameter {
   name: string;
@@ -32,7 +34,8 @@ export interface OpenAPIParameter {
 }
 
 /**
- * OpenAPI parameter schema definition.
+ * OpenAPI parameter schema definition for the builder.
+ * Supports optional type and $ref for schema references.
  */
 export interface OpenAPIParameterSchema {
   type?: string;
@@ -49,19 +52,11 @@ export interface OpenAPIParameterSchema {
 }
 
 /**
- * OpenAPI request body definition.
+ * OpenAPI request body definition for the builder.
+ * Supports both schema references and inline schemas.
  */
 export interface OpenAPIRequestBody {
   required?: boolean;
-  description?: string;
-  schema?: string | Record<string, unknown>;
-  example?: unknown;
-}
-
-/**
- * OpenAPI response definition.
- */
-export interface OpenAPIResponse {
   description?: string;
   schema?: string | Record<string, unknown>;
   example?: unknown;
@@ -78,7 +73,7 @@ export interface OpenAPIOperationMetadata {
   deprecated?: boolean;
   parameters?: OpenAPIParameter[];
   requestBody?: OpenAPIRequestBody;
-  responses?: Record<number | string, OpenAPIResponse>;
+  responses?: Record<number | string, OpenAPIResponseDef>;
 }
 
 /**
@@ -507,7 +502,7 @@ export class OpenAPIBuilder {
    */
   private buildResponses(
     route: AnyRouteConfig,
-    responses: Record<number | string, OpenAPIResponse>,
+    responses: Record<number | string, OpenAPIResponseDef>,
   ): Record<string, Record<string, unknown>> {
     const result: Record<string, Record<string, unknown>> = {};
 
@@ -536,7 +531,9 @@ export class OpenAPIBuilder {
   /**
    * Build a single response object.
    */
-  private buildResponse(responseDef: OpenAPIResponse): Record<string, unknown> {
+  private buildResponse(
+    responseDef: OpenAPIResponseDef,
+  ): Record<string, unknown> {
     const response: Record<string, unknown> = {
       description: responseDef.description ?? 'Response',
     };
