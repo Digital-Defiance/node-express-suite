@@ -16,3 +16,6 @@ export * from './symmetric';
 export * from './system-user';
 export * from './user';
 export * from './xor';
+export * from './upnp';
+export * from './upnp-config';
+export * from './upnp-manager';
