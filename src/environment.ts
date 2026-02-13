@@ -17,7 +17,7 @@ import { LocalhostConstants } from './constants';
 import { setGlobalActiveContextAdminLanguageFromProcessArgvOrEnv } from './get-language';
 import { setGlobalActiveContextAdminTimezoneFromProcessArgvOrEnv } from './get-timezone';
 import { IConstants } from './interfaces/constants';
-import { IEnvironment } from './interfaces/environment';
+import { IEnvironment, ILetsEncryptConfig } from './interfaces/environment';
 import { IMongoEnvironment } from './interfaces/environment-mongo';
 import type { EnvironmentVariables } from './types/environment-variables';
 import {
@@ -25,8 +25,10 @@ import {
   debugLog,
   DEFAULT_TRANSACTION_LOCK_REQUEST_TIMEOUT,
   DEFAULT_TRANSACTION_TIMEOUT,
+  isValidHostname,
   locatePEMRoot,
   parseBackupCodes,
+  parseHostnames,
 } from './utils';
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 
@@ -301,8 +303,42 @@ export class Environment<
       adminLanguage: setGlobalActiveContextAdminLanguageFromProcessArgvOrEnv(),
       pbkdf2Iterations: parseInt(envObj['PBKDF2_ITERATIONS'] ?? '100000'),
       production: envObj['NODE_ENV'] === 'production',
+      letsEncrypt: {
+        enabled:
+          envObj['LETS_ENCRYPT_ENABLED'] === 'true' ||
+          envObj['LETS_ENCRYPT_ENABLED'] === '1',
+        maintainerEmail: envObj['LETS_ENCRYPT_EMAIL'] ?? '',
+        hostnames: envObj['LETS_ENCRYPT_HOSTNAMES']
+          ? parseHostnames(envObj['LETS_ENCRYPT_HOSTNAMES'])
+          : [],
+        staging:
+          envObj['LETS_ENCRYPT_STAGING'] === 'true' ||
+          envObj['LETS_ENCRYPT_STAGING'] === '1',
+        configDir: envObj['LETS_ENCRYPT_CONFIG_DIR'] || './greenlock.d',
+      },
     };
     this._envObject = envObj;
+    // Validate Let's Encrypt configuration when enabled
+    if (this._environment.letsEncrypt.enabled) {
+      if (!this._environment.letsEncrypt.maintainerEmail) {
+        throw new TranslatableSuiteError(
+          SuiteCoreStringKey.Error_LetsEncryptMaintainerEmailRequired,
+        );
+      }
+      if (this._environment.letsEncrypt.hostnames.length === 0) {
+        throw new TranslatableSuiteError(
+          SuiteCoreStringKey.Error_LetsEncryptHostnamesRequired,
+        );
+      }
+      for (const hostname of this._environment.letsEncrypt.hostnames) {
+        if (!isValidHostname(hostname)) {
+          throw new TranslatableSuiteError(
+            SuiteCoreStringKey.Error_LetsEncryptInvalidHostnameTemplate,
+            { hostname },
+          );
+        }
+      }
+    }
     // ensure all required environment variables are set
     if (!this._environment.host) {
       throw new Error(
@@ -779,6 +815,13 @@ export class Environment<
    */
   public get production(): boolean {
     return this._environment.production;
+  }
+
+  /**
+   * Let's Encrypt / Greenlock configuration
+   */
+  public get letsEncrypt(): ILetsEncryptConfig {
+    return this._environment.letsEncrypt;
   }
 
   /**

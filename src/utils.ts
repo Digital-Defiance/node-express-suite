@@ -1106,3 +1106,33 @@ export function parseBackupCodes(
     [];
   return backupCodes;
 }
+
+/** Regex for a valid fully qualified domain name */
+const FQDN_REGEX =
+  /^([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/;
+
+/** Regex for a valid wildcard hostname pattern (e.g. *.example.com) */
+const WILDCARD_REGEX =
+  /^\*\.([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/;
+
+/**
+ * Validates whether a hostname is a valid FQDN or wildcard pattern.
+ * @param hostname The hostname string to validate
+ * @returns true if the hostname matches either the FQDN or wildcard pattern
+ */
+export function isValidHostname(hostname: string): boolean {
+  return FQDN_REGEX.test(hostname) || WILDCARD_REGEX.test(hostname);
+}
+
+/**
+ * Parses a comma-separated string of hostnames into an array.
+ * Trims whitespace from each entry and filters out empty strings.
+ * @param raw The raw comma-separated hostname string
+ * @returns An array of trimmed, non-empty hostname strings
+ */
+export function parseHostnames(raw: string): string[] {
+  return raw
+    .split(',')
+    .map((h) => h.trim())
+    .filter((h) => h.length > 0);
+}

@@ -16,6 +16,7 @@ export * from './enumerations';
 export * from './environment';
 export * from './errors';
 export * from './get-language';
+export * from './greenlock-manager';
 export * from './get-timezone';
 export * from './interfaces';
 export * from './middlewares';
@@ -76,6 +77,8 @@ export {
   getLengthEncodingTypeFromValue,
   getLengthForLengthType,
   parseBackupCodes,
+  isValidHostname,
+  parseHostnames,
 } from './utils';
 export type { TransactionOptions as UtilsTransactionOptions } from './utils';
 export * from './validation';

@@ -10,6 +10,22 @@ import { IMongoEnvironment } from './environment-mongo';
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 
 /**
+ * Configuration for Let's Encrypt / Greenlock TLS certificate management.
+ */
+export interface ILetsEncryptConfig {
+  /** Whether Let's Encrypt is enabled */
+  enabled: boolean;
+  /** Contact email for Let's Encrypt account (required when enabled) */
+  maintainerEmail: string;
+  /** List of hostnames to obtain certificates for */
+  hostnames: string[];
+  /** Use Let's Encrypt staging directory for testing */
+  staging: boolean;
+  /** Directory for Greenlock config and certificate storage */
+  configDir: string;
+}
+
+/**
  * Environment configuration interface for the application.
  * Contains all configuration values, credentials, and environment-specific settings.
  * @template TID Platform-specific ID type (Buffer, ObjectId, etc.)
@@ -188,4 +204,9 @@ export interface IEnvironment<TID extends PlatformID = Buffer> {
    * Whether this is a production environment
    */
   production: boolean;
+
+  /**
+   * Let's Encrypt / Greenlock configuration
+   */
+  letsEncrypt: ILetsEncryptConfig;
 }

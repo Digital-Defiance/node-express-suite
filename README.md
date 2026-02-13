@@ -685,6 +685,65 @@ yarn add -D @faker-js/faker
 - **11 modules** at 100% coverage
 - All critical paths tested (validation, auth, services)
 
+## Let's Encrypt (Automated TLS)
+
+The package supports automated TLS certificate management via [Let's Encrypt](https://letsencrypt.org/) using `greenlock-express`. When enabled, the Application automatically obtains and renews certificates, serves your app over HTTPS on port 443, and redirects HTTP traffic from port 80 to HTTPS.
+
+### Environment Variables
+
+| Variable | Type | Default | Description |
+|---|---|---|---|
+| `LETS_ENCRYPT_ENABLED` | `boolean` | `false` | Set to `true` or `1` to enable Let's Encrypt certificate management |
+| `LETS_ENCRYPT_EMAIL` | `string` | *(required when enabled)* | Contact email for your Let's Encrypt account (used for expiry notices and account recovery) |
+| `LETS_ENCRYPT_HOSTNAMES` | `string` | *(required when enabled)* | Comma-separated list of hostnames to obtain certificates for (supports wildcards, e.g. `*.example.com`) |
+| `LETS_ENCRYPT_STAGING` | `boolean` | `false` | Set to `true` or `1` to use the Let's Encrypt staging directory (recommended for testing) |
+| `LETS_ENCRYPT_CONFIG_DIR` | `string` | `./greenlock.d` | Directory for Greenlock configuration and certificate storage |
+
+### Example: Single Hostname
+
+```env
+LETS_ENCRYPT_ENABLED=true
+LETS_ENCRYPT_EMAIL=admin@example.com
+LETS_ENCRYPT_HOSTNAMES=example.com
+LETS_ENCRYPT_STAGING=false
+```
+
+### Example: Multiple Hostnames with Wildcard
+
+```env
+LETS_ENCRYPT_ENABLED=true
+LETS_ENCRYPT_EMAIL=admin@example.com
+LETS_ENCRYPT_HOSTNAMES=example.com,*.example.com,api.example.com
+LETS_ENCRYPT_STAGING=false
+```
+
+Wildcard hostnames (e.g. `*.example.com`) require DNS-01 challenge validation. Ensure your DNS provider supports programmatic record creation or configure the appropriate Greenlock plugin.
+
+### Port Requirements
+
+When Let's Encrypt is enabled, the Application binds to three ports:
+
+- **Port 443** — HTTPS server with the auto-managed TLS certificate
+- **Port 80** — HTTP redirect server (301 redirects all traffic to HTTPS, also serves ACME HTTP-01 challenges)
+- **`environment.port`** (default 3000) — Primary HTTP server for internal or health-check traffic
+
+Ports 80 and 443 are privileged ports on most systems. You may need elevated permissions to bind to them:
+
+- **Linux**: Use `setcap` to grant the Node.js binary the capability without running as root:
+  ```bash
+  sudo setcap 'cap_net_bind_service=+ep' $(which node)
+  ```
+- **Docker**: Map the ports in your container configuration (containers typically run as root internally)
+- **Reverse proxy**: Alternatively, run behind a reverse proxy (e.g. nginx) that handles ports 80/443 and forwards to your app
+
+### Mutual Exclusivity with Dev-Certificate HTTPS
+
+Let's Encrypt mode and the dev-certificate HTTPS mode (`HTTPS_DEV_CERT_ROOT`) are mutually exclusive at runtime. When `LETS_ENCRYPT_ENABLED=true`, the dev-certificate HTTPS block is automatically skipped to avoid port conflicts. You do not need to unset `HTTPS_DEV_CERT_ROOT` — the Application handles this internally.
+
+- **Production**: Use `LETS_ENCRYPT_ENABLED=true` for real certificates
+- **Development**: Use `HTTPS_DEV_CERT_ROOT` for self-signed dev certificates
+- **Never enable both simultaneously** — Let's Encrypt takes precedence when enabled
+
 ## Best Practices
 
 ### Security

@@ -41,6 +41,7 @@ import { BaseRouter } from './routers/base';
 import { DatabaseInitializationService } from './services';
 import { SchemaMap } from './types';
 import { debugLog, handleError, sendApiMessageResponse } from './utils';
+import { GreenlockManager } from './greenlock-manager';
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 
 /**
@@ -70,6 +71,7 @@ export class Application<
   ) => TAppRouter;
   private readonly _initMiddleware: typeof initMiddleware;
   private _apiRouter?: BaseRouter<TID>;
+  private greenlockManager: GreenlockManager | null = null;
 
   public override get environment(): TEnvironment {
     return super.environment as TEnvironment;
@@ -219,7 +221,13 @@ export class Application<
         }),
       );
 
-      if (this.environment.httpsDevCertRoot) {
+      if (this.environment.letsEncrypt.enabled) {
+        // Let's Encrypt mode: start GreenlockManager for HTTPS on 443 + redirect on 80
+        this.greenlockManager = new GreenlockManager(
+          this.environment.letsEncrypt,
+        );
+        serversReady.push(this.greenlockManager.start(this.expressApp));
+      } else if (this.environment.httpsDevCertRoot) {
         try {
           const certRoot = normalize(this.environment.httpsDevCertRoot);
           if (!isAbsolute(certRoot) || certRoot.includes('..')) {
@@ -281,6 +289,11 @@ export class Application<
   }
 
   public override async stop(): Promise<void> {
+    if (this.greenlockManager) {
+      await this.greenlockManager.stop();
+      this.greenlockManager = null;
+    }
+
     const engine = getSuiteCoreI18nEngine({ constants: this.constants });
     if (this.server) {
       debugLog(
