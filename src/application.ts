@@ -34,11 +34,15 @@ import {
   IServerInitResult,
 } from './interfaces';
 import { IConstants } from './interfaces/constants';
+import { IDocumentStore } from './interfaces/document-store';
 import { IFlexibleCSP, isFlexibleCSP } from './interfaces/flexible-csp';
 import { initMiddleware, isHelmetOptions } from './middleware-utils';
 import { AppRouter } from './routers/app';
 import { BaseRouter } from './routers/base';
-import { DatabaseInitializationService } from './services';
+import {
+  DatabaseInitializationService,
+  MongooseDocumentStore,
+} from './services';
 import { SchemaMap } from './types';
 import { debugLog, handleError, sendApiMessageResponse } from './utils';
 import { GreenlockManager } from './greenlock-manager';
@@ -109,14 +113,18 @@ export class Application<
       apiRouter,
     ) => new AppRouter(apiRouter) as TAppRouter,
     customInitMiddleware: typeof initMiddleware = initMiddleware,
+    documentStore?: IDocumentStore<TID, TModelDocs>,
   ) {
-    super(
-      environment,
-      schemaMapFactory,
-      databaseInitFunction,
-      initResultHashFunction,
-      constants,
-    );
+    const store =
+      documentStore ??
+      new MongooseDocumentStore<TID, TModelDocs, TInitResults, TConstants>(
+        schemaMapFactory,
+        databaseInitFunction,
+        initResultHashFunction,
+        environment,
+        constants,
+      );
+    super(environment, store, constants);
     this._apiRouterFactory = apiRouterFactory;
     this._appRouterFactory = appRouterFactory;
     this._initMiddleware = customInitMiddleware;
@@ -130,8 +138,11 @@ export class Application<
     const engine = getSuiteCoreI18nEngine({ constants: this.constants });
     await super.start(mongoUri, true);
     if (this.devDatabase) {
-      const result = await this.initializeDevDatabase();
-      DatabaseInitializationService.printServerInitResults(result, false);
+      if (this._documentStore?.initializeDevStore) {
+        const result =
+          await this._documentStore.initializeDevStore<TInitResults>(this);
+        DatabaseInitializationService.printServerInitResults(result, false);
+      }
     }
     try {
       this._apiRouter = this._apiRouterFactory(this);

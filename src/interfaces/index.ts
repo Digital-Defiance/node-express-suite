@@ -1,3 +1,5 @@
+export * from './document-store';
+
 export * from './api-error-response';
 export * from './api-express-validation-error-response';
 export * from './api-message-response';

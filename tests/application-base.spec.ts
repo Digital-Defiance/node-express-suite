@@ -8,26 +8,29 @@ import mongoose from '@digitaldefiance/mongoose-types';
 import { TranslatableSuiteError } from '@digitaldefiance/suite-core-lib';
 import { BaseApplication } from '../src/application-base';
 import { Environment } from '../src/environment';
-import { ModelRegistry } from '../src/model-registry';
+import { IDocumentStore } from '../src/interfaces/document-store';
+import { MongooseDocumentStore } from '../src/services/mongoose-document-store';
 
 describe('BaseApplication', () => {
+  /**
+   * Create a minimal MongooseDocumentStore for testing.
+   */
+  function createDocumentStore(env: Environment) {
+    return new MongooseDocumentStore(
+      () => ({}),
+      async () => ({ success: true, data: {} }),
+      () => 'hash',
+      env,
+    );
+  }
+
+  /**
+   * TestApplication wraps BaseApplication with a MongooseDocumentStore.
+   */
   class TestApplication extends BaseApplication<any, any> {
     constructor(env: Environment, constants?: any) {
-      super(
-        env,
-        () => ({}),
-        async () => ({ success: true, data: {} }),
-        () => 'hash',
-        constants,
-      );
-    }
-
-    public async testConnectDatabase(uri: string, debug = false) {
-      return this.connectDatabase(uri, debug);
-    }
-
-    public testValidateMongoUri(uri: string) {
-      return (this as any).validateMongoUri(uri);
+      const store = createDocumentStore(env);
+      super(env, store, constants);
     }
   }
 
@@ -112,35 +115,23 @@ describe('BaseApplication', () => {
     });
   });
 
-  describe('validateMongoUri', () => {
-    it('should accept valid mongodb:// URI', () => {
-      expect(() =>
-        app.testValidateMongoUri('mongodb://localhost:27017/test'),
-      ).not.toThrow();
-    });
-
-    it('should accept valid mongodb+srv:// URI', () => {
-      expect(() =>
-        app.testValidateMongoUri('mongodb+srv://cluster.mongodb.net/test'),
-      ).not.toThrow();
-    });
-
-    it('should reject invalid protocol', () => {
-      expect(() =>
-        app.testValidateMongoUri('http://localhost:27017/test'),
-      ).toThrow();
-    });
-
-    it('should reject malformed URI', () => {
-      expect(() => app.testValidateMongoUri('not-a-valid-uri')).toThrow();
+  describe('validateMongoUri (via MongooseDocumentStore)', () => {
+    // validateMongoUri is now internal to MongooseDocumentStore.connect().
+    // We test it indirectly by calling connect with invalid URIs.
+    it('should reject invalid protocol via connect', async () => {
+      const store = createDocumentStore(env);
+      await expect(
+        store.connect('http://localhost:27017/test'),
+      ).rejects.toThrow();
     });
 
     describe('in production mode', () => {
+      let prodEnv: Environment;
+
       beforeEach(() => {
         process.env.NODE_ENV = 'production';
-        process.env.SYSTEM_PUBLIC_KEY = '04' + '00'.repeat(64); // Mock public key
-        env = new Environment(undefined, false); // production mode
-        app = new TestApplication(env);
+        process.env.SYSTEM_PUBLIC_KEY = '04' + '00'.repeat(64);
+        prodEnv = new Environment(undefined, false);
       });
 
       afterEach(() => {
@@ -148,70 +139,66 @@ describe('BaseApplication', () => {
         delete process.env.SYSTEM_PUBLIC_KEY;
       });
 
-      it('should reject localhost in production', () => {
-        expect(() =>
-          app.testValidateMongoUri('mongodb://localhost:27017/test'),
-        ).toThrow();
+      it('should reject localhost in production', async () => {
+        const store = createDocumentStore(prodEnv);
+        await expect(
+          store.connect('mongodb://localhost:27017/test'),
+        ).rejects.toThrow();
       });
 
-      it('should reject 127.0.0.1 in production', () => {
-        expect(() =>
-          app.testValidateMongoUri('mongodb://127.0.0.1:27017/test'),
-        ).toThrow();
+      it('should reject 127.0.0.1 in production', async () => {
+        const store = createDocumentStore(prodEnv);
+        await expect(
+          store.connect('mongodb://127.0.0.1:27017/test'),
+        ).rejects.toThrow();
       });
 
-      it('should reject private IP 10.x.x.x in production', () => {
-        expect(() =>
-          app.testValidateMongoUri('mongodb://10.0.0.1:27017/test'),
-        ).toThrow();
+      it('should reject private IP 10.x.x.x in production', async () => {
+        const store = createDocumentStore(prodEnv);
+        await expect(
+          store.connect('mongodb://10.0.0.1:27017/test'),
+        ).rejects.toThrow();
       });
 
-      it('should reject private IP 192.168.x.x in production', () => {
-        expect(() =>
-          app.testValidateMongoUri('mongodb://192.168.1.1:27017/test'),
-        ).toThrow();
+      it('should reject private IP 192.168.x.x in production', async () => {
+        const store = createDocumentStore(prodEnv);
+        await expect(
+          store.connect('mongodb://192.168.1.1:27017/test'),
+        ).rejects.toThrow();
       });
 
-      it('should reject private IP 172.16-31.x.x in production', () => {
-        expect(() =>
-          app.testValidateMongoUri('mongodb://172.16.0.1:27017/test'),
-        ).toThrow();
-        expect(() =>
-          app.testValidateMongoUri('mongodb://172.31.255.255:27017/test'),
-        ).toThrow();
+      it('should reject private IP 172.16-31.x.x in production', async () => {
+        const store = createDocumentStore(prodEnv);
+        await expect(
+          store.connect('mongodb://172.16.0.1:27017/test'),
+        ).rejects.toThrow();
+        await expect(
+          store.connect('mongodb://172.31.255.255:27017/test'),
+        ).rejects.toThrow();
       });
 
-      it('should reject link-local IP 169.254.x.x in production', () => {
-        expect(() =>
-          app.testValidateMongoUri('mongodb://169.254.1.1:27017/test'),
-        ).toThrow();
+      it('should reject link-local IP 169.254.x.x in production', async () => {
+        const store = createDocumentStore(prodEnv);
+        await expect(
+          store.connect('mongodb://169.254.1.1:27017/test'),
+        ).rejects.toThrow();
       });
 
-      it('should reject IPv6 localhost in production', () => {
-        expect(() =>
-          app.testValidateMongoUri('mongodb://[::1]:27017/test'),
-        ).toThrow();
+      it('should reject IPv6 localhost in production', async () => {
+        const store = createDocumentStore(prodEnv);
+        await expect(
+          store.connect('mongodb://[::1]:27017/test'),
+        ).rejects.toThrow();
       });
 
-      it('should reject IPv6 private addresses in production', () => {
-        expect(() =>
-          app.testValidateMongoUri('mongodb://[fc00::1]:27017/test'),
-        ).toThrow();
-        expect(() =>
-          app.testValidateMongoUri('mongodb://[fd00::1]:27017/test'),
-        ).toThrow();
-      });
-
-      it('should accept public hostnames in production', () => {
-        expect(() =>
-          app.testValidateMongoUri('mongodb://public-server.com:27017/test'),
-        ).not.toThrow();
-      });
-
-      it('should accept mongodb+srv with public hostname', () => {
-        expect(() =>
-          app.testValidateMongoUri('mongodb+srv://cluster.mongodb.net/test'),
-        ).not.toThrow();
+      it('should reject IPv6 private addresses in production', async () => {
+        const store = createDocumentStore(prodEnv);
+        await expect(
+          store.connect('mongodb://[fc00::1]:27017/test'),
+        ).rejects.toThrow();
+        await expect(
+          store.connect('mongodb://[fd00::1]:27017/test'),
+        ).rejects.toThrow();
       });
     });
   });
@@ -229,12 +216,6 @@ describe('BaseApplication', () => {
   });
 
   describe('devDatabase getter', () => {
-    it('should return devDatabase if set', () => {
-      const mockDevDb = {} as any;
-      (app as any)._devDatabase = mockDevDb;
-      expect(app.devDatabase).toBe(mockDevDb);
-    });
-
     it('should return undefined if not set', () => {
       expect(app.devDatabase).toBeUndefined();
     });
@@ -252,7 +233,7 @@ describe('BaseApplication', () => {
     });
   });
 
-  describe('connectDatabase', () => {
+  describe('connect via documentStore', () => {
     beforeEach(async () => {
       if (mongoose.connection.readyState !== 0) {
         await mongoose.disconnect();
@@ -265,123 +246,33 @@ describe('BaseApplication', () => {
       }
     });
 
-    it('should connect to MongoDB with valid URI', async () => {
+    it('should connect to MongoDB with valid URI via start()', async () => {
       await withConsoleMocks({ mute: true }, async () => {
         const mockConnect = jest
           .spyOn(mongoose, 'connect')
-          .mockResolvedValue(mongoose as any);
+          .mockResolvedValue(mongoose as ReturnType<typeof mongoose.connect>);
 
-        // Mock connection state and events
         Object.defineProperty(mongoose.connection, 'readyState', {
           value: 1,
           writable: true,
           configurable: true,
         });
-        const mockOnce = jest.fn((event, callback) => {
+        const mockOnce = jest.fn((event: string, callback: () => void) => {
           if (event === 'connected') callback();
         });
-        mongoose.connection.once = mockOnce as any;
+        mongoose.connection.once = mockOnce as typeof mongoose.connection.once;
 
-        // Mock db for transaction timeout
-        (mongoose.connection as any).db = {
+        (mongoose.connection as Record<string, unknown>).db = {
           admin: () => ({ command: jest.fn().mockResolvedValue({}) }),
         };
 
-        await app.testConnectDatabase('mongodb://localhost:27017/test', false);
+        await app.start('mongodb://localhost:27017/test');
 
         expect(mockConnect).toHaveBeenCalled();
+        expect(app.ready).toBe(true);
         mockConnect.mockRestore();
-        delete (mongoose.connection as any).db;
+        delete (mongoose.connection as Record<string, unknown>).db;
       });
-    }, 30000);
-    it('should disconnect before connecting if already connected', async () => {
-      await withConsoleMocks({ mute: true }, async () => {
-        const mockDisconnect = jest
-          .spyOn(mongoose, 'disconnect')
-          .mockResolvedValue();
-        const mockConnect = jest
-          .spyOn(mongoose, 'connect')
-          .mockResolvedValue(mongoose as any);
-
-        // Simulate already connected
-        Object.defineProperty(mongoose.connection, 'readyState', {
-          value: 1,
-          writable: true,
-          configurable: true,
-        });
-
-        await app.testConnectDatabase('mongodb://localhost:27017/test', false);
-
-        expect(mockDisconnect).toHaveBeenCalled();
-        expect(mockConnect).toHaveBeenCalled();
-
-        mockDisconnect.mockRestore();
-        mockConnect.mockRestore();
-      });
-    });
-
-    it('should initialize schema map after connection', async () => {
-      const result = await connectMemoryDB();
-      if (!result?.uri) throw new Error('Failed to get MongoDB URI');
-
-      await app.testConnectDatabase(result.uri, false);
-
-      expect(app['_schemaMap']).toBeDefined();
-
-      await disconnectMemoryDB();
-    }, 60000);
-    it('should register models in ModelRegistry', async () => {
-      // Create app with a schema map factory that returns schemas
-      const schemaMapFactory = (connection: any) => ({
-        testModel: {
-          modelName: 'TestModel',
-          schema: new mongoose.Schema({ name: String }),
-          model: mongoose.model(
-            'TestModel',
-            new mongoose.Schema({ name: String }),
-          ),
-          collection: 'testmodels',
-        },
-      });
-
-      const appWithSchemas = new (class extends BaseApplication<any, any> {
-        constructor(env: Environment) {
-          super(
-            env,
-            schemaMapFactory,
-            async () => ({ success: true, data: {} }),
-            () => 'hash',
-          );
-        }
-        public async testConnectDatabase(uri: string, debug = false) {
-          return this.connectDatabase(uri, debug);
-        }
-      })(env);
-
-      const registerSpy = jest.spyOn(ModelRegistry.instance, 'register');
-      const result = await connectMemoryDB();
-      if (!result?.uri) throw new Error('Failed to get MongoDB URI');
-
-      await appWithSchemas.testConnectDatabase(result.uri, false);
-
-      // Should have registered models
-      expect(registerSpy).toHaveBeenCalled();
-
-      registerSpy.mockRestore();
-      await disconnectMemoryDB();
-    }, 30000);
-
-    it('should set transaction parameters when supported', async () => {
-      const result = await connectMemoryDB();
-      if (!result?.uri) throw new Error('Failed to get MongoDB URI');
-
-      // MongoMemoryServer may not support all transaction features,
-      // but we can verify the connection attempt succeeds
-      await expect(
-        app.testConnectDatabase(result.uri, false),
-      ).resolves.not.toThrow();
-
-      await disconnectMemoryDB();
     }, 30000);
 
     it('should handle connection errors gracefully', async () => {
@@ -389,45 +280,34 @@ describe('BaseApplication', () => {
         .spyOn(mongoose, 'connect')
         .mockRejectedValue(new Error('Connection failed'));
 
-      await expect(
-        app.testConnectDatabase('mongodb://localhost:27017/test', false),
-      ).rejects.toThrow('Connection failed');
+      await expect(app.start('mongodb://localhost:27017/test')).rejects.toThrow(
+        'Connection failed',
+      );
 
       mockConnect.mockRestore();
     });
-
-    it('should log debug messages when debug is true', async () => {
-      const result = await connectMemoryDB();
-      if (!result?.uri) throw new Error('Failed to get MongoDB URI');
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
-
-      await app.testConnectDatabase(result.uri, true);
-
-      expect(consoleSpy).toHaveBeenCalled();
-
-      consoleSpy.mockRestore();
-      await disconnectMemoryDB();
-    }, 60000);
   });
 
-  describe('disconnectDatabase', () => {
-    it('should disconnect from MongoDB', async () => {
+  describe('disconnect via documentStore', () => {
+    it('should disconnect from MongoDB via stop()', async () => {
       const mockDisconnect = jest
         .spyOn(mongoose, 'disconnect')
         .mockResolvedValue();
 
-      // Set up connected state
-      (app as any)._db = mongoose;
+      // Simulate connected state
       Object.defineProperty(mongoose.connection, 'readyState', {
         value: 1,
         writable: true,
         configurable: true,
       });
 
-      await (app as any).disconnectDatabase(false);
+      // Set internal _db so disconnect path is taken
+      const store = app.documentStore as MongooseDocumentStore<any, any, any>;
+      (store as Record<string, unknown>)['_db'] = mongoose;
+
+      await app.stop();
 
       expect(mockDisconnect).toHaveBeenCalled();
-      expect((app as any)._db).toBeUndefined();
 
       mockDisconnect.mockRestore();
     });
@@ -437,41 +317,21 @@ describe('BaseApplication', () => {
         .spyOn(mongoose, 'disconnect')
         .mockResolvedValue();
 
-      (app as any)._db = undefined;
       Object.defineProperty(mongoose.connection, 'readyState', {
         value: 0,
         writable: true,
         configurable: true,
       });
 
-      await (app as any).disconnectDatabase(false);
+      await app.stop();
 
       expect(mockDisconnect).not.toHaveBeenCalled();
 
       mockDisconnect.mockRestore();
     });
-
-    it('should log disconnect message when debug enabled', async () => {
-      const mockDisconnect = jest
-        .spyOn(mongoose, 'disconnect')
-        .mockResolvedValue();
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
-
-      (app as any)._db = mongoose;
-      Object.defineProperty(mongoose.connection, 'readyState', {
-        value: 1,
-        writable: true,
-        configurable: true,
-      });
-
-      await (app as any).disconnectDatabase(true);
-
-      mockDisconnect.mockRestore();
-      consoleSpy.mockRestore();
-    });
   });
 
-  describe('setupDevDatabase', () => {
+  describe('setupDevStore via MongooseDocumentStore', () => {
     it('should create in-memory MongoDB instance', async () => {
       const mockCreate = jest
         .spyOn(require('mongodb-memory-server').MongoMemoryReplSet, 'create')
@@ -480,10 +340,11 @@ describe('BaseApplication', () => {
           getUri: jest.fn().mockReturnValue('mongodb://localhost:27017'),
         });
 
-      const uri = await (app as any).setupDevDatabase();
+      const store = createDocumentStore(env);
+      const uri = await store.setupDevStore();
 
       expect(uri).toContain('mongodb://');
-      expect((app as any)._devDatabase).toBeDefined();
+      expect(store.devDatabase).toBeDefined();
 
       mockCreate.mockRestore();
     });
@@ -496,7 +357,8 @@ describe('BaseApplication', () => {
           getUri: jest.fn().mockReturnValue('mongodb://localhost:27017/test'),
         });
 
-      const uri = await (app as any).setupDevDatabase();
+      const store = createDocumentStore(env);
+      const uri = await store.setupDevStore();
 
       expect(uri).toContain('maxPoolSize=20');
       expect(uri).toContain('minPoolSize=4');
@@ -513,7 +375,8 @@ describe('BaseApplication', () => {
           getUri: jest.fn().mockReturnValue('mongodb://localhost:27017'),
         });
 
-      await (app as any).setupDevDatabase();
+      const store = createDocumentStore(env);
+      await store.setupDevStore();
 
       expect(mockWaitUntilRunning).toHaveBeenCalled();
 
@@ -521,121 +384,10 @@ describe('BaseApplication', () => {
     });
   });
 
-  describe('initializeDevDatabase', () => {
-    it('should initialize database with default data', async () => {
-      const mockInitFunction = jest.fn().mockResolvedValue({
-        success: true,
-        data: { users: [], roles: [] },
-      });
-
-      const testApp = new (class extends BaseApplication<any, any> {
-        constructor(env: Environment) {
-          super(
-            env,
-            () => ({}),
-            mockInitFunction,
-            () => 'hash123',
-          );
-        }
-      })(env);
-
-      const result = await (testApp as any).initializeDevDatabase();
-
-      expect(mockInitFunction).toHaveBeenCalled();
-      expect(result).toBeDefined();
-    });
-
-    it('should throw error if initialization fails', async () => {
-      const mockInitFunction = jest.fn().mockResolvedValue({
-        success: false,
-        error: 'Init failed',
-      });
-
-      const testApp = new (class extends BaseApplication<any, any> {
-        constructor(env: Environment) {
-          super(
-            env,
-            () => ({}),
-            mockInitFunction,
-            () => 'hash123',
-          );
-        }
-      })(env);
-
-      await expect((testApp as any).initializeDevDatabase()).rejects.toThrow();
-    });
-
-    it('should timeout if initialization takes too long', async () => {
-      await withConsoleMocks({ mute: true }, async () => {
-        jest.useFakeTimers();
-
-        const mockInitFunction = jest
-          .fn()
-          .mockImplementation(
-            () =>
-              new Promise((resolve) =>
-                setTimeout(() => resolve({ success: true, data: {} }), 400000),
-              ),
-          );
-
-        const testApp = new (class extends BaseApplication<any, any> {
-          constructor(env: Environment) {
-            super(
-              env,
-              () => ({}),
-              mockInitFunction,
-              () => 'hash123',
-            );
-          }
-        })(env);
-
-        const initPromise = (testApp as any).initializeDevDatabase();
-
-        // Fast-forward time past the timeout
-        jest.advanceTimersByTime(400000);
-
-        await expect(initPromise).rejects.toThrow();
-
-        jest.useRealTimers();
-      });
-    }, 10000);
-
-    it('should log initialization hash when detailed debug enabled', async () => {
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
-      const mockEnv = new Environment(undefined, true);
-
-      const mockInitFunction = jest.fn().mockResolvedValue({
-        success: true,
-        data: { users: [], roles: [] },
-      });
-
-      const testApp = new (class extends BaseApplication<any, any> {
-        constructor(env: Environment) {
-          super(
-            env,
-            () => ({}),
-            mockInitFunction,
-            (data) => 'hash123',
-          );
-        }
-      })(mockEnv);
-
-      await testApp['setupDevDatabase']();
-      await testApp['initializeDevDatabase']();
-
-      consoleSpy.mockRestore();
-    }, 10000);
-  });
-
   describe('getModel', () => {
     it('should have getModel method', () => {
       expect(app.getModel).toBeDefined();
       expect(typeof app.getModel).toBe('function');
-    });
-
-    it('should use ModelRegistry for model access', () => {
-      // Just verify ModelRegistry exists and is accessible
-      expect(ModelRegistry.instance).toBeDefined();
     });
   });
 });

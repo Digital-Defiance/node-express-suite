@@ -1,15 +1,21 @@
 /**
  * @fileoverview Base application class with core functionality.
- * Provides database connection, schema management, and plugin support.
+ * Delegates database operations to an IDatabase instance (or legacy IDocumentStore).
  * @module application-base
  */
 
 // Avoid importing from the barrel (../index) here to prevent circular deps
-import mongoose, { Model } from '@digitaldefiance/mongoose-types';
+import type {
+  BsonDocument,
+  ICollection,
+  IDatabase,
+  IDatabaseLifecycleHooks,
+} from '@brightchain/brightchain-lib';
+import { Model } from '@digitaldefiance/mongoose-types';
+import mongoose from '@digitaldefiance/mongoose-types';
 import {
   Constants,
   getSuiteCoreI18nEngine,
-  getSuiteCoreTranslation,
   SuiteCoreStringKey,
   TranslatableSuiteError,
 } from '@digitaldefiance/suite-core-lib';
@@ -20,16 +26,34 @@ import { IBaseDocument } from './documents/base';
 import { Environment } from './environment';
 import { IApplication } from './interfaces/application';
 import { IConstants } from './interfaces/constants';
-import { IFailableResult } from './interfaces/failable-result';
-import { ISchema } from './interfaces/schema';
-import { ModelRegistry } from './model-registry';
+import { IDocumentStore } from './interfaces/document-store';
 import { PluginManager } from './plugins';
+import { MongooseDocumentStore } from './services/mongoose-document-store';
 import { SchemaMap } from './types';
+import { defaultMongoUriValidator } from './utils/default-mongo-uri-validator';
 import { debugLog } from './utils';
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 
 /**
- * Base Application class with core functionality
+ * Duck-typing check to determine if a value conforms to the IDatabase interface.
+ * Checks for the key methods that distinguish IDatabase from IDocumentStore.
+ */
+function isIDatabase(value: unknown): value is IDatabase {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'collection' in value &&
+    'startSession' in value &&
+    typeof (value as Record<string, unknown>)['collection'] === 'function' &&
+    typeof (value as Record<string, unknown>)['startSession'] === 'function'
+  );
+}
+
+/**
+ * Base Application class with core functionality.
+ * Accepts an IDatabase (preferred) or legacy IDocumentStore for backward compatibility.
+ * When an IDatabase is provided, database lifecycle is managed through the IDatabase contract.
+ * When a legacy IDocumentStore is provided, it is used directly for backward compatibility.
  */
 export class BaseApplication<
   TID extends PlatformID,
@@ -41,32 +65,38 @@ export class BaseApplication<
    * Application environment
    */
   private _environment: Environment<TID>;
-  /**
-   * In-memory MongoDB instance for development
-   */
-  private _devDatabase?: MongoMemoryReplSet;
+
   /**
    * Constants for the application
    */
   private _constants: TConstants;
+
   /**
-   * Function to create the schema map given a Mongoose connection
+   * The IDatabase instance for storage-agnostic database operations.
+   * Set when an IDatabase is passed to the constructor.
    */
-  private readonly _schemaMapFactory: (
-    connection: mongoose.Connection,
-  ) => SchemaMap<TID, TModelDocs>;
+  protected readonly _database: IDatabase | undefined;
+
   /**
-   * Function to initialize the database with default data
+   * The injected document store handling all database operations.
+   * Set when a legacy IDocumentStore is passed to the constructor.
+   * @deprecated Prefer _database (IDatabase) for new code.
    */
-  private readonly _databaseInitFunction: (
-    application: BaseApplication<TID, TModelDocs, TInitResults>,
-  ) => Promise<IFailableResult<TInitResults>>;
+  protected readonly _documentStore:
+    | IDocumentStore<TID, TModelDocs>
+    | undefined;
+
   /**
-   * Function to create a hash from the database initialization results (for logging purposes)
+   * Optional lifecycle hooks for database initialization on the IDatabase path.
    */
-  private readonly _initResultHashFunction: (
-    initResults: TInitResults,
-  ) => string;
+  protected readonly _lifecycleHooks:
+    | IDatabaseLifecycleHooks<TInitResults>
+    | undefined;
+
+  /**
+   * Whether setupDevStore was invoked during start() (for teardown on stop).
+   */
+  protected _devStoreProvisioned = false;
 
   /**
    * Get the application environment
@@ -96,21 +126,22 @@ export class BaseApplication<
   }
 
   /**
-   * Mongoose database instance
+   * Schema map for all models, delegated to the document store.
+   * Only available when a legacy IDocumentStore is used.
    */
-  protected _db?: typeof mongoose;
-
-  /**
-   * Schema map for all models
-   */
-  protected _schemaMap: SchemaMap<TID, TModelDocs> | undefined;
   public get schemaMap(): SchemaMap<TID, TModelDocs> {
-    if (!this._schemaMap) {
+    if (!this._documentStore) {
       throw new TranslatableSuiteError(
         SuiteCoreStringKey.Admin_Error_SchemaMapIsNotLoadedYet,
       );
     }
-    return this._schemaMap;
+    const map = this._documentStore.schemaMap;
+    if (!map) {
+      throw new TranslatableSuiteError(
+        SuiteCoreStringKey.Admin_Error_SchemaMapIsNotLoadedYet,
+      );
+    }
+    return map as SchemaMap<TID, TModelDocs>;
   }
 
   /**
@@ -129,15 +160,39 @@ export class BaseApplication<
   public readonly plugins: PluginManager<TID>;
 
   /**
-   * Get the connected MongoDB database instance
+   * Get the connected MongoDB database instance.
+   * @deprecated Use database (IDatabase) or documentStore instead for storage-agnostic access.
    */
   public get db(): typeof mongoose {
-    if (!this._db) {
-      throw new TranslatableSuiteError(
-        SuiteCoreStringKey.Admin_Error_DatabaseNotConnectedYet,
-      );
+    if (this._documentStore instanceof MongooseDocumentStore) {
+      return this._documentStore.db;
     }
-    return this._db;
+    throw new TranslatableSuiteError(
+      SuiteCoreStringKey.Admin_Error_DatabaseNotConnectedYet,
+    );
+  }
+
+  /**
+   * Get the IDatabase instance, if one was provided.
+   */
+  public get database(): IDatabase | undefined {
+    return this._database;
+  }
+
+  /**
+   * Get the injected document store.
+   * @deprecated Prefer database (IDatabase) for new code.
+   */
+  public get documentStore(): IDocumentStore<TID, TModelDocs> | undefined {
+    return this._documentStore;
+  }
+
+  /**
+   * Get the in-memory MongoDB instance (if any), delegated to the document store.
+   * Only available when a legacy IDocumentStore is used.
+   */
+  public get devDatabase(): MongoMemoryReplSet | undefined {
+    return this._documentStore?.devDatabase;
   }
 
   /**
@@ -149,318 +204,33 @@ export class BaseApplication<
 
   constructor(
     environment: Environment<TID>,
-    schemaMapFactory: (
-      connection: mongoose.Connection,
-    ) => SchemaMap<TID, TModelDocs>,
-    databaseInitFunction: (
-      application: BaseApplication<TID, TModelDocs, TInitResults>,
-    ) => Promise<IFailableResult<TInitResults>>,
-    initResultHashFunction: (initResults: TInitResults) => string,
+    databaseOrStore: IDatabase | IDocumentStore<TID, TModelDocs>,
     constants: TConstants = Constants as TConstants,
+    lifecycleHooks?: IDatabaseLifecycleHooks<TInitResults>,
   ) {
     this._ready = false;
     this._environment = environment;
     this._constants = constants;
-    this._schemaMapFactory = schemaMapFactory;
-    this._databaseInitFunction = databaseInitFunction;
-    this._initResultHashFunction = initResultHashFunction;
+
+    // Duck-typing detection: IDatabase has 'collection' and 'startSession' methods
+    if (isIDatabase(databaseOrStore)) {
+      this._database = databaseOrStore;
+      this._documentStore = undefined;
+      this._lifecycleHooks = lifecycleHooks;
+    } else {
+      this._database = undefined;
+      this._documentStore = databaseOrStore;
+      // Lifecycle hooks are only used on the IDatabase path
+      this._lifecycleHooks = undefined;
+    }
+
     this.services = new ServiceContainer();
     this.plugins = new PluginManager<TID>();
   }
 
   /**
-   * Validate MongoDB URI to prevent SSRF attacks
-   */
-  private validateMongoUri(uri: string): void {
-    // Validate protocol
-    if (!uri.startsWith('mongodb://') && !uri.startsWith('mongodb+srv://')) {
-      throw new TranslatableSuiteError(
-        SuiteCoreStringKey.Admin_Error_InvalidMongoUri,
-      );
-    }
-
-    // In production, block private IPs and localhost
-    if (this._environment.production) {
-      // Updated regex to handle IPv6 addresses with brackets
-      const urlMatch = uri.match(
-        /^mongodb(?:\+srv)?:\/\/(?:[^@]+@)?(\[[^\]]+\]|[^:/]+)/,
-      );
-      if (urlMatch) {
-        // Remove brackets from hostname for IPv6 addresses
-        const hostname = urlMatch[1].replace(/[[\]]/g, '');
-        // Block localhost and private IP ranges
-        if (
-          hostname === 'localhost' ||
-          hostname === '127.0.0.1' ||
-          hostname.startsWith('10.') ||
-          hostname.startsWith('192.168.') ||
-          /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(hostname) ||
-          hostname.startsWith('169.254.') || // Link-local
-          hostname === '::1' || // IPv6 localhost
-          hostname.startsWith('fc00:') || // IPv6 private
-          hostname.startsWith('fd00:') // IPv6 private
-        ) {
-          throw new TranslatableSuiteError(
-            SuiteCoreStringKey.Admin_Error_InvalidMongoUri,
-          );
-        }
-      }
-    }
-  }
-
-  /**
-   * Connect to MongoDB and initialize schemas
-   */
-  protected async connectDatabase(
-    mongoUri: string,
-    debug = false,
-  ): Promise<void> {
-    this.validateMongoUri(mongoUri);
-
-    debugLog(
-      debug,
-      'log',
-      `[ ${getSuiteCoreTranslation(
-        SuiteCoreStringKey.Common_Connecting,
-        undefined,
-        undefined,
-        { constants: this.constants },
-      )} ] ${getSuiteCoreTranslation(
-        SuiteCoreStringKey.Common_MongoDB,
-        undefined,
-        undefined,
-        { constants: this.constants },
-      )}: ${mongoUri}`,
-    );
-
-    // Always disconnect first to ensure clean state
-    if (mongoose.connection.readyState !== 0) {
-      await mongoose.disconnect();
-    }
-
-    // amazonq-ignore-next-line solved above with validateMongoUri call
-    await mongoose.connect(mongoUri, {
-      maxPoolSize: this._environment.mongo.maxPoolSize,
-      minPoolSize: this._environment.mongo.minPoolSize,
-      maxIdleTimeMS: this._environment.mongo.maxIdleTimeMS,
-      serverSelectionTimeoutMS:
-        this._environment.mongo.serverSelectionTimeoutMS,
-      socketTimeoutMS: this._environment.mongo.socketTimeoutMS,
-      retryWrites: this._environment.mongo.retryWrites,
-      retryReads: this._environment.mongo.retryReads,
-      readConcern: this._environment.mongo.readConcern,
-      writeConcern: this._environment.mongo.writeConcern,
-    });
-    this._db = mongoose;
-
-    await new Promise<void>((resolve) => {
-      if (mongoose.connection.readyState === 1) {
-        resolve();
-      } else {
-        mongoose.connection.once('connected', resolve);
-      }
-    });
-
-    const engine = getSuiteCoreI18nEngine({ constants: this.constants });
-    debugLog(
-      debug,
-      'log',
-      engine.t(
-        '[ {{SuiteCoreStringKey.Common_Connected}} ] {{SuiteCoreStringKey.Common_MongoDB}}',
-      ),
-    );
-
-    debugLog(
-      debug,
-      'log',
-      engine.t(
-        '[ {{SuiteCoreStringKey.Common_Loading}} ] {{SuiteCoreStringKey.Common_Schemas}}',
-      ),
-    );
-    this._schemaMap = this._schemaMapFactory(this.db.connection);
-    // Register all base models in ModelRegistry for extensibility
-    if (this._schemaMap) {
-      Object.values(this._schemaMap).forEach((schema) => {
-        ModelRegistry.instance.register({
-          modelName: schema.modelName,
-          schema: schema.schema,
-          model: schema.model,
-          collection: schema.collection,
-          discriminators: schema.discriminators,
-        });
-      });
-    }
-
-    if (debug) {
-      (
-        Object.values(this._schemaMap) as ISchema<
-          TID,
-          IBaseDocument<any, TID>
-        >[]
-      ).forEach((schema) => {
-        console.log(
-          engine.t(
-            `[ {{SuiteCoreStringKey.Common_Loaded}} ] {{SuiteCoreStringKey.Common_Schema}} '${schema.modelName.replace(
-              /[\r\n]/g,
-              '',
-            )}'`,
-          ),
-        );
-      });
-    }
-
-    if (!this._db.connection.db) {
-      console.error(
-        engine.translateStringKey(
-          SuiteCoreStringKey.Admin_Error_FailedToSetTransactionTimeout,
-        ),
-      );
-    } else {
-      const command = {
-        ...(this._environment.mongo.setParameterSupported
-          ? { setParameter: 1 }
-          : {}),
-        ...(this._environment.mongo.useTransactions &&
-        this._environment.mongo.transactionLifetimeLimitSecondsSupported
-          ? {
-              transactionLifetimeLimitSeconds:
-                this._environment.mongo.transactionTimeout,
-            }
-          : {}),
-        ...(this._environment.mongo.useTransactions &&
-        this._environment.mongo.maxTransactionLockRequestTimeoutMillisSupported
-          ? {
-              maxTransactionLockRequestTimeoutMillis:
-                this._environment.mongo.transactionLockRequestTimeout,
-            }
-          : {}),
-      };
-      if (Object.keys(command).length > 0) {
-        await this._db.connection.db
-          .admin()
-          .command(command)
-          .catch(() => undefined);
-      }
-      debugLog(
-        debug,
-        'log',
-        engine.translateStringKey(
-          SuiteCoreStringKey.Admin_SetTransactionTimeoutSuccessfully,
-        ),
-      );
-    }
-  }
-
-  /**
-   * Disconnect from database
-   */
-  protected async disconnectDatabase(debug = false): Promise<void> {
-    if (this._db && mongoose.connection.readyState !== 0) {
-      await this._db.disconnect();
-    }
-    const engine = getSuiteCoreI18nEngine({ constants: this.constants });
-    this._db = undefined;
-    debugLog(
-      debug,
-      'log',
-      `[ ${engine.translateStringKey(
-        SuiteCoreStringKey.Common_Disconnected,
-      )} ] ${engine.translateStringKey(SuiteCoreStringKey.Common_MongoDB)}`,
-    );
-  }
-
-  /**
-   * Set up an in-memory MongoDB instance for development
-   * @returns The MongoDB connection URI
-   */
-  protected async setupDevDatabase(): Promise<string> {
-    this._devDatabase = await MongoMemoryReplSet.create({
-      replSet: { count: 1, storageEngine: 'wiredTiger' },
-    });
-    await this._devDatabase.waitUntilRunning();
-    const mongoUri =
-      this._devDatabase.getUri(this._environment.devDatabase) +
-      '&maxPoolSize=20&minPoolSize=4';
-    this._environment.setEnvironment('mongo.uri', mongoUri);
-    debugLog(
-      this._environment.debug,
-      'log',
-      `MongoDB Memory Server with transactions: ${mongoUri}`,
-    );
-    return mongoUri;
-  }
-
-  /**
-   * Initialize the development database with default data
-   */
-  protected async initializeDevDatabase(): Promise<TInitResults> {
-    const engine = getSuiteCoreI18nEngine({ constants: this.constants });
-    debugLog(
-      this._environment.debug,
-      'log',
-      `${engine.translateStringKey(
-        SuiteCoreStringKey.Admin_StartingDatabaseInitialization,
-      )}: ${engine.translateStringKey(
-        SuiteCoreStringKey.Admin_TransactionsEnabledDisabledTemplate,
-        {
-          STATE: this._environment.mongo.useTransactions
-            ? engine.translateStringKey(SuiteCoreStringKey.Common_Enabled)
-            : engine.translateStringKey(SuiteCoreStringKey.Common_Disabled),
-        },
-      )}`,
-    );
-    let initTimeout: NodeJS.Timeout | undefined;
-    const initTimeoutMs = 300000;
-
-    const accountDataResult: IFailableResult<TInitResults> = await Promise.race(
-      [
-        this._databaseInitFunction(this),
-        new Promise<never>((_, reject) => {
-          initTimeout = setTimeout(() => {
-            const logMsg = engine.translateStringKey(
-              SuiteCoreStringKey.Admin_Error_FailedToInitializeUserDatabaseTimeoutTemplate,
-              { timeMs: initTimeoutMs.toString() },
-            );
-            console.error(logMsg);
-            reject(new Error(logMsg));
-          }, initTimeoutMs);
-        }),
-      ],
-    );
-    if (initTimeout) clearTimeout(initTimeout);
-
-    if (accountDataResult.success && accountDataResult.data) {
-      if (this._environment.detailedDebug) {
-        const initHash = this._initResultHashFunction(accountDataResult.data);
-        debugLog(
-          true,
-          'log',
-          engine.translateStringKey(
-            SuiteCoreStringKey.Admin_DatabaseInitializedWithOptionsHashTemplate,
-            { hash: initHash },
-          ),
-        );
-      }
-      return accountDataResult.data;
-    } else {
-      if (this._environment.detailedDebug && accountDataResult.error) {
-        debugLog(true, 'log', accountDataResult.error);
-      }
-      throw new TranslatableSuiteError(
-        SuiteCoreStringKey.Admin_Error_FailedToInitializeUserDatabase,
-      );
-    }
-  }
-
-  /**
-   * Get the in-memory MongoDB instance (if any)
-   */
-  public get devDatabase(): MongoMemoryReplSet | undefined {
-    return this._devDatabase;
-  }
-
-  /**
-   * Start the application and connect to the database
+   * Start the application and connect to the database.
+   * Delegates connection to IDatabase or legacy IDocumentStore.
    */
   public async start(mongoUri?: string, delayReady?: boolean): Promise<void> {
     if (this._ready) {
@@ -474,19 +244,99 @@ export class BaseApplication<
       }
       process.exit(1);
     }
-    if (this._environment.devDatabase && !this._devDatabase) {
-      mongoUri = await this.setupDevDatabase();
+
+    // Legacy IDocumentStore path: handle dev database setup
+    if (this._documentStore) {
+      if (this._environment.devDatabase && !this._documentStore.devDatabase) {
+        if (this._documentStore.setupDevStore) {
+          mongoUri = (await this._documentStore.setupDevStore()) as
+            | string
+            | undefined;
+        }
+      }
     }
+
+    // IDatabase path: handle dev store setup via lifecycle hooks
+    if (
+      this._database &&
+      this._lifecycleHooks?.setupDevStore &&
+      this._environment.devDatabase
+    ) {
+      mongoUri = await this._lifecycleHooks.setupDevStore();
+      this._devStoreProvisioned = true;
+    }
+
     try {
-      await this.connectDatabase(
-        mongoUri ?? this.environment.mongo.uri,
-        this.environment.debug,
-      );
+      const uri = mongoUri ?? this.environment.mongo.uri;
+
+      if (this._database) {
+        // IDatabase path: validate URI before connecting
+        if (this._lifecycleHooks?.validateUri) {
+          this._lifecycleHooks.validateUri(uri);
+        } else {
+          defaultMongoUriValidator(uri, this._environment.production);
+        }
+
+        await this._database.connect(uri);
+      } else if (this._documentStore) {
+        // Legacy IDocumentStore path
+        await this._documentStore.connect(uri);
+      }
 
       // Initialize plugins
       await this.plugins.initAll(this);
 
-      // Database initialization should be handled by the consuming application
+      // IDatabase path: run database initialization hook in dev mode
+      if (
+        this._database &&
+        this._lifecycleHooks?.initializeDatabase &&
+        this._environment.devDatabase
+      ) {
+        const initTimeoutMs = 300000; // 5 minutes
+        const engine = getSuiteCoreI18nEngine({ constants: this._constants });
+
+        let initTimeout: ReturnType<typeof setTimeout> | undefined;
+        const initResult = await Promise.race([
+          this._lifecycleHooks.initializeDatabase(this),
+          new Promise<never>((_, reject) => {
+            initTimeout = setTimeout(() => {
+              const logMsg = engine.translateStringKey(
+                SuiteCoreStringKey.Admin_Error_FailedToInitializeUserDatabaseTimeoutTemplate,
+                { timeMs: initTimeoutMs.toString() },
+              );
+              console.error(logMsg);
+              reject(new Error(logMsg));
+            }, initTimeoutMs);
+          }),
+        ]);
+        if (initTimeout) clearTimeout(initTimeout);
+
+        if (initResult.success && initResult.data !== undefined) {
+          if (
+            this._environment.detailedDebug &&
+            this._lifecycleHooks.hashInitResults
+          ) {
+            const initHash = this._lifecycleHooks.hashInitResults(
+              initResult.data,
+            );
+            debugLog(
+              true,
+              'log',
+              engine.translateStringKey(
+                SuiteCoreStringKey.Admin_DatabaseInitializedWithOptionsHashTemplate,
+                { hash: initHash },
+              ),
+            );
+          }
+        } else {
+          if (this._environment.detailedDebug && initResult.error) {
+            debugLog(true, 'log', initResult.error);
+          }
+          throw new TranslatableSuiteError(
+            SuiteCoreStringKey.Admin_Error_FailedToInitializeUserDatabase,
+          );
+        }
+      }
     } catch (err) {
       const sanitizedErr =
         err instanceof Error
@@ -502,30 +352,69 @@ export class BaseApplication<
   }
 
   /**
-   * Stop the application
+   * Stop the application.
+   * Delegates disconnection to IDatabase or legacy IDocumentStore.
    */
   public async stop(): Promise<void> {
     await this.plugins.stopAll();
-    await this.disconnectDatabase();
-    if (this._devDatabase) {
-      await this._devDatabase.stop();
-      this._devDatabase = undefined;
+
+    if (this._database) {
+      // IDatabase path
+      await this._database.disconnect();
+
+      // Teardown dev store if it was provisioned via lifecycle hooks
+      if (this._devStoreProvisioned && this._lifecycleHooks?.teardownDevStore) {
+        try {
+          await this._lifecycleHooks.teardownDevStore();
+        } catch (teardownErr) {
+          console.error(
+            'Failed to teardown dev store:',
+            teardownErr instanceof Error
+              ? teardownErr.message
+              : String(teardownErr),
+          );
+        }
+      }
+    } else if (this._documentStore) {
+      // Legacy IDocumentStore path
+      await this._documentStore.disconnect();
+      if (this._documentStore.devDatabase) {
+        await this._documentStore.devDatabase.stop();
+      }
     }
+
     this._ready = false;
   }
 
   /**
-   * Get a Mongoose model by name
-   * @param modelName Name of the model
-   * @returns
+   * Get a collection by name via the IDatabase interface.
+   * @param name Name of the collection
+   * @returns ICollection<T> for the named collection
+   * @throws if no IDatabase was provided
    */
+  public getCollection<T extends BsonDocument>(name: string): ICollection<T> {
+    if (!this._database) {
+      throw new TranslatableSuiteError(
+        SuiteCoreStringKey.Admin_Error_DatabaseNotConnectedYet,
+      );
+    }
+    return this._database.collection<T>(name);
+  }
+
+  /**
+   * Get a model by name, delegated to the legacy document store.
+   * @deprecated Use getCollection<T>(name) with IDatabase instead.
+   * @param modelName Name of the model
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public getModel<T extends IBaseDocument<any, TID>>(
     modelName: string,
   ): Model<T> {
-    // if (!this.db) {
-    //   throw new TranslatableError('Admin_Error_DatabaseNotConnectedYet');
-    // }
-    return ModelRegistry.instance.get<any, T>(modelName).model;
-    //return this.db.connection.model<T>(modelName);
+    if (!this._documentStore) {
+      throw new TranslatableSuiteError(
+        SuiteCoreStringKey.Admin_Error_DatabaseNotConnectedYet,
+      );
+    }
+    return this._documentStore.getModel<T>(modelName);
   }
 }

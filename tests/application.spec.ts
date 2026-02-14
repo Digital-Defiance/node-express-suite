@@ -153,15 +153,13 @@ describe('Application', () => {
   });
 
   describe('start() without devDatabase', () => {
-    it('should start without calling initializeDevDatabase', async () => {
+    it('should start without calling initializeDevStore', async () => {
       // Clear previous mock calls
       jest.clearAllMocks();
 
-      // Spy on the protected method
-      const initDevDbSpy = jest.spyOn(
-        application as any,
-        'initializeDevDatabase',
-      );
+      // Spy on the document store's initializeDevStore method
+      const store = (application as any)._documentStore;
+      const initDevStoreSpy = jest.spyOn(store, 'initializeDevStore');
 
       // Mock the base start method to avoid actual database connection
       jest
@@ -181,7 +179,7 @@ describe('Application', () => {
 
       await application.start();
 
-      expect(initDevDbSpy).not.toHaveBeenCalled();
+      expect(initDevStoreSpy).not.toHaveBeenCalled();
       expect(
         DatabaseInitializationService.printServerInitResults,
       ).not.toHaveBeenCalled();
@@ -262,7 +260,7 @@ describe('Application', () => {
       delete process.env.DEV_DATABASE;
     });
 
-    it('should call initializeDevDatabase when devDatabase is set', async () => {
+    it('should call initializeDevStore when devDatabase is set', async () => {
       // Clear previous mock calls
       jest.clearAllMocks();
 
@@ -291,19 +289,21 @@ describe('Application', () => {
         },
       };
 
-      // Spy on initializeDevDatabase
-      const initDevDbSpy = jest
-        .spyOn(application as any, 'initializeDevDatabase')
+      // Spy on the document store's methods
+      const store = (application as any)._documentStore;
+      const initDevStoreSpy = jest
+        .spyOn(store, 'initializeDevStore')
         .mockResolvedValue(mockInitResults);
 
-      // Mock setupDevDatabase to provide a devDatabase instance
+      // Mock setupDevStore to provide a devDatabase instance
       jest
-        .spyOn(application as any, 'setupDevDatabase')
+        .spyOn(store, 'setupDevStore')
         .mockResolvedValue('mongodb://localhost/test');
 
-      // Mock the devDatabase getter to return a truthy value
-      Object.defineProperty(application, 'devDatabase', {
-        get: jest.fn(() => ({ getUri: () => 'mongodb://localhost/test' })),
+      // Mock the devDatabase getter on the store to return a truthy value
+      Object.defineProperty(store, '_devDatabase', {
+        value: { getUri: () => 'mongodb://localhost/test' },
+        writable: true,
         configurable: true,
       });
 
@@ -325,7 +325,7 @@ describe('Application', () => {
 
       await application.start();
 
-      expect(initDevDbSpy).toHaveBeenCalled();
+      expect(initDevStoreSpy).toHaveBeenCalled();
       expect(
         DatabaseInitializationService.printServerInitResults,
       ).toHaveBeenCalledWith(mockInitResults, false);
@@ -362,14 +362,16 @@ describe('Application', () => {
         },
       };
 
+      const store = (application as any)._documentStore;
       jest
-        .spyOn(application as any, 'initializeDevDatabase')
+        .spyOn(store, 'initializeDevStore')
         .mockResolvedValue(mockInitResults);
       jest
-        .spyOn(application as any, 'setupDevDatabase')
+        .spyOn(store, 'setupDevStore')
         .mockResolvedValue('mongodb://localhost/test');
-      Object.defineProperty(application, 'devDatabase', {
-        get: jest.fn(() => ({ getUri: () => 'mongodb://localhost/test' })),
+      Object.defineProperty(store, '_devDatabase', {
+        value: { getUri: () => 'mongodb://localhost/test' },
+        writable: true,
         configurable: true,
       });
       jest
@@ -397,20 +399,20 @@ describe('Application', () => {
       listenSpy.mockRestore();
     }, 10000); // Increase timeout
 
-    it('should handle initializeDevDatabase errors', async () => {
+    it('should handle initializeDevStore errors', async () => {
       // Clear previous mock calls
       jest.clearAllMocks();
 
       const mockError = new Error('Database initialization failed');
 
+      const store = (application as any)._documentStore;
+      jest.spyOn(store, 'initializeDevStore').mockRejectedValue(mockError);
       jest
-        .spyOn(application as any, 'initializeDevDatabase')
-        .mockRejectedValue(mockError);
-      jest
-        .spyOn(application as any, 'setupDevDatabase')
+        .spyOn(store, 'setupDevStore')
         .mockResolvedValue('mongodb://localhost/test');
-      Object.defineProperty(application, 'devDatabase', {
-        get: jest.fn(() => ({ getUri: () => 'mongodb://localhost/test' })),
+      Object.defineProperty(store, '_devDatabase', {
+        value: { getUri: () => 'mongodb://localhost/test' },
+        writable: true,
         configurable: true,
       });
       jest

@@ -19,3 +19,7 @@ export * from './xor';
 export * from './upnp';
 export * from './upnp-config';
 export * from './upnp-manager';
+export * from './mongoose-document-store';
+export * from './mongoose-session-adapter';
+export * from './mongoose-collection';
+export * from './mongoose-database';

@@ -5,6 +5,7 @@
  */
 
 import { I18nEngine } from '@digitaldefiance/i18n-lib';
+import type { IClientSession, IDatabase } from '@brightchain/brightchain-lib';
 import {
   ClientSession,
   Connection,
@@ -275,7 +276,37 @@ export function getDefaultBaseDelay(): number {
 }
 
 /**
- * Wraps a callback in a transaction if necessary
+ * Transaction callback type for IDatabase-based transactions.
+ * Accepts an IClientSession instead of a mongoose ClientSession.
+ */
+export type IDatabaseTransactionCallback<T> = (
+  session: IClientSession | undefined,
+  ...args: Array<unknown>
+) => Promise<T>;
+
+/**
+ * Wraps a callback in a transaction if necessary.
+ * Overload accepting IDatabase for storage-agnostic transaction support.
+ * @param database The IDatabase instance
+ * @param useTransaction Whether to use a transaction
+ * @param session The IClientSession to use (or undefined to create one)
+ * @param callback The callback to wrap
+ * @param options Transaction options including timeout and retry attempts
+ * @param args The arguments to pass to the callback
+ * @returns The result of the callback
+ */
+export async function withTransaction<T, TID extends PlatformID = Buffer>(
+  database: IDatabase,
+  useTransaction: boolean,
+  session: IClientSession | undefined,
+  callback: IDatabaseTransactionCallback<T>,
+  options?: TransactionOptions<TID>,
+  ...args: Array<unknown>
+): Promise<T>;
+
+/**
+ * Wraps a callback in a transaction if necessary.
+ * Legacy overload accepting a mongoose Connection.
  * @param connection The mongoose connection
  * @param useTransaction Whether to use a transaction
  * @param session The session to use
@@ -289,8 +320,20 @@ export async function withTransaction<T, TID extends PlatformID = Buffer>(
   useTransaction: boolean,
   session: ClientSession | undefined,
   callback: TransactionCallback<T>,
+  options?: TransactionOptions<TID>,
+  ...args: Array<unknown>
+): Promise<T>;
+
+/**
+ * Unified implementation for both IDatabase and mongoose Connection overloads.
+ */
+export async function withTransaction<T, TID extends PlatformID = Buffer>(
+  connectionOrDatabase: Connection | IDatabase,
+  useTransaction: boolean,
+  session: ClientSession | IClientSession | undefined,
+  callback: TransactionCallback<T> | IDatabaseTransactionCallback<T>,
   options: TransactionOptions<TID> = {},
-  ...args: any
+  ...args: Array<unknown>
 ): Promise<T> {
   const engine = getSuiteCoreI18nEngine(
     options.application
@@ -300,17 +343,120 @@ export async function withTransaction<T, TID extends PlatformID = Buffer>(
   const isTestEnvironment = process.env['NODE_ENV'] === 'test';
   const {
     timeoutMs = DEFAULT_TRANSACTION_TIMEOUT,
-    retryAttempts = DEFAULT_RETRY_ATTEMPTS, // Use consistent retry attempts
+    retryAttempts = DEFAULT_RETRY_ATTEMPTS,
     baseDelay = getDefaultBaseDelay(),
     debugLogEnabled,
   } = options;
+
+  // Detect whether we received an IDatabase or a mongoose Connection via duck-typing.
+  // mongoose Connection has 'getClient' method; IDatabase does not.
+  // Guard against undefined/null (e.g. when db.connection is not set in test mocks).
+  const isIDatabaseInstance =
+    connectionOrDatabase != null &&
+    typeof connectionOrDatabase === 'object' &&
+    'collection' in connectionOrDatabase &&
+    'startSession' in connectionOrDatabase &&
+    !('getClient' in connectionOrDatabase);
+
   if (!useTransaction) {
-    return await callback(session, undefined, ...args);
+    // When not using a transaction, call the callback directly with the session.
+    // In the IDatabase path, session is IClientSession; in legacy path, it's ClientSession.
+    if (isIDatabaseInstance) {
+      const dbCallback = callback as IDatabaseTransactionCallback<T>;
+      return await dbCallback(
+        session as IClientSession | undefined,
+        undefined,
+        ...args,
+      );
+    }
+    return await (callback as TransactionCallback<T>)(
+      session as ClientSession | undefined,
+      undefined,
+      ...args,
+    );
   }
   const needSession = useTransaction && session === undefined;
+
+  if (isIDatabaseInstance) {
+    // IDatabase path: use database.startSession() for IClientSession
+    const database = connectionOrDatabase as IDatabase;
+    const dbCallback = callback as IDatabaseTransactionCallback<T>;
+    let attempt = 0;
+    while (attempt < retryAttempts) {
+      const s = needSession
+        ? database.startSession()
+        : (session as IClientSession);
+      try {
+        if (needSession && s !== undefined) {
+          s.startTransaction();
+        }
+
+        // Race the callback against the timeout
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          setTimeout(() => {
+            reject(
+              new Error(
+                engine.translateStringKey(
+                  SuiteCoreStringKey.Admin_TransactionTimeoutTemplate,
+                  { timeMs: timeoutMs },
+                ),
+              ),
+            );
+          }, timeoutMs);
+        });
+
+        const result = await Promise.race([
+          dbCallback(s, ...args),
+          timeoutPromise,
+        ]);
+
+        if (needSession && s !== undefined) await s.commitTransaction();
+        return result;
+      } catch (error: unknown) {
+        const err = error as Record<string, unknown> | null;
+        if (needSession && s !== undefined && s.inTransaction)
+          await s.abortTransaction();
+
+        const isTransientError = isTransientTransactionError(err);
+
+        if (isTransientError && attempt < retryAttempts - 1) {
+          attempt++;
+          const delay = computeRetryDelay(
+            baseDelay,
+            attempt,
+            isTestEnvironment,
+          );
+          debugLog(
+            debugLogEnabled === true,
+            'warn',
+            engine.translateStringKey(
+              SuiteCoreStringKey.Admin_TransactionFailedTransientTemplate,
+              { delayMs: delay, attempt, attempts: retryAttempts },
+              undefined,
+            ),
+          );
+          await new Promise((resolve) => setTimeout(resolve, delay));
+          continue;
+        }
+
+        throw error;
+      } finally {
+        if (needSession && s !== undefined) s.endSession();
+      }
+    }
+
+    const delay = computeRetryDelay(baseDelay, attempt, isTestEnvironment);
+    throw new TranslatableSuiteError(
+      SuiteCoreStringKey.Admin_TransactionFailedTransientTemplate,
+      { delayMs: delay, attempt, attempts: retryAttempts },
+    );
+  }
+
+  // Legacy mongoose Connection path
+  const connection = connectionOrDatabase as Connection;
+  const legacyCallback = callback as TransactionCallback<T>;
   const client = connection.getClient();
   if (!client) {
-    // If no client is available, fall back to non-transactional execution
     debugLog(
       debugLogEnabled === true,
       'warn',
@@ -318,12 +464,18 @@ export async function withTransaction<T, TID extends PlatformID = Buffer>(
         SuiteCoreStringKey.Admin_NoMongoDbClientFoundFallingBack,
       ),
     );
-    return await callback(session, undefined, ...args);
+    return await legacyCallback(
+      session as ClientSession | undefined,
+      undefined,
+      ...args,
+    );
   }
 
   let attempt = 0;
   while (attempt < retryAttempts) {
-    const s = needSession ? await client.startSession() : session;
+    const s = needSession
+      ? await client.startSession()
+      : (session as ClientSession);
     try {
       if (needSession && s !== undefined) {
         await s.startTransaction({
@@ -345,55 +497,29 @@ export async function withTransaction<T, TID extends PlatformID = Buffer>(
         }, timeoutMs);
       });
 
-      const result = await Promise.race([callback(s, ...args), timeoutPromise]);
+      const result = await Promise.race([
+        legacyCallback(s, ...args),
+        timeoutPromise,
+      ]);
 
       if (needSession && s !== undefined) await s.commitTransaction();
       return result;
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as Record<string, unknown> | null;
       if (needSession && s !== undefined && s.inTransaction())
         await s.abortTransaction();
 
-      // Check if this is a transient transaction error that can be retried
-      const isTransientError =
-        error?.errorLabelSet?.has('TransientTransactionError') ||
-        error?.errorLabelSet?.has('UnknownTransactionCommitResult') ||
-        error?.code === 251 || // NoSuchTransaction
-        error?.code === 112 || // WriteConflict
-        error?.code === 11000 || // DuplicateKey - very common in concurrent initialization
-        error?.code === 16500 || // TransactionAborted
-        error?.code === 244 || // TransactionTooOld
-        error?.code === 246 || // ExceededTimeLimit
-        error?.code === 13436 || // TransactionTooLargeForCache
-        error?.code === 50 || // MaxTimeMSExpired
-        error?.message?.includes('Transaction') ||
-        error?.message?.includes('aborted') ||
-        error?.message?.includes('WriteConflict') ||
-        error?.message?.includes('NoSuchTransaction') ||
-        error?.message?.includes('TransactionTooOld') ||
-        error?.message?.includes('ExceededTimeLimit') ||
-        error?.message?.includes('duplicate key error') ||
-        error?.message?.includes('E11000') ||
-        (error?.code === 11000 && error?.message?.includes('duplicate')); // More specific duplicate key handling
+      const isTransientError = isTransientTransactionError(err);
 
       if (isTransientError && attempt < retryAttempts - 1) {
         attempt++;
-        const jitter = Math.random() * 0.3; // Reduced jitter
-        const actualBaseDelay = isTestEnvironment
-          ? Math.floor(baseDelay * 0.5)
-          : baseDelay; // Shorter base delay in tests
-        const delay = Math.floor(
-          actualBaseDelay * (1 + attempt * 0.5) * (1 + jitter),
-        ); // Linear backoff instead of exponential
+        const delay = computeRetryDelay(baseDelay, attempt, isTestEnvironment);
         debugLog(
           debugLogEnabled === true,
           'warn',
           engine.translateStringKey(
             SuiteCoreStringKey.Admin_TransactionFailedTransientTemplate,
-            {
-              delayMs: delay,
-              attempt,
-              attempts: retryAttempts,
-            },
+            { delayMs: delay, attempt, attempts: retryAttempts },
             undefined,
           ),
         );
@@ -407,13 +533,13 @@ export async function withTransaction<T, TID extends PlatformID = Buffer>(
     }
   }
 
-  const jitter = Math.random() * 0.3; // Reduced jitter
+  const jitter = Math.random() * 0.3;
   const actualBaseDelay = isTestEnvironment
     ? Math.floor(baseDelay * 0.5)
-    : baseDelay; // Shorter base delay in tests
+    : baseDelay;
   const delay = Math.floor(
     actualBaseDelay * (1 + attempt * 0.5) * (1 + jitter),
-  ); // Linear backoff instead of exponential
+  );
 
   throw new TranslatableSuiteError(
     SuiteCoreStringKey.Admin_TransactionFailedTransientTemplate,
@@ -423,6 +549,55 @@ export async function withTransaction<T, TID extends PlatformID = Buffer>(
       attempts: retryAttempts,
     },
   );
+}
+
+/**
+ * Checks whether an error is a transient transaction error that can be retried.
+ */
+function isTransientTransactionError(
+  error: Record<string, unknown> | null,
+): boolean {
+  if (!error) return false;
+  const errorLabelSet = error['errorLabelSet'] as Set<string> | undefined;
+  const code = error['code'] as number | undefined;
+  const message = error['message'] as string | undefined;
+
+  return (
+    (errorLabelSet?.has('TransientTransactionError') ?? false) ||
+    (errorLabelSet?.has('UnknownTransactionCommitResult') ?? false) ||
+    code === 251 || // NoSuchTransaction
+    code === 112 || // WriteConflict
+    code === 11000 || // DuplicateKey
+    code === 16500 || // TransactionAborted
+    code === 244 || // TransactionTooOld
+    code === 246 || // ExceededTimeLimit
+    code === 13436 || // TransactionTooLargeForCache
+    code === 50 || // MaxTimeMSExpired
+    (message?.includes('Transaction') ?? false) ||
+    (message?.includes('aborted') ?? false) ||
+    (message?.includes('WriteConflict') ?? false) ||
+    (message?.includes('NoSuchTransaction') ?? false) ||
+    (message?.includes('TransactionTooOld') ?? false) ||
+    (message?.includes('ExceededTimeLimit') ?? false) ||
+    (message?.includes('duplicate key error') ?? false) ||
+    (message?.includes('E11000') ?? false) ||
+    (code === 11000 && (message?.includes('duplicate') ?? false))
+  );
+}
+
+/**
+ * Computes the retry delay with linear backoff and jitter.
+ */
+function computeRetryDelay(
+  baseDelay: number,
+  attempt: number,
+  isTestEnvironment: boolean,
+): number {
+  const jitter = Math.random() * 0.3;
+  const actualBaseDelay = isTestEnvironment
+    ? Math.floor(baseDelay * 0.5)
+    : baseDelay;
+  return Math.floor(actualBaseDelay * (1 + attempt * 0.5) * (1 + jitter));
 }
 
 /**

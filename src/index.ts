@@ -82,3 +82,4 @@ export {
 } from './utils';
 export type { TransactionOptions as UtilsTransactionOptions } from './utils';
 export * from './validation';
+export { defaultMongoUriValidator } from './utils/default-mongo-uri-validator';
