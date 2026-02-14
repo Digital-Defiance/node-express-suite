@@ -1,6 +1,6 @@
 {
   "name": "@digitaldefiance/node-express-suite",
-  "version": "3.13.0",
+  "version": "3.13.1",
   "homepage": "https://github.com/Digital-Defiance/node-express-suite",
   "repository": {
     "type": "git",
@@ -38,7 +38,6 @@
     "publish:public": "npm publish --access public"
   },
   "dependencies": {
-    "@brightchain/brightchain-lib": "file:../../../BrightChain/dist/brightchain-lib",
     "@digitaldefiance/ecies-lib": "4.18.0",
     "@digitaldefiance/i18n-lib": "4.5.0",
     "@digitaldefiance/mongoose-types": "8.20.9",

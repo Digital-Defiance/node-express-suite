@@ -5,7 +5,7 @@
  */
 
 import { I18nEngine } from '@digitaldefiance/i18n-lib';
-import type { IClientSession, IDatabase } from '@brightchain/brightchain-lib';
+import type { IClientSession, IDatabase } from './interfaces/storage';
 import {
   ClientSession,
   Connection,

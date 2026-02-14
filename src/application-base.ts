@@ -10,7 +10,7 @@ import type {
   ICollection,
   IDatabase,
   IDatabaseLifecycleHooks,
-} from '@brightchain/brightchain-lib';
+} from './interfaces/storage';
 import { Model } from '@digitaldefiance/mongoose-types';
 import mongoose from '@digitaldefiance/mongoose-types';
 import {

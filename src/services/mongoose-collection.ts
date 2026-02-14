@@ -31,7 +31,7 @@ import type {
   ValidationFieldError,
   WriteConcern,
   WriteOptions,
-} from '@brightchain/brightchain-lib';
+} from '../interfaces/storage';
 import type { Connection, Model } from '@digitaldefiance/mongoose-types';
 import { Schema } from '@digitaldefiance/mongoose-types';
 import type { ClientSession } from 'mongodb';

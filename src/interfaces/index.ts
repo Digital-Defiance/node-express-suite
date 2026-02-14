@@ -1,4 +1,5 @@
 export * from './document-store';
+export * from './storage';
 
 export * from './api-error-response';
 export * from './api-express-validation-error-response';

@@ -5,7 +5,7 @@
  * @module services/mongoose-session-adapter
  */
 
-import type { IClientSession } from '@brightchain/brightchain-lib';
+import type { IClientSession } from '../interfaces/storage';
 import type { ClientSession } from 'mongodb';
 
 /**

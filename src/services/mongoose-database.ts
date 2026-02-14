@@ -12,7 +12,7 @@ import type {
   IClientSession,
   ICollection,
   IDatabase,
-} from '@brightchain/brightchain-lib';
+} from '../interfaces/storage';
 import mongoose from '@digitaldefiance/mongoose-types';
 import type { Connection } from '@digitaldefiance/mongoose-types';
 import { MongooseCollection } from './mongoose-collection';
