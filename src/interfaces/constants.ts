@@ -13,6 +13,7 @@ import {
   PbkdfProfiles,
 } from '@digitaldefiance/node-ecies-lib';
 import { IConstants as ISuiteCoreConstants } from '@digitaldefiance/suite-core-lib';
+import type { II18nConstants } from '@digitaldefiance/i18n-lib';
 import { IFECConsts } from './fec-consts';
 import { IJwtConsts } from './jwt-consts';
 import {
@@ -24,10 +25,12 @@ import { CipherGCMTypes } from 'crypto';
 
 /**
  * Combination of all constants from all libraries.
- * Extends Node ECIES constants (which includes ECIES_CONFIG and all crypto constants)
- * and Suite Core constants (which includes site-specific configuration).
+ * Extends Node ECIES constants (which includes ECIES_CONFIG and all crypto constants),
+ * Suite Core constants (which includes site-specific configuration),
+ * and II18nConstants (which provides the index signature needed for i18n template resolution).
  */
-export interface IConstants extends INodeEciesConstants, ISuiteCoreConstants {
+export interface IConstants
+  extends INodeEciesConstants, ISuiteCoreConstants, II18nConstants {
   /**
    * JWT constants
    */
