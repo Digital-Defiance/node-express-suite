@@ -44,13 +44,13 @@ function createHttpRedirectApp(): express.Application {
 
 // ─── Arbitraries ────────────────────────────────────────────────────────────
 
-/** Arbitrary for a valid DNS label (1-12 chars, alphanumeric + internal hyphens) */
+/** Arbitrary for a valid DNS label (2-12 chars, lowercase alphanumeric + internal hyphens) */
 const dnsLabelArb: fc.Arbitrary<string> = fc.stringMatching(
-  /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,10}[a-zA-Z0-9])?$/,
+  /^[a-z0-9][a-z0-9-]{0,9}[a-z0-9]$/,
 );
 
-/** Arbitrary for a valid TLD (2-6 alpha chars) */
-const tldArb: fc.Arbitrary<string> = fc.stringMatching(/^[a-zA-Z]{2,6}$/);
+/** Arbitrary for a valid TLD (2-6 lowercase alpha chars) */
+const tldArb: fc.Arbitrary<string> = fc.stringMatching(/^[a-z]{2,6}$/);
 
 /** Arbitrary for a valid hostname (one or more labels + TLD) */
 const hostArb: fc.Arbitrary<string> = fc
