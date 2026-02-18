@@ -26,6 +26,7 @@ export * from './flexible-csp';
 export * from './handleable-error-options';
 export * from './jwt-consts';
 export * from './jwt-sign-response';
+export * from './lets-encrypt-config';
 export * from './models';
 export * from './mongo-errors';
 export * from './network';

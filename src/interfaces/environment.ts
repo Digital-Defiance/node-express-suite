@@ -8,22 +8,7 @@ import { SecureBuffer, SecureString } from '@digitaldefiance/ecies-lib';
 import { BackupCode } from '../backup-code';
 import { IMongoEnvironment } from './environment-mongo';
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
-
-/**
- * Configuration for Let's Encrypt / Greenlock TLS certificate management.
- */
-export interface ILetsEncryptConfig {
-  /** Whether Let's Encrypt is enabled */
-  enabled: boolean;
-  /** Contact email for Let's Encrypt account (required when enabled) */
-  maintainerEmail: string;
-  /** List of hostnames to obtain certificates for */
-  hostnames: string[];
-  /** Use Let's Encrypt staging directory for testing */
-  staging: boolean;
-  /** Directory for Greenlock config and certificate storage */
-  configDir: string;
-}
+import { ILetsEncryptConfig } from './lets-encrypt-config';
 
 /**
  * Environment configuration interface for the application.

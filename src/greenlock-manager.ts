@@ -14,7 +14,7 @@ import {
   GreenlockSiteConfig,
 } from 'greenlock-express';
 import { Server } from 'http';
-import { ILetsEncryptConfig } from './interfaces/environment';
+import { ILetsEncryptConfig } from './interfaces/lets-encrypt-config';
 
 type ServerWithOptionalClose = Server & { closeAllConnections?: () => void };
 
@@ -72,7 +72,7 @@ export class GreenlockManager {
    */
   private buildSiteConfig(): GreenlockSiteConfig[] {
     const subject =
-      this.config.hostnames.find((h) => !h.startsWith('*.')) ??
+      this.config.hostnames.find((h: string) => !h.startsWith('*.')) ??
       this.config.hostnames[0];
 
     return [

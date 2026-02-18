@@ -17,7 +17,8 @@ import { LocalhostConstants } from './constants';
 import { setGlobalActiveContextAdminLanguageFromProcessArgvOrEnv } from './get-language';
 import { setGlobalActiveContextAdminTimezoneFromProcessArgvOrEnv } from './get-timezone';
 import { IConstants } from './interfaces/constants';
-import { IEnvironment, ILetsEncryptConfig } from './interfaces/environment';
+import { IEnvironment } from './interfaces/environment';
+import { ILetsEncryptConfig } from './interfaces/lets-encrypt-config';
 import { IMongoEnvironment } from './interfaces/environment-mongo';
 import type { EnvironmentVariables } from './types/environment-variables';
 import {
