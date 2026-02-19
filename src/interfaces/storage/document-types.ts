@@ -355,7 +355,9 @@ export type CollectionSchemaFieldType =
   | 'array'
   | 'null'
   | 'date'
-  | 'any';
+  | 'any'
+  | 'branded-primitive'
+  | 'branded-interface';
 
 /**
  * Per-field schema definition for collection validation.
@@ -389,6 +391,8 @@ export interface FieldSchema {
   additionalProperties?: boolean;
   /** Custom validation function */
   validate?: (value: unknown) => boolean | string;
+  /** Branded primitive or interface ID to resolve from the Interface_Registry */
+  ref?: string;
 }
 
 /**
