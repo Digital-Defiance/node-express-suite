@@ -26,7 +26,7 @@ import { BackupCode } from '../backup-code';
 import { LocalhostConstants as AppConstants } from '../constants';
 import { IUserDocument } from '../documents';
 import { InvalidBackupCodeVersionError } from '../errors/invalid-backup-code-version';
-import { IMongoApplication } from '../interfaces/mongo-application';
+import { IApplication } from '../interfaces/application';
 import { BaseService } from './base';
 import { KeyWrappingService } from './index';
 import { RoleService } from './role';
@@ -46,7 +46,7 @@ export class BackupCodeService<
   TID extends PlatformID = Buffer,
   TDate extends Date = Date,
   TTokenRole extends ITokenRole<TID, TDate> = ITokenRole<TID, TDate>,
-  TApplication extends IMongoApplication<TID> = IMongoApplication<TID>,
+  TApplication extends IApplication<TID> = IApplication<TID>,
 > extends BaseService<TID> {
   private readonly eciesService: ECIESService<TID>;
   private systemUser?: BackendMember<TID>;
