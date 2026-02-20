@@ -2,6 +2,7 @@ import { Connection } from '@digitaldefiance/mongoose-types';
 import { registerNodeRuntimeConfiguration } from '@digitaldefiance/node-ecies-lib';
 import { Application } from '../src/application';
 import { BaseApplication } from '../src/application-base';
+import { MongoApplicationBase } from '../src/mongo-application-base';
 import { LocalhostConstants } from '../src/constants';
 import { Environment } from '../src/environment';
 import { IConstants, IServerInitResult } from '../src/interfaces';
@@ -119,7 +120,9 @@ describe('Application', () => {
 
   afterEach(async () => {
     // Clean up - mock stop to avoid hanging
-    jest.spyOn(BaseApplication.prototype, 'stop').mockResolvedValue(undefined);
+    jest
+      .spyOn(MongoApplicationBase.prototype, 'stop')
+      .mockResolvedValue(undefined);
     jest.clearAllMocks();
     if (application && application.ready) {
       try {
@@ -163,7 +166,7 @@ describe('Application', () => {
 
       // Mock the base start method to avoid actual database connection
       jest
-        .spyOn(BaseApplication.prototype as any, 'start')
+        .spyOn(MongoApplicationBase.prototype as any, 'start')
         .mockResolvedValue(undefined);
 
       // Mock express app listen
@@ -309,7 +312,7 @@ describe('Application', () => {
 
       // Mock the base start method
       jest
-        .spyOn(BaseApplication.prototype as any, 'start')
+        .spyOn(MongoApplicationBase.prototype as any, 'start')
         .mockResolvedValue(undefined);
 
       // Mock express app listen
@@ -375,7 +378,7 @@ describe('Application', () => {
         configurable: true,
       });
       jest
-        .spyOn(BaseApplication.prototype as any, 'start')
+        .spyOn(MongoApplicationBase.prototype as any, 'start')
         .mockResolvedValue(undefined);
       const listenSpy = jest
         .spyOn(application.expressApp, 'listen')
@@ -416,7 +419,7 @@ describe('Application', () => {
         configurable: true,
       });
       jest
-        .spyOn(BaseApplication.prototype as any, 'start')
+        .spyOn(MongoApplicationBase.prototype as any, 'start')
         .mockResolvedValue(undefined);
 
       // Set NODE_ENV to test to make the error throw instead of exit
@@ -439,7 +442,7 @@ describe('Application', () => {
     it('should stop the application', async () => {
       // Mock the base stop method
       jest
-        .spyOn(BaseApplication.prototype, 'stop')
+        .spyOn(MongoApplicationBase.prototype, 'stop')
         .mockResolvedValue(undefined);
 
       // Mock server
@@ -459,7 +462,7 @@ describe('Application', () => {
 
     it('should handle missing server gracefully', async () => {
       jest
-        .spyOn(BaseApplication.prototype, 'stop')
+        .spyOn(MongoApplicationBase.prototype, 'stop')
         .mockResolvedValue(undefined);
       (application as any).server = null;
       (application as any)._ready = true;

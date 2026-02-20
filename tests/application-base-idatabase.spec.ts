@@ -28,6 +28,7 @@ import {
   jest,
 } from '@jest/globals';
 import { BaseApplication } from '../src/application-base';
+import { MongoApplicationBase } from '../src/mongo-application-base';
 import { Environment } from '../src/environment';
 import { withTransaction } from '../src/utils';
 import type { IDatabaseTransactionCallback } from '../src/utils';
@@ -285,11 +286,7 @@ function setupTestEnv(): void {
 // TestApplication subclass that accepts IDatabase directly
 // ---------------------------------------------------------------------------
 
-class IDatabaseTestApplication extends BaseApplication<
-  Buffer,
-  Record<string, never>,
-  void
-> {
+class IDatabaseTestApplication extends BaseApplication<Buffer, void> {
   constructor(env: Environment, database: IDatabase) {
     super(env, database);
   }
@@ -323,9 +320,12 @@ describe('BaseApplication with IDatabase', () => {
       expect(app.database).toBe(mockDb);
     });
 
-    it('should set documentStore to undefined when IDatabase is provided', () => {
+    it('should not have documentStore when IDatabase is provided', () => {
       const app = new IDatabaseTestApplication(env, mockDb);
-      expect(app.documentStore).toBeUndefined();
+      // BaseApplication is database-agnostic; documentStore is on MongoApplicationBase
+      expect(
+        (app as Record<string, unknown>)['_documentStore'],
+      ).toBeUndefined();
     });
 
     it('should initialize services and plugins', () => {
@@ -404,15 +404,15 @@ describe('BaseApplication with IDatabase', () => {
       expect(mockDb.callLog.collection).toContain('users');
     });
 
-    it('should throw when no IDatabase is available', () => {
-      // Create an app with a legacy IDocumentStore so _database is undefined
+    it('should throw when using MongoApplicationBase with legacy IDocumentStore', () => {
+      // Create an app with a legacy IDocumentStore so the no-op IDatabase is used
       const store = new MongooseDocumentStore(
         () => ({}),
         async () => ({ success: true, data: {} }),
         () => 'hash',
         env,
       );
-      const legacyApp = new BaseApplication(env, store);
+      const legacyApp = new MongoApplicationBase(env, store);
       expect(() => legacyApp.getCollection('users')).toThrow();
     });
   });
@@ -422,7 +422,7 @@ describe('BaseApplication with IDatabase', () => {
 // Backward compatibility with legacy IDocumentStore
 // ---------------------------------------------------------------------------
 
-describe('BaseApplication backward compatibility with IDocumentStore', () => {
+describe('MongoApplicationBase backward compatibility with IDocumentStore', () => {
   let env: Environment;
 
   beforeEach(() => {
@@ -443,9 +443,10 @@ describe('BaseApplication backward compatibility with IDocumentStore', () => {
       () => 'hash',
       env,
     );
-    const app = new BaseApplication(env, store);
+    const app = new MongoApplicationBase(env, store);
     expect(app.documentStore).toBe(store);
-    expect(app.database).toBeUndefined();
+    // MongoApplicationBase with IDocumentStore uses a no-op IDatabase internally
+    expect(app.database).toBeDefined();
   });
 
   it('should call IDocumentStore.connect on start', async () => {
@@ -459,7 +460,7 @@ describe('BaseApplication backward compatibility with IDocumentStore', () => {
       .spyOn(store, 'connect')
       .mockResolvedValue(undefined);
 
-    const app = new BaseApplication(env, store);
+    const app = new MongoApplicationBase(env, store);
     await app.start('mongodb://localhost:27017/test');
 
     expect(connectSpy).toHaveBeenCalledWith('mongodb://localhost:27017/test');
@@ -482,7 +483,7 @@ describe('BaseApplication backward compatibility with IDocumentStore', () => {
       .spyOn(store, 'disconnect')
       .mockResolvedValue(undefined);
 
-    const app = new BaseApplication(env, store);
+    const app = new MongoApplicationBase(env, store);
     await app.start('mongodb://localhost:27017/test');
     await app.stop();
 
@@ -500,7 +501,7 @@ describe('BaseApplication backward compatibility with IDocumentStore', () => {
       () => 'hash',
       env,
     );
-    const app = new BaseApplication(env, store);
+    const app = new MongoApplicationBase(env, store);
     expect(typeof app.getModel).toBe('function');
   });
 });

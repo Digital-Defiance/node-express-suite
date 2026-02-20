@@ -11,7 +11,7 @@ import {
 } from '@digitaldefiance/suite-core-lib';
 import { HelmetOptions } from 'helmet';
 import { Application } from '../application';
-import { BaseApplication } from '../application-base';
+import { MongoApplicationBase } from '../mongo-application-base';
 import { IBaseDocument } from '../documents';
 import { Environment } from '../environment';
 import {
@@ -48,7 +48,7 @@ export class ApplicationBuilder<
     connection: mongoose.Connection,
   ) => SchemaMap<TID, TModelDocs>;
   private databaseInitFunction?: (
-    app: BaseApplication<TID, TModelDocs, TInitResults>,
+    app: MongoApplicationBase<TID, TModelDocs, TInitResults>,
   ) => Promise<IFailableResult<TInitResults>>;
   private initResultHashFunction?: (results: TInitResults) => string;
   private cspConfig?: ICSPConfig | HelmetOptions | IFlexibleCSP;
@@ -79,7 +79,7 @@ export class ApplicationBuilder<
 
   withDatabaseInit(
     initFn: (
-      app: BaseApplication<TID, TModelDocs, TInitResults>,
+      app: MongoApplicationBase<TID, TModelDocs, TInitResults>,
     ) => Promise<IFailableResult<TInitResults>>,
     hashFn: (results: TInitResults) => string,
   ): this {

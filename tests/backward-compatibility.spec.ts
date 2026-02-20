@@ -7,7 +7,7 @@
  * Validates: Requirements 5.1, 5.2, 5.3, 5.4
  */
 import { withConsoleMocks } from '@digitaldefiance/express-suite-test-utils';
-import { BaseApplication } from '../src/application-base';
+import { MongoApplicationBase } from '../src/mongo-application-base';
 import { Environment } from '../src/environment';
 import { IDocumentStore } from '../src/interfaces/document-store';
 
@@ -62,7 +62,7 @@ function createTestEnv(devDatabase = false): Environment<string> {
 // Tests
 // ---------------------------------------------------------------------------
 
-describe('Backward compatibility: BaseApplication with IDocumentStore (no hooks)', () => {
+describe('Backward compatibility: MongoApplicationBase with IDocumentStore (no hooks)', () => {
   afterEach(() => {
     delete process.env.DEV_DATABASE;
   });
@@ -77,7 +77,7 @@ describe('Backward compatibility: BaseApplication with IDocumentStore (no hooks)
       const store = createMockDocumentStore(callLog);
       const env = createTestEnv(false);
 
-      const app = new BaseApplication(env, store);
+      const app = new MongoApplicationBase(env, store);
       await app.start('mongodb://example.com:27017/test');
 
       expect(store.connect).toHaveBeenCalledWith(
@@ -85,7 +85,8 @@ describe('Backward compatibility: BaseApplication with IDocumentStore (no hooks)
       );
       expect(app.ready).toBe(true);
       expect(app.documentStore).toBe(store);
-      expect(app.database).toBeUndefined();
+      // MongoApplicationBase with IDocumentStore uses a no-op IDatabase internally
+      expect(app.database).toBeDefined();
     });
   });
 
@@ -99,7 +100,7 @@ describe('Backward compatibility: BaseApplication with IDocumentStore (no hooks)
       const store = createMockDocumentStore(callLog);
       const env = createTestEnv(true);
 
-      const app = new BaseApplication(env, store);
+      const app = new MongoApplicationBase(env, store);
       await app.start();
 
       expect(store.setupDevStore).toHaveBeenCalled();
@@ -117,7 +118,7 @@ describe('Backward compatibility: BaseApplication with IDocumentStore (no hooks)
       const store = createMockDocumentStore(callLog);
       const env = createTestEnv(false);
 
-      const app = new BaseApplication(env, store);
+      const app = new MongoApplicationBase(env, store);
       await app.start('mongodb://example.com:27017/test');
       await app.stop();
 
@@ -136,12 +137,12 @@ describe('Backward compatibility: BaseApplication with IDocumentStore (no hooks)
     const store = createMockDocumentStore(callLog);
 
     // Two-arg form (environment + store) — the original minimal signature
-    const app1 = new BaseApplication(env, store);
+    const app1 = new MongoApplicationBase(env, store);
     expect(app1).toBeDefined();
     expect(app1.ready).toBe(false);
 
     // Three-arg form (environment + store + constants) — still works
-    const app2 = new BaseApplication(env, store, undefined);
+    const app2 = new MongoApplicationBase(env, store, undefined);
     expect(app2).toBeDefined();
   });
 
@@ -155,7 +156,7 @@ describe('Backward compatibility: BaseApplication with IDocumentStore (no hooks)
       const store = createMockDocumentStore(callLog);
       const env = createTestEnv(false);
 
-      const app = new BaseApplication(env, store);
+      const app = new MongoApplicationBase(env, store);
       await app.start('mongodb://example.com:27017/test');
       await app.stop();
 

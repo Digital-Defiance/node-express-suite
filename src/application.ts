@@ -1,6 +1,6 @@
 /**
  * @fileoverview Main application class with Express server.
- * Extends BaseApplication with HTTP/HTTPS server and routing.
+ * Extends MongoApplicationBase with HTTP/HTTPS server and routing.
  * @module application
  */
 
@@ -23,7 +23,7 @@ import { HelmetOptions } from 'helmet';
 import { Server } from 'http';
 import { createServer } from 'https';
 import { isAbsolute, normalize, resolve } from 'path';
-import { BaseApplication } from './application-base';
+import { MongoApplicationBase } from './mongo-application-base';
 import { IBaseDocument } from './documents/base';
 import { Environment } from './environment';
 import {
@@ -62,7 +62,7 @@ export class Application<
   TConstants extends IConstants = IConstants,
   TAppRouter extends AppRouter<TID> = AppRouter<TID>,
 >
-  extends BaseApplication<TID, TModelDocs, TInitResults, TConstants>
+  extends MongoApplicationBase<TID, TModelDocs, TInitResults, TConstants>
   implements IMongoApplication<TID>
 {
   public readonly expressApp: ExpressApplication;
@@ -94,7 +94,7 @@ export class Application<
       connection: mongoose.Connection,
     ) => SchemaMap<TID, TModelDocs>,
     databaseInitFunction: (
-      application: BaseApplication<TID, TModelDocs, TInitResults>,
+      application: MongoApplicationBase<TID, TModelDocs, TInitResults>,
     ) => Promise<IFailableResult<TInitResults>>,
     initResultHashFunction: (initResults: TInitResults) => string,
     cspConfig: ICSPConfig | HelmetOptions | IFlexibleCSP = {

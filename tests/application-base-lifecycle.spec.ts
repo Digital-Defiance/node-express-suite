@@ -70,11 +70,7 @@ function createProdEnv(): Environment<string> {
 // ---------------------------------------------------------------------------
 
 /** Test subclass that exposes protected fields for verification. */
-class TestableBaseApplication extends BaseApplication<
-  string,
-  Record<string, never>,
-  unknown
-> {
+class TestableBaseApplication extends BaseApplication<string, unknown> {
   get lifecycleHooks() {
     return this._lifecycleHooks;
   }
@@ -108,7 +104,7 @@ describe('BaseApplication lifecycle hooks (IDatabase path)', () => {
     });
 
     it('should not store lifecycle hooks when IDocumentStore is provided', () => {
-      // IDocumentStore path: hooks should be ignored
+      // IDocumentStore path: MongoApplicationBase does not accept lifecycle hooks
       const env = createProdEnv();
       // Minimal IDocumentStore mock (not IDatabase — no 'startSession')
       const store = {
@@ -117,16 +113,18 @@ describe('BaseApplication lifecycle hooks (IDatabase path)', () => {
         schemaMap: undefined,
         devDatabase: undefined,
       };
-      const hooks: IDatabaseLifecycleHooks = { validateUri: jest.fn() };
 
-      const app = new TestableBaseApplication(
-        env,
-        store as never,
-        undefined,
-        hooks,
-      );
-
-      expect(app.lifecycleHooks).toBeUndefined();
+      // MongoApplicationBase constructor does not accept lifecycle hooks
+      // when using IDocumentStore — they are only for the IDatabase path
+      // via BaseApplication. Verify that MongoApplicationBase with a store
+      // does not expose lifecycle hooks.
+      const { MongoApplicationBase } = require('../src/mongo-application-base');
+      const app = new MongoApplicationBase(env, store as never);
+      // MongoApplicationBase doesn't have _lifecycleHooks — it delegates to parent
+      // which gets no hooks since MongoApplicationBase doesn't pass them
+      expect(
+        (app as Record<string, unknown>)['_lifecycleHooks'],
+      ).toBeUndefined();
     });
   });
 
@@ -331,24 +329,22 @@ describe('BaseApplication lifecycle hooks (IDatabase path)', () => {
       });
     });
 
-    it('should use default validator when no custom validateUri is provided', async () => {
-      // Create environment in production mode, then restore NODE_ENV for test throw path
-      process.env.NODE_ENV = 'production';
-      process.env.SYSTEM_PUBLIC_KEY = '04' + '00'.repeat(64);
-      const prodEnv = new Environment<string>(undefined, false);
-      process.env.NODE_ENV = 'test';
-      delete process.env.SYSTEM_PUBLIC_KEY;
+    it('should skip URI validation when no custom validateUri is provided', async () => {
+      await withConsoleMocks({ mute: true }, async () => {
+        const callLog: string[] = [];
+        const db = createMockDatabase(callLog);
+        const env = createProdEnv();
+        const hooks: IDatabaseLifecycleHooks = {};
 
-      const callLog: string[] = [];
-      const db = createMockDatabase(callLog);
-      const hooks: IDatabaseLifecycleHooks = {};
+        const app = new TestableBaseApplication(env, db, undefined, hooks);
 
-      const app = new TestableBaseApplication(prodEnv, db, undefined, hooks);
-
-      // Default validator rejects localhost in production
-      await expect(app.start('mongodb://localhost:27017/test')).rejects.toThrow(
-        TranslatableSuiteError,
-      );
+        // Without a validateUri hook, BaseApplication does not validate the URI.
+        // URI validation is database-specific and should be provided via hooks
+        // or handled by the IDatabase implementation itself.
+        await app.start('mongodb://localhost:27017/test');
+        expect(callLog).toContain('connect');
+        expect(app.ready).toBe(true);
+      });
     });
   });
 

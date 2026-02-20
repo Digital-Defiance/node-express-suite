@@ -3,6 +3,7 @@ import 'reflect-metadata';
 export * from './application';
 export * from './application-base';
 export * from './application-concrete';
+export * from './mongo-application-base';
 export * from './backup-code';
 export * from './builders';
 export * from './constants';

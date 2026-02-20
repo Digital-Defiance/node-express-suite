@@ -143,6 +143,7 @@ export class Environment<
       disableEmailSend:
         envObj['DISABLE_EMAIL_SEND'] === 'true' ||
         envObj['DISABLE_EMAIL_SEND'] === '1',
+      databaseUri: envObj['DATABASE_URI'] ?? envObj['MONGO_URI'] ?? undefined,
       mongo: {
         dbName: envObj['MONGO_DB_NAME'] ?? 'db',
         uri: envObj['MONGO_URI'] ?? undefined,
@@ -609,6 +610,14 @@ export class Environment<
    */
   public get disableEmailSend(): boolean {
     return this._environment.disableEmailSend;
+  }
+
+  /**
+   * Generic database connection URI.
+   * For MongoDB apps, defaults to MONGO_URI. For other databases, set DATABASE_URI.
+   */
+  public get databaseUri(): string | undefined {
+    return this._environment.databaseUri;
   }
 
   /**

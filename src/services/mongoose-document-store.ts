@@ -25,7 +25,7 @@ import { SchemaMap } from '../types';
 import { debugLog } from '../utils';
 import { defaultMongoUriValidator } from '../utils/default-mongo-uri-validator';
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
-import type { BaseApplication } from '../application-base';
+import type { MongoApplicationBase } from '../mongo-application-base';
 
 /**
  * Mongoose implementation of IDocumentStore.
@@ -68,7 +68,7 @@ export class MongooseDocumentStore<
    * Function to initialize the database with default data
    */
   private readonly _databaseInitFunction: (
-    application: BaseApplication<TID, TModelDocs, TInitResults>,
+    application: MongoApplicationBase<TID, TModelDocs, TInitResults>,
   ) => Promise<IFailableResult<TInitResults>>;
 
   /**
@@ -93,7 +93,7 @@ export class MongooseDocumentStore<
       connection: mongoose.Connection,
     ) => SchemaMap<TID, TModelDocs>,
     databaseInitFunction: (
-      application: BaseApplication<TID, TModelDocs, TInitResults>,
+      application: MongoApplicationBase<TID, TModelDocs, TInitResults>,
     ) => Promise<IFailableResult<TInitResults>>,
     initResultHashFunction: (initResults: TInitResults) => string,
     environment: Environment<TID>,
@@ -374,7 +374,7 @@ export class MongooseDocumentStore<
     const accountDataResult: IFailableResult<TInitResults> = await Promise.race(
       [
         this._databaseInitFunction(
-          app as unknown as BaseApplication<TID, TModelDocs, TInitResults>,
+          app as unknown as MongoApplicationBase<TID, TModelDocs, TInitResults>,
         ),
         new Promise<never>((_, reject) => {
           initTimeout = setTimeout(() => {

@@ -20,7 +20,7 @@ import { ModelRegistry } from '../../src/model-registry';
 import { getSchemaMap } from '../../src/schemas';
 import { DatabaseInitializationService } from '../../src/services';
 import { MongooseDocumentStore } from '../../src/services/mongoose-document-store';
-import { BaseApplication } from '../../src/application-base';
+import { MongoApplicationBase } from '../../src/mongo-application-base';
 import { IServerInitResult, IConstants } from '../../src/interfaces';
 import type { IRoleDocument } from '../../src/documents/role';
 import type { IUserDocument } from '../../src/documents/user';
@@ -38,7 +38,11 @@ jest.unmock('argon2');
 const hex64 = () => randomBytes(32).toString('hex');
 
 describe('Database initialization integration (initializeDevStore)', () => {
-  let app: BaseApplication;
+  let app: MongoApplicationBase<
+    Buffer,
+    Record<string, never>,
+    IServerInitResult<Buffer>
+  >;
   let documentStore: MongooseDocumentStore;
 
   beforeAll(async () => {
@@ -87,7 +91,7 @@ describe('Database initialization integration (initializeDevStore)', () => {
       TestConstants,
     );
 
-    app = new BaseApplication(env, documentStore, TestConstants);
+    app = new MongoApplicationBase(env, documentStore, TestConstants);
 
     // BaseApplication.start() -> setupDevStore -> connect (in-memory MongoDB)
     await app.start();

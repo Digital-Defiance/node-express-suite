@@ -6,6 +6,7 @@ import {
 } from '@digitaldefiance/express-suite-test-utils';
 import mongoose from '@digitaldefiance/mongoose-types';
 import { TranslatableSuiteError } from '@digitaldefiance/suite-core-lib';
+import { MongoApplicationBase } from '../src/mongo-application-base';
 import { BaseApplication } from '../src/application-base';
 import { Environment } from '../src/environment';
 import { IDocumentStore } from '../src/interfaces/document-store';
@@ -25,9 +26,9 @@ describe('BaseApplication', () => {
   }
 
   /**
-   * TestApplication wraps BaseApplication with a MongooseDocumentStore.
+   * TestApplication wraps MongoApplicationBase with a MongooseDocumentStore.
    */
-  class TestApplication extends BaseApplication<any, any> {
+  class TestApplication extends MongoApplicationBase<any, any, any> {
     constructor(env: Environment, constants?: any) {
       const store = createDocumentStore(env);
       super(env, store, constants);

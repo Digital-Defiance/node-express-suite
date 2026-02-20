@@ -7,7 +7,6 @@ import { Connection } from '@digitaldefiance/mongoose-types';
 import { IFailableResult } from '@digitaldefiance/suite-core-lib';
 import { HelmetOptions } from 'helmet';
 import { Application } from '../../application';
-import { BaseApplication } from '../../application-base';
 import { IBaseDocument } from '../../documents';
 import { Environment } from '../../environment';
 import {

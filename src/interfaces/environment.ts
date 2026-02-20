@@ -79,6 +79,13 @@ export interface IEnvironment<TID extends PlatformID = Buffer> {
    */
   mongo?: IMongoEnvironment;
   /**
+   * Generic database connection URI.
+   * Used by BaseApplication for storage-agnostic database connection.
+   * For MongoDB, this defaults to the value of mongo.uri.
+   * For other databases, set DATABASE_URI in the environment.
+   */
+  databaseUri?: string;
+  /**
    * Mnemonic for the admin user
    */
   adminMnemonic?: SecureString;

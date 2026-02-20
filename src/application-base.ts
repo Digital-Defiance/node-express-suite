@@ -1,6 +1,7 @@
 /**
- * @fileoverview Base application class with core functionality.
- * Delegates database operations to an IDatabase instance (or legacy IDocumentStore).
+ * @fileoverview Database-agnostic base application class.
+ * Delegates database operations to an IDatabase instance.
+ * For MongoDB/Mongoose-specific functionality, see MongoApplicationBase.
  * @module application-base
  */
 
@@ -11,57 +12,35 @@ import type {
   IDatabase,
   IDatabaseLifecycleHooks,
 } from './interfaces/storage';
-import { Model } from '@digitaldefiance/mongoose-types';
-import mongoose from '@digitaldefiance/mongoose-types';
 import {
   Constants,
   getSuiteCoreI18nEngine,
   SuiteCoreStringKey,
   TranslatableSuiteError,
 } from '@digitaldefiance/suite-core-lib';
-import { MongoMemoryReplSet } from 'mongodb-memory-server';
 import { join } from 'path';
 import { ServiceContainer } from './container';
-import { IBaseDocument } from './documents/base';
 import { Environment } from './environment';
-import { IMongoApplication } from './interfaces/mongo-application';
+import { IApplication } from './interfaces/application';
 import { IAuthenticationProvider } from './interfaces/authentication-provider';
 import { IConstants } from './interfaces/constants';
-import { IDocumentStore } from './interfaces/document-store';
 import { PluginManager } from './plugins';
-import { MongooseDocumentStore } from './services/mongoose-document-store';
-import { SchemaMap } from './types';
-import { defaultMongoUriValidator } from './utils/default-mongo-uri-validator';
 import { debugLog } from './utils';
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 
 /**
- * Duck-typing check to determine if a value conforms to the IDatabase interface.
- * Checks for the key methods that distinguish IDatabase from IDocumentStore.
- */
-function isIDatabase(value: unknown): value is IDatabase {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    'collection' in value &&
-    'startSession' in value &&
-    typeof (value as Record<string, unknown>)['collection'] === 'function' &&
-    typeof (value as Record<string, unknown>)['startSession'] === 'function'
-  );
-}
-
-/**
- * Base Application class with core functionality.
- * Accepts an IDatabase (preferred) or legacy IDocumentStore for backward compatibility.
- * When an IDatabase is provided, database lifecycle is managed through the IDatabase contract.
- * When a legacy IDocumentStore is provided, it is used directly for backward compatibility.
+ * Database-agnostic base application class.
+ * Accepts an IDatabase for storage operations and optional lifecycle hooks
+ * for dev store provisioning, URI validation, and database initialization.
+ *
+ * For MongoDB/Mongoose-specific functionality (IDocumentStore, schemaMap,
+ * getModel, db), use MongoApplicationBase which extends this class.
  */
 export class BaseApplication<
   TID extends PlatformID,
-  TModelDocs extends Record<string, IBaseDocument<any, TID>>,
-  TInitResults,
+  TInitResults = unknown,
   TConstants extends IConstants = IConstants,
-> implements IMongoApplication<TID> {
+> implements IApplication<TID> {
   /**
    * Application environment
    */
@@ -74,21 +53,11 @@ export class BaseApplication<
 
   /**
    * The IDatabase instance for storage-agnostic database operations.
-   * Set when an IDatabase is passed to the constructor.
    */
-  protected readonly _database: IDatabase | undefined;
+  protected readonly _database: IDatabase;
 
   /**
-   * The injected document store handling all database operations.
-   * Set when a legacy IDocumentStore is passed to the constructor.
-   * @deprecated Prefer _database (IDatabase) for new code.
-   */
-  protected readonly _documentStore:
-    | IDocumentStore<TID, TModelDocs>
-    | undefined;
-
-  /**
-   * Optional lifecycle hooks for database initialization on the IDatabase path.
+   * Optional lifecycle hooks for database initialization.
    */
   protected readonly _lifecycleHooks:
     | IDatabaseLifecycleHooks<TInitResults>
@@ -127,25 +96,6 @@ export class BaseApplication<
   }
 
   /**
-   * Schema map for all models, delegated to the document store.
-   * Only available when a legacy IDocumentStore is used.
-   */
-  public get schemaMap(): SchemaMap<TID, TModelDocs> {
-    if (!this._documentStore) {
-      throw new TranslatableSuiteError(
-        SuiteCoreStringKey.Admin_Error_SchemaMapIsNotLoadedYet,
-      );
-    }
-    const map = this._documentStore.schemaMap;
-    if (!map) {
-      throw new TranslatableSuiteError(
-        SuiteCoreStringKey.Admin_Error_SchemaMapIsNotLoadedYet,
-      );
-    }
-    return map as SchemaMap<TID, TModelDocs>;
-  }
-
-  /**
    * Flag indicating whether the application is ready to handle requests
    */
   protected _ready: boolean;
@@ -161,30 +111,15 @@ export class BaseApplication<
   public readonly plugins: PluginManager<TID>;
 
   /**
-   * Get the connected MongoDB database instance.
-   * @deprecated Use database (IDatabase) or documentStore instead for storage-agnostic access.
+   * Get the IDatabase instance.
    */
-  public get db(): typeof mongoose {
-    if (this._documentStore instanceof MongooseDocumentStore) {
-      return this._documentStore.db;
-    }
-    throw new TranslatableSuiteError(
-      SuiteCoreStringKey.Admin_Error_DatabaseNotConnectedYet,
-    );
-  }
-
-  /**
-   * Get the IDatabase instance, if one was provided.
-   */
-  public get database(): IDatabase | undefined {
+  public get database(): IDatabase {
     return this._database;
   }
 
   /**
    * Authentication provider for storage-agnostic user lookup and credential verification.
    * Subclasses can override this to provide a custom authentication provider.
-   * By default, returns undefined — Mongo-backed apps should set this in their constructor
-   * or override this getter.
    */
   private _authProvider: IAuthenticationProvider<TID> | undefined;
 
@@ -197,22 +132,6 @@ export class BaseApplication<
   }
 
   /**
-   * Get the injected document store.
-   * @deprecated Prefer database (IDatabase) for new code.
-   */
-  public get documentStore(): IDocumentStore<TID, TModelDocs> | undefined {
-    return this._documentStore;
-  }
-
-  /**
-   * Get the in-memory MongoDB instance (if any), delegated to the document store.
-   * Only available when a legacy IDocumentStore is used.
-   */
-  public get devDatabase(): MongoMemoryReplSet | undefined {
-    return this._documentStore?.devDatabase;
-  }
-
-  /**
    * Get whether the application is ready to handle requests
    */
   public get ready(): boolean {
@@ -221,35 +140,24 @@ export class BaseApplication<
 
   constructor(
     environment: Environment<TID>,
-    databaseOrStore: IDatabase | IDocumentStore<TID, TModelDocs>,
+    database: IDatabase,
     constants: TConstants = Constants as TConstants,
     lifecycleHooks?: IDatabaseLifecycleHooks<TInitResults>,
   ) {
     this._ready = false;
     this._environment = environment;
     this._constants = constants;
-
-    // Duck-typing detection: IDatabase has 'collection' and 'startSession' methods
-    if (isIDatabase(databaseOrStore)) {
-      this._database = databaseOrStore;
-      this._documentStore = undefined;
-      this._lifecycleHooks = lifecycleHooks;
-    } else {
-      this._database = undefined;
-      this._documentStore = databaseOrStore;
-      // Lifecycle hooks are only used on the IDatabase path
-      this._lifecycleHooks = undefined;
-    }
-
+    this._database = database;
+    this._lifecycleHooks = lifecycleHooks;
     this.services = new ServiceContainer();
     this.plugins = new PluginManager<TID>();
   }
 
   /**
    * Start the application and connect to the database.
-   * Delegates connection to IDatabase or legacy IDocumentStore.
+   * Delegates connection to the IDatabase instance.
    */
-  public async start(mongoUri?: string, delayReady?: boolean): Promise<void> {
+  public async start(uri?: string, delayReady?: boolean): Promise<void> {
     if (this._ready) {
       console.error(
         'Failed to start the application:',
@@ -262,53 +170,28 @@ export class BaseApplication<
       process.exit(1);
     }
 
-    // Legacy IDocumentStore path: handle dev database setup
-    if (this._documentStore) {
-      if (this._environment.devDatabase && !this._documentStore.devDatabase) {
-        if (this._documentStore.setupDevStore) {
-          mongoUri = (await this._documentStore.setupDevStore()) as
-            | string
-            | undefined;
-        }
-      }
-    }
-
-    // IDatabase path: handle dev store setup via lifecycle hooks
-    if (
-      this._database &&
-      this._lifecycleHooks?.setupDevStore &&
-      this._environment.devDatabase
-    ) {
-      mongoUri = await this._lifecycleHooks.setupDevStore();
+    // Handle dev store setup via lifecycle hooks
+    if (this._lifecycleHooks?.setupDevStore && this._environment.devDatabase) {
+      uri = await this._lifecycleHooks.setupDevStore();
       this._devStoreProvisioned = true;
     }
 
     try {
-      const uri = mongoUri ?? this.environment.mongo?.uri;
+      const resolvedUri = uri ?? this.environment.databaseUri;
 
-      if (this._database) {
-        // IDatabase path: only validate/connect if a URI was provided.
-        // Non-Mongo databases (e.g. BrightChainDb) manage their own connection
-        // internally and do not need a URI passed from the environment.
-        if (uri) {
-          if (this._lifecycleHooks?.validateUri) {
-            this._lifecycleHooks.validateUri(uri);
-          } else {
-            defaultMongoUriValidator(uri, this._environment.production);
-          }
-        }
-        await this._database.connect(uri);
-      } else if (this._documentStore) {
-        // Legacy IDocumentStore path — always requires a URI
-        await this._documentStore.connect(uri);
+      // Only validate/connect if a URI was provided.
+      // Non-Mongo databases (e.g. BrightChainDb) manage their own connection
+      // internally and do not need a URI passed from the environment.
+      if (resolvedUri && this._lifecycleHooks?.validateUri) {
+        this._lifecycleHooks.validateUri(resolvedUri);
       }
+      await this._database.connect(resolvedUri);
 
       // Initialize plugins
       await this.plugins.initAll(this);
 
-      // IDatabase path: run database initialization hook in dev mode
+      // Run database initialization hook in dev mode
       if (
-        this._database &&
         this._lifecycleHooks?.initializeDatabase &&
         this._environment.devDatabase
       ) {
@@ -373,33 +256,24 @@ export class BaseApplication<
 
   /**
    * Stop the application.
-   * Delegates disconnection to IDatabase or legacy IDocumentStore.
+   * Delegates disconnection to the IDatabase instance.
    */
   public async stop(): Promise<void> {
     await this.plugins.stopAll();
 
-    if (this._database) {
-      // IDatabase path
-      await this._database.disconnect();
+    await this._database.disconnect();
 
-      // Teardown dev store if it was provisioned via lifecycle hooks
-      if (this._devStoreProvisioned && this._lifecycleHooks?.teardownDevStore) {
-        try {
-          await this._lifecycleHooks.teardownDevStore();
-        } catch (teardownErr) {
-          console.error(
-            'Failed to teardown dev store:',
-            teardownErr instanceof Error
-              ? teardownErr.message
-              : String(teardownErr),
-          );
-        }
-      }
-    } else if (this._documentStore) {
-      // Legacy IDocumentStore path
-      await this._documentStore.disconnect();
-      if (this._documentStore.devDatabase) {
-        await this._documentStore.devDatabase.stop();
+    // Teardown dev store if it was provisioned via lifecycle hooks
+    if (this._devStoreProvisioned && this._lifecycleHooks?.teardownDevStore) {
+      try {
+        await this._lifecycleHooks.teardownDevStore();
+      } catch (teardownErr) {
+        console.error(
+          'Failed to teardown dev store:',
+          teardownErr instanceof Error
+            ? teardownErr.message
+            : String(teardownErr),
+        );
       }
     }
 
@@ -410,31 +284,8 @@ export class BaseApplication<
    * Get a collection by name via the IDatabase interface.
    * @param name Name of the collection
    * @returns ICollection<T> for the named collection
-   * @throws if no IDatabase was provided
    */
   public getCollection<T extends BsonDocument>(name: string): ICollection<T> {
-    if (!this._database) {
-      throw new TranslatableSuiteError(
-        SuiteCoreStringKey.Admin_Error_DatabaseNotConnectedYet,
-      );
-    }
     return this._database.collection<T>(name);
-  }
-
-  /**
-   * Get a model by name, delegated to the legacy document store.
-   * @deprecated Use getCollection<T>(name) with IDatabase instead.
-   * @param modelName Name of the model
-   */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  public getModel<T extends IBaseDocument<any, TID>>(
-    modelName: string,
-  ): Model<T> {
-    if (!this._documentStore) {
-      throw new TranslatableSuiteError(
-        SuiteCoreStringKey.Admin_Error_DatabaseNotConnectedYet,
-      );
-    }
-    return this._documentStore.getModel<T>(modelName);
   }
 }
