@@ -24,6 +24,7 @@ import { MongoApplicationBase } from '../../src/mongo-application-base';
 import { IServerInitResult, IConstants } from '../../src/interfaces';
 import type { IRoleDocument } from '../../src/documents/role';
 import type { IUserDocument } from '../../src/documents/user';
+import type { BaseModelDocs } from '../../src/schemas/schema';
 
 // Use example.com so EmailString validation passes (localhost is rejected)
 const TestConstants: IConstants = createExpressConstants(
@@ -40,10 +41,14 @@ const hex64 = () => randomBytes(32).toString('hex');
 describe('Database initialization integration (initializeDevStore)', () => {
   let app: MongoApplicationBase<
     Buffer,
-    Record<string, never>,
+    BaseModelDocs,
     IServerInitResult<Buffer>
   >;
-  let documentStore: MongooseDocumentStore;
+  let documentStore: MongooseDocumentStore<
+    Buffer,
+    BaseModelDocs,
+    IServerInitResult<Buffer>
+  >;
 
   beforeAll(async () => {
     process.env.NODE_ENV = 'test';
@@ -79,14 +84,16 @@ describe('Database initialization integration (initializeDevStore)', () => {
 
     const env = new Environment(undefined, true, true, TestConstants);
 
-    documentStore = new MongooseDocumentStore(
+    documentStore = new MongooseDocumentStore<
+      Buffer,
+      BaseModelDocs,
+      IServerInitResult<Buffer>
+    >(
       getSchemaMap,
-      DatabaseInitializationService.initUserDb.bind(
-        DatabaseInitializationService,
-      ),
-      DatabaseInitializationService.serverInitResultHash.bind(
-        DatabaseInitializationService,
-      ),
+      (application) =>
+        DatabaseInitializationService.initUserDb(application),
+      (r: IServerInitResult<Buffer>) =>
+        DatabaseInitializationService.serverInitResultHash(r),
       env,
       TestConstants,
     );
