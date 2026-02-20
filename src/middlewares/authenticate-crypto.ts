@@ -1,15 +1,12 @@
 /**
  * @fileoverview Cryptographic authentication middleware for operations requiring private keys.
  * Validates mnemonic or password to unlock user's private key for sensitive operations.
+ * Storage-agnostic — delegates credential verification to IAuthenticationProvider.
  * @module middlewares/authenticate-crypto
  */
 
 import { SecureString } from '@digitaldefiance/ecies-lib';
-import { ClientSession } from '@digitaldefiance/mongoose-types';
-import {
-  Member as BackendMember,
-  PlatformID,
-} from '@digitaldefiance/node-ecies-lib';
+import { PlatformID } from '@digitaldefiance/node-ecies-lib';
 import {
   AccountStatus,
   getSuiteCoreTranslation,
@@ -17,21 +14,22 @@ import {
   SuiteCoreStringKey,
 } from '@digitaldefiance/suite-core-lib';
 import { NextFunction, Request, Response } from 'express';
-import { ServiceKeys } from '../container';
-import { IUserDocument } from '../documents/user';
-import { BaseModelName } from '../enumerations';
 import { InvalidPasswordError } from '../errors';
-import { IMongoApplication } from '../interfaces/mongo-application';
-import { withTransaction } from '../utils';
+import { IApplication } from '../interfaces/application';
 
 /**
  * Express middleware for cryptographic authentication.
  * Requires mnemonic or password in request body to unlock user's private key.
  * Attaches authenticated BackendMember with private key to req.eciesUser.
  * Used for operations requiring cryptographic signing or decryption.
+ *
+ * Delegates to `application.authProvider` for storage-agnostic credential
+ * verification. The application must have an authProvider configured with
+ * authenticateWithMnemonic and/or authenticateWithPassword.
+ *
  * @template TID - Platform ID type (defaults to Buffer)
  * @template TAccountStatus - Account status type (defaults to AccountStatus)
- * @param {IMongoApplication<TID>} application - Application instance
+ * @param {IApplication<TID>} application - Application instance with authProvider
  * @param {Request} req - Express request object
  * @param {Response} res - Express response object
  * @param {NextFunction} next - Express next function
@@ -44,12 +42,17 @@ export async function authenticateCrypto<
   TID extends PlatformID = Buffer,
   TAccountStatus extends string = AccountStatus,
 >(
-  application: IMongoApplication<TID>,
+  application: IApplication<TID>,
   req: Request,
   res: Response,
   next: NextFunction,
   activeStatusValue: TAccountStatus = AccountStatus.Active as TAccountStatus,
 ): Promise<Response | void> {
+  const authProvider = application.authProvider;
+  if (!authProvider) {
+    return res.status(500).send('Authentication provider not configured');
+  }
+
   if (!req.user) {
     return res.status(401).send(
       // amazonq-ignore-next-line false positive, hardcoded string
@@ -90,106 +93,89 @@ export async function authenticateCrypto<
       ),
     });
   }
-  const UserModel = application.getModel<IUserDocument<string, TID>>(
-    BaseModelName.User,
-  );
-  const userService = application.services.get(ServiceKeys.USER) as {
-    loginWithMnemonic: (
-      email: string,
-      mnemonic: SecureString,
-      session?: ClientSession,
-    ) => Promise<any>;
-    loginWithPassword: (
-      email: string,
-      password: string,
-      session?: ClientSession,
-    ) => Promise<any>;
-  };
 
   try {
-    return await withTransaction<Response | void>(
-      application.db.connection,
-      application.environment.mongo.useTransactions,
-      undefined,
-      async (sess: ClientSession | undefined) => {
-        const userDoc = await UserModel.findById(req.user!.id)
-          .session(sess ?? null)
-          .exec();
+    // Verify the user exists and is active
+    const authenticatedUser = await authProvider.findUserById(req.user.id);
+    if (
+      !authenticatedUser ||
+      authenticatedUser.accountStatus !== activeStatusValue
+    ) {
+      return res.status(403).send(
+        // amazonq-ignore-next-line false positive, hardcoded string
+        getSuiteCoreTranslation(SuiteCoreStringKey.Validation_UserNotFound),
+      );
+    }
 
-        if (!userDoc || userDoc.accountStatus !== activeStatusValue) {
-          return res.status(403).send(
-            // amazonq-ignore-next-line false positive, hardcoded string
-            getSuiteCoreTranslation(SuiteCoreStringKey.Validation_UserNotFound),
-          );
-        }
+    // Ensure we're only authenticating the currently logged-in user
+    if (authenticatedUser.id !== req.user.id) {
+      return res.status(403).send(
+        // amazonq-ignore-next-line false positive, hardcoded string
+        getSuiteCoreTranslation(
+          SuiteCoreStringKey.Validation_InvalidCredentials,
+        ),
+      );
+    }
 
-        // Ensure we're only authenticating the currently logged-in user
-        if (userDoc._id.toString() !== req.user!.id) {
-          return res.status(403).send(
-            // amazonq-ignore-next-line false positive, hardcoded string
-            getSuiteCoreTranslation(
-              SuiteCoreStringKey.Validation_InvalidCredentials,
-            ),
-          );
-        }
-
-        let loginResult: {
-          userDoc: IUserDocument;
-          userMember: BackendMember;
-          adminMember: BackendMember;
-        };
-
-        if (mnemonic) {
-          // Authenticate with mnemonic
-          const userMnemonic = new SecureString(mnemonic);
-          try {
-            loginResult = await userService.loginWithMnemonic(
-              userDoc.email,
-              userMnemonic,
-              sess,
-            );
-          } finally {
-            userMnemonic.dispose();
-          }
-        } else if (password) {
-          // Authenticate with password
-          loginResult = await userService.loginWithPassword(
-            userDoc.email,
-            password,
-            sess,
-          );
-        } else {
-          // Should not happen due to earlier guard; keeps TypeScript happy
-          return res.status(400).send({
-            // amazonq-ignore-next-line false positive, hardcoded string
-            message: getSuiteCoreTranslation(
-              SuiteCoreStringKey.Validation_MnemonicOrPasswordRequired,
-            ),
-          });
-        }
-
+    if (mnemonic) {
+      if (!authProvider.authenticateWithMnemonic) {
+        return res.status(501).send({
+          message: 'Mnemonic authentication not supported by this provider',
+        });
+      }
+      const userMnemonic = new SecureString(mnemonic);
+      try {
+        const result = await authProvider.authenticateWithMnemonic(
+          authenticatedUser.email,
+          userMnemonic,
+        );
         // Double-check authenticated user matches logged-in user
-        if (loginResult.userDoc._id.toString() !== req.user!.id) {
-          return res.status(403).send(
-            // amazonq-ignore-next-line false positive, hardcoded string
+        if (result.userId !== req.user.id) {
+          return res
+            .status(403)
+            .send(
+              getSuiteCoreTranslation(
+                SuiteCoreStringKey.Validation_InvalidCredentials,
+              ),
+            );
+        }
+        req.eciesUser = result.userMember;
+      } finally {
+        userMnemonic.dispose();
+      }
+    } else if (password) {
+      if (!authProvider.authenticateWithPassword) {
+        return res.status(501).send({
+          message: 'Password authentication not supported by this provider',
+        });
+      }
+      const result = await authProvider.authenticateWithPassword(
+        authenticatedUser.email,
+        password,
+      );
+      // Double-check authenticated user matches logged-in user
+      if (result.userId !== req.user.id) {
+        return res
+          .status(403)
+          .send(
             getSuiteCoreTranslation(
               SuiteCoreStringKey.Validation_InvalidCredentials,
             ),
           );
-        }
+      }
+      req.eciesUser = result.userMember;
+    } else {
+      // Should not happen due to earlier guard; keeps TypeScript happy
+      return res.status(400).send({
+        // amazonq-ignore-next-line false positive, hardcoded string
+        message: getSuiteCoreTranslation(
+          SuiteCoreStringKey.Validation_MnemonicOrPasswordRequired,
+        ),
+      });
+    }
 
-        // Attach the fully authenticated member (with private key) to the request
-        req.eciesUser = loginResult.userMember;
-        // Do not attach the admin user to the request; it's a process-wide singleton
-        // and must not be disposed as part of request cleanup.
-
-        next();
-        return;
-      },
-      {
-        timeoutMs: application.environment.mongo.transactionTimeout,
-      },
-    );
+    next();
+    return;
   } catch (err) {
     if (
       err instanceof InvalidCredentialsError ||

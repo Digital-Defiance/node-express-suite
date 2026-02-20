@@ -3,18 +3,13 @@ import { Types } from '@digitaldefiance/mongoose-types';
 import { registerNodeRuntimeConfiguration } from '@digitaldefiance/node-ecies-lib';
 import express from 'express';
 import request from 'supertest';
+import { TokenExpiredError } from '../../src/errors/token-expired';
 import { authenticateToken } from '../../src/middlewares/authenticate-token';
-import { JwtService } from '../../src/services/jwt';
-import { RoleService } from '../../src/services/role';
+import { IAuthenticationProvider } from '../../src/interfaces/authentication-provider';
 import { createApplicationMock } from '../__tests__/helpers/application.mock';
 
-jest.mock('../../src/services/jwt');
-jest.mock('../../src/services/role');
-
 describe('authenticateToken success paths', () => {
-  let mockJwtService: any;
-  let mockRoleService: any;
-  let mockUserModel: any;
+  let mockAuthProvider: jest.Mocked<IAuthenticationProvider>;
 
   beforeAll(() => {
     registerNodeRuntimeConfiguration('default-config', {});
@@ -23,28 +18,11 @@ describe('authenticateToken success paths', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
-    mockJwtService = {
+    mockAuthProvider = {
       verifyToken: jest.fn(),
+      findUserById: jest.fn(),
+      buildRequestUserDTO: jest.fn(),
     };
-
-    mockRoleService = {
-      getUserRoles: jest.fn().mockResolvedValue([]),
-      rolesToTokenRoles: jest.fn().mockReturnValue([]),
-    };
-
-    mockUserModel = {
-      findById: jest.fn().mockReturnThis(),
-      select: jest.fn().mockReturnThis(),
-      session: jest.fn().mockReturnThis(),
-      exec: jest.fn(),
-    };
-
-    (JwtService as jest.MockedClass<typeof JwtService>).mockImplementation(
-      () => mockJwtService,
-    );
-    (RoleService as jest.MockedClass<typeof RoleService>).mockImplementation(
-      () => mockRoleService,
-    );
   });
 
   function makeApp() {
@@ -52,8 +30,9 @@ describe('authenticateToken success paths', () => {
     app.use(express.json());
     const application = createApplicationMock(
       {
-        getModel: () => mockUserModel as any,
-      },
+        getModel: () => ({}) as unknown,
+        authProvider: mockAuthProvider,
+      } as Partial<any>,
       {
         mongo: {
           uri: 'mongodb://localhost:27017',
@@ -71,7 +50,7 @@ describe('authenticateToken success paths', () => {
   }
 
   it('403 when verifyToken returns null', async () => {
-    mockJwtService.verifyToken.mockResolvedValue(null);
+    mockAuthProvider.verifyToken.mockResolvedValue(null);
 
     const app = makeApp();
     const res = await request(app)
@@ -82,8 +61,8 @@ describe('authenticateToken success paths', () => {
   });
 
   it('403 when user document not found', async () => {
-    mockJwtService.verifyToken.mockResolvedValue({ userId: 'user-123' });
-    mockUserModel.exec.mockResolvedValue(null);
+    mockAuthProvider.verifyToken.mockResolvedValue({ userId: 'user-123' });
+    mockAuthProvider.findUserById.mockResolvedValue(null);
 
     const app = makeApp();
     const res = await request(app)
@@ -94,10 +73,11 @@ describe('authenticateToken success paths', () => {
   });
 
   it('403 when user account is not Active', async () => {
-    mockJwtService.verifyToken.mockResolvedValue({ userId: 'user-123' });
-    mockUserModel.exec.mockResolvedValue({
-      _id: 'user-123',
+    mockAuthProvider.verifyToken.mockResolvedValue({ userId: 'user-123' });
+    mockAuthProvider.findUserById.mockResolvedValue({
+      id: 'user-123',
       accountStatus: AccountStatus.Locked,
+      email: 'test@example.com',
       siteLanguage: 'en',
       timezone: 'America/New_York',
     });
@@ -112,15 +92,22 @@ describe('authenticateToken success paths', () => {
 
   it('allows access when user is valid and Active', async () => {
     const userId = new Types.ObjectId();
-    mockJwtService.verifyToken.mockResolvedValue({ userId: userId.toString() });
-    mockUserModel.exec.mockResolvedValue({
-      _id: userId,
+    mockAuthProvider.verifyToken.mockResolvedValue({
+      userId: userId.toString(),
+    });
+    mockAuthProvider.findUserById.mockResolvedValue({
+      id: userId.toString(),
       accountStatus: AccountStatus.Active,
+      email: 'test@example.com',
       siteLanguage: 'en',
       timezone: 'America/New_York',
-      username: 'testuser',
-      email: 'test@example.com',
     });
+    mockAuthProvider.buildRequestUserDTO.mockResolvedValue({
+      id: userId.toString(),
+      email: 'test@example.com',
+      username: 'testuser',
+      roles: [],
+    } as any);
 
     const app = makeApp();
     const res = await request(app)
@@ -128,17 +115,16 @@ describe('authenticateToken success paths', () => {
       .set('Authorization', 'Bearer valid-token');
 
     expect(res.status).toBe(200);
-    expect(mockJwtService.verifyToken).toHaveBeenCalledWith('valid-token');
-    expect(mockUserModel.findById).toHaveBeenCalledWith(userId.toString());
-    expect(mockUserModel.select).toHaveBeenCalledWith('-password');
-    expect(mockRoleService.getUserRoles).toHaveBeenCalledWith(
-      userId,
-      undefined,
+    expect(mockAuthProvider.verifyToken).toHaveBeenCalledWith('valid-token');
+    expect(mockAuthProvider.findUserById).toHaveBeenCalledWith(
+      userId.toString(),
     );
   });
 
   it('handles generic errors with 500', async () => {
-    mockJwtService.verifyToken.mockRejectedValue(new Error('Unexpected error'));
+    mockAuthProvider.verifyToken.mockRejectedValue(
+      new Error('Unexpected error'),
+    );
 
     const app = makeApp();
     const res = await request(app)
@@ -151,15 +137,22 @@ describe('authenticateToken success paths', () => {
 
   it('sets user language and timezone context when available', async () => {
     const userId = new Types.ObjectId();
-    mockJwtService.verifyToken.mockResolvedValue({ userId: userId.toString() });
-    mockUserModel.exec.mockResolvedValue({
-      _id: userId,
+    mockAuthProvider.verifyToken.mockResolvedValue({
+      userId: userId.toString(),
+    });
+    mockAuthProvider.findUserById.mockResolvedValue({
+      id: userId.toString(),
       accountStatus: AccountStatus.Active,
+      email: 'spain@example.com',
       siteLanguage: 'es',
       timezone: 'Europe/Madrid',
-      username: 'spainuser',
-      email: 'spain@example.com',
     });
+    mockAuthProvider.buildRequestUserDTO.mockResolvedValue({
+      id: userId.toString(),
+      email: 'spain@example.com',
+      username: 'spainuser',
+      roles: [],
+    } as any);
 
     const app = makeApp();
     const res = await request(app)

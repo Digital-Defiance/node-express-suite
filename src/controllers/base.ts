@@ -38,6 +38,7 @@ import { BaseModelName } from '../enumerations/base-model-name';
 import { ExpressValidationError } from '../errors/express-validation';
 import { MissingValidatedDataError } from '../errors/missing-validated-data';
 import { IConstants } from '../interfaces';
+import { IApplication } from '../interfaces/application';
 import { IMongoApplication } from '../interfaces/mongo-application';
 import { authenticateCrypto } from '../middlewares/authenticate-crypto';
 import { authenticateToken } from '../middlewares/authenticate-token';
@@ -68,18 +69,20 @@ import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
  * @template THandler Handler object type
  * @template TLanguage Language code type
  * @template TID Platform ID type
+ * @template TApplication Application interface type
  */
 export abstract class BaseController<
   T extends ApiResponse,
   THandler extends object,
   TLanguage extends string,
   TID extends PlatformID = Buffer,
+  TApplication extends IApplication<TID> = IApplication<TID>,
 > {
   public readonly router: Router;
   private activeRequest: Request | null = null;
   private activeResponse: Response | null = null;
   private activeSession: ClientSession | undefined = undefined;
-  public readonly application: IMongoApplication<TID>;
+  public readonly application: TApplication;
   protected routeDefinitions: RouteConfig<THandler, TLanguage>[] = [];
   protected get constants(): IConstants {
     if (!this.application.constants) {
@@ -94,16 +97,40 @@ export abstract class BaseController<
   // Allowlist of registered validation functions to prevent code injection
   // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
   private static validationRegistry = new WeakSet<Function>();
-  protected transactionManager: TransactionManager;
+  protected transactionManager: TransactionManager | undefined;
 
-  public constructor(application: IMongoApplication<TID>) {
+  /**
+   * Type guard: does the application expose a Mongoose connection?
+   */
+  protected isMongoApplication(): boolean {
+    return (
+      'db' in this.application &&
+      (this.application as unknown as IMongoApplication<TID>).db !== undefined
+    );
+  }
+
+  /**
+   * Returns the application typed as IMongoApplication, or undefined if not Mongo-backed.
+   */
+  protected get mongoApplication(): IMongoApplication<TID> | undefined {
+    if (this.isMongoApplication()) {
+      return this.application as unknown as IMongoApplication<TID>;
+    }
+    return undefined;
+  }
+
+  public constructor(application: TApplication) {
     this.application = application;
     this.router = Router();
     this.handlers = {} as THandler;
-    this.transactionManager = new TransactionManager(
-      application.db.connection,
-      application.environment.mongo.useTransactions,
-    );
+    // Only create TransactionManager when the app has a Mongoose connection
+    const mongoApp = this.mongoApplication;
+    if (mongoApp) {
+      this.transactionManager = new TransactionManager(
+        mongoApp.db.connection,
+        mongoApp.environment.mongo.useTransactions,
+      );
+    }
     this.initRouteDefinitions();
     this.registerValidationFunctions();
     this.initializeRoutes();
@@ -270,17 +297,29 @@ export abstract class BaseController<
 
         let result: HandlerResult;
         if (config.useTransaction) {
-          result = await this.transactionManager.execute(
-            async (session) => {
-              this.activeSession = session;
-              try {
+          if (!this.transactionManager) {
+            // No Mongoose connection — try IDatabase.withTransaction, or run without transaction
+            const db = this.application.database;
+            if (db) {
+              result = await db.withTransaction(async () => {
                 return await typedHandler(req, ...handlerArgs);
-              } finally {
-                this.activeSession = undefined;
-              }
-            },
-            { timeoutMs: config.transactionTimeout },
-          );
+              });
+            } else {
+              result = await typedHandler(req, ...handlerArgs);
+            }
+          } else {
+            result = await this.transactionManager.execute(
+              async (session) => {
+                this.activeSession = session;
+                try {
+                  return await typedHandler(req, ...handlerArgs);
+                } finally {
+                  this.activeSession = undefined;
+                }
+              },
+              { timeoutMs: config.transactionTimeout },
+            );
+          }
         } else {
           result = await typedHandler(req, ...handlerArgs);
         }
@@ -470,6 +509,12 @@ export abstract class BaseController<
   protected async validateAndFetchRequestUser(
     req: Request,
   ): Promise<IUserDocument<TLanguage, TID>> {
+    if (!this.isMongoApplication()) {
+      throw new Error(
+        'validateAndFetchRequestUser requires a Mongo-backed application. ' +
+          'Override this method for non-Mongo storage backends.',
+      );
+    }
     const UserModel = ModelRegistry.instance.getTypedModel<
       IUserDocument<TLanguage, TID>
     >(BaseModelName.User);
@@ -501,13 +546,28 @@ export abstract class BaseController<
     options?: TransactionOptions<TID>,
     ...args: any
   ) {
-    return await utilsWithTransaction<T, TID>(
-      this.application.db.connection,
-      this.application.environment.mongo.useTransactions,
-      session,
-      callback,
-      { application: this.application, ...options },
-      ...args,
-    );
+    // Mongoose path — full retry/timeout support
+    if (this.isMongoApplication()) {
+      const mongoApp = this.mongoApplication!;
+      return await utilsWithTransaction<T, TID>(
+        mongoApp.db.connection,
+        mongoApp.environment.mongo.useTransactions,
+        session,
+        callback,
+        { application: this.application, ...options },
+        ...args,
+      );
+    }
+
+    // IDatabase path — delegate to IDatabase.withTransaction
+    const db = this.application.database;
+    if (db) {
+      return await db.withTransaction(async () => {
+        return await callback(session, ...args);
+      });
+    }
+
+    // No database — run callback directly without transaction
+    return await callback(session, ...args);
   }
 }

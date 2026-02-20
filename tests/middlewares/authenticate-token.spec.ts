@@ -54,11 +54,17 @@ describe('authenticateToken middleware', () => {
   function makeApp() {
     const app = express();
     app.use(express.json());
+    // Provide a minimal authProvider so the middleware doesn't 500
+    const mockAuthProvider = {
+      verifyToken: jest.fn().mockResolvedValue(null),
+      findUserById: jest.fn().mockResolvedValue(null),
+      buildRequestUserDTO: jest.fn().mockResolvedValue(null),
+    };
     const application = createApplicationMock(
       {
-        // Minimal getModel to avoid DB calls when token is missing/invalid
         getModel: () => ({}) as unknown,
-      },
+        authProvider: mockAuthProvider,
+      } as Partial<any>,
       {
         mongo: { uri: 'mongodb://localhost:27017', transactionTimeout: 60000 },
       },

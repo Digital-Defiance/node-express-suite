@@ -1,39 +1,18 @@
 import express from 'express';
 import request from 'supertest';
 import { TokenExpiredError } from '../../src/errors/token-expired';
+import { authenticateToken } from '../../src/middlewares/authenticate-token';
+import { IAuthenticationProvider } from '../../src/interfaces/authentication-provider';
 import { createApplicationMock } from '../__tests__/helpers/application.mock';
 
-// Mock JwtService to control verifyToken behavior
-jest.mock('../../src/services/jwt', () => {
-  const crypto = require('crypto');
-  return {
-    JwtService: jest.fn().mockImplementation(() => ({
-      verifyToken: jest.fn((token: string) => {
-        // Use constant-time comparison to prevent timing attacks
-        const expiredToken = 'expired';
-        const isExpired =
-          token.length === expiredToken.length &&
-          crypto.timingSafeEqual(Buffer.from(token), Buffer.from(expiredToken));
-        if (isExpired) {
-          throw new TokenExpiredError();
-        }
-        const err = new Error('bad token');
-        err.name = 'JsonWebTokenError';
-        throw err;
-      }),
-    })),
-  };
-});
-
-import { authenticateToken } from '../../src/middlewares/authenticate-token';
-
-function makeApp() {
+function makeApp(mockAuthProvider: Partial<IAuthenticationProvider>) {
   const app = express();
   app.use(express.json());
   const application = createApplicationMock(
     {
       getModel: () => ({}) as unknown,
-    },
+      authProvider: mockAuthProvider,
+    } as Partial<any>,
     { mongo: { uri: 'mongodb://localhost:27017', transactionTimeout: 60000 } },
   );
   app.get(
@@ -45,8 +24,15 @@ function makeApp() {
 }
 
 describe('authenticateToken error paths', () => {
-  it('returns 400 when JwtService throws JsonWebTokenError', async () => {
-    const app = makeApp();
+  it('returns 400 when authProvider.verifyToken throws JsonWebTokenError', async () => {
+    const err = new Error('bad token');
+    err.name = 'JsonWebTokenError';
+    const mockAuthProvider: Partial<IAuthenticationProvider> = {
+      verifyToken: jest.fn().mockRejectedValue(err),
+      findUserById: jest.fn(),
+      buildRequestUserDTO: jest.fn(),
+    };
+    const app = makeApp(mockAuthProvider);
     const res = await request(app)
       .get('/protected')
       .set('Authorization', 'Bearer invalid');
@@ -54,8 +40,13 @@ describe('authenticateToken error paths', () => {
     expect(res.body?.message || res.text).toBeTruthy();
   });
 
-  it('returns 401 when JwtService throws TokenExpiredError', async () => {
-    const app = makeApp();
+  it('returns 401 when authProvider.verifyToken throws TokenExpiredError', async () => {
+    const mockAuthProvider: Partial<IAuthenticationProvider> = {
+      verifyToken: jest.fn().mockRejectedValue(new TokenExpiredError()),
+      findUserById: jest.fn(),
+      buildRequestUserDTO: jest.fn(),
+    };
+    const app = makeApp(mockAuthProvider);
     const res = await request(app)
       .get('/protected')
       .set('Authorization', 'Bearer expired');

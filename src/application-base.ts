@@ -25,6 +25,7 @@ import { ServiceContainer } from './container';
 import { IBaseDocument } from './documents/base';
 import { Environment } from './environment';
 import { IMongoApplication } from './interfaces/mongo-application';
+import { IAuthenticationProvider } from './interfaces/authentication-provider';
 import { IConstants } from './interfaces/constants';
 import { IDocumentStore } from './interfaces/document-store';
 import { PluginManager } from './plugins';
@@ -177,6 +178,22 @@ export class BaseApplication<
    */
   public get database(): IDatabase | undefined {
     return this._database;
+  }
+
+  /**
+   * Authentication provider for storage-agnostic user lookup and credential verification.
+   * Subclasses can override this to provide a custom authentication provider.
+   * By default, returns undefined — Mongo-backed apps should set this in their constructor
+   * or override this getter.
+   */
+  private _authProvider: IAuthenticationProvider<TID> | undefined;
+
+  public get authProvider(): IAuthenticationProvider<TID> | undefined {
+    return this._authProvider;
+  }
+
+  public set authProvider(provider: IAuthenticationProvider<TID> | undefined) {
+    this._authProvider = provider;
   }
 
   /**

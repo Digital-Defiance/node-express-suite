@@ -20,7 +20,7 @@ import { Request, Response } from 'express';
 import 'reflect-metadata';
 import { z } from 'zod';
 import { BaseController } from '../controllers/base';
-import { IMongoApplication } from '../interfaces/mongo-application';
+import { IApplication } from '../interfaces/application';
 import { ControllerRegistry } from '../registry';
 import { ApiResponse, RouteConfig } from '../types';
 import { getEffectiveAuthMetadata } from './auth';
@@ -124,11 +124,19 @@ export interface CollectedRouteMetadata<
  *
  * @template TLanguage - Language code type (defaults to CoreLanguageCode)
  * @template TID - Platform ID type (defaults to Buffer)
+ * @template TApplication - Application interface type (defaults to IApplication<TID>)
  */
 export abstract class DecoratorBaseController<
   TLanguage extends CoreLanguageCode = CoreLanguageCode,
   TID extends PlatformID = Buffer,
-> extends BaseController<ApiResponse, Record<string, unknown>, TLanguage, TID> {
+  TApplication extends IApplication<TID> = IApplication<TID>,
+> extends BaseController<
+  ApiResponse,
+  Record<string, unknown>,
+  TLanguage,
+  TID,
+  TApplication
+> {
   /**
    * Gets the collected metadata map for this instance.
    * Uses a WeakMap to avoid class field initialization issues.
@@ -150,7 +158,7 @@ export abstract class DecoratorBaseController<
     return map;
   }
 
-  constructor(application: IMongoApplication<TID>) {
+  constructor(application: TApplication) {
     super(application);
     // Auto-register with ControllerRegistry after routes are initialized
     this.registerWithControllerRegistry();

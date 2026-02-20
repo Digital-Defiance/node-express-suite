@@ -1,22 +1,8 @@
 import { AccountStatus } from '@digitaldefiance/suite-core-lib';
 import express from 'express';
 import request from 'supertest';
+import { IAuthenticationProvider } from '../../src/interfaces/authentication-provider';
 import { createApplicationMock } from '../__tests__/helpers/application.mock';
-
-// Mock UserService used inside authenticate-crypto
-const mockLoginWithMnemonic = jest.fn();
-const mockLoginWithPassword = jest.fn();
-
-// UserService will be mocked via service container in makeApp
-
-// Mock email service registry
-jest.mock('../../src/registry', () => ({
-  emailServiceRegistry: {
-    getService: jest.fn().mockReturnValue({
-      sendEmail: jest.fn(),
-    }),
-  },
-}));
 
 // Import after mocks are set up
 import { authenticateCrypto } from '../../src/middlewares/authenticate-crypto';
@@ -25,31 +11,31 @@ const VALID_USER_ID = 'USER_ID';
 
 function makeApp(
   overrides: {
-    getModelImpl?: () => unknown;
+    authProviderOverrides?: Partial<IAuthenticationProvider>;
     setUser?: boolean | { id: string };
   } = {},
 ) {
   const app = express();
   app.use(express.json());
 
+  const mockAuthProvider: Partial<IAuthenticationProvider> = {
+    verifyToken: jest.fn().mockResolvedValue(null),
+    findUserById: jest.fn().mockResolvedValue(null),
+    buildRequestUserDTO: jest.fn().mockResolvedValue(null),
+    ...overrides.authProviderOverrides,
+  };
+
   const application = createApplicationMock(
     {
-      getModel: () =>
-        overrides.getModelImpl ? overrides.getModelImpl() : ({} as unknown),
-    },
+      getModel: () => ({}) as unknown,
+      authProvider: mockAuthProvider,
+    } as Partial<any>,
     { mongo: { uri: 'mongodb://localhost:27017', transactionTimeout: 60000 } },
   );
-
-  // Register UserService in the container
-  application.services.register('user', () => ({
-    loginWithMnemonic: mockLoginWithMnemonic,
-    loginWithPassword: mockLoginWithPassword,
-  }));
 
   // Optional middleware to set req.user
   if (overrides.setUser) {
     app.use((req, _res, next) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (req as any).user =
         typeof overrides.setUser === 'object'
           ? overrides.setUser
@@ -59,13 +45,10 @@ function makeApp(
   }
 
   // Endpoint under test
-  // amazonq-ignore-next-line false positive, test harness
   app.post(
     '/crypto',
     (req, res, next) => authenticateCrypto(application, req, res, next),
     (_req, res) => {
-      // If authenticateCrypto calls next(), we land here
-      // Return something that lets us assert success
       res.status(200).json({ ok: true });
     },
   );
@@ -73,21 +56,7 @@ function makeApp(
   return app;
 }
 
-// Helper to build a chainable mongoose-like query stub for findById().session().exec()
-function buildFindByIdChain(result: unknown) {
-  return {
-    session: () => ({
-      exec: async () => result,
-    }),
-  };
-}
-
 describe('authenticateCrypto middleware', () => {
-  beforeEach(() => {
-    mockLoginWithMnemonic.mockReset();
-    mockLoginWithPassword.mockReset();
-  });
-
   it('returns 401 when req.user is missing', async () => {
     const app = makeApp();
     const res = await request(app).post('/crypto').send({});
@@ -101,10 +70,12 @@ describe('authenticateCrypto middleware', () => {
   });
 
   it('returns 403 when user not found', async () => {
-    const getModelImpl = () => ({
-      findById: () => buildFindByIdChain(null),
+    const app = makeApp({
+      authProviderOverrides: {
+        findUserById: jest.fn().mockResolvedValue(null),
+      },
+      setUser: { id: VALID_USER_ID },
     });
-    const app = makeApp({ getModelImpl, setUser: { id: VALID_USER_ID } });
     const res = await request(app)
       .post('/crypto')
       .send({ mnemonic: 'seed phrase' });
@@ -112,31 +83,34 @@ describe('authenticateCrypto middleware', () => {
   });
 
   it('returns 403 when user is inactive', async () => {
-    const getModelImpl = () => ({
-      findById: () =>
-        buildFindByIdChain({
-          _id: { toString: () => VALID_USER_ID },
+    const app = makeApp({
+      authProviderOverrides: {
+        findUserById: jest.fn().mockResolvedValue({
+          id: VALID_USER_ID,
           email: 'user@example.com',
           accountStatus: AccountStatus.AdminLock,
+          timezone: 'UTC',
         }),
+      },
+      setUser: { id: VALID_USER_ID },
     });
-    const app = makeApp({ getModelImpl, setUser: { id: VALID_USER_ID } });
-    // test fixture values - not real credentials
     // amazonq-ignore-next-line
     const res = await request(app).post('/crypto').send({ password: 'pass' });
     expect(res.status).toBe(403);
   });
 
   it('returns 403 when fetched user id does not match req.user.id', async () => {
-    const getModelImpl = () => ({
-      findById: () =>
-        buildFindByIdChain({
-          _id: { toString: () => '507f1f77bcf86cd799439012' },
+    const app = makeApp({
+      authProviderOverrides: {
+        findUserById: jest.fn().mockResolvedValue({
+          id: '507f1f77bcf86cd799439012',
           email: 'user@example.com',
           accountStatus: AccountStatus.Active,
+          timezone: 'UTC',
         }),
+      },
+      setUser: { id: VALID_USER_ID },
     });
-    const app = makeApp({ getModelImpl, setUser: { id: VALID_USER_ID } });
     const res = await request(app)
       .post('/crypto')
       .send({ mnemonic: 'seed phrase' });
@@ -144,23 +118,21 @@ describe('authenticateCrypto middleware', () => {
   });
 
   it('succeeds and sets members when mnemonic is valid', async () => {
-    mockLoginWithMnemonic.mockResolvedValue({
-      userDoc: {
-        _id: { toString: () => VALID_USER_ID },
-        email: 'user@example.com',
-      },
-      userMember: { id: 'user-member' },
-      adminMember: { id: 'admin-member' },
-    });
-    const getModelImpl = () => ({
-      findById: () =>
-        buildFindByIdChain({
-          _id: { toString: () => VALID_USER_ID },
+    const app = makeApp({
+      authProviderOverrides: {
+        findUserById: jest.fn().mockResolvedValue({
+          id: VALID_USER_ID,
           email: 'user@example.com',
           accountStatus: AccountStatus.Active,
+          timezone: 'UTC',
         }),
+        authenticateWithMnemonic: jest.fn().mockResolvedValue({
+          userId: VALID_USER_ID,
+          userMember: { id: 'user-member' },
+        }),
+      },
+      setUser: { id: VALID_USER_ID },
     });
-    const app = makeApp({ getModelImpl, setUser: { id: VALID_USER_ID } });
     const res = await request(app)
       .post('/crypto')
       .send({ mnemonic: 'seed phrase' });

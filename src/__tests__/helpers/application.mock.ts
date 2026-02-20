@@ -30,7 +30,8 @@ export function createApplicationMock(
     constants: LocalhostConstants,
     disableEmailSend: true,
     db: overrides?.db || ({} as typeof mongoose),
-    database: undefined,
+    database: (overrides as any)?.database ?? undefined,
+    authProvider: (overrides as any)?.authProvider ?? undefined,
     ready: true,
     async start() {
       /* noop */
@@ -71,6 +72,9 @@ export function createApplicationMock2(
       return mongoose;
     },
     get database() {
+      return undefined;
+    },
+    get authProvider() {
       return undefined;
     },
     get ready() {

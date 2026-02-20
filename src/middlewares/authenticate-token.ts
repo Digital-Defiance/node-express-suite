@@ -1,29 +1,22 @@
 /**
  * @fileoverview JWT token authentication middleware.
  * Validates bearer tokens, loads user data, and sets up request context.
+ * Storage-agnostic — delegates user lookup and role resolution to
+ * IAuthenticationProvider on the application.
  * @module middlewares/authenticate-token
  */
 
 import type { Timezone as TimezoneType } from '@digitaldefiance/i18n-lib';
 import { GlobalActiveContext } from '@digitaldefiance/i18n-lib';
-import { ClientSession } from '@digitaldefiance/mongoose-types';
 import {
   AccountStatus,
   getSuiteCoreTranslation,
-  ITokenRole,
-  ITokenUser,
   SuiteCoreStringKey,
 } from '@digitaldefiance/suite-core-lib';
 import { NextFunction, Request, Response } from 'express';
 import { IncomingHttpHeaders } from 'http';
-import { IUserDocument } from '../documents/user';
-import { BaseModelName } from '../enumerations/base-model-name';
 import { TokenExpiredError } from '../errors/token-expired';
-import { IMongoApplication } from '../interfaces/mongo-application';
-import { JwtService } from '../services/jwt';
-import { RequestUserService } from '../services/request-user';
-import { RoleService } from '../services/role';
-import { withTransaction } from '../utils';
+import { IApplication } from '../interfaces/application';
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 
 // Type for Timezone constructor
@@ -57,33 +50,29 @@ export function findAuthToken(headers: IncomingHttpHeaders): string | null {
  * Express middleware for JWT token authentication.
  * Validates token, loads user from database, checks account status,
  * and populates req.user with authenticated user data.
+ *
+ * Delegates to `application.authProvider` for storage-agnostic user lookup
+ * and role resolution. The application must have an authProvider configured.
+ *
  * @template TID - Platform ID type (defaults to Buffer)
- * @template D - Date type (defaults to Date)
- * @template TTokenRole - Token role interface type
- * @template TTokenUser - Token user interface type
- * @template TApplication - Application interface type
- * @param {TApplication} application - Application instance
+ * @param {IApplication<TID>} application - Application instance with authProvider
  * @param {Request} req - Express request object
  * @param {Response} res - Express response object
  * @param {NextFunction} next - Express next function
  * @returns {Promise<Response>} Response object
  * @throws {TokenExpiredError} When token has expired
  */
-export async function authenticateToken<
-  TID extends PlatformID = Buffer,
-  D extends Date = Date,
-  TTokenRole extends ITokenRole<TID, D> = ITokenRole<TID, D>,
-  TTokenUser extends ITokenUser = ITokenUser,
-  TApplication extends IMongoApplication<TID> = IMongoApplication<TID>,
->(
-  application: TApplication,
+export async function authenticateToken<TID extends PlatformID = Buffer>(
+  application: IApplication<TID>,
   req: Request,
   res: Response,
   next: NextFunction,
 ): Promise<Response> {
-  const UserModel = application.getModel<IUserDocument<string, TID>>(
-    BaseModelName.User,
-  );
+  const authProvider = application.authProvider;
+  if (!authProvider) {
+    return res.status(500).send('Authentication provider not configured');
+  }
+
   const token = findAuthToken(req.headers);
   if (token == null) {
     return res
@@ -94,50 +83,47 @@ export async function authenticateToken<
   }
 
   try {
-    return await withTransaction<Response>(
-      application.db.connection,
-      application.environment.mongo.useTransactions,
-      undefined,
-      async (sess: ClientSession | undefined) => {
-        const jwtService = new JwtService<
-          TID,
-          D,
-          TTokenRole,
-          TTokenUser,
-          TApplication
-        >(application);
-        const user: TTokenUser | null = await jwtService.verifyToken(token);
-        if (user === null) {
-          return res.status(403).send(
-            // amazonq-ignore-next-line false positive, hardcoded string
-            getSuiteCoreTranslation(SuiteCoreStringKey.Validation_UserNotFound),
-          );
-        }
-        const userDoc = await UserModel.findById(user.userId)
-          .select('-password')
-          .session(sess ?? null)
-          .exec();
-        if (!userDoc || userDoc.accountStatus !== AccountStatus.Active) {
-          return res.status(403).send(
-            // amazonq-ignore-next-line false positive, hardcoded string
-            getSuiteCoreTranslation(SuiteCoreStringKey.Validation_UserNotFound),
-          );
-        }
-        const roleService = new RoleService<TID, D, TTokenRole>(application);
-        const roles = await roleService.getUserRoles(userDoc._id as TID, sess);
-        const tokenRoles = roleService.rolesToTokenRoles(roles);
-        req.user = RequestUserService.makeRequestUserDTO(userDoc, tokenRoles);
-        const context = GlobalActiveContext.getInstance();
-        context.userLanguage = userDoc.siteLanguage ?? context.userLanguage;
-        context.setLanguageContextSpace('user');
-        context.userTimezone = createTimezone(userDoc.timezone);
-        next();
-        return res;
-      },
-      {
-        timeoutMs: application.environment.mongo.transactionTimeout,
-      },
-    );
+    const user = await authProvider.verifyToken(token);
+    if (user === null) {
+      return res.status(403).send(
+        // amazonq-ignore-next-line false positive, hardcoded string
+        getSuiteCoreTranslation(SuiteCoreStringKey.Validation_UserNotFound),
+      );
+    }
+
+    // Look up the user and check account status
+    const authenticatedUser = await authProvider.findUserById(user.userId);
+    if (
+      !authenticatedUser ||
+      authenticatedUser.accountStatus !== AccountStatus.Active
+    ) {
+      return res.status(403).send(
+        // amazonq-ignore-next-line false positive, hardcoded string
+        getSuiteCoreTranslation(SuiteCoreStringKey.Validation_UserNotFound),
+      );
+    }
+
+    // Build the full request user DTO with roles
+    const requestUserDTO = await authProvider.buildRequestUserDTO(user.userId);
+    if (!requestUserDTO) {
+      return res.status(403).send(
+        // amazonq-ignore-next-line false positive, hardcoded string
+        getSuiteCoreTranslation(SuiteCoreStringKey.Validation_UserNotFound),
+      );
+    }
+
+    req.user = requestUserDTO;
+
+    // Update global context with user's language and timezone
+    const context = GlobalActiveContext.getInstance();
+    if (authenticatedUser.siteLanguage) {
+      context.userLanguage = authenticatedUser.siteLanguage;
+    }
+    context.setLanguageContextSpace('user');
+    context.userTimezone = createTimezone(authenticatedUser.timezone);
+
+    next();
+    return res;
   } catch (err) {
     if (err instanceof TokenExpiredError) {
       return res.status(401).send({

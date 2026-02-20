@@ -42,6 +42,11 @@ describe('ApiRouter', () => {
     const app = express();
     app.use(express.json());
 
+    const mockAuthProvider = {
+      verifyToken: jest.fn().mockResolvedValue(null),
+      findUserById: jest.fn().mockResolvedValue(null),
+      buildRequestUserDTO: jest.fn().mockResolvedValue(null),
+    };
     const application = createApplicationMock(
       {
         // Provide a minimal getModel implementation for constructor-time lookups
@@ -49,7 +54,8 @@ describe('ApiRouter', () => {
           ({
             /* minimal mock */
           }) as unknown,
-      },
+        authProvider: mockAuthProvider,
+      } as Partial<any>,
       {
         // Provide required HMAC secret expected by services
         mnemonicHmacSecret: new SecureBuffer(Buffer.alloc(32)),

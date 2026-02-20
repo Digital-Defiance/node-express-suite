@@ -66,7 +66,13 @@ interface DocsHandlers extends TypedHandlers {
  */
 export class OpenApiController<
   TID extends PlatformID = Buffer,
-> extends BaseController<DocsApiResponse, DocsHandlers, CoreLanguageCode, TID> {
+> extends BaseController<
+  DocsApiResponse,
+  DocsHandlers,
+  CoreLanguageCode,
+  TID,
+  IMongoApplication<TID>
+> {
   private static readonly API_VERSION = '0.12.0';
   private readonly builder: OpenAPIBuilder;
 

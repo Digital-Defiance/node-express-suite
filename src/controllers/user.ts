@@ -113,7 +113,7 @@ export class UserController<
   TTokenRole extends ITokenRole<TID, TDate> = ITokenRole<TID, TDate>,
   TTokenUser extends ITokenUser = ITokenUser,
   TApplication extends IMongoApplication<TID> = IMongoApplication<TID>,
-> extends DecoratorBaseController<TLanguage, TID> {
+> extends DecoratorBaseController<TLanguage, TID, TApplication> {
   protected readonly userService: UserService<
     IUserDocument,
     TID,
@@ -145,7 +145,7 @@ export class UserController<
   protected readonly systemUser: BackendMember<TID>;
 
   constructor(
-    application: IMongoApplication<TID>,
+    application: TApplication,
     jwtService: JwtService<TID, TDate, TTokenRole, TTokenUser, TApplication>,
     userService: UserService<
       any,

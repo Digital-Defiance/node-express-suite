@@ -1,6 +1,7 @@
 export * from './backup-code';
 export * from './base';
 export * from './mongo-base';
+export * from './mongo-authentication-provider';
 export * from './checksum';
 export * from './database-initialization';
 export * from './db-init-cache';

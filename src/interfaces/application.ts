@@ -7,6 +7,7 @@
 
 import { ServiceContainer } from '../container';
 import { Environment } from '../environment';
+import { IAuthenticationProvider } from './authentication-provider';
 import { IConstants } from './constants';
 import type { IDatabase } from './storage/database';
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
@@ -35,6 +36,13 @@ export interface IApplication<TID extends PlatformID = Buffer> {
    * Optional — not all applications require a database.
    */
   get database(): IDatabase | undefined;
+  /**
+   * Storage-agnostic authentication provider.
+   * Supplies user lookup, role resolution, and credential verification
+   * for the authentication middlewares.
+   * Optional — not all applications require authentication.
+   */
+  get authProvider(): IAuthenticationProvider<TID> | undefined;
   /** Starts the application and initializes all services */
   start(): Promise<void>;
 }

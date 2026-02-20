@@ -27,6 +27,8 @@ export function createApplicationMock(
     environment: mockEnvironment,
     constants: LocalhostConstants,
     db: overrides?.db || ({} as any),
+    database: (overrides as any)?.database ?? undefined,
+    authProvider: (overrides as any)?.authProvider ?? undefined,
     ready: true,
     start: jest.fn(),
     getModel: overrides?.getModel || defaultGetModel,
