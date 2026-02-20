@@ -23,7 +23,7 @@ import { IUserDocument } from '../documents';
 import { IRoleDocument } from '../documents/role';
 import { IUserRoleDocument } from '../documents/user-role';
 import { BaseModelName } from '../enumerations/base-model-name';
-import { IApplication } from '../interfaces/application';
+import { IMongoApplication } from '../interfaces/mongo-application';
 import { IRoleBackendObject } from '../interfaces/backend-objects/role';
 import { ModelRegistry } from '../model-registry';
 import { omit } from '../utils';
@@ -50,7 +50,7 @@ export class RoleService<
    * Constructor for the role service
    * @param application The application object
    */
-  constructor(application: IApplication<TID>) {
+  constructor(application: IMongoApplication<TID>) {
     super(application);
   }
 

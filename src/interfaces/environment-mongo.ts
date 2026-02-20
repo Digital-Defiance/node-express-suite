@@ -12,9 +12,10 @@ import { ReadConcernLike, WriteConcern } from 'mongodb';
  */
 export interface IMongoEnvironment {
   /**
-   * The URI of the MongoDB database
+   * The URI of the MongoDB database.
+   * Optional — omit when using a non-MongoDB database (e.g. BrightChainDb).
    */
-  uri: string;
+  uri?: string;
   /**
    * The name of the MongoDB database
    */

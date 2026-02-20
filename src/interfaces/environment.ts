@@ -74,9 +74,10 @@ export interface IEnvironment<TID extends PlatformID = Buffer> {
    */
   disableEmailSend: boolean;
   /**
-   * MongoDB configuration
+   * MongoDB configuration.
+   * Optional — omit when using a non-MongoDB database (e.g. BrightChainDb).
    */
-  mongo: IMongoEnvironment;
+  mongo?: IMongoEnvironment;
   /**
    * Mnemonic for the admin user
    */

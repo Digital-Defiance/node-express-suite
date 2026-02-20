@@ -75,7 +75,7 @@ import { Environment } from '../environment';
 import { InvalidNewPasswordError } from '../errors';
 import { MongooseValidationError } from '../errors/mongoose-validation';
 import { ICreateUserBasics } from '../interfaces';
-import { IApplication } from '../interfaces/application';
+import { IMongoApplication } from '../interfaces/mongo-application';
 import { IUserBackendObject } from '../interfaces/backend-objects/user';
 import { IConstants } from '../interfaces/constants';
 import { IEmailService } from '../interfaces/email-service';
@@ -125,7 +125,7 @@ export class UserService<
     TAccountStatus
   >,
   TTokenRole extends ITokenRole<TID, TDate> = ITokenRole<TID, TDate>,
-  TApplication extends IApplication<TID> = IApplication<TID>,
+  TApplication extends IMongoApplication<TID> = IMongoApplication<TID>,
 > extends BaseService<TID, TApplication> {
   protected readonly roleService: RoleService<TID, TDate, TTokenRole>;
   protected readonly eciesService: ECIESService<TID>;

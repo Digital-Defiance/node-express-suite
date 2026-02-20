@@ -21,7 +21,7 @@ import { ServiceKeys } from '../container';
 import { IUserDocument } from '../documents/user';
 import { BaseModelName } from '../enumerations';
 import { InvalidPasswordError } from '../errors';
-import { IApplication } from '../interfaces/application';
+import { IMongoApplication } from '../interfaces/mongo-application';
 import { withTransaction } from '../utils';
 
 /**
@@ -31,7 +31,7 @@ import { withTransaction } from '../utils';
  * Used for operations requiring cryptographic signing or decryption.
  * @template TID - Platform ID type (defaults to Buffer)
  * @template TAccountStatus - Account status type (defaults to AccountStatus)
- * @param {IApplication<TID>} application - Application instance
+ * @param {IMongoApplication<TID>} application - Application instance
  * @param {Request} req - Express request object
  * @param {Response} res - Express response object
  * @param {NextFunction} next - Express next function
@@ -44,7 +44,7 @@ export async function authenticateCrypto<
   TID extends PlatformID = Buffer,
   TAccountStatus extends string = AccountStatus,
 >(
-  application: IApplication<TID>,
+  application: IMongoApplication<TID>,
   req: Request,
   res: Response,
   next: NextFunction,

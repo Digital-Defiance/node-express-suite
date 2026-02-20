@@ -12,7 +12,8 @@ import {
 } from '../types';
 import { BaseController } from './base';
 import { OpenAPIBuilder } from '../openapi';
-import { IApplication, IStatusCodeResponse } from '../interfaces';
+import { IStatusCodeResponse } from '../interfaces';
+import { IMongoApplication } from '../interfaces/mongo-application';
 import { ControllerRegistry } from '../registry';
 
 /**
@@ -69,7 +70,7 @@ export class OpenApiController<
   private static readonly API_VERSION = '0.12.0';
   private readonly builder: OpenAPIBuilder;
 
-  constructor(application: IApplication<TID>) {
+  constructor(application: IMongoApplication<TID>) {
     super(application);
 
     this.builder = new OpenAPIBuilder({

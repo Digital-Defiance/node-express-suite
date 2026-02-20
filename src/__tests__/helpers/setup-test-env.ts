@@ -195,7 +195,7 @@ export async function setupTestEnvironment<
   return {
     application,
     mongoServer: application.devDatabase!,
-    mongoUri: application.environment.mongo.uri,
+    mongoUri: application.environment.mongo.uri!,
     accountData,
     dbName: application.environment.devDatabase!,
   };

@@ -21,7 +21,7 @@ import { promisify } from 'util';
 import { IUserDocument } from '../documents/user';
 import { InvalidJwtTokenError } from '../errors/invalid-jwt-token';
 import { TokenExpiredError } from '../errors/token-expired';
-import { IApplication } from '../interfaces/application';
+import { IMongoApplication } from '../interfaces/mongo-application';
 import { IJwtSignResponse } from '../interfaces/jwt-sign-response';
 import { BaseService } from './base';
 import { RoleService } from './role';
@@ -49,7 +49,7 @@ export class JwtService<
   TDate extends Date = Date,
   TTokenRole extends ITokenRole<TID, TDate> = ITokenRole<TID, TDate>,
   TTokenUser extends ITokenUser = ITokenUser,
-  TApplication extends IApplication<TID> = IApplication<TID>,
+  TApplication extends IMongoApplication<TID> = IMongoApplication<TID>,
 > extends BaseService<TID, TApplication> {
   private readonly roleService: RoleService<TID, TDate, TTokenRole>;
 

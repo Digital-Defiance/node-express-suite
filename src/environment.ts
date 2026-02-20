@@ -145,9 +145,7 @@ export class Environment<
         envObj['DISABLE_EMAIL_SEND'] === '1',
       mongo: {
         dbName: envObj['MONGO_DB_NAME'] ?? 'db',
-        uri:
-          envObj['MONGO_URI'] ??
-          `mongodb://db:27017/${envObj['MONGO_DB_NAME'] ?? 'db'}`,
+        uri: envObj['MONGO_URI'] ?? undefined,
         setParameterSupported:
           envObj['MONGO_SET_PARAMETER_SUPPORTED'] === 'true' ||
           envObj['MONGO_SET_PARAMETER_SUPPORTED'] === '1',
@@ -395,13 +393,8 @@ export class Environment<
         { value: 'MNEMONIC_ENCRYPTION_KEY' },
       );
     }
-    if (!this._environment.mongo.uri) {
-      throw new Error(
-        getSuiteCoreTranslation(SuiteCoreStringKey.Admin_EnvNotSetTemplate, {
-          variable: 'MONGO_URI',
-        }),
-      );
-    }
+    // MONGO_URI is optional — only required when using a Mongoose/MongoDB document store.
+    // Applications using IDatabase (e.g. BrightChainDb) do not need it.
     if (!this._environment.emailSender) {
       throw new Error(
         getSuiteCoreTranslation(SuiteCoreStringKey.Admin_EnvNotSetTemplate, {
@@ -619,10 +612,27 @@ export class Environment<
   }
 
   /**
-   * The MongoDB configuration (primarily for transactions)
+   * The MongoDB configuration (primarily for transactions).
+   * Returns the mongo config object (uri may be undefined when not using MongoDB).
    */
   public get mongo(): IMongoEnvironment {
-    return this._environment.mongo;
+    return this._environment.mongo!;
+  }
+
+  /**
+   * Returns the MongoDB config, throwing a clear error if MONGO_URI is not set.
+   * Use this in Mongoose-specific code paths to get a clear error rather than
+   * a silent undefined URI.
+   */
+  public get requireMongo(): IMongoEnvironment & { uri: string } {
+    const m = this._environment.mongo;
+    if (!m?.uri) {
+      throw new TranslatableSuiteError(
+        SuiteCoreStringKey.Admin_EnvNotSetTemplate,
+        { variable: 'MONGO_URI' },
+      );
+    }
+    return m as IMongoEnvironment & { uri: string };
   }
 
   /**

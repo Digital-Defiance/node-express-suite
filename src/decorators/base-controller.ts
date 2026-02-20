@@ -20,7 +20,7 @@ import { Request, Response } from 'express';
 import 'reflect-metadata';
 import { z } from 'zod';
 import { BaseController } from '../controllers/base';
-import { IApplication } from '../interfaces/application';
+import { IMongoApplication } from '../interfaces/mongo-application';
 import { ControllerRegistry } from '../registry';
 import { ApiResponse, RouteConfig } from '../types';
 import { getEffectiveAuthMetadata } from './auth';
@@ -150,7 +150,7 @@ export abstract class DecoratorBaseController<
     return map;
   }
 
-  constructor(application: IApplication<TID>) {
+  constructor(application: IMongoApplication<TID>) {
     super(application);
     // Auto-register with ControllerRegistry after routes are initialized
     this.registerWithControllerRegistry();

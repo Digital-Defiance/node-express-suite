@@ -19,7 +19,7 @@ import { IncomingHttpHeaders } from 'http';
 import { IUserDocument } from '../documents/user';
 import { BaseModelName } from '../enumerations/base-model-name';
 import { TokenExpiredError } from '../errors/token-expired';
-import { IApplication } from '../interfaces/application';
+import { IMongoApplication } from '../interfaces/mongo-application';
 import { JwtService } from '../services/jwt';
 import { RequestUserService } from '../services/request-user';
 import { RoleService } from '../services/role';
@@ -74,7 +74,7 @@ export async function authenticateToken<
   D extends Date = Date,
   TTokenRole extends ITokenRole<TID, D> = ITokenRole<TID, D>,
   TTokenUser extends ITokenUser = ITokenUser,
-  TApplication extends IApplication<TID> = IApplication<TID>,
+  TApplication extends IMongoApplication<TID> = IMongoApplication<TID>,
 >(
   application: TApplication,
   req: Request,

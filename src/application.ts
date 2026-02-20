@@ -32,6 +32,7 @@ import {
   IFailableResult,
   isCSPConfig,
   IServerInitResult,
+  IMongoApplication,
 } from './interfaces';
 import { IConstants } from './interfaces/constants';
 import { IDocumentStore } from './interfaces/document-store';
@@ -62,7 +63,7 @@ export class Application<
   TAppRouter extends AppRouter<TID> = AppRouter<TID>,
 >
   extends BaseApplication<TID, TModelDocs, TInitResults, TConstants>
-  implements IApplication<TID>
+  implements IMongoApplication<TID>
 {
   public readonly expressApp: ExpressApplication;
   private server: ServerWithOptionalClose | null = null;

@@ -50,7 +50,7 @@ import {
   IApiUserSettingsResponse,
 } from '../interfaces';
 import { IApiBackupCodesResponse } from '../interfaces/api-responses/backup-codes-response';
-import type { IApplication } from '../interfaces/application';
+import type { IMongoApplication } from '../interfaces/mongo-application';
 import { IConstants } from '../interfaces/constants';
 import { IStatusCodeResponse } from '../interfaces/status-code-response';
 import { findAuthToken } from '../middlewares/authenticate-token';
@@ -112,7 +112,7 @@ export class UserController<
   >,
   TTokenRole extends ITokenRole<TID, TDate> = ITokenRole<TID, TDate>,
   TTokenUser extends ITokenUser = ITokenUser,
-  TApplication extends IApplication<TID> = IApplication<TID>,
+  TApplication extends IMongoApplication<TID> = IMongoApplication<TID>,
 > extends DecoratorBaseController<TLanguage, TID> {
   protected readonly userService: UserService<
     IUserDocument,
@@ -145,7 +145,7 @@ export class UserController<
   protected readonly systemUser: BackendMember<TID>;
 
   constructor(
-    application: IApplication<TID>,
+    application: IMongoApplication<TID>,
     jwtService: JwtService<TID, TDate, TTokenRole, TTokenUser, TApplication>,
     userService: UserService<
       any,

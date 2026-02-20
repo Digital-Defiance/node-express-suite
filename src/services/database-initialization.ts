@@ -44,7 +44,7 @@ import { IUserRoleDocument } from '../documents/user-role';
 import { BaseModelName } from '../enumerations/base-model-name';
 import { Environment } from '../environment';
 import { IDBInitResult } from '../interfaces';
-import { IApplication } from '../interfaces/application';
+import { IMongoApplication } from '../interfaces/mongo-application';
 import { IServerInitResult } from '../interfaces/server-init-result';
 import { ModelRegistry } from '../model-registry';
 import { KeyWrappingService } from '../services/key-wrapping';
@@ -82,7 +82,7 @@ export abstract class DatabaseInitializationService {
     str: string,
     variables?: Record<string, unknown>,
     language?: string,
-    application?: IApplication,
+    application?: IMongoApplication,
   ): string {
     // Handles template strings with {{component.key}} syntax
     return getSuiteCoreI18nEngine(
@@ -263,7 +263,7 @@ export abstract class DatabaseInitializationService {
   }
 
   public static getInitOptions<TID extends PlatformID = Buffer>(
-    application: IApplication<TID>,
+    application: IMongoApplication<TID>,
   ): {
     adminId?: TID;
     adminMnemonic?: SecureString;
@@ -366,7 +366,7 @@ export abstract class DatabaseInitializationService {
    * @returns Result of the initialization
    */
   public static async initUserDbWithServices<TID extends PlatformID = Buffer>(
-    application: IApplication<TID>,
+    application: IMongoApplication<TID>,
     keyWrappingService: KeyWrappingService,
     mnemonicService: MnemonicService<TID>,
     eciesService: ECIESService<TID>,
@@ -1587,7 +1587,7 @@ SYSTEM_PASSWORD="${serverInitResult.systemPassword}"
    * @returns Result of the initialization
    */
   public static async initUserDb<TID extends PlatformID = Buffer>(
-    application: IApplication<TID>,
+    application: IMongoApplication<TID>,
   ): Promise<IFailableResult<IServerInitResult<TID>>> {
     const mnemonicModel = ModelRegistry.instance.getTypedModel<
       IMnemonicDocument<TID>

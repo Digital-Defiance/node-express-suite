@@ -38,7 +38,7 @@ import { BaseModelName } from '../enumerations/base-model-name';
 import { ExpressValidationError } from '../errors/express-validation';
 import { MissingValidatedDataError } from '../errors/missing-validated-data';
 import { IConstants } from '../interfaces';
-import { IApplication } from '../interfaces/application';
+import { IMongoApplication } from '../interfaces/mongo-application';
 import { authenticateCrypto } from '../middlewares/authenticate-crypto';
 import { authenticateToken } from '../middlewares/authenticate-token';
 import { setGlobalContextLanguageFromRequest } from '../middlewares/set-global-context-language';
@@ -79,7 +79,7 @@ export abstract class BaseController<
   private activeRequest: Request | null = null;
   private activeResponse: Response | null = null;
   private activeSession: ClientSession | undefined = undefined;
-  public readonly application: IApplication<TID>;
+  public readonly application: IMongoApplication<TID>;
   protected routeDefinitions: RouteConfig<THandler, TLanguage>[] = [];
   protected get constants(): IConstants {
     if (!this.application.constants) {
@@ -96,7 +96,7 @@ export abstract class BaseController<
   private static validationRegistry = new WeakSet<Function>();
   protected transactionManager: TransactionManager;
 
-  public constructor(application: IApplication<TID>) {
+  public constructor(application: IMongoApplication<TID>) {
     this.application = application;
     this.router = Router();
     this.handlers = {} as THandler;

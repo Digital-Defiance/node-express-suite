@@ -16,7 +16,7 @@ import { UserController } from '../controllers/user';
 import { IBaseDocument } from '../documents';
 import { Environment } from '../environment';
 import { IConstants } from '../interfaces';
-import { IApplication } from '../interfaces/application';
+import { IMongoApplication } from '../interfaces/mongo-application';
 import { IEmailService } from '../interfaces/email-service';
 import { emailServiceRegistry } from '../registry';
 import { BackupCodeService } from '../services/backup-code';
@@ -59,7 +59,7 @@ export class ApiRouter<
   TTokenUser extends ITokenUser = ITokenUser,
   TConstants extends IConstants = IConstants,
   TEnvironment extends Environment<TID> = Environment<TID>,
-  TApplication extends IApplication<TID> = IApplication<TID>,
+  TApplication extends IMongoApplication<TID> = IMongoApplication<TID>,
 > extends BaseRouter<TID, TApplication> {
   private readonly openApiController: OpenApiController<TID>;
   /** User controller for handling user-related API endpoints */

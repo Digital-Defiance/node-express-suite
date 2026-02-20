@@ -469,13 +469,13 @@ PORT=9000
       }).toThrow();
     });
 
-    it('should throw error for missing MONGO_URI', () => {
+    it('should not throw error for missing MONGO_URI (optional for non-Mongo apps)', () => {
       delete process.env['MONGO_URI'];
       process.env['MONGO_URI'] = '';
 
       expect(() => {
         new Environment();
-      }).toThrow();
+      }).not.toThrow();
     });
 
     it('should throw error for missing SYSTEM_PUBLIC_KEY when not in initialization mode', () => {

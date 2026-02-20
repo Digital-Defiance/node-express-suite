@@ -143,7 +143,7 @@ export class MongooseDocumentStore<
    * @inheritdoc
    */
   public async connect(uri?: string): Promise<void> {
-    const mongoUri = uri ?? this._environment.mongo.uri;
+    const mongoUri = uri ?? this._environment.requireMongo.uri;
     const debug = this._environment.debug;
 
     this.validateMongoUri(mongoUri);

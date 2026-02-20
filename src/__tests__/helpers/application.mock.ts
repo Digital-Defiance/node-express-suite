@@ -3,13 +3,13 @@ import mongoose, { Document, Model } from '@digitaldefiance/mongoose-types';
 import { LocalhostConstants } from '../../../src/constants';
 import { ServiceContainer } from '../../../src/container';
 import { Environment } from '../../../src/environment';
-import { IApplication } from '../../../src/interfaces/application';
+import { IMongoApplication } from '../../../src/interfaces/mongo-application';
 import { PluginManager } from '../../../src/plugins';
 
 export function createApplicationMock(
-  overrides?: Partial<IApplication>,
+  overrides?: Partial<IMongoApplication>,
   envOverrides?: Partial<Environment>,
-): IApplication {
+): IMongoApplication {
   const mockEnvironment = {
     jwtSecret: new SecureString('test-jwt-secret'),
     mnemonicHmacSecret: new SecureString('test-hmac-secret'),
@@ -30,6 +30,7 @@ export function createApplicationMock(
     constants: LocalhostConstants,
     disableEmailSend: true,
     db: overrides?.db || ({} as typeof mongoose),
+    database: undefined,
     ready: true,
     async start() {
       /* noop */
@@ -37,7 +38,7 @@ export function createApplicationMock(
     getModel: overrides?.getModel || defaultGetModel,
     services: new ServiceContainer(),
     plugins: new PluginManager(),
-  } as IApplication;
+  } as IMongoApplication;
 }
 
 /**
@@ -47,9 +48,9 @@ export function createApplicationMock2(
   apiDistDir: string,
   reactDistDir: string,
   serverUrl: string = 'http://localhost:3000',
-  overrides?: Partial<IApplication>,
+  overrides?: Partial<IMongoApplication>,
   envOverrides?: Partial<Environment>,
-): IApplication {
+): IMongoApplication {
   // minimal environment-like object with only fields used by constructors
   const env: Partial<Environment> = {
     debug: false,
@@ -62,12 +63,15 @@ export function createApplicationMock2(
     ...envOverrides,
   };
 
-  const application: IApplication = {
+  const application: IMongoApplication = {
     get environment() {
       return { ...env } as Environment;
     },
     get db() {
       return mongoose;
+    },
+    get database() {
+      return undefined;
     },
     get ready() {
       return true;
@@ -83,7 +87,7 @@ export function createApplicationMock2(
     constants: LocalhostConstants,
     disableEmailSend: true,
     ...(overrides as object),
-  } as IApplication;
+  } as IMongoApplication;
 
   return application;
 }

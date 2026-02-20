@@ -7,6 +7,7 @@ export * from './api-message-response';
 export * from './api-mongo-validation-error-response';
 export * from './api-responses';
 export * from './application';
+export * from './mongo-application';
 export * from './backend-objects';
 export * from './checksum-config';
 export * from './checksum-consts';

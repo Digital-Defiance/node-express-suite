@@ -24,7 +24,7 @@ import { join } from 'path';
 import { ServiceContainer } from './container';
 import { IBaseDocument } from './documents/base';
 import { Environment } from './environment';
-import { IApplication } from './interfaces/application';
+import { IMongoApplication } from './interfaces/mongo-application';
 import { IConstants } from './interfaces/constants';
 import { IDocumentStore } from './interfaces/document-store';
 import { PluginManager } from './plugins';
@@ -60,7 +60,7 @@ export class BaseApplication<
   TModelDocs extends Record<string, IBaseDocument<any, TID>>,
   TInitResults,
   TConstants extends IConstants = IConstants,
-> implements IApplication<TID> {
+> implements IMongoApplication<TID> {
   /**
    * Application environment
    */
@@ -267,19 +267,22 @@ export class BaseApplication<
     }
 
     try {
-      const uri = mongoUri ?? this.environment.mongo.uri;
+      const uri = mongoUri ?? this.environment.mongo?.uri;
 
       if (this._database) {
-        // IDatabase path: validate URI before connecting
-        if (this._lifecycleHooks?.validateUri) {
-          this._lifecycleHooks.validateUri(uri);
-        } else {
-          defaultMongoUriValidator(uri, this._environment.production);
+        // IDatabase path: only validate/connect if a URI was provided.
+        // Non-Mongo databases (e.g. BrightChainDb) manage their own connection
+        // internally and do not need a URI passed from the environment.
+        if (uri) {
+          if (this._lifecycleHooks?.validateUri) {
+            this._lifecycleHooks.validateUri(uri);
+          } else {
+            defaultMongoUriValidator(uri, this._environment.production);
+          }
         }
-
         await this._database.connect(uri);
       } else if (this._documentStore) {
-        // Legacy IDocumentStore path
+        // Legacy IDocumentStore path — always requires a URI
         await this._documentStore.connect(uri);
       }
 

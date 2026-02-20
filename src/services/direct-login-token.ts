@@ -11,7 +11,7 @@ import {
   IUsedDirectLoginTokenBase,
 } from '@digitaldefiance/suite-core-lib';
 import { BaseModelName } from '../enumerations/base-model-name';
-import { IApplication } from '../interfaces/application';
+import { IMongoApplication } from '../interfaces/mongo-application';
 import { ModelRegistry } from '../model-registry';
 import { withTransaction } from '../utils';
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
@@ -34,7 +34,7 @@ export abstract class DirectLoginTokenService {
    * @throws {FailedToUseDirectTokenError} If token creation fails
    */
   public static async useToken<TID extends PlatformID = Buffer>(
-    app: IApplication<TID>,
+    app: IMongoApplication<TID>,
     userId: TID,
     token: string,
     session?: ClientSession,

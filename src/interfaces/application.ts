@@ -1,18 +1,20 @@
 /**
- * @fileoverview Application interface defining core application structure and services.
- * Provides access to environment, constants, database, and service container.
+ * @fileoverview Base application interface defining core application structure and services.
+ * Database-agnostic — does NOT include Mongoose/MongoDB-specific members.
+ * For MongoDB access, use IMongoApplication from './mongo-application'.
  * @module interfaces/application
  */
 
-import mongoose, { Model } from '@digitaldefiance/mongoose-types';
 import { ServiceContainer } from '../container';
-import { IBaseDocument } from '../documents';
 import { Environment } from '../environment';
 import { IConstants } from './constants';
+import type { IDatabase } from './storage/database';
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 
 /**
  * Core application interface providing access to all application services and configuration.
+ * This interface is database-agnostic. It does NOT expose `db: typeof mongoose` or
+ * `getModel()` — those belong on IMongoApplication for Mongoose consumers.
  * @template TID Platform-specific ID type (Buffer, ObjectId, etc.)
  */
 export interface IApplication<TID extends PlatformID = Buffer> {
@@ -20,21 +22,19 @@ export interface IApplication<TID extends PlatformID = Buffer> {
   get environment(): Environment<TID>;
   /** Application constants and configuration values */
   get constants(): IConstants;
-  /** Mongoose database connection */
-  get db(): typeof mongoose;
   /** Whether the application is ready to handle requests */
   get ready(): boolean;
   /** Service container for dependency injection */
   get services(): ServiceContainer;
   /** Plugin manager for extensibility */
   get plugins(): import('../plugins').PluginManager<TID>;
+  /**
+   * Storage-agnostic database instance.
+   * Both Mongoose-backed apps (via BaseApplication) and BrightChainDb apps
+   * can expose their database through this property.
+   * Optional — not all applications require a database.
+   */
+  get database(): IDatabase | undefined;
   /** Starts the application and initializes all services */
   start(): Promise<void>;
-  /**
-   * Gets a Mongoose model by name.
-   * @template U Document type extending IBaseDocument
-   * @param modelName Name of the model to retrieve
-   * @returns Mongoose model instance
-   */
-  getModel<U extends IBaseDocument<any, TID>>(modelName: string): Model<U>;
 }
