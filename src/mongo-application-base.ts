@@ -22,6 +22,7 @@ import { IMongoApplication } from './interfaces/mongo-application';
 import { IConstants } from './interfaces/constants';
 import { IDocumentStore } from './interfaces/document-store';
 import { MongooseDocumentStore } from './services/mongoose-document-store';
+import { MongoAuthenticationProvider } from './services/mongo-authentication-provider';
 import { SchemaMap } from './types';
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 
@@ -177,6 +178,11 @@ export class MongoApplicationBase<
       try {
         const uri = mongoUri ?? this.environment.mongo?.uri;
         await this._documentStore.connect(uri);
+
+        // Wire up the Mongoose-backed authentication provider
+        if (!this.authProvider) {
+          this.authProvider = new MongoAuthenticationProvider(this);
+        }
 
         // Initialize plugins
         await this.plugins.initAll(this);
