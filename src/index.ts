@@ -1,9 +1,8 @@
 import 'reflect-metadata';
 
 export * from './application';
-export * from './application-base';
-export * from './application-concrete';
-export * from './mongo-application-base';
+export * from './base-application';
+export * from './mongo-application-concrete';
 export * from './backup-code';
 export * from './builders';
 export * from './constants';
@@ -85,3 +84,4 @@ export type { TransactionOptions as UtilsTransactionOptions } from './utils';
 export * from './validation';
 export * from './branded-responses';
 export { defaultMongoUriValidator } from './utils/default-mongo-uri-validator';
+export { createNoOpDatabase } from './utils/no-op-database';

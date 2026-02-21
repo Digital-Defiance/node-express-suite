@@ -13,7 +13,7 @@ import type {
   IDatabaseLifecycleHooks,
 } from '@brightchain/brightchain-lib';
 import { TranslatableSuiteError } from '@digitaldefiance/suite-core-lib';
-import { BaseApplication } from '../src/application-base';
+import { BaseApplication } from '../src/base-application';
 import { Environment } from '../src/environment';
 
 // ---------------------------------------------------------------------------
@@ -103,28 +103,13 @@ describe('BaseApplication lifecycle hooks (IDatabase path)', () => {
       expect(app.lifecycleHooks).toBe(hooks);
     });
 
-    it('should not store lifecycle hooks when IDocumentStore is provided', () => {
-      // IDocumentStore path: MongoApplicationBase does not accept lifecycle hooks
+    it('should not store lifecycle hooks when no hooks are provided', () => {
       const env = createProdEnv();
-      // Minimal IDocumentStore mock (not IDatabase — no 'startSession')
-      const store = {
-        connect: jest.fn(),
-        disconnect: jest.fn(),
-        schemaMap: undefined,
-        devDatabase: undefined,
-      };
-
-      // MongoApplicationBase constructor does not accept lifecycle hooks
-      // when using IDocumentStore — they are only for the IDatabase path
-      // via BaseApplication. Verify that MongoApplicationBase with a store
-      // does not expose lifecycle hooks.
-      const { MongoApplicationBase } = require('../src/mongo-application-base');
-      const app = new MongoApplicationBase(env, store as never);
-      // MongoApplicationBase doesn't have _lifecycleHooks — it delegates to parent
-      // which gets no hooks since MongoApplicationBase doesn't pass them
-      expect(
-        (app as Record<string, unknown>)['_lifecycleHooks'],
-      ).toBeUndefined();
+      // BaseApplication without lifecycle hooks should have undefined _lifecycleHooks
+      const callLog: string[] = [];
+      const db = createMockDatabase(callLog);
+      const app = new TestableBaseApplication(env, db as never);
+      expect(app.lifecycleHooks).toBeUndefined();
     });
   });
 

@@ -1,10 +1,10 @@
 /**
  * @fileoverview End-to-end integration test for the direct login challenge flow.
- * Boots a real MongoApplicationBase with in-memory MongoDB, initializes users,
+ * Boots a real BaseApplication with MongoDatabasePlugin and in-memory MongoDB, initializes users,
  * and exercises the full generate → sign → verify challenge lifecycle.
  *
- * This test exists to catch regressions from the BaseApplication / MongoApplicationBase
- * refactor — specifically ensuring that the legacy IDocumentStore path still works
+ * This test exists to catch regressions from the BaseApplication / Application
+ * refactor — specifically ensuring that the plugin-based architecture works
  * correctly for authentication, transactions, and model access.
  */
 
@@ -17,13 +17,8 @@ import {
   GlobalActiveContext,
   IActiveContext,
 } from '@digitaldefiance/i18n-lib';
-import {
-  ECIESService,
-} from '@digitaldefiance/node-ecies-lib';
-import {
-  IECIESConfig,
-  SecureString,
-} from '@digitaldefiance/ecies-lib';
+import { ECIESService } from '@digitaldefiance/node-ecies-lib';
+import { IECIESConfig, SecureString } from '@digitaldefiance/ecies-lib';
 import { createExpressConstants, ECIES } from '../../src/constants';
 import { BaseModelName } from '../../src/enumerations';
 import { Environment } from '../../src/environment';
@@ -31,7 +26,8 @@ import { ModelRegistry } from '../../src/model-registry';
 import { getSchemaMap } from '../../src/schemas';
 import { DatabaseInitializationService } from '../../src/services';
 import { MongooseDocumentStore } from '../../src/services/mongoose-document-store';
-import { MongoApplicationBase } from '../../src/mongo-application-base';
+import { BaseApplication } from '../../src/base-application';
+import { MongoDatabasePlugin } from '../../src/plugins/mongo-database-plugin';
 import { UserService } from '../../src/services/user';
 import { RoleService } from '../../src/services/role';
 import { KeyWrappingService } from '../../src/services/key-wrapping';
@@ -39,6 +35,7 @@ import { BackupCodeService } from '../../src/services/backup-code';
 import { JwtService } from '../../src/services/jwt';
 import { DummyEmailService } from '../../src/services/dummy-email-service';
 import { IServerInitResult, IConstants } from '../../src/interfaces';
+import { IMongoApplication } from '../../src/interfaces/mongo-application';
 import type { IUserDocument } from '../../src/documents/user';
 import type { BaseModelDocs } from '../../src/schemas/schema';
 
@@ -64,15 +61,15 @@ const eciesConfig: IECIESConfig = {
 };
 
 describe('Direct login challenge E2E (real MongoDB)', () => {
-  let app: MongoApplicationBase<
+  let app: BaseApplication<Buffer>;
+  let mongoPlugin: MongoDatabasePlugin<
     Buffer,
     BaseModelDocs,
     IServerInitResult<Buffer>
   >;
+  let mongoApp: IMongoApplication<Buffer>;
   let initResult: IServerInitResult<Buffer>;
-  let userService: UserService<
-    unknown, Buffer, Date, string, string
-  >;
+  let userService: UserService<unknown, Buffer, Date, string, string>;
   let eciesService: ECIESService<Buffer>;
 
   beforeAll(async () => {
@@ -109,43 +106,77 @@ describe('Direct login challenge E2E (real MongoDB)', () => {
 
     const env = new Environment(undefined, true, true, TestConstants);
 
-    const documentStore = new MongooseDocumentStore<
+    mongoPlugin = new MongoDatabasePlugin<
       Buffer,
       BaseModelDocs,
       IServerInitResult<Buffer>
-    >(
-      getSchemaMap,
-      (application) =>
+    >({
+      schemaMapFactory: getSchemaMap,
+      databaseInitFunction: (application: IMongoApplication<Buffer>) =>
         DatabaseInitializationService.initUserDb(application),
-      (r: IServerInitResult<Buffer>) =>
+      initResultHashFunction: (r: IServerInitResult<Buffer>) =>
         DatabaseInitializationService.serverInitResultHash(r),
-      env,
-      TestConstants,
-    );
+      environment: env,
+      constants: TestConstants,
+    });
 
-    app = new MongoApplicationBase(env, documentStore, TestConstants);
+    const noOpDb = {
+      collection() {
+        throw new Error('Use MongoDatabasePlugin');
+      },
+      startSession() {
+        throw new Error('Use MongoDatabasePlugin');
+      },
+      withTransaction() {
+        throw new Error('Use MongoDatabasePlugin');
+      },
+      listCollections() {
+        return [];
+      },
+      async dropCollection() {
+        return false;
+      },
+      async connect() {
+        /* no-op */
+      },
+      async disconnect() {
+        /* no-op */
+      },
+      isConnected() {
+        return false;
+      },
+    };
 
-    // Start the app — connects to in-memory MongoDB, registers models
-    await app.start();
+    app = new BaseApplication(env, noOpDb as never, TestConstants);
+
+    // Connect the plugin manually (simulating what Application.start() does)
+    await mongoPlugin.connect();
+    await mongoPlugin.init(app as never);
+
+    // Set the auth provider from the plugin
+    app.authProvider = mongoPlugin.authenticationProvider;
+
+    // Get the IMongoApplication adapter from the plugin (has db, getModel, etc.)
+    mongoApp = mongoPlugin.mongoApplication!;
 
     // Initialize the database — creates admin, member, system users
     initResult =
-      await documentStore.initializeDevStore<IServerInitResult<Buffer>>(app);
+      (await mongoPlugin.initializeDevStore()) as IServerInitResult<Buffer>;
 
     // Build services the same way ApiRouter does
     eciesService = new ECIESService<Buffer>(eciesConfig);
-    const roleService = new RoleService<Buffer>(app);
-    const emailService = new DummyEmailService<Buffer>(app);
+    const roleService = new RoleService<Buffer>(mongoApp);
+    const emailService = new DummyEmailService<Buffer>(app as never);
     const keyWrappingService = new KeyWrappingService();
     const backupCodeService = new BackupCodeService<Buffer>(
-      app,
+      mongoApp,
       eciesService,
       keyWrappingService,
       roleService,
     );
 
     userService = new UserService(
-      app,
+      mongoApp,
       roleService,
       emailService,
       keyWrappingService,
@@ -154,8 +185,8 @@ describe('Direct login challenge E2E (real MongoDB)', () => {
   }, 120_000);
 
   afterAll(async () => {
-    if (app) {
-      await app.stop();
+    if (mongoPlugin) {
+      await mongoPlugin.disconnect();
     }
   }, 30_000);
 
@@ -178,9 +209,8 @@ describe('Direct login challenge E2E (real MongoDB)', () => {
   });
 
   it('should expose a working db getter (not the no-op)', () => {
-    // The legacy IDocumentStore path creates a no-op IDatabase for BaseApplication,
-    // but MongoApplicationBase.db should return the real mongoose instance.
-    const db = app.db;
+    // The MongoDatabasePlugin manages the real mongoose instance
+    const db = mongoPlugin.db;
     expect(db).toBeDefined();
     expect(db.connection).toBeDefined();
     expect(db.connection.readyState).toBe(1); // connected
@@ -199,8 +229,7 @@ describe('Direct login challenge E2E (real MongoDB)', () => {
     const challenge = userService.generateDirectLoginChallenge();
     expect(typeof challenge).toBe('string');
     // Challenge = time(8) + nonce(32) + serverSignature(SIGNATURE_SIZE) in hex
-    const expectedLength =
-      (8 + 32 + TestConstants.ECIES.SIGNATURE_SIZE) * 2;
+    const expectedLength = (8 + 32 + TestConstants.ECIES.SIGNATURE_SIZE) * 2;
     expect(challenge.length).toBe(expectedLength);
     expect(/^[a-f0-9]+$/.test(challenge)).toBe(true);
   });
@@ -356,7 +385,7 @@ describe('Direct login challenge E2E (real MongoDB)', () => {
     );
 
     // Now sign a JWT — this is what the controller does after verification
-    const jwtService = new JwtService<Buffer>(app);
+    const jwtService = new JwtService<Buffer>(mongoApp);
     const { token, roles } = await jwtService.signToken(
       userDoc,
       app.environment.jwtSecret,
@@ -381,9 +410,7 @@ describe('Direct login challenge E2E (real MongoDB)', () => {
     });
     expect(admin).not.toBeNull();
 
-    const authUser = await app.authProvider!.findUserById(
-      String(admin!._id),
-    );
+    const authUser = await app.authProvider!.findUserById(String(admin!._id));
     expect(authUser).not.toBeNull();
     expect(authUser!.email).toBe(TestConstants.AdministratorEmail);
   });
@@ -397,9 +424,7 @@ describe('Direct login challenge E2E (real MongoDB)', () => {
     });
     expect(admin).not.toBeNull();
 
-    const dto = await app.authProvider!.buildRequestUserDTO(
-      String(admin!._id),
-    );
+    const dto = await app.authProvider!.buildRequestUserDTO(String(admin!._id));
     expect(dto).not.toBeNull();
     expect(dto!.username).toBe(TestConstants.AdministratorUser);
     expect(dto!.roles).toBeDefined();
@@ -414,7 +439,7 @@ describe('Direct login challenge E2E (real MongoDB)', () => {
     const admin = await UserModel.findOne({
       username: TestConstants.AdministratorUser,
     });
-    const jwtService = new JwtService<Buffer>(app);
+    const jwtService = new JwtService<Buffer>(mongoApp);
     const { token } = await jwtService.signToken(
       admin!,
       app.environment.jwtSecret,

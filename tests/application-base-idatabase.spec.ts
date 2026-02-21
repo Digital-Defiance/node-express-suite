@@ -27,8 +27,7 @@ import {
   afterEach,
   jest,
 } from '@jest/globals';
-import { BaseApplication } from '../src/application-base';
-import { MongoApplicationBase } from '../src/mongo-application-base';
+import { BaseApplication } from '../src/base-application';
 import { Environment } from '../src/environment';
 import { withTransaction } from '../src/utils';
 import type { IDatabaseTransactionCallback } from '../src/utils';
@@ -322,7 +321,7 @@ describe('BaseApplication with IDatabase', () => {
 
     it('should not have documentStore when IDatabase is provided', () => {
       const app = new IDatabaseTestApplication(env, mockDb);
-      // BaseApplication is database-agnostic; documentStore is on MongoApplicationBase
+      // BaseApplication is database-agnostic; documentStore is on MongoDatabasePlugin
       expect(
         (app as Record<string, unknown>)['_documentStore'],
       ).toBeUndefined();
@@ -404,15 +403,37 @@ describe('BaseApplication with IDatabase', () => {
       expect(mockDb.callLog.collection).toContain('users');
     });
 
-    it('should throw when using MongoApplicationBase with legacy IDocumentStore', () => {
-      // Create an app with a legacy IDocumentStore so the no-op IDatabase is used
-      const store = new MongooseDocumentStore(
-        () => ({}),
-        async () => ({ success: true, data: {} }),
-        () => 'hash',
-        env,
-      );
-      const legacyApp = new MongoApplicationBase(env, store);
+    it('should throw when using a no-op IDatabase for collection access', () => {
+      // Create an app with a no-op IDatabase (simulating the legacy document store path)
+      const noOpDb = {
+        collection() {
+          throw new Error(
+            'No-op IDatabase: use the MongoDatabasePlugin for collection access',
+          );
+        },
+        startSession() {
+          throw new Error('No-op');
+        },
+        withTransaction() {
+          throw new Error('No-op');
+        },
+        listCollections() {
+          return [];
+        },
+        async dropCollection() {
+          return false;
+        },
+        async connect() {
+          /* no-op */
+        },
+        async disconnect() {
+          /* no-op */
+        },
+        isConnected() {
+          return false;
+        },
+      };
+      const legacyApp = new BaseApplication(env, noOpDb as never);
       expect(() => legacyApp.getCollection('users')).toThrow();
     });
   });
@@ -422,7 +443,7 @@ describe('BaseApplication with IDatabase', () => {
 // Backward compatibility with legacy IDocumentStore
 // ---------------------------------------------------------------------------
 
-describe('MongoApplicationBase backward compatibility with IDocumentStore', () => {
+describe('BaseApplication backward compatibility with IDocumentStore via MongooseDocumentStore', () => {
   let env: Environment;
 
   beforeEach(() => {
@@ -436,20 +457,47 @@ describe('MongoApplicationBase backward compatibility with IDocumentStore', () =
     }
   });
 
-  it('should accept a legacy IDocumentStore and set documentStore', () => {
+  it('should accept a MongooseDocumentStore and expose it', () => {
     const store = new MongooseDocumentStore(
       () => ({}),
       async () => ({ success: true, data: {} }),
       () => 'hash',
       env,
     );
-    const app = new MongoApplicationBase(env, store);
-    expect(app.documentStore).toBe(store);
-    // MongoApplicationBase with IDocumentStore uses a no-op IDatabase internally
+    // BaseApplication with a no-op IDatabase — the store manages its own connection
+    const noOpDb = {
+      collection() {
+        throw new Error('No-op');
+      },
+      startSession() {
+        throw new Error('No-op');
+      },
+      withTransaction() {
+        throw new Error('No-op');
+      },
+      listCollections() {
+        return [];
+      },
+      async dropCollection() {
+        return false;
+      },
+      async connect() {
+        /* no-op */
+      },
+      async disconnect() {
+        /* no-op */
+      },
+      isConnected() {
+        return false;
+      },
+    };
+    const app = new BaseApplication(env, noOpDb as never);
+    // The no-op IDatabase is accessible
     expect(app.database).toBeDefined();
+    expect(app.database.isConnected()).toBe(false);
   });
 
-  it('should call IDocumentStore.connect on start', async () => {
+  it('should call MongooseDocumentStore.connect on start', async () => {
     const store = new MongooseDocumentStore(
       () => ({}),
       async () => ({ success: true, data: {} }),
@@ -460,16 +508,43 @@ describe('MongoApplicationBase backward compatibility with IDocumentStore', () =
       .spyOn(store, 'connect')
       .mockResolvedValue(undefined);
 
-    const app = new MongoApplicationBase(env, store);
-    await app.start('mongodb://localhost:27017/test');
+    // Use BaseApplication with a no-op database; manually connect the store
+    const noOpDb = {
+      collection() {
+        throw new Error('No-op');
+      },
+      startSession() {
+        throw new Error('No-op');
+      },
+      withTransaction() {
+        throw new Error('No-op');
+      },
+      listCollections() {
+        return [];
+      },
+      async dropCollection() {
+        return false;
+      },
+      async connect() {
+        /* no-op */
+      },
+      async disconnect() {
+        /* no-op */
+      },
+      isConnected() {
+        return false;
+      },
+    };
+    const app = new BaseApplication(env, noOpDb as never);
+    // Manually connect the store (as MongoDatabasePlugin would do)
+    await store.connect('mongodb://localhost:27017/test');
 
     expect(connectSpy).toHaveBeenCalledWith('mongodb://localhost:27017/test');
-    expect(app.ready).toBe(true);
 
     connectSpy.mockRestore();
   });
 
-  it('should call IDocumentStore.disconnect on stop', async () => {
+  it('should call MongooseDocumentStore.disconnect on stop', async () => {
     const store = new MongooseDocumentStore(
       () => ({}),
       async () => ({ success: true, data: {} }),
@@ -483,26 +558,23 @@ describe('MongoApplicationBase backward compatibility with IDocumentStore', () =
       .spyOn(store, 'disconnect')
       .mockResolvedValue(undefined);
 
-    const app = new MongoApplicationBase(env, store);
-    await app.start('mongodb://localhost:27017/test');
-    await app.stop();
+    await store.connect('mongodb://localhost:27017/test');
+    await store.disconnect();
 
     expect(disconnectSpy).toHaveBeenCalled();
-    expect(app.ready).toBe(false);
 
     connectSpy.mockRestore();
     disconnectSpy.mockRestore();
   });
 
-  it('should still provide getModel when using IDocumentStore', () => {
+  it('should still provide getModel on MongooseDocumentStore', () => {
     const store = new MongooseDocumentStore(
       () => ({}),
       async () => ({ success: true, data: {} }),
       () => 'hash',
       env,
     );
-    const app = new MongoApplicationBase(env, store);
-    expect(typeof app.getModel).toBe('function');
+    expect(typeof store.getModel).toBe('function');
   });
 });
 

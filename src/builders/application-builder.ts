@@ -1,6 +1,6 @@
 /**
  * @fileoverview Application builder for fluent application construction.
- * Provides builder pattern for creating Application instances.
+ * Provides builder pattern for creating Application instances with MongoDatabasePlugin.
  * @module builders/application-builder
  */
 
@@ -11,7 +11,6 @@ import {
 } from '@digitaldefiance/suite-core-lib';
 import { HelmetOptions } from 'helmet';
 import { Application } from '../application';
-import { MongoApplicationBase } from '../mongo-application-base';
 import { IBaseDocument } from '../documents';
 import { Environment } from '../environment';
 import {
@@ -22,14 +21,17 @@ import {
 } from '../interfaces';
 import { IConstants } from '../interfaces/constants';
 import { IFlexibleCSP } from '../interfaces/flexible-csp';
+import { IMongoApplication } from '../interfaces/mongo-application';
 import { initMiddleware } from '../middleware-utils';
 import { AppRouter } from '../routers/app';
 import { BaseRouter } from '../routers/base';
+import { MongoDatabasePlugin } from '../plugins/mongo-database-plugin';
 import { SchemaMap } from '../types';
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 
 /**
- * Builder for constructing Application instances with fluent API.
+ * Builder for constructing Application instances with MongoDatabasePlugin using a fluent API.
+ *
  * @template TID - Platform ID type
  * @template TModelDocs - Model documents type
  * @template TInitResults - Initialization results type
@@ -37,7 +39,7 @@ import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
  */
 export class ApplicationBuilder<
   TID extends PlatformID,
-  TModelDocs extends Record<string, IBaseDocument<any, TID>>,
+  TModelDocs extends Record<string, IBaseDocument<never, TID>>,
   TInitResults extends IServerInitResult<TID>,
   TConstants extends IConstants = IConstants,
 > {
@@ -48,7 +50,7 @@ export class ApplicationBuilder<
     connection: mongoose.Connection,
   ) => SchemaMap<TID, TModelDocs>;
   private databaseInitFunction?: (
-    app: MongoApplicationBase<TID, TModelDocs, TInitResults>,
+    app: IMongoApplication<TID>,
   ) => Promise<IFailableResult<TInitResults>>;
   private initResultHashFunction?: (results: TInitResults) => string;
   private cspConfig?: ICSPConfig | HelmetOptions | IFlexibleCSP;
@@ -60,7 +62,7 @@ export class ApplicationBuilder<
     return this;
   }
 
-  withApiRouter(factory: (app: any) => BaseRouter<TID>): this {
+  withApiRouter(factory: (app: IApplication<TID>) => BaseRouter<TID>): this {
     this.apiRouterFactory = factory;
     return this;
   }
@@ -79,7 +81,7 @@ export class ApplicationBuilder<
 
   withDatabaseInit(
     initFn: (
-      app: MongoApplicationBase<TID, TModelDocs, TInitResults>,
+      app: IMongoApplication<TID>,
     ) => Promise<IFailableResult<TInitResults>>,
     hashFn: (results: TInitResults) => string,
   ): this {
@@ -103,14 +105,11 @@ export class ApplicationBuilder<
     return this;
   }
 
-  build(): Application<
-    TInitResults,
-    TModelDocs,
-    TID,
-    Environment<TID>,
-    TConstants,
-    AppRouter<TID>
-  > {
+  /**
+   * Build an Application with a MongoDatabasePlugin pre-registered.
+   * Returns the Application instance with the plugin already wired up.
+   */
+  build(): Application<TID, Environment<TID>, TConstants, AppRouter<TID>> {
     if (!this.environment)
       throw new TranslatableSuiteError(
         SuiteCoreStringKey.Error_EnvironmentIsRequired,
@@ -132,16 +131,35 @@ export class ApplicationBuilder<
         SuiteCoreStringKey.Error_InitResultHashFunctionIsRequired,
       );
 
-    return new Application(
+    const app = new Application<
+      TID,
+      Environment<TID>,
+      TConstants,
+      AppRouter<TID>
+    >(
       this.environment,
       this.apiRouterFactory,
-      this.schemaMapFactory,
-      this.databaseInitFunction,
-      this.initResultHashFunction,
       this.cspConfig,
       this.constants,
       this.appRouterFactory,
       this.customInitMiddleware,
     );
+
+    const mongoPlugin = new MongoDatabasePlugin<
+      TID,
+      TModelDocs,
+      TInitResults,
+      TConstants
+    >({
+      schemaMapFactory: this.schemaMapFactory,
+      databaseInitFunction: this.databaseInitFunction,
+      initResultHashFunction: this.initResultHashFunction,
+      environment: this.environment,
+      constants: this.constants,
+    });
+
+    app.useDatabasePlugin(mongoPlugin);
+
+    return app;
   }
 }

@@ -1,9 +1,9 @@
 /**
  * @fileoverview Integration test verifying that custom constants (Site, SiteTagline, etc.)
  * propagate correctly through the refactored application hierarchy:
- *   BaseApplication → MongoApplicationBase → Express (via ApiRouter)
+ *   BaseApplication → Application (with MongoDatabasePlugin) → Express (via ApiRouter)
  *
- * Boots a MongoApplicationBase with in-memory MongoDB and custom constants,
+ * Boots a BaseApplication with MongoDatabasePlugin and in-memory MongoDB and custom constants,
  * wires up Express + ApiRouter, and verifies the constants are accessible
  * at every layer — including from an HTTP endpoint that reads them.
  */
@@ -24,9 +24,11 @@ import { Environment } from '../../src/environment';
 import { getSchemaMap } from '../../src/schemas';
 import { DatabaseInitializationService } from '../../src/services';
 import { MongooseDocumentStore } from '../../src/services/mongoose-document-store';
-import { MongoApplicationBase } from '../../src/mongo-application-base';
+import { BaseApplication } from '../../src/base-application';
+import { MongoDatabasePlugin } from '../../src/plugins/mongo-database-plugin';
 import { ApiRouter } from '../../src/routers/api';
 import { IServerInitResult, IConstants } from '../../src/interfaces';
+import { IMongoApplication } from '../../src/interfaces/mongo-application';
 import { DummyEmailService } from '../../src/services/dummy-email-service';
 import { emailServiceRegistry } from '../../src/registry';
 import type { BaseModelDocs } from '../../src/schemas/schema';
@@ -91,7 +93,8 @@ describe('createExpressConstants overrides', () => {
 // ── Full integration test with MongoDB + Express ───────────────────────
 
 describe('Constants propagation through application hierarchy', () => {
-  let app: MongoApplicationBase<
+  let app: BaseApplication<Buffer>;
+  let mongoPlugin: MongoDatabasePlugin<
     Buffer,
     BaseModelDocs,
     IServerInitResult<Buffer>
@@ -133,35 +136,66 @@ describe('Constants propagation through application hierarchy', () => {
 
     const env = new Environment(undefined, true, true, CustomConstants);
 
-    const documentStore = new MongooseDocumentStore<
+    mongoPlugin = new MongoDatabasePlugin<
       Buffer,
       BaseModelDocs,
       IServerInitResult<Buffer>
-    >(
-      getSchemaMap,
-      (application) =>
+    >({
+      schemaMapFactory: getSchemaMap,
+      databaseInitFunction: (application: IMongoApplication<Buffer>) =>
         DatabaseInitializationService.initUserDb(application),
-      (r: IServerInitResult<Buffer>) =>
+      initResultHashFunction: (r: IServerInitResult<Buffer>) =>
         DatabaseInitializationService.serverInitResultHash(r),
-      env,
-      CustomConstants,
-    );
+      environment: env,
+      constants: CustomConstants,
+    });
 
-    app = new MongoApplicationBase(env, documentStore, CustomConstants);
+    const noOpDb = {
+      collection() {
+        throw new Error('Use MongoDatabasePlugin');
+      },
+      startSession() {
+        throw new Error('Use MongoDatabasePlugin');
+      },
+      withTransaction() {
+        throw new Error('Use MongoDatabasePlugin');
+      },
+      listCollections() {
+        return [];
+      },
+      async dropCollection() {
+        return false;
+      },
+      async connect() {
+        /* no-op */
+      },
+      async disconnect() {
+        /* no-op */
+      },
+      isConnected() {
+        return false;
+      },
+    };
+
+    app = new BaseApplication(env, noOpDb as never, CustomConstants);
 
     // Connect to in-memory MongoDB
-    await app.start();
+    await mongoPlugin.connect();
+    await mongoPlugin.init(app as never);
+
+    // Set the auth provider from the plugin
+    app.authProvider = mongoPlugin.authenticationProvider;
 
     // Initialize the database — creates admin, member, system users
     // This MUST happen before ApiRouter because UserController.constructor
     // calls SystemUserService.getSystemUser() which needs the system mnemonic.
-    await documentStore.initializeDevStore<IServerInitResult<Buffer>>(app);
+    await mongoPlugin.initializeDevStore();
 
     // Wire up Express + ApiRouter
     expressApp = express();
     expressApp.use(express.json());
-    emailServiceRegistry.setService(new DummyEmailService(app));
-    apiRouter = new ApiRouter(app);
+    emailServiceRegistry.setService(new DummyEmailService(app as never));
+    apiRouter = new ApiRouter(mongoPlugin.mongoApplication!);
     expressApp.use('/api', apiRouter.router);
 
     // Add a test endpoint that returns the constants as seen from the app
@@ -177,33 +211,37 @@ describe('Constants propagation through application hierarchy', () => {
   }, 120_000);
 
   afterAll(async () => {
-    if (app) {
-      await app.stop();
+    if (mongoPlugin) {
+      await mongoPlugin.disconnect();
     }
   }, 30_000);
 
   // ── In-memory constants checks ───────────────────────────────────────
 
-  it('MongoApplicationBase.constants.Site should be the custom value', () => {
+  it('BaseApplication.constants.Site should be the custom value', () => {
     expect(app.constants.Site).toBe(CUSTOM_SITE);
   });
 
-  it('MongoApplicationBase.constants.SiteTagline should be the custom value', () => {
+  it('BaseApplication.constants.SiteTagline should be the custom value', () => {
     expect(app.constants.SiteTagline).toBe(CUSTOM_TAGLINE);
   });
 
-  it('MongoApplicationBase.constants.SiteDescription should be the custom value', () => {
+  it('BaseApplication.constants.SiteDescription should be the custom value', () => {
     expect(app.constants.SiteDescription).toBe(CUSTOM_DESCRIPTION);
   });
 
   it('constants should NOT be the suite-core defaults', () => {
     expect(app.constants.Site).not.toBe('New Site');
     expect(app.constants.SiteTagline).not.toBe('New Site Tagline');
-    expect(app.constants.SiteDescription).not.toBe('Description of the new site');
+    expect(app.constants.SiteDescription).not.toBe(
+      'Description of the new site',
+    );
   });
 
   it('domain-derived constants should use the custom domain', () => {
-    expect(app.constants.AdministratorEmail).toBe('admin@acme-corp.example.com');
+    expect(app.constants.AdministratorEmail).toBe(
+      'admin@acme-corp.example.com',
+    );
     expect(app.constants.MemberEmail).toBe('test@acme-corp.example.com');
     expect(app.constants.SystemEmail).toBe('system@acme-corp.example.com');
     expect(app.constants.SiteHostname).toBe('acme-corp.example.com');
@@ -222,9 +260,7 @@ describe('Constants propagation through application hierarchy', () => {
   // ── HTTP endpoint check ──────────────────────────────────────────────
 
   it('GET /test/constants should return custom constants via HTTP', async () => {
-    const res = await request(expressApp)
-      .get('/test/constants')
-      .expect(200);
+    const res = await request(expressApp).get('/test/constants').expect(200);
 
     expect(res.body.site).toBe(CUSTOM_SITE);
     expect(res.body.siteTagline).toBe(CUSTOM_TAGLINE);

@@ -1,3 +1,4 @@
+export * from './mongoose-document-store';
 export * from './document-store';
 export * from './storage';
 

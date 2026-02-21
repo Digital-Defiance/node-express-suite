@@ -1,11 +1,11 @@
 /**
- * @fileoverview Main application class with Express server.
- * Extends MongoApplicationBase with HTTP/HTTPS server and routing.
+ * @fileoverview Generic Express application class.
+ * Extends BaseApplication with HTTP/HTTPS server, routing, and middleware.
+ * Database-agnostic — database backends are provided via IDatabasePlugin.
  * @module application
  */
 
 import { HandleableError } from '@digitaldefiance/i18n-lib';
-import mongoose from '@digitaldefiance/mongoose-types';
 import {
   Constants,
   getSuiteCoreI18nEngine,
@@ -23,48 +23,41 @@ import { HelmetOptions } from 'helmet';
 import { Server } from 'http';
 import { createServer } from 'https';
 import { isAbsolute, normalize, resolve } from 'path';
-import { MongoApplicationBase } from './mongo-application-base';
-import { IBaseDocument } from './documents/base';
+import { BaseApplication } from './base-application';
 import { Environment } from './environment';
-import {
-  IApplication,
-  ICSPConfig,
-  IFailableResult,
-  isCSPConfig,
-  IServerInitResult,
-  IMongoApplication,
-} from './interfaces';
+import { IApplication, ICSPConfig, isCSPConfig } from './interfaces';
 import { IConstants } from './interfaces/constants';
-import { IDocumentStore } from './interfaces/document-store';
 import { IFlexibleCSP, isFlexibleCSP } from './interfaces/flexible-csp';
 import { initMiddleware, isHelmetOptions } from './middleware-utils';
 import { AppRouter } from './routers/app';
 import { BaseRouter } from './routers/base';
-import {
-  DatabaseInitializationService,
-  MongooseDocumentStore,
-} from './services';
-import { SchemaMap } from './types';
 import { debugLog, handleError, sendApiMessageResponse } from './utils';
 import { GreenlockManager } from './greenlock-manager';
+import { IDatabasePlugin } from './plugins/database-plugin';
+import type { IDatabase } from './interfaces/storage';
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
+import { createNoOpDatabase } from './utils/no-op-database';
 
-/**
- * Application class
- */
 type ServerWithOptionalClose = Server & { closeAllConnections?: () => void };
 
+/**
+ * Generic Express application class.
+ *
+ * Provides HTTP/HTTPS server, routing, middleware, and error handling.
+ * Database backends are plugged in via IDatabasePlugin rather than
+ * being baked into the class hierarchy.
+ *
+ * @template TID - Platform ID type (Buffer, ObjectId, etc.)
+ * @template TEnvironment - Environment type
+ * @template TConstants - Constants type
+ * @template TAppRouter - App router type
+ */
 export class Application<
-  TInitResults extends IServerInitResult<TID>,
-  TModelDocs extends Record<string, IBaseDocument<any, TID>>,
   TID extends PlatformID = Buffer,
   TEnvironment extends Environment<TID> = Environment<TID>,
   TConstants extends IConstants = IConstants,
   TAppRouter extends AppRouter<TID> = AppRouter<TID>,
->
-  extends MongoApplicationBase<TID, TModelDocs, TInitResults, TConstants>
-  implements IMongoApplication<TID>
-{
+> extends BaseApplication<TID, unknown, TConstants> {
   public readonly expressApp: ExpressApplication;
   private server: ServerWithOptionalClose | null = null;
   private readonly _cspConfig: ICSPConfig | HelmetOptions | IFlexibleCSP;
@@ -77,26 +70,42 @@ export class Application<
   private readonly _initMiddleware: typeof initMiddleware;
   private _apiRouter?: BaseRouter<TID>;
   private greenlockManager: GreenlockManager | null = null;
+  private _databasePlugin: IDatabasePlugin<TID> | null = null;
 
   public override get environment(): TEnvironment {
     return super.environment as TEnvironment;
   }
 
+  /**
+   * Get the registered database plugin, if any.
+   */
+  public get databasePlugin(): IDatabasePlugin<TID> | null {
+    return this._databasePlugin;
+  }
+
+  /**
+   * Register a database plugin. Must be called before start().
+   * The plugin will be initialized during start() and its database
+   * will be used as the application's primary database.
+   */
+  public useDatabasePlugin(plugin: IDatabasePlugin<TID>): this {
+    this._databasePlugin = plugin;
+    // Also register it as a regular plugin so it participates in the lifecycle
+    this.plugins.register(plugin);
+    return this;
+  }
+
+  /**
+   * Hook for subclasses to register services before the server starts.
+   * Called during the constructor.
+   */
   protected registerServices(): void {
-    // Services will be registered by subclasses or ApiRouter
-    // Base implementation does nothing
+    // Subclasses can override to register services
   }
 
   constructor(
     environment: TEnvironment,
     apiRouterFactory: (app: IApplication<TID>) => BaseRouter<TID>,
-    schemaMapFactory: (
-      connection: mongoose.Connection,
-    ) => SchemaMap<TID, TModelDocs>,
-    databaseInitFunction: (
-      application: MongoApplicationBase<TID, TModelDocs, TInitResults>,
-    ) => Promise<IFailableResult<TInitResults>>,
-    initResultHashFunction: (initResults: TInitResults) => string,
     cspConfig: ICSPConfig | HelmetOptions | IFlexibleCSP = {
       corsWhitelist: [],
       csp: {
@@ -114,18 +123,9 @@ export class Application<
       apiRouter,
     ) => new AppRouter(apiRouter) as TAppRouter,
     customInitMiddleware: typeof initMiddleware = initMiddleware,
-    documentStore?: IDocumentStore<TID, TModelDocs>,
+    database?: IDatabase,
   ) {
-    const store =
-      documentStore ??
-      new MongooseDocumentStore<TID, TModelDocs, TInitResults, TConstants>(
-        schemaMapFactory,
-        databaseInitFunction,
-        initResultHashFunction,
-        environment,
-        constants,
-      );
-    super(environment, store, constants);
+    super(environment, database ?? createNoOpDatabase(), constants);
     this._apiRouterFactory = apiRouterFactory;
     this._appRouterFactory = appRouterFactory;
     this._initMiddleware = customInitMiddleware;
@@ -135,16 +135,67 @@ export class Application<
     this.registerServices();
   }
 
-  public override async start(mongoUri?: string): Promise<void> {
+  public override async start(uri?: string): Promise<void> {
     const engine = getSuiteCoreI18nEngine({ constants: this.constants });
-    await super.start(mongoUri, true);
-    if (this.devDatabase) {
-      if (this._documentStore?.initializeDevStore) {
-        const result =
-          await this._documentStore.initializeDevStore<TInitResults>(this);
-        DatabaseInitializationService.printServerInitResults(result, false);
+
+    // If a database plugin is registered, handle its lifecycle
+    if (this._databasePlugin) {
+      if (this._ready) {
+        console.error(
+          'Failed to start the application:',
+          'Application is already running',
+        );
+        const err = new Error('Application is already running');
+        if (process.env['NODE_ENV'] === 'test') {
+          throw err;
+        }
+        process.exit(1);
       }
+
+      // Dev store setup
+      if (this.environment.devDatabase && this._databasePlugin.setupDevStore) {
+        const devUri = await this._databasePlugin.setupDevStore();
+        if (devUri) {
+          uri = devUri;
+        }
+      }
+
+      try {
+        // Connect the database plugin
+        await this._databasePlugin.connect(uri);
+
+        // Initialize all plugins (including the database plugin)
+        await this.plugins.initAll(this);
+
+        // Wire up auth provider from database plugin
+        if (this._databasePlugin.authenticationProvider && !this.authProvider) {
+          this.authProvider = this._databasePlugin.authenticationProvider;
+        }
+
+        // Dev store initialization (seeding)
+        if (
+          this.environment.devDatabase &&
+          this._databasePlugin.initializeDevStore
+        ) {
+          await this._databasePlugin.initializeDevStore();
+        }
+      } catch (err) {
+        const sanitizedErr =
+          err instanceof Error
+            ? err.message.replace(/[\r\n]/g, ' ')
+            : String(err).replace(/[\r\n]/g, ' ');
+        console.error('Failed to start the application:', sanitizedErr);
+        if (process.env['NODE_ENV'] === 'test') {
+          throw err;
+        }
+        process.exit(1);
+      }
+    } else {
+      // No database plugin — use BaseApplication's IDatabase path
+      await super.start(uri, true);
     }
+
+    // Start Express server and routing
     try {
       this._apiRouter = this._apiRouterFactory(this);
       if (isFlexibleCSP(this._cspConfig) || isCSPConfig(this._cspConfig)) {
@@ -215,7 +266,7 @@ export class Application<
 
       const serversReady: Promise<void>[] = [];
       serversReady.push(
-        new Promise<void>((resolve) => {
+        new Promise<void>((resolvePromise) => {
           this.server = this.expressApp.listen(
             this.environment.port,
             this.environment.host,
@@ -227,14 +278,13 @@ export class Application<
                   SuiteCoreStringKey.Common_Ready,
                 )} ] http://${this.environment.host}:${this.environment.port}`,
               );
-              resolve();
+              resolvePromise();
             },
           ) as ServerWithOptionalClose;
         }),
       );
 
       if (this.environment.letsEncrypt.enabled) {
-        // Let's Encrypt mode: start GreenlockManager for HTTPS on 443 + redirect on 80
         this.greenlockManager = new GreenlockManager(
           this.environment.letsEncrypt,
         );
@@ -262,7 +312,7 @@ export class Application<
           };
 
           serversReady.push(
-            new Promise<void>((resolve) => {
+            new Promise<void>((resolvePromise) => {
               createServer(options, this.expressApp).listen(
                 this.environment.httpsDevPort,
                 this.environment.host,
@@ -274,7 +324,7 @@ export class Application<
                       this.environment.httpsDevPort
                     }`,
                   );
-                  resolve();
+                  resolvePromise();
                 },
               );
             }),
@@ -317,21 +367,28 @@ export class Application<
           SuiteCoreStringKey.Common_ApplicationAndDatabase,
         )}`,
       );
-      await new Promise<void>((resolve, reject) => {
+      await new Promise<void>((resolvePromise, reject) => {
         this.server!.closeAllConnections?.();
         this.server!.close((err) => {
           if (err) {
             reject(err);
           } else {
-            resolve();
+            resolvePromise();
           }
         });
       });
       this.server = null;
     }
 
-    await super.stop();
-    this._ready = false;
+    // Database plugin handles its own teardown via stop()
+    // which is called by PluginManager.stopAll() in super.stop()
+    if (this._databasePlugin) {
+      await this.plugins.stopAll();
+      this._ready = false;
+    } else {
+      await super.stop();
+    }
+
     debugLog(
       this.environment.debug,
       'log',

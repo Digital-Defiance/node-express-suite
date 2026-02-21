@@ -35,15 +35,11 @@ import { join } from 'path';
 import { GreenlockManager } from '../greenlock-manager';
 import { Application } from '../application';
 import { Environment } from '../environment';
-import { IServerInitResult } from '../interfaces';
-import { IBaseDocument } from '../documents/base';
 import { AppRouter } from '../routers/app';
 import type { BaseRouter } from '../routers/base';
 import type { IApplication } from '../interfaces/application';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
-
-type TestModelDocs = Record<string, IBaseDocument<unknown, Buffer>>;
 
 /**
  * Creates a minimal set of process.env overrides that satisfy all
@@ -75,18 +71,9 @@ function makeBaseEnv(
  * The Application constructor is complex, but we only need to test
  * the start()/stop() orchestration around GreenlockManager.
  */
-function createTestApplication(
-  env: Environment,
-): Application<IServerInitResult<Buffer>, TestModelDocs> {
+function createTestApplication(env: Environment): Application {
   const noopRouterFactory = (_app: IApplication) =>
     ({ init: jest.fn() }) as unknown as BaseRouter<Buffer>;
-
-  const noopSchemaMapFactory = () => ({}) as never;
-
-  const noopDbInit = () =>
-    Promise.resolve({ success: true, data: {} as IServerInitResult<Buffer> });
-
-  const noopHashFn = () => 'hash';
 
   // Provide a mock appRouterFactory that returns a stub with init(),
   // avoiding the real AppRouter which requires a fully wired application.
@@ -96,9 +83,6 @@ function createTestApplication(
   return new Application(
     env,
     noopRouterFactory,
-    noopSchemaMapFactory,
-    noopDbInit,
-    noopHashFn,
     undefined, // cspConfig — use default
     undefined, // constants — use default
     mockAppRouterFactory,

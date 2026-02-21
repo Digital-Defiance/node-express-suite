@@ -20,8 +20,10 @@ import { ModelRegistry } from '../../src/model-registry';
 import { getSchemaMap } from '../../src/schemas';
 import { DatabaseInitializationService } from '../../src/services';
 import { MongooseDocumentStore } from '../../src/services/mongoose-document-store';
-import { MongoApplicationBase } from '../../src/mongo-application-base';
+import { BaseApplication } from '../../src/base-application';
+import { MongoDatabasePlugin } from '../../src/plugins/mongo-database-plugin';
 import { IServerInitResult, IConstants } from '../../src/interfaces';
+import { IMongoApplication } from '../../src/interfaces/mongo-application';
 import type { IRoleDocument } from '../../src/documents/role';
 import type { IUserDocument } from '../../src/documents/user';
 import type { BaseModelDocs } from '../../src/schemas/schema';
@@ -39,12 +41,8 @@ jest.unmock('argon2');
 const hex64 = () => randomBytes(32).toString('hex');
 
 describe('Database initialization integration (initializeDevStore)', () => {
-  let app: MongoApplicationBase<
-    Buffer,
-    BaseModelDocs,
-    IServerInitResult<Buffer>
-  >;
-  let documentStore: MongooseDocumentStore<
+  let app: BaseApplication<Buffer>;
+  let mongoPlugin: MongoDatabasePlugin<
     Buffer,
     BaseModelDocs,
     IServerInitResult<Buffer>
@@ -84,32 +82,61 @@ describe('Database initialization integration (initializeDevStore)', () => {
 
     const env = new Environment(undefined, true, true, TestConstants);
 
-    documentStore = new MongooseDocumentStore<
+    mongoPlugin = new MongoDatabasePlugin<
       Buffer,
       BaseModelDocs,
       IServerInitResult<Buffer>
-    >(
-      getSchemaMap,
-      (application) =>
+    >({
+      schemaMapFactory: getSchemaMap,
+      databaseInitFunction: (application: IMongoApplication<Buffer>) =>
         DatabaseInitializationService.initUserDb(application),
-      (r: IServerInitResult<Buffer>) =>
+      initResultHashFunction: (r: IServerInitResult<Buffer>) =>
         DatabaseInitializationService.serverInitResultHash(r),
-      env,
-      TestConstants,
-    );
+      environment: env,
+      constants: TestConstants,
+    });
 
-    app = new MongoApplicationBase(env, documentStore, TestConstants);
+    // Create a no-op IDatabase since MongoDatabasePlugin manages its own connection
+    const noOpDb = {
+      collection() {
+        throw new Error('Use MongoDatabasePlugin');
+      },
+      startSession() {
+        throw new Error('Use MongoDatabasePlugin');
+      },
+      withTransaction() {
+        throw new Error('Use MongoDatabasePlugin');
+      },
+      listCollections() {
+        return [];
+      },
+      async dropCollection() {
+        return false;
+      },
+      async connect() {
+        /* no-op */
+      },
+      async disconnect() {
+        /* no-op */
+      },
+      isConnected() {
+        return false;
+      },
+    };
 
-    // BaseApplication.start() -> setupDevStore -> connect (in-memory MongoDB)
-    await app.start();
+    app = new BaseApplication(env, noOpDb as never, TestConstants);
+
+    // Connect the plugin manually (simulating what Application.start() does)
+    await mongoPlugin.connect();
+    await mongoPlugin.init(app as never);
 
     // Now run initializeDevStore which calls initUserDb against the real DB
-    await documentStore.initializeDevStore<IServerInitResult<Buffer>>(app);
+    await mongoPlugin.initializeDevStore();
   }, 120000);
 
   afterAll(async () => {
-    if (app) {
-      await app.stop();
+    if (mongoPlugin) {
+      await mongoPlugin.disconnect();
     }
   }, 30000);
 

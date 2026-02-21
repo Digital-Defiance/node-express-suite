@@ -1,8 +1,8 @@
 /**
  * @fileoverview Database-agnostic base application class.
  * Delegates database operations to an IDatabase instance.
- * For MongoDB/Mongoose-specific functionality, see MongoApplicationBase.
- * @module application-base
+ * For MongoDB/Mongoose-specific functionality, see MongoDatabasePlugin.
+ * @module base-application
  */
 
 // Avoid importing from the barrel (../index) here to prevent circular deps
@@ -34,7 +34,7 @@ import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
  * for dev store provisioning, URI validation, and database initialization.
  *
  * For MongoDB/Mongoose-specific functionality (IDocumentStore, schemaMap,
- * getModel, db), use MongoApplicationBase which extends this class.
+ * getModel, db), use MongoDatabasePlugin which plugs into Application.
  */
 export class BaseApplication<
   TID extends PlatformID,

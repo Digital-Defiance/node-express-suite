@@ -60,7 +60,7 @@
       "files": [
         "src/decorators/**/*.ts",
         "src/container/**/*.ts",
-        "src/application-base.ts",
+        "src/base-application.ts",
         "src/application.ts",
         "src/builders/**/*.ts",
         "src/middlewares/**/*.ts",

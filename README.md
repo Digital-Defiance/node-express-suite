@@ -1769,6 +1769,235 @@ For issues and questions:
 - GitHub Issues: <https://github.com/Digital-Defiance/node-express-suite/issues>
 - Email: <support@digitaldefiance.org>
 
+## Plugin-Based Architecture
+
+The framework uses a plugin-based architecture that separates database concerns from the core application. This replaces the old deep inheritance hierarchy (Mongo base → Application → concrete subclass) with a composable plugin pattern.
+
+### Architecture Overview
+
+```
+BaseApplication<TID>          ← Database-agnostic base (accepts IDatabase)
+  └── Application<TID>        ← HTTP/Express layer (server, routing, middleware)
+        └── useDatabasePlugin()  ← Plug in any database backend
+
+IDatabasePlugin<TID>          ← Plugin interface for database backends
+  └── MongoDatabasePlugin     ← Mongoose/MongoDB implementation
+
+MongoApplicationConcrete      ← Ready-to-use concrete class for testing/dev
+```
+
+### Core Classes
+
+| Class | Purpose |
+|-------|---------|
+| `BaseApplication<TID>` | Database-agnostic base. Accepts an `IDatabase` instance and optional lifecycle hooks. Manages `PluginManager`, `ServiceContainer`, and environment. |
+| `Application<TID>` | Extends `BaseApplication` with Express HTTP/HTTPS server, routing, CSP/Helmet config, and middleware. Database-agnostic — database backends are provided via `IDatabasePlugin`. |
+| `MongoApplicationConcrete<TID>` | Concrete `Application` subclass for testing/development. Wires up `MongoDatabasePlugin` with default configuration, schema maps, and a dummy email service. Replaces the old concrete class. |
+
+### IDatabasePlugin Interface
+
+The `IDatabasePlugin<TID>` interface extends `IApplicationPlugin<TID>` with database-specific lifecycle hooks:
+
+```typescript
+interface IDatabasePlugin<TID> extends IApplicationPlugin<TID> {
+  readonly database: IDatabase;
+  readonly authenticationProvider?: IAuthenticationProvider<TID>;
+
+  connect(uri?: string): Promise<void>;
+  disconnect(): Promise<void>;
+  isConnected(): boolean;
+
+  // Optional dev/test store management
+  setupDevStore?(): Promise<string>;
+  teardownDevStore?(): Promise<void>;
+  initializeDevStore?(): Promise<unknown>;
+}
+```
+
+### MongoDatabasePlugin
+
+`MongoDatabasePlugin` implements `IDatabasePlugin` for MongoDB/Mongoose:
+
+```typescript
+import { MongoDatabasePlugin } from '@digitaldefiance/node-express-suite';
+
+const mongoPlugin = new MongoDatabasePlugin({
+  schemaMapFactory: getSchemaMap,
+  databaseInitFunction: DatabaseInitializationService.initUserDb.bind(DatabaseInitializationService),
+  initResultHashFunction: DatabaseInitializationService.serverInitResultHash.bind(DatabaseInitializationService),
+  environment,
+  constants,
+});
+```
+
+It wraps a `MongooseDocumentStore` and provides:
+- Connection/disconnection lifecycle
+- Dev database provisioning via `MongoMemoryReplSet`
+- Authentication provider wiring
+- Mongoose model and schema map access
+
+### Application Constructor
+
+The `Application` constructor accepts these parameters:
+
+```typescript
+constructor(
+  environment: TEnvironment,
+  apiRouterFactory: (app: IApplication<TID>) => BaseRouter<TID>,
+  cspConfig?: ICSPConfig | HelmetOptions | IFlexibleCSP,
+  constants?: TConstants,
+  appRouterFactory?: (apiRouter: BaseRouter<TID>) => TAppRouter,
+  customInitMiddleware?: typeof initMiddleware,
+  database?: IDatabase,  // Optional — use useDatabasePlugin() instead
+)
+```
+
+The `database` parameter is optional. When using a database plugin, the plugin's `database` property is used automatically.
+
+### Registering a Database Plugin
+
+Use `useDatabasePlugin()` to register a database plugin with the application:
+
+```typescript
+const app = new Application(environment, apiRouterFactory);
+app.useDatabasePlugin(mongoPlugin);
+await app.start();
+```
+
+`useDatabasePlugin()` stores the plugin as the application's database plugin AND registers it with the `PluginManager`, so it participates in the full plugin lifecycle (`init`, `stop`).
+
+### Implementing a Custom Database Plugin (BrightChain Example)
+
+To use a non-Mongo database, implement `IDatabasePlugin` directly. You do not need `IDocumentStore` or any Mongoose types:
+
+```typescript
+import type { IDatabasePlugin, IDatabase, IApplication } from '@digitaldefiance/node-express-suite';
+
+class BrightChainDatabasePlugin implements IDatabasePlugin<Buffer> {
+  readonly name = 'brightchain-database';
+  readonly version = '1.0.0';
+
+  private _connected = false;
+  private _database: IDatabase;
+
+  constructor(private config: BrightChainConfig) {
+    this._database = new BrightChainDatabase(config);
+  }
+
+  get database(): IDatabase {
+    return this._database;
+  }
+
+  // Optional: provide an auth provider if your DB manages authentication
+  get authenticationProvider() {
+    return undefined;
+  }
+
+  async connect(uri?: string): Promise<void> {
+    await this._database.connect(uri ?? this.config.connectionString);
+    this._connected = true;
+  }
+
+  async disconnect(): Promise<void> {
+    await this._database.disconnect();
+    this._connected = false;
+  }
+
+  isConnected(): boolean {
+    return this._connected;
+  }
+
+  async init(app: IApplication<Buffer>): Promise<void> {
+    // Wire up any app-level integrations after connection
+    // e.g., register services, set auth provider, etc.
+  }
+
+  async stop(): Promise<void> {
+    await this.disconnect();
+  }
+}
+
+// Usage:
+const app = new Application(environment, apiRouterFactory);
+app.useDatabasePlugin(new BrightChainDatabasePlugin(config));
+await app.start();
+```
+
+---
+
+## Migration Guide: Inheritance → Plugin Architecture
+
+This section covers migrating from the old inheritance-based hierarchy to the new plugin-based architecture.
+
+### What Changed
+
+| Before | After |
+|--------|-------|
+| Old Mongo base → `Application` → old concrete class | `BaseApplication` → `Application` + `IDatabasePlugin` |
+| Database logic baked into the class hierarchy | Database logic provided via plugins |
+| Old concrete class for testing/dev | `MongoApplicationConcrete` for testing/dev |
+| Extending the old Mongo base for custom apps | Implementing `IDatabasePlugin` for custom databases |
+
+### Before (Old Hierarchy)
+
+```typescript
+// Old: The concrete class extended Application which extended the Mongo base class
+// Database logic was tightly coupled into the inheritance chain
+import { /* old concrete class */ } from '@digitaldefiance/node-express-suite';
+
+const app = new OldConcreteApp(environment);
+await app.start();
+```
+
+### After (Plugin Architecture)
+
+```typescript
+// New: Application is database-agnostic, MongoDatabasePlugin provides Mongo support
+import { MongoApplicationConcrete } from '@digitaldefiance/node-express-suite';
+
+// For testing/development (drop-in replacement for the old concrete class):
+const app = new MongoApplicationConcrete(environment);
+await app.start();
+```
+
+Or for custom wiring:
+
+```typescript
+import { Application, MongoDatabasePlugin } from '@digitaldefiance/node-express-suite';
+
+const app = new Application(environment, apiRouterFactory);
+
+const mongoPlugin = new MongoDatabasePlugin({
+  schemaMapFactory: getSchemaMap,
+  databaseInitFunction: DatabaseInitializationService.initUserDb.bind(DatabaseInitializationService),
+  initResultHashFunction: DatabaseInitializationService.serverInitResultHash.bind(DatabaseInitializationService),
+  environment,
+  constants,
+});
+
+app.useDatabasePlugin(mongoPlugin);
+await app.start();
+```
+
+### Key Renames
+
+| Old Name | New Name | Notes |
+|----------|----------|-------|
+| Old concrete class | `MongoApplicationConcrete` | Drop-in replacement for testing/dev |
+| Old Mongo base class | *(removed)* | Functionality moved to `BaseApplication` + `MongoDatabasePlugin` |
+| Old base file | `base-application.ts` | File renamed |
+| Old concrete file | `mongo-application-concrete.ts` | File renamed |
+
+### Migration Checklist
+
+- [ ] Replace the old concrete class with `MongoApplicationConcrete`
+- [ ] Replace any old Mongo base subclasses with `Application` + `useDatabasePlugin()`
+- [ ] Update imports to use `base-application` (renamed from old base file)
+- [ ] Update imports to use `mongo-application-concrete` (renamed from old concrete file)
+- [ ] If you had a custom concrete subclass, convert it to use `MongoDatabasePlugin` or implement your own `IDatabasePlugin`
+
+---
+
 ## Architecture Refactor (2025)
 
 **Major improvements with large complexity reduction:**
@@ -2654,7 +2883,7 @@ This release introduces a complete decorator-based API for defining controllers,
 ### Version 2.1.24
 
 - Provide mocks/fixtures for use in testing
-- Provide concrete/runnable ApplicationConcrete class
+- Provide concrete/runnable MongoApplicationConcrete class
 - Export DummyEmailService for testing
 - Further streamline Application generics
 

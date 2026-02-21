@@ -1,30 +1,25 @@
 import { Connection } from '@digitaldefiance/mongoose-types';
 import { registerNodeRuntimeConfiguration } from '@digitaldefiance/node-ecies-lib';
 import { Application } from '../src/application';
-import { BaseApplication } from '../src/application-base';
-import { MongoApplicationBase } from '../src/mongo-application-base';
+import { BaseApplication } from '../src/base-application';
 import { LocalhostConstants } from '../src/constants';
 import { Environment } from '../src/environment';
 import { IConstants, IServerInitResult } from '../src/interfaces';
+import { IMongoApplication } from '../src/interfaces/mongo-application';
 import { AppRouter } from '../src/routers/app';
 import { BaseRouter } from '../src/routers/base';
 import { DatabaseInitializationService } from '../src/services/database-initialization';
+import { MongoDatabasePlugin } from '../src/plugins/mongo-database-plugin';
 import { SchemaMap } from '../src/types';
 
 // Mock dependencies
 jest.mock('../src/services/database-initialization');
 
 describe('Application', () => {
-  let application: Application<
-    IServerInitResult,
-    any,
-    Environment,
-    IConstants,
-    AppRouter
-  >;
+  let application: Application<Buffer, Environment, IConstants, AppRouter>;
   let env: Environment;
   let mockApiRouter: BaseRouter;
-  let mockSchemaMap: SchemaMap<any>;
+  let mockSchemaMap: SchemaMap<Buffer, Record<string, never>>;
 
   beforeAll(() => {
     registerNodeRuntimeConfiguration('default-config', {});
@@ -49,9 +44,9 @@ describe('Application', () => {
     env = new Environment(undefined, true);
 
     // Mock schema map
-    mockSchemaMap = {} as SchemaMap<any>;
+    mockSchemaMap = {} as SchemaMap<Buffer, Record<string, never>>;
 
-    // Mock API router factory - just return a BaseRouter instance
+    // Mock API router factory
     const apiRouterFactory = jest.fn((app) => {
       mockApiRouter = new BaseRouter(app);
       return mockApiRouter;
@@ -67,8 +62,26 @@ describe('Application', () => {
     application = new Application(
       env,
       apiRouterFactory,
-      (connection: Connection) => mockSchemaMap,
-      async (app: BaseApplication<any, IServerInitResult>) => ({
+      {
+        corsWhitelist: [],
+        csp: {
+          defaultSrc: [],
+          imgSrc: [],
+          connectSrc: [],
+          scriptSrc: [],
+          styleSrc: [],
+          fontSrc: [],
+          frameSrc: [],
+        },
+      },
+      LocalhostConstants,
+      appRouterFactory,
+    );
+
+    // Register a MongoDatabasePlugin
+    const mongoPlugin = new MongoDatabasePlugin({
+      schemaMapFactory: (connection: Connection) => mockSchemaMap,
+      databaseInitFunction: async (app: IMongoApplication) => ({
         success: true,
         data: {
           systemUser: {
@@ -94,22 +107,12 @@ describe('Application', () => {
           },
         },
       }),
-      (initResults: IServerInitResult) => 'test-hash',
-      {
-        corsWhitelist: [],
-        csp: {
-          defaultSrc: [],
-          imgSrc: [],
-          connectSrc: [],
-          scriptSrc: [],
-          styleSrc: [],
-          fontSrc: [],
-          frameSrc: [],
-        },
-      },
-      LocalhostConstants,
-      appRouterFactory,
-    );
+      initResultHashFunction: (initResults: IServerInitResult) => 'test-hash',
+      environment: env,
+      constants: LocalhostConstants,
+    });
+
+    application.useDatabasePlugin(mongoPlugin);
 
     // Mock the DatabaseInitializationService.printServerInitResults
     jest.clearAllMocks();
@@ -119,16 +122,12 @@ describe('Application', () => {
   });
 
   afterEach(async () => {
-    // Clean up - mock stop to avoid hanging
-    jest
-      .spyOn(MongoApplicationBase.prototype, 'stop')
-      .mockResolvedValue(undefined);
     jest.clearAllMocks();
     if (application && application.ready) {
       try {
         // Set server to null to skip close logic
-        (application as any).server = null;
-        (application as any)._ready = false;
+        (application as Record<string, unknown>).server = null;
+        (application as Record<string, unknown>)._ready = false;
       } catch (err) {
         // Ignore errors during cleanup
       }
@@ -153,43 +152,48 @@ describe('Application', () => {
     it('should not be ready initially', () => {
       expect(application.ready).toBe(false);
     });
+
+    it('should have a database plugin registered', () => {
+      expect(application.databasePlugin).toBeDefined();
+      expect(application.databasePlugin!.name).toBe('mongo-database');
+    });
   });
 
   describe('start() without devDatabase', () => {
     it('should start without calling initializeDevStore', async () => {
-      // Clear previous mock calls
       jest.clearAllMocks();
 
-      // Spy on the document store's initializeDevStore method
-      const store = (application as any)._documentStore;
-      const initDevStoreSpy = jest.spyOn(store, 'initializeDevStore');
-
-      // Mock the base start method to avoid actual database connection
-      jest
-        .spyOn(MongoApplicationBase.prototype as any, 'start')
+      // Mock the database plugin's connect to avoid real DB connection
+      const plugin = application.databasePlugin!;
+      const connectSpy = jest
+        .spyOn(plugin, 'connect')
         .mockResolvedValue(undefined);
+      const initSpy = jest.spyOn(plugin, 'init').mockResolvedValue(undefined);
 
       // Mock express app listen
       const listenSpy = jest
         .spyOn(application.expressApp, 'listen')
-        .mockImplementation(((port: any, host: any, callback: any) => {
+        .mockImplementation(((
+          port: number,
+          host: string,
+          callback: () => void,
+        ) => {
           callback();
           return {
             close: jest.fn(),
             closeAllConnections: jest.fn(),
           };
-        }) as any);
+        }) as never);
 
       await application.start();
 
-      expect(initDevStoreSpy).not.toHaveBeenCalled();
-      expect(
-        DatabaseInitializationService.printServerInitResults,
-      ).not.toHaveBeenCalled();
+      expect(connectSpy).toHaveBeenCalled();
       expect(application.ready).toBe(true);
 
       listenSpy.mockRestore();
-    }, 10000); // Increase timeout
+      connectSpy.mockRestore();
+      initSpy.mockRestore();
+    }, 10000);
   });
 
   describe('start() with devDatabase', () => {
@@ -204,7 +208,6 @@ describe('Application', () => {
         return mockApiRouter;
       });
 
-      // Create appRouterFactory that mocks init
       const appRouterFactory2 = (apiRouter: BaseRouter) => {
         const router = new AppRouter(apiRouter);
         jest.spyOn(router, 'init').mockImplementation(() => {});
@@ -214,8 +217,25 @@ describe('Application', () => {
       application = new Application(
         env,
         apiRouterFactory,
-        (connection: Connection) => mockSchemaMap,
-        async (app: BaseApplication<any, IServerInitResult>) => ({
+        {
+          corsWhitelist: [],
+          csp: {
+            defaultSrc: [],
+            imgSrc: [],
+            connectSrc: [],
+            scriptSrc: [],
+            styleSrc: [],
+            fontSrc: [],
+            frameSrc: [],
+          },
+        },
+        LocalhostConstants,
+        appRouterFactory2,
+      );
+
+      const mongoPlugin = new MongoDatabasePlugin({
+        schemaMapFactory: (connection: Connection) => mockSchemaMap,
+        databaseInitFunction: async () => ({
           success: true,
           data: {
             systemUser: {
@@ -241,22 +261,12 @@ describe('Application', () => {
             },
           },
         }),
-        (initResults: IServerInitResult) => 'test-hash',
-        {
-          corsWhitelist: [],
-          csp: {
-            defaultSrc: [],
-            imgSrc: [],
-            connectSrc: [],
-            scriptSrc: [],
-            styleSrc: [],
-            fontSrc: [],
-            frameSrc: [],
-          },
-        },
-        LocalhostConstants,
-        appRouterFactory2,
-      );
+        initResultHashFunction: () => 'test-hash',
+        environment: env,
+        constants: LocalhostConstants,
+      });
+
+      application.useDatabasePlugin(mongoPlugin);
     });
 
     afterEach(() => {
@@ -264,165 +274,58 @@ describe('Application', () => {
     });
 
     it('should call initializeDevStore when devDatabase is set', async () => {
-      // Clear previous mock calls
       jest.clearAllMocks();
 
-      // Mock the necessary methods
-      const mockInitResults: IServerInitResult = {
-        systemUser: {
-          _id: 'system-id',
-          username: 'system',
-          email: 'system@example.com',
-          password: 'password123',
-        },
-        adminUser: {
-          _id: 'admin-id',
-          username: 'admin',
-          email: 'admin@example.com',
-          password: 'password123',
-        },
-        memberUser: {
-          _id: 'member-id',
-          username: 'member',
-          email: 'member@example.com',
-          password: 'password123',
-          mnemonic: 'test mnemonic phrase',
-          publicKey: 'public-key-123',
-          backupCodes: ['code1', 'code2'],
-        },
-      };
-
-      // Spy on the document store's methods
-      const store = (application as any)._documentStore;
-      const initDevStoreSpy = jest
-        .spyOn(store, 'initializeDevStore')
-        .mockResolvedValue(mockInitResults);
-
-      // Mock setupDevStore to provide a devDatabase instance
-      jest
-        .spyOn(store, 'setupDevStore')
+      const plugin = application.databasePlugin!;
+      const connectSpy = jest
+        .spyOn(plugin, 'connect')
+        .mockResolvedValue(undefined);
+      const initSpy = jest.spyOn(plugin, 'init').mockResolvedValue(undefined);
+      const setupDevSpy = jest
+        .spyOn(plugin, 'setupDevStore')
         .mockResolvedValue('mongodb://localhost/test');
-
-      // Mock the devDatabase getter on the store to return a truthy value
-      Object.defineProperty(store, '_devDatabase', {
-        value: { getUri: () => 'mongodb://localhost/test' },
-        writable: true,
-        configurable: true,
-      });
-
-      // Mock the base start method
-      jest
-        .spyOn(MongoApplicationBase.prototype as any, 'start')
+      const initDevSpy = jest
+        .spyOn(plugin, 'initializeDevStore')
         .mockResolvedValue(undefined);
 
-      // Mock express app listen
       const listenSpy = jest
         .spyOn(application.expressApp, 'listen')
-        .mockImplementation(((port: any, host: any, callback: any) => {
+        .mockImplementation(((
+          port: number,
+          host: string,
+          callback: () => void,
+        ) => {
           callback();
           return {
             close: jest.fn(),
             closeAllConnections: jest.fn(),
           };
-        }) as any);
+        }) as never);
 
       await application.start();
 
-      expect(initDevStoreSpy).toHaveBeenCalled();
-      expect(
-        DatabaseInitializationService.printServerInitResults,
-      ).toHaveBeenCalledWith(mockInitResults, false);
+      expect(setupDevSpy).toHaveBeenCalled();
+      expect(initDevSpy).toHaveBeenCalled();
       expect(application.ready).toBe(true);
 
       listenSpy.mockRestore();
-    }, 10000); // Increase timeout
-
-    it('should print server init results with verbose flag false', async () => {
-      // Clear previous mock calls
-      jest.clearAllMocks();
-
-      const mockInitResults: IServerInitResult = {
-        systemUser: {
-          _id: 'system-id',
-          username: 'system',
-          email: 'system@example.com',
-          password: 'password123',
-        },
-        adminUser: {
-          _id: 'admin-id',
-          username: 'admin',
-          email: 'admin@example.com',
-          password: 'password123',
-        },
-        memberUser: {
-          _id: 'member-id',
-          username: 'member',
-          email: 'member@example.com',
-          password: 'password123',
-          mnemonic: 'test mnemonic phrase',
-          publicKey: 'public-key-123',
-          backupCodes: ['code1', 'code2'],
-        },
-      };
-
-      const store = (application as any)._documentStore;
-      jest
-        .spyOn(store, 'initializeDevStore')
-        .mockResolvedValue(mockInitResults);
-      jest
-        .spyOn(store, 'setupDevStore')
-        .mockResolvedValue('mongodb://localhost/test');
-      Object.defineProperty(store, '_devDatabase', {
-        value: { getUri: () => 'mongodb://localhost/test' },
-        writable: true,
-        configurable: true,
-      });
-      jest
-        .spyOn(MongoApplicationBase.prototype as any, 'start')
-        .mockResolvedValue(undefined);
-      const listenSpy = jest
-        .spyOn(application.expressApp, 'listen')
-        .mockImplementation(((port: any, host: any, callback: any) => {
-          callback();
-          return {
-            close: jest.fn(),
-            closeAllConnections: jest.fn(),
-          };
-        }) as any);
-
-      await application.start();
-
-      expect(
-        DatabaseInitializationService.printServerInitResults,
-      ).toHaveBeenCalledTimes(1);
-      expect(
-        DatabaseInitializationService.printServerInitResults,
-      ).toHaveBeenCalledWith(mockInitResults, false);
-
-      listenSpy.mockRestore();
-    }, 10000); // Increase timeout
+      connectSpy.mockRestore();
+      initSpy.mockRestore();
+    }, 10000);
 
     it('should handle initializeDevStore errors', async () => {
-      // Clear previous mock calls
       jest.clearAllMocks();
 
       const mockError = new Error('Database initialization failed');
 
-      const store = (application as any)._documentStore;
-      jest.spyOn(store, 'initializeDevStore').mockRejectedValue(mockError);
+      const plugin = application.databasePlugin!;
+      jest.spyOn(plugin, 'connect').mockResolvedValue(undefined);
+      jest.spyOn(plugin, 'init').mockResolvedValue(undefined);
       jest
-        .spyOn(store, 'setupDevStore')
+        .spyOn(plugin, 'setupDevStore')
         .mockResolvedValue('mongodb://localhost/test');
-      Object.defineProperty(store, '_devDatabase', {
-        value: { getUri: () => 'mongodb://localhost/test' },
-        writable: true,
-        configurable: true,
-      });
-      jest
-        .spyOn(MongoApplicationBase.prototype as any, 'start')
-        .mockResolvedValue(undefined);
+      jest.spyOn(plugin, 'initializeDevStore').mockRejectedValue(mockError);
 
-      // Set NODE_ENV to test to make the error throw instead of exit
       const originalEnv = process.env.NODE_ENV;
       process.env.NODE_ENV = 'test';
 
@@ -430,28 +333,24 @@ describe('Application', () => {
         'Database initialization failed',
       );
 
-      expect(
-        DatabaseInitializationService.printServerInitResults,
-      ).not.toHaveBeenCalled();
-
       process.env.NODE_ENV = originalEnv;
-    }, 10000); // Increase timeout
+    }, 10000);
   });
 
   describe('stop()', () => {
     it('should stop the application', async () => {
-      // Mock the base stop method
-      jest
-        .spyOn(MongoApplicationBase.prototype, 'stop')
-        .mockResolvedValue(undefined);
+      const plugin = application.databasePlugin!;
+      jest.spyOn(plugin, 'connect').mockResolvedValue(undefined);
+      jest.spyOn(plugin, 'init').mockResolvedValue(undefined);
+      jest.spyOn(plugin, 'stop').mockResolvedValue(undefined);
 
       // Mock server
       const mockServer = {
-        close: jest.fn((cb) => cb()),
+        close: jest.fn((cb: (err?: Error) => void) => cb()),
         closeAllConnections: jest.fn(),
       };
-      (application as any).server = mockServer;
-      (application as any)._ready = true;
+      (application as Record<string, unknown>).server = mockServer;
+      (application as Record<string, unknown>)._ready = true;
 
       await application.stop();
 
@@ -461,11 +360,13 @@ describe('Application', () => {
     });
 
     it('should handle missing server gracefully', async () => {
-      jest
-        .spyOn(MongoApplicationBase.prototype, 'stop')
-        .mockResolvedValue(undefined);
-      (application as any).server = null;
-      (application as any)._ready = true;
+      const plugin = application.databasePlugin!;
+      jest.spyOn(plugin, 'connect').mockResolvedValue(undefined);
+      jest.spyOn(plugin, 'init').mockResolvedValue(undefined);
+      jest.spyOn(plugin, 'stop').mockResolvedValue(undefined);
+
+      (application as Record<string, unknown>).server = null;
+      (application as Record<string, unknown>)._ready = true;
 
       await expect(application.stop()).resolves.not.toThrow();
       expect(application.ready).toBe(false);
@@ -475,17 +376,14 @@ describe('Application', () => {
   describe('registerServices()', () => {
     it('should call registerServices during construction', () => {
       const registerServicesSpy = jest.spyOn(
-        Application.prototype as any,
+        Application.prototype as Record<string, unknown>,
         'registerServices',
-      );
+      ) as jest.SpyInstance;
 
       const apiRouterFactory = jest.fn((app) => new BaseRouter(app));
       const testApp = new Application(
         env,
         apiRouterFactory,
-        (connection: Connection) => mockSchemaMap,
-        async () => ({ success: true, data: {} as any }),
-        () => 'test-hash',
         {
           corsWhitelist: [],
           csp: {

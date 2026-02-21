@@ -6,8 +6,7 @@ import {
 } from '@digitaldefiance/express-suite-test-utils';
 import mongoose from '@digitaldefiance/mongoose-types';
 import { TranslatableSuiteError } from '@digitaldefiance/suite-core-lib';
-import { MongoApplicationBase } from '../src/mongo-application-base';
-import { BaseApplication } from '../src/application-base';
+import { BaseApplication } from '../src/base-application';
 import { Environment } from '../src/environment';
 import { IDocumentStore } from '../src/interfaces/document-store';
 import { MongooseDocumentStore } from '../src/services/mongoose-document-store';
@@ -26,12 +25,95 @@ describe('BaseApplication', () => {
   }
 
   /**
-   * TestApplication wraps MongoApplicationBase with a MongooseDocumentStore.
+   * TestApplication wraps BaseApplication with a MongooseDocumentStore
+   * to test the Mongo-specific document store path.
    */
-  class TestApplication extends MongoApplicationBase<any, any, any> {
-    constructor(env: Environment, constants?: any) {
-      const store = createDocumentStore(env);
-      super(env, store, constants);
+  class TestApplication extends BaseApplication<Buffer, Record<string, never>> {
+    private readonly _documentStore: MongooseDocumentStore<
+      Buffer,
+      Record<string, never>,
+      Record<string, never>
+    >;
+
+    constructor(env: Environment, constants?: Record<string, unknown>) {
+      const store = createDocumentStore(env) as MongooseDocumentStore<
+        Buffer,
+        Record<string, never>,
+        Record<string, never>
+      >;
+      // BaseApplication needs an IDatabase; for the document store path,
+      // we use a no-op database and manage connection via the store.
+      const noOpDb = {
+        collection() {
+          throw new Error('No-op');
+        },
+        startSession() {
+          throw new Error('No-op');
+        },
+        withTransaction() {
+          throw new Error('No-op');
+        },
+        listCollections() {
+          return [];
+        },
+        async dropCollection() {
+          return false;
+        },
+        async connect() {
+          /* no-op */
+        },
+        async disconnect() {
+          /* no-op */
+        },
+        isConnected() {
+          return false;
+        },
+      };
+      super(env, noOpDb, constants as never);
+      this._documentStore = store;
+    }
+
+    get documentStore() {
+      return this._documentStore;
+    }
+    get db() {
+      return this._documentStore.db;
+    }
+    get schemaMap() {
+      const map = this._documentStore.schemaMap;
+      if (!map)
+        throw new TranslatableSuiteError('Schema map not loaded' as never);
+      return map;
+    }
+    get devDatabase() {
+      return this._documentStore.devDatabase;
+    }
+    getModel<T>(modelName: string) {
+      return this._documentStore.getModel<T>(modelName) as never;
+    }
+
+    override async start(uri?: string): Promise<void> {
+      if (this._ready) {
+        const err = new Error('Application is already running');
+        if (process.env['NODE_ENV'] === 'test') throw err;
+        process.exit(1);
+      }
+      if (this.environment.devDatabase && this._documentStore.setupDevStore) {
+        const devUri = await this._documentStore.setupDevStore();
+        if (devUri) uri = devUri;
+      }
+      await this._documentStore.connect(uri);
+      await this.plugins.initAll(this);
+      this._ready = true;
+    }
+
+    override async stop(): Promise<void> {
+      await this.plugins.stopAll();
+      await this._documentStore.disconnect();
+      if (this._documentStore.devDatabase) {
+        await this._documentStore.devDatabase.stop();
+      }
+      this._ready = false;
     }
   }
 
@@ -89,7 +171,7 @@ describe('BaseApplication', () => {
   describe('reloadEnvironment', () => {
     it('should reload environment', () => {
       const originalEnv = app.environment;
-      process.env.SYSTEM_PUBLIC_KEY = 'a'.repeat(130); // Set required env var
+      process.env.SYSTEM_PUBLIC_KEY = 'a'.repeat(130);
       app.reloadEnvironment(undefined, true);
       expect(app.environment).not.toBe(originalEnv);
       expect(app.environment).toBeDefined();
@@ -117,8 +199,6 @@ describe('BaseApplication', () => {
   });
 
   describe('validateMongoUri (via MongooseDocumentStore)', () => {
-    // validateMongoUri is now internal to MongooseDocumentStore.connect().
-    // We test it indirectly by calling connect with invalid URIs.
     it('should reject invalid protocol via connect', async () => {
       const store = createDocumentStore(env);
       await expect(
@@ -295,15 +375,17 @@ describe('BaseApplication', () => {
         .spyOn(mongoose, 'disconnect')
         .mockResolvedValue();
 
-      // Simulate connected state
       Object.defineProperty(mongoose.connection, 'readyState', {
         value: 1,
         writable: true,
         configurable: true,
       });
 
-      // Set internal _db so disconnect path is taken
-      const store = app.documentStore as MongooseDocumentStore<any, any, any>;
+      const store = app.documentStore as MongooseDocumentStore<
+        Buffer,
+        Record<string, never>,
+        Record<string, never>
+      >;
       (store as Record<string, unknown>)['_db'] = mongoose;
 
       await app.stop();

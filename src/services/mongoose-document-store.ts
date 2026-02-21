@@ -17,7 +17,7 @@ import { IBaseDocument } from '../documents/base';
 import { Environment } from '../environment';
 import { IApplication } from '../interfaces/application';
 import { IConstants } from '../interfaces/constants';
-import { IDocumentStore } from '../interfaces/document-store';
+import { IDocumentStore } from '../interfaces/mongoose-document-store';
 import { IFailableResult } from '../interfaces/failable-result';
 import { ISchema } from '../interfaces/schema';
 import { ModelRegistry } from '../model-registry';
@@ -25,7 +25,7 @@ import { SchemaMap } from '../types';
 import { debugLog } from '../utils';
 import { defaultMongoUriValidator } from '../utils/default-mongo-uri-validator';
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
-import type { MongoApplicationBase } from '../mongo-application-base';
+import type { IMongoApplication } from '../interfaces/mongo-application';
 
 /**
  * Mongoose implementation of IDocumentStore.
@@ -68,7 +68,7 @@ export class MongooseDocumentStore<
    * Function to initialize the database with default data
    */
   private readonly _databaseInitFunction: (
-    application: MongoApplicationBase<TID, TModelDocs, TInitResults>,
+    application: IMongoApplication<TID>,
   ) => Promise<IFailableResult<TInitResults>>;
 
   /**
@@ -93,7 +93,7 @@ export class MongooseDocumentStore<
       connection: mongoose.Connection,
     ) => SchemaMap<TID, TModelDocs>,
     databaseInitFunction: (
-      application: MongoApplicationBase<TID, TModelDocs, TInitResults>,
+      application: IMongoApplication<TID>,
     ) => Promise<IFailableResult<TInitResults>>,
     initResultHashFunction: (initResults: TInitResults) => string,
     environment: Environment<TID>,
@@ -373,9 +373,7 @@ export class MongooseDocumentStore<
 
     const accountDataResult: IFailableResult<TInitResults> = await Promise.race(
       [
-        this._databaseInitFunction(
-          app as unknown as MongoApplicationBase<TID, TModelDocs, TInitResults>,
-        ),
+        this._databaseInitFunction(app as IMongoApplication<TID>),
         new Promise<never>((_, reject) => {
           initTimeout = setTimeout(() => {
             const logMsg = engine.translateStringKey(

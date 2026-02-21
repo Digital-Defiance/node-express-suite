@@ -1,6 +1,6 @@
 /**
  * @fileoverview HTTP-level integration test for the direct login challenge flow.
- * Boots a MongoApplicationBase with in-memory MongoDB, wires up Express + ApiRouter,
+ * Boots a BaseApplication with MongoDatabasePlugin and in-memory MongoDB, wires up Express + ApiRouter,
  * and exercises the actual HTTP endpoints for request-direct-login and direct-challenge.
  *
  * This test catches regressions that only manifest at the controller/HTTP layer,
@@ -25,9 +25,11 @@ import { Environment } from '../../src/environment';
 import { getSchemaMap } from '../../src/schemas';
 import { DatabaseInitializationService } from '../../src/services';
 import { MongooseDocumentStore } from '../../src/services/mongoose-document-store';
-import { MongoApplicationBase } from '../../src/mongo-application-base';
+import { BaseApplication } from '../../src/base-application';
+import { MongoDatabasePlugin } from '../../src/plugins/mongo-database-plugin';
 import { ApiRouter } from '../../src/routers/api';
 import { IServerInitResult, IConstants } from '../../src/interfaces';
+import { IMongoApplication } from '../../src/interfaces/mongo-application';
 import { DummyEmailService } from '../../src/services/dummy-email-service';
 import { emailServiceRegistry } from '../../src/registry';
 import type { BaseModelDocs } from '../../src/schemas/schema';
@@ -51,7 +53,8 @@ const eciesConfig: IECIESConfig = {
 };
 
 describe('Direct login HTTP endpoints (real MongoDB + Express)', () => {
-  let app: MongoApplicationBase<
+  let app: BaseApplication<Buffer>;
+  let mongoPlugin: MongoDatabasePlugin<
     Buffer,
     BaseModelDocs,
     IServerInitResult<Buffer>
@@ -94,42 +97,73 @@ describe('Direct login HTTP endpoints (real MongoDB + Express)', () => {
 
     const env = new Environment(undefined, true, true, TestConstants);
 
-    const documentStore = new MongooseDocumentStore<
+    mongoPlugin = new MongoDatabasePlugin<
       Buffer,
       BaseModelDocs,
       IServerInitResult<Buffer>
-    >(
-      getSchemaMap,
-      (application) =>
+    >({
+      schemaMapFactory: getSchemaMap,
+      databaseInitFunction: (application: IMongoApplication<Buffer>) =>
         DatabaseInitializationService.initUserDb(application),
-      (r: IServerInitResult<Buffer>) =>
+      initResultHashFunction: (r: IServerInitResult<Buffer>) =>
         DatabaseInitializationService.serverInitResultHash(r),
-      env,
-      TestConstants,
-    );
+      environment: env,
+      constants: TestConstants,
+    });
 
-    app = new MongoApplicationBase(env, documentStore, TestConstants);
+    const noOpDb = {
+      collection() {
+        throw new Error('Use MongoDatabasePlugin');
+      },
+      startSession() {
+        throw new Error('Use MongoDatabasePlugin');
+      },
+      withTransaction() {
+        throw new Error('Use MongoDatabasePlugin');
+      },
+      listCollections() {
+        return [];
+      },
+      async dropCollection() {
+        return false;
+      },
+      async connect() {
+        /* no-op */
+      },
+      async disconnect() {
+        /* no-op */
+      },
+      isConnected() {
+        return false;
+      },
+    };
+
+    app = new BaseApplication(env, noOpDb as never, TestConstants);
 
     // Connect to in-memory MongoDB
-    await app.start();
+    await mongoPlugin.connect();
+    await mongoPlugin.init(app as never);
+
+    // Set the auth provider from the plugin
+    app.authProvider = mongoPlugin.authenticationProvider;
 
     // Initialize the database — creates admin, member, system users
     initResult =
-      await documentStore.initializeDevStore<IServerInitResult<Buffer>>(app);
+      (await mongoPlugin.initializeDevStore()) as IServerInitResult<Buffer>;
 
     // Wire up Express + ApiRouter — same as Application.start() does
     expressApp = express();
     expressApp.use(express.json());
-    emailServiceRegistry.setService(new DummyEmailService(app));
-    const apiRouter = new ApiRouter(app);
+    emailServiceRegistry.setService(new DummyEmailService(app as never));
+    const apiRouter = new ApiRouter(mongoPlugin.mongoApplication!);
     expressApp.use('/api', apiRouter.router);
 
     eciesService = new ECIESService<Buffer>(eciesConfig);
   }, 120_000);
 
   afterAll(async () => {
-    if (app) {
-      await app.stop();
+    if (mongoPlugin) {
+      await mongoPlugin.disconnect();
     }
   }, 30_000);
 
