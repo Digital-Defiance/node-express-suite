@@ -34,9 +34,13 @@ import { BaseRouter } from './routers/base';
 import { debugLog, handleError, sendApiMessageResponse } from './utils';
 import { GreenlockManager } from './greenlock-manager';
 import { IDatabasePlugin } from './plugins/database-plugin';
+import { MongoDatabasePlugin } from './plugins/mongo-database-plugin';
 import type { IDatabase } from './interfaces/storage';
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 import { createNoOpDatabase } from './utils/no-op-database';
+import type { IBaseDocument } from './documents';
+import type mongoose from '@digitaldefiance/mongoose-types';
+import type { Model } from '@digitaldefiance/mongoose-types';
 
 type ServerWithOptionalClose = Server & { closeAllConnections?: () => void };
 
@@ -81,6 +85,42 @@ export class Application<
    */
   public get databasePlugin(): IDatabasePlugin<TID> | null {
     return this._databasePlugin;
+  }
+
+  /**
+   * Get the Mongoose database instance.
+   * Delegates to the MongoDatabasePlugin when registered.
+   * This allows the Application to satisfy IMongoApplication
+   * when a MongoDatabasePlugin is in use.
+   */
+  public get db(): typeof mongoose {
+    if (
+      this._databasePlugin &&
+      this._databasePlugin instanceof MongoDatabasePlugin
+    ) {
+      return this._databasePlugin.db;
+    }
+    throw new Error(
+      'No MongoDatabasePlugin registered. The db accessor requires a MongoDatabasePlugin.',
+    );
+  }
+
+  /**
+   * Get a Mongoose model by name.
+   * Delegates to the MongoDatabasePlugin when registered.
+   */
+  public getModel<U extends IBaseDocument<unknown, TID>>(
+    modelName: string,
+  ): Model<U> {
+    if (
+      this._databasePlugin &&
+      this._databasePlugin instanceof MongoDatabasePlugin
+    ) {
+      return this._databasePlugin.getModel<U>(modelName);
+    }
+    throw new Error(
+      'No MongoDatabasePlugin registered. The getModel accessor requires a MongoDatabasePlugin.',
+    );
   }
 
   /**
