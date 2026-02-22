@@ -5,16 +5,16 @@
  */
 
 import { AccountStatus, IUserBase } from '@digitaldefiance/suite-core-lib';
-import { IBaseDocument } from './base';
+import { BaseDocument } from './base';
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 
 /**
  * User document interface for MongoDB user collection.
  * @template TLanguage - String type for site language (defaults to string)
  * @template TID - Platform ID type (defaults to Buffer)
- * @typedef {IBaseDocument<IUserBase<TID, Date, S, AccountStatus>, TID>} IUserDocument
+ * @typedef {BaseDocument<IUserBase<TID, Date, S, AccountStatus>, TID>} IUserDocument
  */
-export type IUserDocument<
+export type UserDocument<
   TLanguage extends string = string,
   TID extends PlatformID = Buffer,
-> = IBaseDocument<IUserBase<TID, Date, TLanguage, AccountStatus>, TID>;
+> = BaseDocument<IUserBase<TID, Date, TLanguage, AccountStatus>, TID>;

@@ -9,7 +9,7 @@
 import { Model } from '@digitaldefiance/mongoose-types';
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 import { MongoMemoryReplSet } from 'mongodb-memory-server';
-import { IBaseDocument } from '../documents/base';
+import { BaseDocument } from '../documents/base';
 import { ISchema } from './schema';
 import { IApplication } from './application';
 
@@ -24,9 +24,9 @@ import { IApplication } from './application';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface IDocumentStore<
   TID extends PlatformID = Buffer,
-  TModelDocs extends Record<string, IBaseDocument<any, TID>> = Record<
+  TModelDocs extends Record<string, BaseDocument<any, TID>> = Record<
     string,
-    IBaseDocument<any, TID>
+    BaseDocument<any, TID>
   >,
 > {
   /** Connect to the backing store. URI may be ignored by non-network stores. */
@@ -39,7 +39,7 @@ export interface IDocumentStore<
   isConnected(): boolean;
 
   /** Retrieve a Mongoose model by name. */
-  getModel<T extends IBaseDocument<any, TID>>(modelName: string): Model<T>;
+  getModel<T extends BaseDocument<any, TID>>(modelName: string): Model<T>;
 
   /** The schema map, if available (populated after connect). */
   readonly schemaMap?: { [K in keyof TModelDocs]: ISchema<TID, TModelDocs[K]> };

@@ -20,8 +20,8 @@ import {
   Role,
 } from '@digitaldefiance/suite-core-lib';
 import { IUserDocument } from '../documents';
-import { IRoleDocument } from '../documents/role';
-import { IUserRoleDocument } from '../documents/user-role';
+import { RoleDocument } from '../documents/role';
+import { UserRoleDocument } from '../documents/user-role';
 import { BaseModelName } from '../enumerations/base-model-name';
 import { IApplication } from '../interfaces/application';
 import { IRoleBackendObject } from '../interfaces/backend-objects/role';
@@ -58,7 +58,7 @@ export class RoleService<
     TID extends PlatformID = Buffer,
     TDate extends Date = Date,
   >(
-    role: ITokenRole<TID, TDate> | IRoleDocument<TID> | Partial<IRoleBase<TID>>,
+    role: ITokenRole<TID, TDate> | RoleDocument<TID> | Partial<IRoleBase<TID>>,
   ): ITokenRoleDTO {
     const provider = getEnhancedNodeIdProvider<TID>();
     const roleObj = role instanceof Document ? role.toObject() : role;
@@ -153,13 +153,13 @@ export class RoleService<
   public async createRole(
     roleData: IRoleBase<TID, TDate, Role>,
     session?: ClientSession | null,
-  ): Promise<IRoleDocument<TID>> {
+  ): Promise<RoleDocument<TID>> {
     const RoleModel = ModelRegistry.instance.get<any, any>(
       BaseModelName.Role,
     ).model;
     const role = new RoleModel(roleData);
     const savedRole = await role.save(session ? { session } : {});
-    return savedRole as IRoleDocument<TID>;
+    return savedRole as RoleDocument<TID>;
   }
 
   /**
@@ -175,7 +175,7 @@ export class RoleService<
     createdBy: TID,
     session?: ClientSession,
     overrideId?: TID,
-  ): Promise<IUserRoleDocument<TID>> {
+  ): Promise<UserRoleDocument<TID>> {
     const UserRoleModel = ModelRegistry.instance.get<any, any>(
       BaseModelName.UserRole,
     ).model;
@@ -277,7 +277,7 @@ export class RoleService<
   public async getUserRoles(
     userId: TID,
     session?: ClientSession,
-  ): Promise<IRoleDocument<TID>[]> {
+  ): Promise<RoleDocument<TID>[]> {
     const UserRoleModel = ModelRegistry.instance.get<any, any>(
       BaseModelName.UserRole,
     ).model;
@@ -298,7 +298,7 @@ export class RoleService<
     return (await RoleModel.find({
       _id: { $in: roleIds },
       deletedAt: { $exists: false },
-    }).session(session ?? null)) as IRoleDocument<TID>[];
+    }).session(session ?? null)) as RoleDocument<TID>[];
   }
 
   /**
@@ -351,7 +351,7 @@ export class RoleService<
   public async isUserAdmin(
     userDoc: IUserDocument<string, TID>,
     session?: ClientSession,
-    providedRoles?: Array<IRoleDocument<TID>>,
+    providedRoles?: Array<RoleDocument<TID>>,
   ): Promise<boolean> {
     const roles =
       providedRoles ?? (await this.getUserRoles(userDoc._id, session));
@@ -364,7 +364,7 @@ export class RoleService<
   public async isUserMember(
     userDoc: IUserDocument<string, TID>,
     session?: ClientSession,
-    providedRoles?: Array<IRoleDocument<TID>>,
+    providedRoles?: Array<RoleDocument<TID>>,
   ): Promise<boolean> {
     const roles =
       providedRoles ?? (await this.getUserRoles(userDoc._id, session));
@@ -377,7 +377,7 @@ export class RoleService<
   public async isUserChild(
     userDoc: IUserDocument<string, TID>,
     session?: ClientSession,
-    providedRoles?: Array<IRoleDocument<TID>>,
+    providedRoles?: Array<RoleDocument<TID>>,
   ): Promise<boolean> {
     const roles =
       providedRoles ?? (await this.getUserRoles(userDoc._id, session));
@@ -390,7 +390,7 @@ export class RoleService<
   public async isSystemUser(
     userDoc: IUserDocument<string, TID>,
     session?: ClientSession,
-    providedRoles?: Array<IRoleDocument<TID>>,
+    providedRoles?: Array<RoleDocument<TID>>,
   ): Promise<boolean> {
     const roles =
       providedRoles ?? (await this.getUserRoles(userDoc._id, session));
@@ -400,7 +400,7 @@ export class RoleService<
   public async getMemberType(
     userDoc: IUserDocument<string, TID>,
     session?: ClientSession,
-    providedRoles?: Array<IRoleDocument<TID>>,
+    providedRoles?: Array<RoleDocument<TID>>,
   ): Promise<MemberType> {
     const roles =
       providedRoles ?? (await this.getUserRoles(userDoc._id, session));

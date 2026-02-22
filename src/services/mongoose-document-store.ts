@@ -13,7 +13,7 @@ import {
   TranslatableSuiteError,
 } from '@digitaldefiance/suite-core-lib';
 import { MongoMemoryReplSet } from 'mongodb-memory-server';
-import { IBaseDocument } from '../documents/base';
+import { BaseDocument } from '../documents/base';
 import { Environment } from '../environment';
 import { IApplication } from '../interfaces/application';
 import { IConstants } from '../interfaces/constants';
@@ -38,7 +38,7 @@ import type { IMongoApplication } from '../interfaces/mongo-application';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export class MongooseDocumentStore<
   TID extends PlatformID,
-  TModelDocs extends Record<string, IBaseDocument<any, TID>>,
+  TModelDocs extends Record<string, BaseDocument<any, TID>>,
   TInitResults,
   TConstants extends IConstants = IConstants,
 > implements IDocumentStore<TID, TModelDocs> {
@@ -224,10 +224,7 @@ export class MongooseDocumentStore<
 
     if (debug) {
       (
-        Object.values(this._schemaMap) as ISchema<
-          TID,
-          IBaseDocument<any, TID>
-        >[]
+        Object.values(this._schemaMap) as ISchema<TID, BaseDocument<any, TID>>[]
       ).forEach((schema) => {
         console.log(
           engine.t(
@@ -317,7 +314,7 @@ export class MongooseDocumentStore<
    * @inheritdoc
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  public getModel<T extends IBaseDocument<any, TID>>(
+  public getModel<T extends BaseDocument<any, TID>>(
     modelName: string,
   ): Model<T> {
     return ModelRegistry.instance.get<any, T>(modelName).model;

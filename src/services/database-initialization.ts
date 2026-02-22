@@ -37,10 +37,10 @@ import { createHash, randomBytes } from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
 import { BackupCode } from '../backup-code';
-import { IMnemonicDocument } from '../documents/mnemonic';
-import { IRoleDocument } from '../documents/role';
-import { IUserDocument } from '../documents/user';
-import { IUserRoleDocument } from '../documents/user-role';
+import { MnemonicDocument } from '../documents/mnemonic';
+import { RoleDocument } from '../documents/role';
+import { UserDocument } from '../documents/user';
+import { UserRoleDocument } from '../documents/user-role';
 import { BaseModelName } from '../enumerations/base-model-name';
 import { Environment } from '../environment';
 import { IDBInitResult } from '../interfaces';
@@ -382,9 +382,9 @@ export abstract class DatabaseInitializationService {
         application.constants.idProvider.generate(),
       ) as TID) as () => TID;
     const UserModel = ModelRegistry.instance.getTypedModel<
-      IUserDocument<string, TID>
+      UserDocument<string, TID>
     >(BaseModelName.User);
-    const RoleModel = ModelRegistry.instance.getTypedModel<IRoleDocument<TID>>(
+    const RoleModel = ModelRegistry.instance.getTypedModel<RoleDocument<TID>>(
       BaseModelName.Role,
     );
     const adminUserId: TID = options.adminId ?? effectiveIdGenerator();
@@ -443,7 +443,7 @@ export abstract class DatabaseInitializationService {
         // Try to construct a minimal result from existing data
         // Note: This is a fallback case and some data may not be available
         const UserRoleModel = ModelRegistry.instance.getTypedModel<
-          IUserRoleDocument<TID>
+          UserRoleDocument<TID>
         >(BaseModelName.UserRole);
         const [
           adminRole,
@@ -551,23 +551,23 @@ export abstract class DatabaseInitializationService {
         : { timeoutMs: 120000 }; // Keep original production timeout
 
       const result = await withTransaction<{
-        adminRole: IRoleDocument<TID>;
-        memberRole: IRoleDocument<TID>;
-        systemRole: IRoleDocument<TID>;
-        systemDoc: IUserDocument<string, TID>;
-        systemUserRoleDoc: IUserRoleDocument<TID>;
+        adminRole: RoleDocument<TID>;
+        memberRole: RoleDocument<TID>;
+        systemRole: RoleDocument<TID>;
+        systemDoc: UserDocument<string, TID>;
+        systemUserRoleDoc: UserRoleDocument<TID>;
         systemPassword: string;
         systemMnemonic: string;
         systemBackupCodes: BackupCode[];
         systemMember: BackendMember<TID>;
-        adminDoc: IUserDocument<string, TID>;
-        adminUserRoleDoc: IUserRoleDocument<TID>;
+        adminDoc: UserDocument<string, TID>;
+        adminUserRoleDoc: UserRoleDocument<TID>;
         adminPassword: string;
         adminMnemonic: string;
         adminBackupCodes: BackupCode[];
         adminMember: BackendMember<TID>;
-        memberDoc: IUserDocument<string, TID>;
-        memberUserRoleDoc: IUserRoleDocument<TID>;
+        memberDoc: UserDocument<string, TID>;
+        memberUserRoleDoc: UserRoleDocument<TID>;
         memberPassword: string;
         memberMnemonic: string;
         memberBackupCodes: BackupCode[];
@@ -1590,7 +1590,7 @@ SYSTEM_PASSWORD="${serverInitResult.systemPassword}"
     application: IMongoApplication<TID>,
   ): Promise<IFailableResult<IServerInitResult<TID>>> {
     const mnemonicModel = ModelRegistry.instance.getTypedModel<
-      IMnemonicDocument<TID>
+      MnemonicDocument<TID>
     >(BaseModelName.Mnemonic);
     const mnemonicService = new MnemonicService(
       mnemonicModel,

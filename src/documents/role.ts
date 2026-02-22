@@ -5,15 +5,15 @@
  */
 
 import { IRoleBase } from '@digitaldefiance/suite-core-lib';
-import { IBaseDocument } from './base';
+import { BaseDocument } from './base';
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 
 /**
  * Role document interface for MongoDB role collection.
  * @template TID - Platform ID type (defaults to Buffer)
- * @typedef {IBaseDocument<IRoleBase<TID, Date>, TID>} IRoleDocument
+ * @typedef {BaseDocument<IRoleBase<TID, Date>, TID>} IRoleDocument
  */
-export type IRoleDocument<TID extends PlatformID = Buffer> = IBaseDocument<
+export type RoleDocument<TID extends PlatformID = Buffer> = BaseDocument<
   IRoleBase<TID, Date>,
   TID
 >;

@@ -35,7 +35,7 @@ import { BackupCode } from '../backup-code';
 import { DecoratorBaseController } from '../decorators/base-controller';
 import { Controller, Get, Post } from '../decorators/controller';
 import { IBaseDocument } from '../documents';
-import { IUserDocument } from '../documents/user';
+import { UserDocument } from '../documents/user';
 import { BaseModelName } from '../enumerations/base-model-name';
 import { Environment } from '../environment';
 import { MnemonicOrPasswordRequiredError } from '../errors/mnemonic-or-password-required';
@@ -115,14 +115,14 @@ export class UserController<
   TApplication extends IMongoApplication<TID> = IMongoApplication<TID>,
 > extends DecoratorBaseController<TLanguage, TID, TApplication> {
   protected readonly userService: UserService<
-    IUserDocument,
+    UserDocument,
     TID,
     TDate,
     TLanguage,
     TAccountStatus,
     Environment<TID>,
     IConstants,
-    IBaseDocument<IUserDocument, TID>,
+    IBaseDocument<UserDocument, TID>,
     TUser,
     TTokenRole,
     TApplication
@@ -237,7 +237,7 @@ export class UserController<
       );
     }
 
-    const UserModel = this.application.getModel<IUserDocument<string, TID>>(
+    const UserModel = this.application.getModel<UserDocument<string, TID>>(
       BaseModelName.User,
     );
     const userDoc = await UserModel.findById(tokenUser.userId).select(
@@ -570,7 +570,7 @@ export class UserController<
       );
     }
 
-    const UserModel = this.application.getModel<IUserDocument<string, TID>>(
+    const UserModel = this.application.getModel<UserDocument<string, TID>>(
       BaseModelName.User,
     );
     const userDoc = await UserModel.findById(req.user.id);
@@ -736,7 +736,7 @@ export class UserController<
       );
     }
 
-    const UserModel = this.application.getModel<IUserDocument<string, TID>>(
+    const UserModel = this.application.getModel<UserDocument<string, TID>>(
       BaseModelName.User,
     );
     const user = await UserModel.findById(req.user.id);
@@ -1341,7 +1341,7 @@ export class UserController<
           email?: unknown;
         };
 
-        const UserModel = this.application.getModel<IUserDocument<string, TID>>(
+        const UserModel = this.application.getModel<UserDocument<string, TID>>(
           BaseModelName.User,
         );
         const query: { username?: string; email?: string } = {};
@@ -1535,7 +1535,7 @@ export class UserController<
       async (sess) => {
         const { email } = this.validatedBody as { email?: unknown };
 
-        const UserModel = this.application.getModel<IUserDocument<string, TID>>(
+        const UserModel = this.application.getModel<UserDocument<string, TID>>(
           BaseModelName.User,
         );
         if (!isString(email)) {
@@ -1564,7 +1564,7 @@ export class UserController<
         // Mongoose document type doesn't exactly match IUserDocument generic signature
         // but the document has all required properties
         await this.userService.createAndSendEmailToken(
-          user as unknown as IUserDocument<TLanguage, TID>,
+          user as unknown as UserDocument<TLanguage, TID>,
           EmailTokenType.PasswordReset,
           sess,
           this.application.environment.debug,

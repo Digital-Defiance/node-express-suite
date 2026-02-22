@@ -5,7 +5,7 @@
  */
 
 import { Model } from '@digitaldefiance/mongoose-types';
-import { IBaseDocument } from '../documents/base';
+import { BaseDocument } from '../documents/base';
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 
 /**
@@ -14,7 +14,7 @@ import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
  */
 export interface IDiscriminatorCollections<
   TID extends PlatformID,
-  T extends IBaseDocument<any, TID>,
+  T extends BaseDocument<any, TID>,
 > {
   byType: Record<string, Model<T>>;
   array: Array<Model<T>>;

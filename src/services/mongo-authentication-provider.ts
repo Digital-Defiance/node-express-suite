@@ -9,7 +9,7 @@ import type { SecureString } from '@digitaldefiance/ecies-lib';
 import { ClientSession } from '@digitaldefiance/mongoose-types';
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 import { AccountStatus, ITokenUser } from '@digitaldefiance/suite-core-lib';
-import type { IUserDocument } from '../documents/user';
+import type { UserDocument } from '../documents/user';
 import { BaseModelName } from '../enumerations/base-model-name';
 import type {
   IAuthenticatedUser,
@@ -40,7 +40,7 @@ export class MongoAuthenticationProvider<
     userId: string,
   ): Promise<IAuthenticatedUser<TLanguage> | null> {
     const UserModel = ModelRegistry.instance.getTypedModel<
-      IUserDocument<TLanguage, TID>
+      UserDocument<TLanguage, TID>
     >(BaseModelName.User);
 
     const userDoc = await UserModel.findById(userId).select('-password').exec();
@@ -59,7 +59,7 @@ export class MongoAuthenticationProvider<
 
   async buildRequestUserDTO(userId: string): Promise<IRequestUserDTO | null> {
     const UserModel = ModelRegistry.instance.getTypedModel<
-      IUserDocument<TLanguage, TID>
+      UserDocument<TLanguage, TID>
     >(BaseModelName.User);
 
     return await withTransaction<IRequestUserDTO | null>(
@@ -102,7 +102,7 @@ export class MongoAuthenticationProvider<
         mnemonic: SecureString,
         session?: ClientSession,
       ) => Promise<{
-        userDoc: IUserDocument;
+        userDoc: UserDocument;
         userMember: import('@digitaldefiance/node-ecies-lib').Member<TID>;
       }>;
     };
@@ -133,7 +133,7 @@ export class MongoAuthenticationProvider<
         password: string,
         session?: ClientSession,
       ) => Promise<{
-        userDoc: IUserDocument;
+        userDoc: UserDocument;
         userMember: import('@digitaldefiance/node-ecies-lib').Member<TID>;
       }>;
     };

@@ -13,5 +13,5 @@ import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
  * @template TID - Platform ID type (defaults to Buffer)
  * @typedef {Document<I> & T} IBaseDocument
  */
-export type IBaseDocument<T, TID extends PlatformID = Buffer> = Document<TID> &
+export type BaseDocument<T, TID extends PlatformID = Buffer> = Document<TID> &
   T;

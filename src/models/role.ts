@@ -5,7 +5,7 @@
  */
 
 import { Connection, Model, Schema } from '@digitaldefiance/mongoose-types';
-import { IRoleDocument } from '../documents/role';
+import { RoleDocument } from '../documents/role';
 import { BaseModelName } from '../enumerations';
 import { SchemaCollection } from '../enumerations/schema-collection';
 import { RoleSchema } from '../schemas/role';
@@ -20,7 +20,7 @@ import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
  * @param {TModelName} modelName - Model name (defaults to 'Role')
  * @param {TCollection} collection - Collection name (defaults to 'roles')
  * @param {Schema} schema - Mongoose schema (defaults to RoleSchema)
- * @returns {Model<IRoleDocument<TID>>} Configured Mongoose model
+ * @returns {Model<RoleDocument<TID>>} Configured Mongoose model
  */
 export function RoleModel<
   TModelName extends string = BaseModelName,
@@ -31,8 +31,8 @@ export function RoleModel<
   modelName: TModelName = BaseModelName.Role as TModelName,
   collection: TCollection = SchemaCollection.Role as TCollection,
   schema: Schema = RoleSchema,
-): Model<IRoleDocument<TID>> {
-  return connection.model<IRoleDocument<TID>>(modelName, schema, collection);
+): Model<RoleDocument<TID>> {
+  return connection.model<RoleDocument<TID>>(modelName, schema, collection);
 }
 
 export default RoleModel;

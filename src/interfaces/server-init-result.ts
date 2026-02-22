@@ -5,12 +5,16 @@
  */
 
 import { Member, PlatformID } from '@digitaldefiance/node-ecies-lib';
-import { IRoleDocument } from '../documents/role';
-import { IUserDocument } from '../documents/user';
-import { IUserRoleDocument } from '../documents/user-role';
+import { RoleDocument } from '../documents/role';
+import { UserDocument } from '../documents/user';
+import { UserRoleDocument } from '../documents/user-role';
 
 // Re-export essential document types
-export type { IRoleDocument, IUserDocument, IUserRoleDocument };
+export type {
+  RoleDocument as IRoleDocument,
+  UserDocument as IUserDocument,
+  UserRoleDocument as IUserRoleDocument,
+};
 
 /**
  * Result of server initialization for testing.
@@ -18,31 +22,31 @@ export type { IRoleDocument, IUserDocument, IUserRoleDocument };
  * @template TID - Platform ID type (defaults to Buffer)
  */
 export interface IServerInitResult<TID extends PlatformID = Buffer> {
-  adminRole: IRoleDocument<TID>;
-  adminUser: IUserDocument<string, TID>;
+  adminRole: RoleDocument<TID>;
+  adminUser: UserDocument<string, TID>;
   adminUsername: string;
   adminEmail: string;
   adminMnemonic: string;
   adminPassword: string;
   adminBackupCodes: Array<string>;
   adminMember: Member<TID>;
-  adminUserRole: IUserRoleDocument<TID>;
-  memberRole: IRoleDocument<TID>;
-  memberUser: IUserDocument<string, TID>;
+  adminUserRole: UserRoleDocument<TID>;
+  memberRole: RoleDocument<TID>;
+  memberUser: UserDocument<string, TID>;
   memberUsername: string;
   memberEmail: string;
   memberMnemonic: string;
   memberPassword: string;
   memberBackupCodes: Array<string>;
   memberMember: Member<TID>;
-  memberUserRole: IUserRoleDocument<TID>;
-  systemRole: IRoleDocument<TID>;
-  systemUser: IUserDocument<string, TID>;
+  memberUserRole: UserRoleDocument<TID>;
+  systemRole: RoleDocument<TID>;
+  systemUser: UserDocument<string, TID>;
   systemUsername: string;
   systemEmail: string;
   systemMnemonic: string;
   systemPassword: string;
   systemBackupCodes: Array<string>;
   systemMember: Member<TID>;
-  systemUserRole: IUserRoleDocument<TID>;
+  systemUserRole: UserRoleDocument<TID>;
 }

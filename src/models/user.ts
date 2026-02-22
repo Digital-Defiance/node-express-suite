@@ -5,7 +5,7 @@
  */
 
 import { Connection, Model, Schema } from '@digitaldefiance/mongoose-types';
-import { IUserDocument } from '../documents/user';
+import { UserDocument } from '../documents/user';
 import { BaseModelName } from '../enumerations';
 import { SchemaCollection } from '../enumerations/schema-collection';
 import { UserSchema } from '../schemas/user';
@@ -20,7 +20,7 @@ import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
  * @param {TModelName} modelName - Model name (defaults to 'User')
  * @param {TCollection} collection - Collection name (defaults to 'users')
  * @param {Schema} schema - Mongoose schema (defaults to UserSchema)
- * @returns {Model<IUserDocument<string, TID>>} Configured Mongoose model
+ * @returns {Model<UserDocument<string, TID>>} Configured Mongoose model
  */
 export function UserModel<
   TModelName extends string = BaseModelName,
@@ -31,8 +31,8 @@ export function UserModel<
   modelName: TModelName = BaseModelName.User as TModelName,
   collection: TCollection = SchemaCollection.User as TCollection,
   schema: Schema = UserSchema,
-): Model<IUserDocument<string, TID>> {
-  return connection.model<IUserDocument<string, TID>>(
+): Model<UserDocument<string, TID>> {
+  return connection.model<UserDocument<string, TID>>(
     modelName,
     schema,
     collection,

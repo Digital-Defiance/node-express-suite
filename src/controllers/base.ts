@@ -33,7 +33,7 @@ import {
   ValidationChain,
   validationResult,
 } from 'express-validator';
-import { IUserDocument } from '../documents/user';
+import { UserDocument } from '../documents/user';
 import { BaseModelName } from '../enumerations/base-model-name';
 import { ExpressValidationError } from '../errors/express-validation';
 import { MissingValidatedDataError } from '../errors/missing-validated-data';
@@ -508,7 +508,7 @@ export abstract class BaseController<
 
   protected async validateAndFetchRequestUser(
     req: Request,
-  ): Promise<IUserDocument<TLanguage, TID>> {
+  ): Promise<UserDocument<TLanguage, TID>> {
     if (!this.isMongoApplication()) {
       throw new Error(
         'validateAndFetchRequestUser requires a Mongo-backed application. ' +
@@ -516,7 +516,7 @@ export abstract class BaseController<
       );
     }
     const UserModel = ModelRegistry.instance.getTypedModel<
-      IUserDocument<TLanguage, TID>
+      UserDocument<TLanguage, TID>
     >(BaseModelName.User);
     if (!req.user) {
       throw new HandleableError(

@@ -1,7 +1,7 @@
-export type { IBaseDocument } from './base';
-export type { IEmailTokenDocument } from './email-token';
-export type { IMnemonicDocument } from './mnemonic';
-export type { IRoleDocument } from './role';
-export type { IUsedDirectLoginTokenDocument } from './used-direct-login-token';
-export type { IUserDocument } from './user';
-export type { IUserRoleDocument } from './user-role';
+export type { BaseDocument as IBaseDocument } from './base';
+export type { EmailTokenDocument as IEmailTokenDocument } from './email-token';
+export type { MnemonicDocument as IMnemonicDocument } from './mnemonic';
+export type { RoleDocument as IRoleDocument } from './role';
+export type { UsedDirectLoginTokenDocument as IUsedDirectLoginTokenDocument } from './used-direct-login-token';
+export type { UserDocument as IUserDocument } from './user';
+export type { UserRoleDocument as IUserRoleDocument } from './user-role';

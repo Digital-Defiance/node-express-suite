@@ -5,7 +5,7 @@
  */
 
 import { IMnemonicBase } from '@digitaldefiance/suite-core-lib';
-import { IBaseDocument } from './base';
+import { BaseDocument } from './base';
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 
 /**
@@ -14,7 +14,7 @@ import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
  * Used for secure storage and retrieval of user recovery mnemonics.
  * @template TID Platform-specific ID type (Buffer, ObjectId, etc.)
  */
-export type IMnemonicDocument<TID extends PlatformID = Buffer> = IBaseDocument<
+export type MnemonicDocument<TID extends PlatformID = Buffer> = BaseDocument<
   IMnemonicBase<TID>,
   TID
 >;

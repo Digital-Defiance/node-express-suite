@@ -11,7 +11,7 @@ import {
   TranslatableSuiteError,
 } from '@digitaldefiance/suite-core-lib';
 import { createHmac } from 'crypto';
-import { IMnemonicDocument } from '../documents/mnemonic';
+import { MnemonicDocument } from '../documents/mnemonic';
 import { IConstants } from '../interfaces';
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 
@@ -22,11 +22,11 @@ import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
  */
 export class MnemonicService<TID extends PlatformID = Buffer> {
   private readonly hmacSecret: SecureBuffer;
-  private readonly MnemonicModel: Model<IMnemonicDocument<TID>>;
+  private readonly MnemonicModel: Model<MnemonicDocument<TID>>;
   private readonly constants: IConstants;
 
   constructor(
-    mnemonicModel: Model<IMnemonicDocument<TID>>,
+    mnemonicModel: Model<MnemonicDocument<TID>>,
     hmacSecret: SecureBuffer,
     constants: IConstants,
   ) {
@@ -81,7 +81,7 @@ export class MnemonicService<TID extends PlatformID = Buffer> {
     _password: SecureString,
     session?: ClientSession,
   ): Promise<{
-    document: IMnemonicDocument<TID> | null;
+    document: MnemonicDocument<TID> | null;
   }> {
     if (!mnemonic.value || !this.constants.MnemonicRegex.test(mnemonic.value)) {
       throw new TranslatableSuiteError(
@@ -117,7 +117,7 @@ export class MnemonicService<TID extends PlatformID = Buffer> {
   public async addMnemonic(
     mnemonic: SecureString,
     session?: ClientSession,
-  ): Promise<IMnemonicDocument<TID> | null> {
+  ): Promise<MnemonicDocument<TID> | null> {
     if (!mnemonic.value || !this.constants.MnemonicRegex.test(mnemonic.value)) {
       throw new TranslatableSuiteError(
         SuiteCoreStringKey.Validation_MnemonicRegex,
@@ -147,7 +147,7 @@ export class MnemonicService<TID extends PlatformID = Buffer> {
   public async getMnemonicDocument(
     mnemonicId: TID,
     session?: ClientSession,
-  ): Promise<IMnemonicDocument<TID> | null> {
+  ): Promise<MnemonicDocument<TID> | null> {
     return await this.MnemonicModel.findById(mnemonicId).session(
       session ?? null,
     );

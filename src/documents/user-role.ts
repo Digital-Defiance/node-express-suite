@@ -5,7 +5,7 @@
  */
 
 import { IUserRoleBase } from '@digitaldefiance/suite-core-lib';
-import { IBaseDocument } from './base';
+import { BaseDocument } from './base';
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 
 /**
@@ -14,7 +14,7 @@ import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
  * Supports many-to-many relationships between users and roles with timestamps.
  * @template TID Platform-specific ID type (Buffer, ObjectId, etc.)
  */
-export type IUserRoleDocument<TID extends PlatformID = Buffer> = IBaseDocument<
+export type UserRoleDocument<TID extends PlatformID = Buffer> = BaseDocument<
   IUserRoleBase<TID, Date>,
   TID
 >;

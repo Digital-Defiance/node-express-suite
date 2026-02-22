@@ -12,7 +12,7 @@ import {
   IUserDocument,
   IUserRoleDocument,
 } from '../documents';
-import { IUsedDirectLoginTokenDocument } from '../documents/used-direct-login-token';
+import { UsedDirectLoginTokenDocument } from '../documents/used-direct-login-token';
 import { BaseModelName } from '../enumerations';
 import { SchemaCollection } from '../enumerations/schema-collection';
 import { IConstants } from '../interfaces';
@@ -42,7 +42,7 @@ export interface BaseModelDocs {
   EmailToken: IEmailTokenDocument;
   Mnemonic: IMnemonicDocument;
   Role: IRoleDocument;
-  UsedDirectLoginToken: IUsedDirectLoginTokenDocument;
+  UsedDirectLoginToken: UsedDirectLoginTokenDocument;
   User: IUserDocument;
   UserRole: IUserRoleDocument;
 }
@@ -57,7 +57,7 @@ export interface SchemaMapOptions {
     EmailToken?: Schema<IEmailTokenDocument>;
     Mnemonic?: Schema<IMnemonicDocument>;
     Role?: Schema<IRoleDocument>;
-    UsedDirectLoginToken?: Schema<IUsedDirectLoginTokenDocument>;
+    UsedDirectLoginToken?: Schema<UsedDirectLoginTokenDocument>;
     User?: Schema<IUserDocument>;
     UserRole?: Schema<IUserRoleDocument>;
   };

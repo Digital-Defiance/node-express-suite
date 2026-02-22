@@ -18,7 +18,7 @@ import {
   VerifyOptions,
 } from 'jsonwebtoken';
 import { promisify } from 'util';
-import { IUserDocument } from '../documents/user';
+import { UserDocument } from '../documents/user';
 import { InvalidJwtTokenError } from '../errors/invalid-jwt-token';
 import { TokenExpiredError } from '../errors/token-expired';
 import { IApplication } from '../interfaces/application';
@@ -70,7 +70,7 @@ export class JwtService<
    * @returns The signed token
    */
   public async signToken(
-    userDoc: IUserDocument<string, TID>,
+    userDoc: UserDocument<string, TID>,
     jwtSecret: string,
     overrideLanguage?: string,
   ): Promise<IJwtSignResponse<TID, TDate, TTokenRole>> {

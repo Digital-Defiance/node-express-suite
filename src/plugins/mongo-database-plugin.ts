@@ -17,7 +17,7 @@ import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 import type { IDatabase } from '../interfaces/storage';
 import type { IAuthenticationProvider } from '../interfaces/authentication-provider';
 import type { IApplication } from '../interfaces/application';
-import type { IBaseDocument } from '../documents/base';
+import type { BaseDocument } from '../documents/base';
 import type { IDocumentStore } from '../interfaces/mongoose-document-store';
 import type { IConstants } from '../interfaces/constants';
 import type { IMongoApplication } from '../interfaces/mongo-application';
@@ -36,7 +36,7 @@ import { createNoOpDatabase } from '../utils/no-op-database';
 export interface MongoDatabasePluginOptions<
   TID extends PlatformID,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  TModelDocs extends Record<string, IBaseDocument<any, TID>>,
+  TModelDocs extends Record<string, BaseDocument<any, TID>>,
   TInitResults,
   TConstants extends IConstants = IConstants,
 > {
@@ -67,7 +67,7 @@ export interface MongoDatabasePluginOptions<
 export class MongoDatabasePlugin<
   TID extends PlatformID,
   /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-  TModelDocs extends Record<string, IBaseDocument<any, TID>>,
+  TModelDocs extends Record<string, BaseDocument<any, TID>>,
   TInitResults,
   TConstants extends IConstants = IConstants,
 > implements IDatabasePlugin<TID> {
@@ -110,7 +110,7 @@ export class MongoDatabasePlugin<
   static fromDocumentStore<
     TID extends PlatformID,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    TModelDocs extends Record<string, IBaseDocument<any, TID>>,
+    TModelDocs extends Record<string, BaseDocument<any, TID>>,
     TInitResults,
     TConstants extends IConstants = IConstants,
   >(
@@ -301,7 +301,7 @@ export class MongoDatabasePlugin<
    * Get a Mongoose model by name.
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  getModel<T extends IBaseDocument<any, TID>>(modelName: string): Model<T> {
+  getModel<T extends BaseDocument<any, TID>>(modelName: string): Model<T> {
     return this._documentStore.getModel<T>(modelName);
   }
 
@@ -342,7 +342,7 @@ export class MongoDatabasePlugin<
         return plugin.db;
       },
       /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-      getModel: <U extends IBaseDocument<any, TID>>(modelName: string) =>
+      getModel: <U extends BaseDocument<any, TID>>(modelName: string) =>
         plugin.getModel<U>(modelName),
     };
   }

@@ -5,7 +5,7 @@
  */
 
 import { Connection, Model, Schema } from '@digitaldefiance/mongoose-types';
-import { IEmailTokenDocument } from '../documents/email-token';
+import { EmailTokenDocument } from '../documents/email-token';
 import { BaseModelName } from '../enumerations';
 import { SchemaCollection } from '../enumerations/schema-collection';
 import { EmailTokenSchema } from '../schemas/email-token';
@@ -20,7 +20,7 @@ import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
  * @param {TModelName} [modelName] - Model name (defaults to 'EmailToken')
  * @param {TCollection} [collection] - Collection name (defaults to 'emailTokens')
  * @param {Schema} [schema] - Mongoose schema (defaults to EmailTokenSchema)
- * @returns {Model<IEmailTokenDocument<TID>>} Configured Mongoose model
+ * @returns {Model<EmailTokenDocument<TID>>} Configured Mongoose model
  */
 export function EmailTokenModel<
   TModelName extends string = BaseModelName,
@@ -31,7 +31,7 @@ export function EmailTokenModel<
   modelName?: TModelName,
   collection?: TCollection,
   schema?: Schema,
-): Model<IEmailTokenDocument<TID>>;
+): Model<EmailTokenDocument<TID>>;
 
 export function EmailTokenModel<TID extends PlatformID = Buffer>(
   connection: Connection,
@@ -39,7 +39,7 @@ export function EmailTokenModel<TID extends PlatformID = Buffer>(
   collection: string = SchemaCollection.EmailToken,
   schema: Schema = EmailTokenSchema,
 ) {
-  return connection.model<IEmailTokenDocument<TID>>(
+  return connection.model<EmailTokenDocument<TID>>(
     modelName,
     schema,
     collection,

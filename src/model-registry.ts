@@ -9,7 +9,7 @@ import {
   Document as MongooseDocument,
   Schema,
 } from '@digitaldefiance/mongoose-types';
-import { IBaseDocument } from './documents/base';
+import { BaseDocument } from './documents/base';
 import { InvalidModelError } from './errors';
 import { PlatformID } from '@digitaldefiance/node-ecies-lib';
 
@@ -21,7 +21,7 @@ import { PlatformID } from '@digitaldefiance/node-ecies-lib';
 export type ModelRegistration<
   TID extends PlatformID,
   T,
-  U extends IBaseDocument<T, TID>,
+  U extends BaseDocument<T, TID>,
 > = {
   modelName: string;
   schema: Schema;
@@ -38,7 +38,7 @@ class ModelRegistry<TID extends PlatformID> {
   protected static _instance: ModelRegistry<PlatformID>;
   protected _models: Map<
     string,
-    ModelRegistration<TID, any, IBaseDocument<any, TID>>
+    ModelRegistration<TID, any, BaseDocument<any, TID>>
   > = new Map();
 
   private constructor() {}
@@ -60,7 +60,7 @@ class ModelRegistry<TID extends PlatformID> {
    * @template U - Document type extending IBaseDocument
    * @param {ModelRegistration<T, U>} registration - Model registration information
    */
-  public register<T, U extends IBaseDocument<T, TID>>(
+  public register<T, U extends BaseDocument<T, TID>>(
     registration: ModelRegistration<TID, T, U>,
   ): void {
     this._models.set(
@@ -77,7 +77,7 @@ class ModelRegistry<TID extends PlatformID> {
    * @returns {ModelRegistration<T, U>} Model registration
    * @throws {InvalidModelError} If model is not registered
    */
-  public get<T, U extends IBaseDocument<T, TID>>(
+  public get<T, U extends BaseDocument<T, TID>>(
     modelName: string,
   ): ModelRegistration<TID, T, U> {
     const result = this._models.get(modelName) as ModelRegistration<TID, T, U>;

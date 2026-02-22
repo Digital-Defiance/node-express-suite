@@ -5,7 +5,7 @@
  */
 
 import { Connection, Model, Schema } from '@digitaldefiance/mongoose-types';
-import { IUserRoleDocument } from '../documents/user-role';
+import { UserRoleDocument } from '../documents/user-role';
 import { BaseModelName } from '../enumerations';
 import { SchemaCollection } from '../enumerations/schema-collection';
 import { UserRoleSchema } from '../schemas/user-role';
@@ -20,7 +20,7 @@ import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
  * @param {TModelName} modelName - Model name (defaults to 'UserRole')
  * @param {TCollection} collection - Collection name (defaults to 'userRoles')
  * @param {Schema} schema - Mongoose schema (defaults to UserRoleSchema)
- * @returns {Model<IUserRoleDocument<TID>>} Configured Mongoose model
+ * @returns {Model<UserRoleDocument<TID>>} Configured Mongoose model
  */
 export default function UserRoleModel<
   TModelName extends string = BaseModelName,
@@ -31,10 +31,6 @@ export default function UserRoleModel<
   modelName: TModelName = BaseModelName.UserRole as TModelName,
   collection: TCollection = SchemaCollection.UserRole as TCollection,
   schema: Schema = UserRoleSchema,
-): Model<IUserRoleDocument<TID>> {
-  return connection.model<IUserRoleDocument<TID>>(
-    modelName,
-    schema,
-    collection,
-  );
+): Model<UserRoleDocument<TID>> {
+  return connection.model<UserRoleDocument<TID>>(modelName, schema, collection);
 }

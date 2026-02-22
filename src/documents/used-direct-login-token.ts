@@ -5,7 +5,7 @@
  */
 
 import { IUsedDirectLoginTokenBase } from '@digitaldefiance/suite-core-lib';
-import { IBaseDocument } from './base';
+import { BaseDocument } from './base';
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 
 /**
@@ -14,5 +14,5 @@ import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
  * Prevents replay attacks by recording consumed tokens with user ID and timestamp.
  * @template TID Platform-specific ID type (Buffer, ObjectId, etc.)
  */
-export type IUsedDirectLoginTokenDocument<TID extends PlatformID = Buffer> =
-  IBaseDocument<IUsedDirectLoginTokenBase<TID>, TID>;
+export type UsedDirectLoginTokenDocument<TID extends PlatformID = Buffer> =
+  BaseDocument<IUsedDirectLoginTokenBase<TID>, TID>;

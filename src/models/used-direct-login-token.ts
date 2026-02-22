@@ -5,7 +5,7 @@
  */
 
 import { Connection, Model, Schema } from '@digitaldefiance/mongoose-types';
-import { IUsedDirectLoginTokenDocument } from '../documents/used-direct-login-token';
+import { UsedDirectLoginTokenDocument } from '../documents/used-direct-login-token';
 import { BaseModelName } from '../enumerations';
 import { SchemaCollection } from '../enumerations/schema-collection';
 import { UsedDirectLoginTokenSchema } from '../schemas/used-direct-login-token';
@@ -20,7 +20,7 @@ import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
  * @param {TModelName} [modelName] - Model name (defaults to 'UsedDirectLoginToken')
  * @param {TCollection} [collection] - Collection name (defaults to 'usedDirectLoginTokens')
  * @param {Schema} [schema] - Mongoose schema (defaults to UsedDirectLoginTokenSchema)
- * @returns {Model<IUsedDirectLoginTokenDocument<TID>>} Configured Mongoose model
+ * @returns {Model<UsedDirectLoginTokenDocument<TID>>} Configured Mongoose model
  */
 export function UsedDirectLoginTokenModel<
   TModelName extends string = BaseModelName,
@@ -31,15 +31,15 @@ export function UsedDirectLoginTokenModel<
   modelName?: TModelName,
   collection?: TCollection,
   schema?: Schema,
-): Model<IUsedDirectLoginTokenDocument<TID>>;
+): Model<UsedDirectLoginTokenDocument<TID>>;
 
 export function UsedDirectLoginTokenModel<TID extends PlatformID = Buffer>(
   connection: Connection,
   modelName?: string,
   collection?: string,
   schema?: Schema,
-): Model<IUsedDirectLoginTokenDocument<TID>> {
-  return connection.model<IUsedDirectLoginTokenDocument<TID>>(
+): Model<UsedDirectLoginTokenDocument<TID>> {
+  return connection.model<UsedDirectLoginTokenDocument<TID>>(
     modelName ?? BaseModelName.UsedDirectLoginToken,
     schema ?? UsedDirectLoginTokenSchema,
     collection ?? SchemaCollection.UsedDirectLoginToken,
