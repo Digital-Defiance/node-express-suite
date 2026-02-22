@@ -228,9 +228,9 @@ export class Environment<
             constants.idProvider.deserialize(envObj['ADMIN_ROLE_ID']),
           ) as TID)
         : undefined,
-      adminUserRoleId: envObj['ADMIN_ROLE_ID']
+      adminUserRoleId: envObj['ADMIN_USER_ROLE_ID']
         ? (constants.idProvider.fromBytes(
-            constants.idProvider.deserialize(envObj['ADMIN_ROLE_ID']),
+            constants.idProvider.deserialize(envObj['ADMIN_USER_ROLE_ID']),
           ) as TID)
         : undefined,
       adminBackupCodes: envObj['ADMIN_BACKUP_CODES']
@@ -283,9 +283,9 @@ export class Environment<
             constants.idProvider.deserialize(envObj['SYSTEM_ROLE_ID']),
           ) as TID)
         : undefined,
-      systemUserRoleId: envObj['SYSTEM_ROLE_ID']
+      systemUserRoleId: envObj['SYSTEM_USER_ROLE_ID']
         ? (constants.idProvider.fromBytes(
-            constants.idProvider.deserialize(envObj['SYSTEM_ROLE_ID']),
+            constants.idProvider.deserialize(envObj['SYSTEM_USER_ROLE_ID']),
           ) as TID)
         : undefined,
       systemBackupCodes: envObj['SYSTEM_BACKUP_CODES']
@@ -912,7 +912,7 @@ System User Data:
 -- SYSTEM_PUBLIC_KEY: ${this.systemPublicKeyHex}
 -- SYSTEM_PASSWORD: ${this.systemPassword?.value}
 -- SYSTEM_ROLE_ID: ${this.systemRoleId?.toString()}
--- SYSTEM_ROLE_ID: ${this.systemUserRoleId?.toString()}
+-- SYSTEM_USER_ROLE_ID: ${this.systemUserRoleId?.toString()}
 -- SYSTEM_BACKUP_CODES: ${this.systemBackupCodes
         ?.map((code: BackupCode) => code.value)
         .join(', ')}
