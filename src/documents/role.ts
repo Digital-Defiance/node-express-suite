@@ -11,7 +11,7 @@ import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 /**
  * Role document interface for MongoDB role collection.
  * @template TID - Platform ID type (defaults to Buffer)
- * @typedef {BaseDocument<IRoleBase<TID, Date>, TID>} IRoleDocument
+ * @typedef {BaseDocument<IRoleBase<TID, Date>, TID>} RoleDocument
  */
 export type RoleDocument<TID extends PlatformID = Buffer> = BaseDocument<
   IRoleBase<TID, Date>,

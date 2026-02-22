@@ -38,7 +38,7 @@ import { MongoDatabasePlugin } from './plugins/mongo-database-plugin';
 import type { IDatabase } from './interfaces/storage';
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 import { createNoOpDatabase } from './utils/no-op-database';
-import type { IBaseDocument } from './documents';
+import type { BaseDocument } from './documents';
 import type mongoose from '@digitaldefiance/mongoose-types';
 import type { Model } from '@digitaldefiance/mongoose-types';
 
@@ -109,7 +109,7 @@ export class Application<
    * Get a Mongoose model by name.
    * Delegates to the MongoDatabasePlugin when registered.
    */
-  public getModel<U extends IBaseDocument<unknown, TID>>(
+  public getModel<U extends BaseDocument<unknown, TID>>(
     modelName: string,
   ): Model<U> {
     if (

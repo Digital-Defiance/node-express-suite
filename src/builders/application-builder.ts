@@ -11,7 +11,7 @@ import {
 } from '@digitaldefiance/suite-core-lib';
 import { HelmetOptions } from 'helmet';
 import { Application } from '../application';
-import { IBaseDocument } from '../documents';
+import { BaseDocument } from '../documents';
 import { Environment } from '../environment';
 import {
   IApplication,
@@ -39,7 +39,7 @@ import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
  */
 export class ApplicationBuilder<
   TID extends PlatformID,
-  TModelDocs extends Record<string, IBaseDocument<never, TID>>,
+  TModelDocs extends Record<string, BaseDocument<never, TID>>,
   TInitResults extends IServerInitResult<TID>,
   TConstants extends IConstants = IConstants,
 > {

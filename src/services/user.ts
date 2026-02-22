@@ -66,7 +66,7 @@ import { Wallet } from '@ethereumjs/wallet';
 import { randomBytes } from 'crypto';
 import validator from 'validator';
 import { BackupCode } from '../backup-code';
-import { IBaseDocument } from '../documents';
+import { BaseDocument } from '../documents';
 import { EmailTokenDocument } from '../documents/email-token';
 import { MnemonicDocument } from '../documents/mnemonic';
 import { UserDocument } from '../documents/user';
@@ -117,7 +117,7 @@ export class UserService<
   TAccountStatus extends string,
   _TEnvironment extends Environment<TID> = Environment<TID>,
   _TConstants extends IConstants = IConstants,
-  _TBaseDocument extends IBaseDocument<T, TID> = IBaseDocument<T, TID>,
+  _TBaseDocument extends BaseDocument<T, TID> = BaseDocument<T, TID>,
   TUser extends IUserBase<TID, TDate, TLanguage, TAccountStatus> = IUserBase<
     TID,
     TDate,

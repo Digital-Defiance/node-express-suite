@@ -7,7 +7,7 @@ import { Connection } from '@digitaldefiance/mongoose-types';
 import { IFailableResult } from '@digitaldefiance/suite-core-lib';
 import { HelmetOptions } from 'helmet';
 import { Application } from '../../application';
-import { IBaseDocument } from '../../documents';
+import { BaseDocument } from '../../documents';
 import { Environment } from '../../environment';
 import {
   IApplication,
@@ -27,9 +27,9 @@ import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 
 export async function setupTestEnvironment<
   TID extends PlatformID = Buffer,
-  TModelDocs extends Record<string, IBaseDocument<never, TID>> = Record<
+  TModelDocs extends Record<string, BaseDocument<never, TID>> = Record<
     string,
-    IBaseDocument<never, TID>
+    BaseDocument<never, TID>
   >,
   TConstants extends IConstants = IConstants,
   TAppRouter extends AppRouter<TID> = AppRouter<TID>,

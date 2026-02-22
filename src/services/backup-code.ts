@@ -24,7 +24,7 @@ import {
 import { timingSafeEqual } from 'crypto';
 import { BackupCode } from '../backup-code';
 import { LocalhostConstants as AppConstants } from '../constants';
-import { IUserDocument } from '../documents';
+import { UserDocument } from '../documents';
 import { InvalidBackupCodeVersionError } from '../errors/invalid-backup-code-version';
 import { IApplication } from '../interfaces/application';
 import { BaseService } from './base';
@@ -160,18 +160,18 @@ export class BackupCodeService<
    * v1: Recover a user's private key using a backup code.
    */
   public async recoverKeyWithBackupCodeV1(
-    userDoc: IUserDocument<string, TID>,
+    userDoc: UserDocument<string, TID>,
     backupCode: string,
     newPassword?: SecureString,
     session?: ClientSession,
   ): Promise<{
-    userDoc: IUserDocument<string, TID>;
+    userDoc: UserDocument<string, TID>;
     user: BackendMember<TID>;
     codeCount: number;
   }> {
     const normalizedCode = BackupCode.normalizeCode(backupCode);
     return await this.withTransaction<{
-      userDoc: IUserDocument<string, TID>;
+      userDoc: UserDocument<string, TID>;
       user: BackendMember<TID>;
       codeCount: number;
     }>(
@@ -246,12 +246,12 @@ export class BackupCodeService<
    * Recover a user's private key using a backup code (version-dispatched).
    */
   public async recoverKeyWithBackupCode(
-    userDoc: IUserDocument<string, TID>,
+    userDoc: UserDocument<string, TID>,
     backupCode: string,
     newPassword?: SecureString,
     session?: ClientSession,
   ): Promise<{
-    userDoc: IUserDocument<string, TID>;
+    userDoc: UserDocument<string, TID>;
     user: BackendMember<TID>;
     codeCount: number;
   }> {
@@ -279,8 +279,8 @@ export class BackupCodeService<
     fetchBatch: (
       afterId?: string,
       limit?: number,
-    ) => Promise<IUserDocument<string, TID>[]>,
-    saveUser: (user: IUserDocument<string, TID>) => Promise<void>,
+    ) => Promise<UserDocument<string, TID>[]>,
+    saveUser: (user: UserDocument<string, TID>) => Promise<void>,
     oldSystem: BackendMember,
     newSystem: BackendMember,
     options?: { batchSize?: number; onProgress?: (count: number) => void },

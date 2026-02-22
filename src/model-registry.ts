@@ -16,7 +16,7 @@ import { PlatformID } from '@digitaldefiance/node-ecies-lib';
 /**
  * Model registration information.
  * @template T - Document Data type
- * @template U - Document type extending IBaseDocument
+ * @template U - Document type extending BaseDocument
  */
 export type ModelRegistration<
   TID extends PlatformID,
@@ -57,7 +57,7 @@ class ModelRegistry<TID extends PlatformID> {
   /**
    * Registers a model with the registry.
    * @template T - Document ID type
-   * @template U - Document type extending IBaseDocument
+   * @template U - Document type extending BaseDocument
    * @param {ModelRegistration<T, U>} registration - Model registration information
    */
   public register<T, U extends BaseDocument<T, TID>>(
@@ -72,7 +72,7 @@ class ModelRegistry<TID extends PlatformID> {
   /**
    * Retrieves a model registration by name.
    * @template T - Document ID type
-   * @template U - Document type extending IBaseDocument
+   * @template U - Document type extending BaseDocument
    * @param {string} modelName - Name of the model
    * @returns {ModelRegistration<T, U>} Model registration
    * @throws {InvalidModelError} If model is not registered

@@ -13,7 +13,7 @@ import {
 } from '@digitaldefiance/suite-core-lib';
 import { ServiceKeys } from '../container';
 import { UserController } from '../controllers/user';
-import { IBaseDocument } from '../documents';
+import { BaseDocument } from '../documents';
 import { Environment } from '../environment';
 import { IConstants } from '../interfaces';
 import { IMongoApplication } from '../interfaces/mongo-application';
@@ -55,7 +55,7 @@ export class ApiRouter<
     TAccountStatus
   >,
   TTokenRole extends ITokenRole<TID, TDate> = ITokenRole<TID, TDate>,
-  TBaseDocument extends IBaseDocument<any, TID> = IBaseDocument<any, TID>,
+  TBaseDocument extends BaseDocument<any, TID> = BaseDocument<any, TID>,
   TTokenUser extends ITokenUser = ITokenUser,
   TConstants extends IConstants = IConstants,
   TEnvironment extends Environment<TID> = Environment<TID>,

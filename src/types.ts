@@ -9,7 +9,7 @@ import { Member, PlatformID } from '@digitaldefiance/node-ecies-lib';
 import { IRequestUserDTO } from '@digitaldefiance/suite-core-lib';
 import { NextFunction, RequestHandler, Response } from 'express';
 import { ValidationChain } from 'express-validator';
-import { IBaseDocument } from './documents';
+import { BaseDocument } from './documents';
 import {
   IApiErrorResponse,
   IApiExpressValidationErrorResponse,
@@ -73,14 +73,14 @@ declare global {
  */
 type ModelDocMap<
   TID extends PlatformID,
-  TModelDocs extends Record<string, IBaseDocument<any, TID>>,
+  TModelDocs extends Record<string, BaseDocument<any, TID>>,
 > = {
   [K in keyof TModelDocs]: TModelDocs[K];
 };
 
 export type SchemaMap<
   TID extends PlatformID,
-  TModelDocs extends Record<string, IBaseDocument<any, TID>>,
+  TModelDocs extends Record<string, BaseDocument<any, TID>>,
 > = {
   /**
    * For each model name, contains the corresponding schema and model

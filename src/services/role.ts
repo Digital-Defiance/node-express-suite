@@ -19,7 +19,7 @@ import {
   LastAdminError,
   Role,
 } from '@digitaldefiance/suite-core-lib';
-import { IUserDocument } from '../documents';
+import { UserDocument } from '../documents';
 import { RoleDocument } from '../documents/role';
 import { UserRoleDocument } from '../documents/user-role';
 import { BaseModelName } from '../enumerations/base-model-name';
@@ -349,7 +349,7 @@ export class RoleService<
   }
 
   public async isUserAdmin(
-    userDoc: IUserDocument<string, TID>,
+    userDoc: UserDocument<string, TID>,
     session?: ClientSession,
     providedRoles?: Array<RoleDocument<TID>>,
   ): Promise<boolean> {
@@ -362,7 +362,7 @@ export class RoleService<
   }
 
   public async isUserMember(
-    userDoc: IUserDocument<string, TID>,
+    userDoc: UserDocument<string, TID>,
     session?: ClientSession,
     providedRoles?: Array<RoleDocument<TID>>,
   ): Promise<boolean> {
@@ -375,7 +375,7 @@ export class RoleService<
   }
 
   public async isUserChild(
-    userDoc: IUserDocument<string, TID>,
+    userDoc: UserDocument<string, TID>,
     session?: ClientSession,
     providedRoles?: Array<RoleDocument<TID>>,
   ): Promise<boolean> {
@@ -388,7 +388,7 @@ export class RoleService<
   }
 
   public async isSystemUser(
-    userDoc: IUserDocument<string, TID>,
+    userDoc: UserDocument<string, TID>,
     session?: ClientSession,
     providedRoles?: Array<RoleDocument<TID>>,
   ): Promise<boolean> {
@@ -398,7 +398,7 @@ export class RoleService<
   }
 
   public async getMemberType(
-    userDoc: IUserDocument<string, TID>,
+    userDoc: UserDocument<string, TID>,
     session?: ClientSession,
     providedRoles?: Array<RoleDocument<TID>>,
   ): Promise<MemberType> {

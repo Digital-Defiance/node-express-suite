@@ -9,7 +9,7 @@
 import mongoose from '@digitaldefiance/mongoose-types';
 import type { Model } from '@digitaldefiance/mongoose-types';
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
-import type { IBaseDocument } from '../documents';
+import type { BaseDocument } from '../documents';
 import type { IApplication } from './application';
 
 /**
@@ -31,9 +31,9 @@ export interface IMongoApplication<
 
   /**
    * Gets a Mongoose model by name.
-   * @template U Document type extending IBaseDocument
+   * @template U Document type extending BaseDocument
    * @param modelName Name of the model to retrieve
    * @returns Mongoose model instance
    */
-  getModel<U extends IBaseDocument<any, TID>>(modelName: string): Model<U>;
+  getModel<U extends BaseDocument<any, TID>>(modelName: string): Model<U>;
 }

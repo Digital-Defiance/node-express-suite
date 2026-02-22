@@ -12,7 +12,7 @@ import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
  * User document interface for MongoDB user collection.
  * @template TLanguage - String type for site language (defaults to string)
  * @template TID - Platform ID type (defaults to Buffer)
- * @typedef {BaseDocument<IUserBase<TID, Date, S, AccountStatus>, TID>} IUserDocument
+ * @typedef {BaseDocument<IUserBase<TID, Date, S, AccountStatus>, TID>} UserDocument
  */
 export type UserDocument<
   TLanguage extends string = string,

@@ -10,11 +10,7 @@ import { UserDocument } from '../documents/user';
 import { UserRoleDocument } from '../documents/user-role';
 
 // Re-export essential document types
-export type {
-  RoleDocument as IRoleDocument,
-  UserDocument as IUserDocument,
-  UserRoleDocument as IUserRoleDocument,
-};
+export type { RoleDocument, UserDocument, UserRoleDocument };
 
 /**
  * Result of server initialization for testing.

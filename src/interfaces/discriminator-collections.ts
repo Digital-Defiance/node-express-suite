@@ -10,7 +10,7 @@ import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 
 /**
  * Collections of discriminator models.
- * @template T - Document type extending IBaseDocument
+ * @template T - Document type extending BaseDocument
  */
 export interface IDiscriminatorCollections<
   TID extends PlatformID,

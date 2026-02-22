@@ -12,7 +12,7 @@ import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 /**
  * Interface for each schema in the schema map.
  * Combines Mongoose schema, model, and collection metadata with optional discriminators.
- * @template T - Document type extending IBaseDocument
+ * @template T - Document type extending BaseDocument
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface ISchema<

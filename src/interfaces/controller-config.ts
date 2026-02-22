@@ -9,7 +9,7 @@ import {
   ITokenUser,
   IUserBase,
 } from '@digitaldefiance/suite-core-lib';
-import { IBaseDocument } from '../documents';
+import { BaseDocument } from '../documents';
 import { Environment } from '../environment';
 import { IApplication } from './application';
 import { IConstants } from './constants';
@@ -36,7 +36,7 @@ export interface IControllerConfig<
   userType: IUserBase<TID, TDate, TLanguage, TAccountStatus>;
   tokenRoleType: ITokenRole<TID, TDate>;
   tokenUserType: ITokenUser;
-  baseDocumentType: IBaseDocument<any, TID>;
+  baseDocumentType: BaseDocument<any, TID>;
   environmentType: Environment<TID>;
   constantsType: IConstants;
   applicationType: IApplication<TID>;

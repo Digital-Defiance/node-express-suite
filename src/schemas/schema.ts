@@ -6,11 +6,11 @@
 
 import { Connection, Schema } from '@digitaldefiance/mongoose-types';
 import {
-  IEmailTokenDocument,
-  IMnemonicDocument,
-  IRoleDocument,
-  IUserDocument,
-  IUserRoleDocument,
+  EmailTokenDocument,
+  MnemonicDocument,
+  RoleDocument,
+  UserDocument,
+  UserRoleDocument,
 } from '../documents';
 import { UsedDirectLoginTokenDocument } from '../documents/used-direct-login-token';
 import { BaseModelName } from '../enumerations';
@@ -39,12 +39,12 @@ import { PlatformID } from '@digitaldefiance/node-ecies-lib';
  * Maps model names to their document interfaces.
  */
 export interface BaseModelDocs {
-  EmailToken: IEmailTokenDocument;
-  Mnemonic: IMnemonicDocument;
-  Role: IRoleDocument;
+  EmailToken: EmailTokenDocument;
+  Mnemonic: MnemonicDocument;
+  Role: RoleDocument;
   UsedDirectLoginToken: UsedDirectLoginTokenDocument;
-  User: IUserDocument;
-  UserRole: IUserRoleDocument;
+  User: UserDocument;
+  UserRole: UserRoleDocument;
 }
 
 /**
@@ -54,12 +54,12 @@ export interface BaseModelDocs {
 export interface SchemaMapOptions {
   constants?: IConstants;
   schemas?: {
-    EmailToken?: Schema<IEmailTokenDocument>;
-    Mnemonic?: Schema<IMnemonicDocument>;
-    Role?: Schema<IRoleDocument>;
+    EmailToken?: Schema<EmailTokenDocument>;
+    Mnemonic?: Schema<MnemonicDocument>;
+    Role?: Schema<RoleDocument>;
     UsedDirectLoginToken?: Schema<UsedDirectLoginTokenDocument>;
-    User?: Schema<IUserDocument>;
-    UserRole?: Schema<IUserRoleDocument>;
+    User?: Schema<UserDocument>;
+    UserRole?: Schema<UserRoleDocument>;
   };
   modelNames?: {
     EmailToken?: string;

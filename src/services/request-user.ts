@@ -9,7 +9,7 @@ import {
   IRoleDTO,
   ITokenRole,
 } from '@digitaldefiance/suite-core-lib';
-import { IUserDocument } from '../documents';
+import { UserDocument } from '../documents';
 import { IRequestUserBackendObject } from '../interfaces/backend-objects/request-user';
 import { RoleService } from './role';
 import {
@@ -46,10 +46,10 @@ export class RequestUserService<
     TRequestUserDTO extends IRequestUserDTO,
   >(
     userDoc:
-      | IUserDocument<TLanguage, TID>
+      | UserDocument<TLanguage, TID>
       | (Pick<
-          IUserDocument<TLanguage, TID>,
-          keyof IUserDocument<TLanguage, TID>
+          UserDocument<TLanguage, TID>,
+          keyof UserDocument<TLanguage, TID>
         > & {
           _id: PlatformID;
         }),

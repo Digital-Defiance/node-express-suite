@@ -34,7 +34,7 @@ import { z } from 'zod';
 import { BackupCode } from '../backup-code';
 import { DecoratorBaseController } from '../decorators/base-controller';
 import { Controller, Get, Post } from '../decorators/controller';
-import { IBaseDocument } from '../documents';
+import { BaseDocument } from '../documents';
 import { UserDocument } from '../documents/user';
 import { BaseModelName } from '../enumerations/base-model-name';
 import { Environment } from '../environment';
@@ -122,7 +122,7 @@ export class UserController<
     TAccountStatus,
     Environment<TID>,
     IConstants,
-    IBaseDocument<UserDocument, TID>,
+    BaseDocument<UserDocument, TID>,
     TUser,
     TTokenRole,
     TApplication
@@ -1561,7 +1561,7 @@ export class UserController<
           };
         }
 
-        // Mongoose document type doesn't exactly match IUserDocument generic signature
+        // Mongoose document type doesn't exactly match UserDocument generic signature
         // but the document has all required properties
         await this.userService.createAndSendEmailToken(
           user as unknown as UserDocument<TLanguage, TID>,
