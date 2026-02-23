@@ -9,6 +9,7 @@ import {
   Constants,
   getSuiteCoreI18nEngine,
   getSuiteCoreTranslation,
+  IFailableResult,
   SuiteCoreStringKey,
   TranslatableSuiteError,
 } from '@digitaldefiance/suite-core-lib';
@@ -18,7 +19,6 @@ import { Environment } from '../environment';
 import { IApplication } from '../interfaces/application';
 import { IConstants } from '../interfaces/constants';
 import { IDocumentStore } from '../interfaces/mongoose-document-store';
-import { IFailableResult } from '../interfaces/failable-result';
 import { ISchema } from '../interfaces/schema';
 import { ModelRegistry } from '../model-registry';
 import { SchemaMap } from '../types';

@@ -9,19 +9,19 @@ import { Model } from '@digitaldefiance/mongoose-types';
 import mongoose from '@digitaldefiance/mongoose-types';
 import {
   Constants,
+  IFailableResult,
   SuiteCoreStringKey,
   TranslatableSuiteError,
 } from '@digitaldefiance/suite-core-lib';
 import { MongoMemoryReplSet } from 'mongodb-memory-server';
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
-import type { IDatabase } from '../interfaces/storage';
+import type { IDatabase } from '@digitaldefiance/suite-core-lib';
 import type { IAuthenticationProvider } from '../interfaces/authentication-provider';
 import type { IApplication } from '../interfaces/application';
 import type { BaseDocument } from '../documents/base';
 import type { IDocumentStore } from '../interfaces/mongoose-document-store';
 import type { IConstants } from '../interfaces/constants';
 import type { IMongoApplication } from '../interfaces/mongo-application';
-import type { IFailableResult } from '../interfaces/failable-result';
 import type { SchemaMap } from '../types';
 import type { IDatabasePlugin } from './database-plugin';
 import { MongooseDocumentStore } from '../services/mongoose-document-store';

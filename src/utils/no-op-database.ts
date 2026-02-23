@@ -1,4 +1,4 @@
-import type { IDatabase } from '../interfaces/storage';
+import type { IDatabase } from '@digitaldefiance/suite-core-lib';
 
 /**
  * Creates a no-op IDatabase instance.

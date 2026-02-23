@@ -7,7 +7,7 @@
  */
 
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
-import type { IDatabase } from '../interfaces/storage';
+import type { IDatabase } from '@digitaldefiance/suite-core-lib';
 import type { IAuthenticationProvider } from '../interfaces/authentication-provider';
 import type { IApplicationPlugin } from './plugin-interface';
 

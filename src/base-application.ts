@@ -11,7 +11,7 @@ import type {
   ICollection,
   IDatabase,
   IDatabaseLifecycleHooks,
-} from './interfaces/storage';
+} from '@digitaldefiance/suite-core-lib';
 import {
   Constants,
   getSuiteCoreI18nEngine,

@@ -35,7 +35,7 @@ import { debugLog, handleError, sendApiMessageResponse } from './utils';
 import { GreenlockManager } from './greenlock-manager';
 import { IDatabasePlugin } from './plugins/database-plugin';
 import { MongoDatabasePlugin } from './plugins/mongo-database-plugin';
-import type { IDatabase } from './interfaces/storage';
+import type { IDatabase } from '@digitaldefiance/suite-core-lib';
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 import { createNoOpDatabase } from './utils/no-op-database';
 import type { BaseDocument } from './documents';

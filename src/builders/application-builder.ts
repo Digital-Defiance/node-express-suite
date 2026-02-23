@@ -6,6 +6,7 @@
 
 import mongoose from '@digitaldefiance/mongoose-types';
 import {
+  IFailableResult,
   SuiteCoreStringKey,
   TranslatableSuiteError,
 } from '@digitaldefiance/suite-core-lib';
@@ -13,12 +14,7 @@ import { HelmetOptions } from 'helmet';
 import { Application } from '../application';
 import { BaseDocument } from '../documents';
 import { Environment } from '../environment';
-import {
-  IApplication,
-  ICSPConfig,
-  IFailableResult,
-  IServerInitResult,
-} from '../interfaces';
+import { IApplication, ICSPConfig, IServerInitResult } from '../interfaces';
 import { IConstants } from '../interfaces/constants';
 import { IFlexibleCSP } from '../interfaces/flexible-csp';
 import { IMongoApplication } from '../interfaces/mongo-application';

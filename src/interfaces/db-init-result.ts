@@ -4,7 +4,7 @@
  * @module interfaces/db-init-result
  */
 
-import { IFailableResult } from './failable-result';
+import { IFailableResult } from '@digitaldefiance/suite-core-lib';
 
 /**
  * Result of database initialization operation.

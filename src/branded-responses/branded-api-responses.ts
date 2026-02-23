@@ -1,5 +1,8 @@
 import { createBrandedInterface } from '@digitaldefiance/branded-interface';
-import type { IApiMessageResponse } from '@digitaldefiance/suite-core-lib';
+import type {
+  IApiMessageResponse,
+  IFailableResult,
+} from '@digitaldefiance/suite-core-lib';
 import type {
   IApiErrorResponse,
   IApiTokenResponse,
@@ -15,7 +18,6 @@ import type {
   IApiMongoValidationErrorResponse,
   IStatusCodeResponse,
 } from '../interfaces';
-import type { IFailableResult } from '../interfaces/failable-result';
 import {
   isNonEmptyString,
   isNonEmptyArray,

@@ -31,7 +31,7 @@ import type {
   ValidationFieldError,
   WriteConcern,
   WriteOptions,
-} from '../interfaces/storage';
+} from '@digitaldefiance/suite-core-lib';
 import type { Connection, Model } from '@digitaldefiance/mongoose-types';
 import { Schema } from '@digitaldefiance/mongoose-types';
 import type { ClientSession } from 'mongodb';

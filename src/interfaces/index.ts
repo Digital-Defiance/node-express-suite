@@ -1,6 +1,5 @@
 export * from './mongoose-document-store';
 export * from './document-store';
-export * from './storage';
 
 export * from './api-error-response';
 export * from './api-express-validation-error-response';
@@ -23,7 +22,6 @@ export * from './discriminator-collections';
 export * from './email-service';
 export * from './environment';
 export * from './environment-mongo';
-export * from './failable-result';
 export * from './fec-consts';
 export * from './flexible-csp';
 export * from './handleable-error-options';

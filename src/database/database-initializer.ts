@@ -5,7 +5,7 @@
  */
 
 import { IApplication } from '../interfaces/application';
-import { IFailableResult } from '../interfaces/failable-result';
+import { IFailableResult } from '@digitaldefiance/suite-core-lib';
 
 export interface IDatabaseInitializer<T = unknown> {
   initialize(app: IApplication): Promise<IFailableResult<T>>;

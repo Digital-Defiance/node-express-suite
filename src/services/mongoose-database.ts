@@ -12,7 +12,7 @@ import type {
   IClientSession,
   ICollection,
   IDatabase,
-} from '../interfaces/storage';
+} from '@digitaldefiance/suite-core-lib';
 import mongoose from '@digitaldefiance/mongoose-types';
 import type { Connection } from '@digitaldefiance/mongoose-types';
 import { MongooseCollection } from './mongoose-collection';

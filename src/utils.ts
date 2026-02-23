@@ -5,7 +5,10 @@
  */
 
 import { I18nEngine } from '@digitaldefiance/i18n-lib';
-import type { IClientSession, IDatabase } from './interfaces/storage';
+import type {
+  IClientSession,
+  IDatabase,
+} from '@digitaldefiance/suite-core-lib';
 import {
   ClientSession,
   Connection,

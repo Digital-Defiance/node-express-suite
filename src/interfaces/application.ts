@@ -9,7 +9,7 @@ import { ServiceContainer } from '../container';
 import { Environment } from '../environment';
 import { IAuthenticationProvider } from './authentication-provider';
 import { IConstants } from './constants';
-import type { IDatabase } from './storage/database';
+import type { IDatabase } from '@digitaldefiance/suite-core-lib';
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 
 /**

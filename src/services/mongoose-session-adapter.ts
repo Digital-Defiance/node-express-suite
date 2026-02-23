@@ -5,7 +5,7 @@
  * @module services/mongoose-session-adapter
  */
 
-import type { IClientSession } from '../interfaces/storage';
+import type { IClientSession } from '@digitaldefiance/suite-core-lib';
 import type { ClientSession } from 'mongodb';
 
 /**
