@@ -1,6 +1,6 @@
 {
   "name": "@digitaldefiance/node-express-suite",
-  "version": "4.2.0",
+  "version": "4.2.1",
   "homepage": "https://github.com/Digital-Defiance/node-express-suite",
   "repository": {
     "type": "git",
@@ -44,7 +44,7 @@
     "@digitaldefiance/mongoose-types": "8.20.9",
     "@digitaldefiance/node-ecies-lib": "4.19.6",
     "@digitaldefiance/reed-solomon-erasure.wasm": "^1.0.2",
-    "@digitaldefiance/suite-core-lib": "3.13.5",
+    "@digitaldefiance/suite-core-lib": "3.13.7",
     "@noble/curves": "^1.9.0",
     "@noble/hashes": "^1.8.0",
     "argon2": "^0.40.1",

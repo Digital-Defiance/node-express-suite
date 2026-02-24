@@ -744,7 +744,9 @@ export class UserController<
     return {
       statusCode: 200,
       response: {
-        message: 'Backup codes retrieved',
+        message: getSuiteCoreTranslation(
+          SuiteCoreStringKey.BackupCodes_RetrievedSuccess,
+        ),
         codeCount: user?.backupCodes?.length || 0,
       } as IApiCodeCountResponse,
     };
@@ -1608,7 +1610,9 @@ export class UserController<
         return {
           statusCode: 200,
           response: {
-            message: 'Token is valid',
+            message: getSuiteCoreTranslation(
+              SuiteCoreStringKey.Validation_TokenValid,
+            ),
           },
         };
       },
