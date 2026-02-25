@@ -214,9 +214,7 @@ export class Environment<
         ? new Date(envObj['ADMIN_CREATED_AT'])
         : new Date(),
       adminId: envObj['ADMIN_ID']
-        ? (constants.idProvider.fromBytes(
-            constants.idProvider.deserialize(envObj['ADMIN_ID']),
-          ) as TID)
+        ? (constants.idProvider.parseSafe(envObj['ADMIN_ID']) as TID)
         : (constants.idProvider.fromBytes(
             constants.idProvider.generate(),
           ) as TID),
@@ -241,9 +239,7 @@ export class Environment<
         ? new Date(envObj['MEMBER_CREATED_AT'])
         : new Date(),
       memberId: envObj['MEMBER_ID']
-        ? (constants.idProvider.fromBytes(
-            constants.idProvider.deserialize(envObj['MEMBER_ID']),
-          ) as TID)
+        ? (constants.idProvider.parseSafe(envObj['MEMBER_ID']) as TID)
         : (constants.idProvider.fromBytes(
             constants.idProvider.generate(),
           ) as TID),
@@ -268,9 +264,7 @@ export class Environment<
         ? new Date(envObj['SYSTEM_CREATED_AT'])
         : new Date(),
       systemId: envObj['SYSTEM_ID']
-        ? (constants.idProvider.fromBytes(
-            constants.idProvider.deserialize(envObj['SYSTEM_ID']),
-          ) as TID)
+        ? (constants.idProvider.parseSafe(envObj['SYSTEM_ID']) as TID)
         : (constants.idProvider.fromBytes(
             constants.idProvider.generate(),
           ) as TID),

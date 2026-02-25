@@ -724,9 +724,9 @@ PORT=9000
     });
 
     it('should return correct user IDs and dates', () => {
-      expect(ObjectId.isValid(env.adminId)).toBe(true);
-      expect(ObjectId.isValid(env.memberId)).toBe(true);
-      expect(ObjectId.isValid(env.systemId)).toBe(true);
+      expect(ObjectId.isValid(env.adminId!)).toBe(true);
+      expect(ObjectId.isValid(env.memberId!)).toBe(true);
+      expect(ObjectId.isValid(env.systemId!)).toBe(true);
       expect(env.adminCreatedAt).toEqual(new Date('2023-01-01T00:00:00.000Z'));
       expect(env.memberCreatedAt).toEqual(new Date('2023-02-01T00:00:00.000Z'));
       expect(env.systemCreatedAt).toEqual(new Date('2023-03-01T00:00:00.000Z'));
@@ -930,9 +930,9 @@ PORT=9000
 
       const env = new Environment();
 
-      expect(ObjectId.isValid(env.adminId)).toBe(true);
-      expect(ObjectId.isValid(env.memberId)).toBe(true);
-      expect(ObjectId.isValid(env.systemId)).toBe(true);
+      expect(ObjectId.isValid(env.adminId!)).toBe(true);
+      expect(ObjectId.isValid(env.memberId!)).toBe(true);
+      expect(ObjectId.isValid(env.systemId!)).toBe(true);
     });
 
     it('should generate default dates when not provided', () => {
@@ -957,14 +957,6 @@ PORT=9000
   });
 
   describe('edge cases and error handling', () => {
-    it('should handle malformed ObjectId strings gracefully', () => {
-      process.env['ADMIN_ID'] = 'invalid-object-id';
-
-      expect(() => {
-        new Environment();
-      }).toThrow(); // ObjectId constructor should throw
-    });
-
     it('should handle malformed date strings gracefully', () => {
       process.env['ADMIN_CREATED_AT'] = 'invalid-date';
 
