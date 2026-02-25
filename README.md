@@ -2400,6 +2400,231 @@ The following v1.x patterns still work in v2.0:
 
 ## ChangeLog
 
+### Version 4.19.11
+
+Version sync — bumped major/minor without substantive changes to match rest of suite.
+
+### Version 4.2.3
+
+- Use `idProvider.parseSafe()` instead of `fromBytes(deserialize(...))` in Environment for cleaner ID parsing
+- Simplified environment tests accordingly
+
+### Version 4.2.2
+
+- Added comprehensive Greenlock staging boolean tests and property-based tests for Let's Encrypt configuration preservation
+
+### Version 4.2.1
+
+- Translated hardcoded English strings in UserController (`'Backup codes retrieved'`, `'Token is valid'`) to use `SuiteCoreStringKey` i18n keys
+
+### Version 4.2.0
+
+**Storage Interfaces Moved to suite-core-lib**
+
+- Moved `IDatabase`, `ICollection`, `IClientSession`, `IDatabaseLifecycleHooks`, and related storage interfaces from local `interfaces/storage/` to `@digitaldefiance/suite-core-lib`
+- Removed `IFailableResult` from local interfaces (now imported from suite-core-lib)
+- Removed local `document-types.ts`, `document-types.branded.spec.ts`, and `type-identity.property.spec.ts` (moved upstream)
+- Updated all imports across the codebase to reference suite-core-lib
+
+### Version 4.1.3
+
+- Fixed environment variable parsing: `ADMIN_USER_ROLE_ID` and `SYSTEM_USER_ROLE_ID` were incorrectly reading from `ADMIN_ROLE_ID` and `SYSTEM_ROLE_ID` respectively
+- Fixed debug print for `SYSTEM_USER_ROLE_ID`
+
+### Version 4.1.2
+
+- Dependency updates (ecies-lib, node-ecies-lib)
+
+### Version 4.1.1
+
+- Dependency updates (ecies-lib, node-ecies-lib)
+
+### Version 4.1.0
+
+**Document Type Naming Cleanup**
+
+- Renamed document interfaces: `IUserDocument` → `UserDocument`, `IRoleDocument` → `RoleDocument`, `IUserRoleDocument` → `UserRoleDocument` (with re-exports for backward compatibility)
+- Updated `IServerInitResult` and all services/controllers to use new document type names
+- Cleaned up model, schema, and service files to use consistent naming
+
+### Version 4.0.1
+
+- Added `db` and `getModel<T>()` accessors to `Application` class, delegating to `MongoDatabasePlugin` when registered
+- Added comprehensive tests for the new database accessors
+
+### Version 4.0.0
+
+**Plugin-Based Database Architecture**
+
+- **BREAKING**: Extracted MongoDB/Mongoose logic from `Application` into `MongoDatabasePlugin`
+- **NEW**: `BaseApplication` — database-agnostic base class that delegates storage to `IDatabase`
+- **NEW**: `IDatabasePlugin` interface for pluggable database backends
+- **NEW**: `MongoDatabasePlugin` — Mongoose-specific plugin handling connection, models, schema maps, and dev database
+- **NEW**: `createNoOpDatabase()` utility for applications that don't need a database
+- Renamed `ApplicationBase` → `BaseApplication` (file: `application-base.ts` → `base-application.ts`)
+- Removed `MongoApplicationBase` (functionality absorbed by `MongoDatabasePlugin`)
+- Removed stale `.js`/`.js.map`/`.d.ts.map` artifacts from `interfaces/`
+- Updated `ApplicationBuilder` to register `MongoDatabasePlugin` automatically
+- Added plugin manager integration tests and property-based tests
+- Added stale-reference detection tests
+- Added no-op database tests
+
+### Version 3.18.3
+
+- Added integration tests: constants propagation, direct-login E2E, direct-login HTTP
+
+### Version 3.18.2
+
+- Auto-wire `MongoAuthenticationProvider` during `MongoApplicationBase.start()` when no auth provider is set
+
+### Version 3.18.1
+
+- Dependency updates (branded-interface, ecies-lib, i18n-lib, node-ecies-lib, suite-core-lib)
+
+### Version 3.18.0
+
+**MongoApplicationBase Extraction**
+
+- **NEW**: `MongoApplicationBase` — extracted MongoDB/Mongoose-specific logic from `ApplicationBase` into a dedicated subclass
+- `ApplicationBase` is now database-agnostic, accepting an `IDatabase` instance
+- Added `DISABLE_MONGO` environment variable support for non-Mongo deployments
+- Updated all tests to work with the new class hierarchy
+
+### Version 3.17.0
+
+- Services (`BackupCodeService`, `JwtService`, `RoleService`) now accept `IApplication` instead of `IMongoApplication`, enabling use with non-Mongo backends
+
+### Version 3.16.0
+
+**Authentication Provider Abstraction**
+
+- **NEW**: `IAuthenticationProvider` interface — storage-agnostic authentication abstraction for user lookup, role fetching, and credential verification
+- **NEW**: `MongoAuthenticationProvider` — Mongoose-backed implementation
+- Refactored `authenticate-token` and `authenticate-crypto` middlewares to use `IAuthenticationProvider` instead of direct Mongoose calls
+- Added `authProvider` property to `IApplication`
+- Updated `BaseController` to pass auth provider to middlewares
+
+### Version 3.15.0
+
+**Database-Agnostic Service Layer**
+
+- **NEW**: `IMongoApplication` interface — separates Mongoose-specific capabilities (`db`, `getModel`) from the base `IApplication`
+- **NEW**: `MongoBaseService` — Mongoose-specific service base class
+- `BaseService.withTransaction()` now supports both Mongoose and `IDatabase.withTransaction()` paths, with fallback to no-transaction execution
+- Refactored `Environment` to separate Mongo config from base config
+- Updated all controllers and services to use appropriate application interface
+
+### Version 3.14.5
+
+- Added `branded-primitive` and `branded-interface` to `CollectionSchemaFieldType`
+- Added `ref` field to `FieldSchema` for branded type resolution
+- Added branded type tests for document-types
+
+### Version 3.14.4
+
+**Branded API Responses**
+
+- **NEW**: `branded-responses/` module with branded API response types using `@digitaldefiance/branded-interface`
+- Branded wrappers for all API response interfaces (`BrandedApiLoginResponse`, `BrandedApiTokenResponse`, etc.)
+- Response validators and serializers for runtime type checking
+- Extracted `ILetsEncryptConfig` into its own interface file
+- Added `@digitaldefiance/branded-interface` dependency
+- Comprehensive property-based tests for all branded responses
+
+### Version 3.14.3
+
+- Dependency updates and Greenlock test fixes
+
+### Version 3.14.2
+
+- `IConstants` now extends `II18nConstants` from `@digitaldefiance/i18n-lib` (provides index signature for i18n template resolution)
+- Dependency updates (ecies-lib, i18n-lib, node-ecies-lib, suite-core-lib)
+
+### Version 3.14.1
+
+- Added property-based tests for no-brightchain-imports and type-identity
+- Dependency updates
+
+### Version 3.13.1
+
+**Storage-Agnostic Interfaces**
+
+- **NEW**: `interfaces/storage/` module with database-agnostic abstractions:
+  - `IClientSession` — transaction support interface
+  - `ICollection<T>` — full CRUD, query, index, aggregation, and schema validation interface
+  - `IDatabase` — database lifecycle and collection access interface
+  - `IDatabaseLifecycleHooks` — hooks for dev store provisioning and initialization
+  - `DocumentTypes` — comprehensive type definitions for filters, queries, indexes, aggregation, etc.
+- Updated `IFailableResult` with additional utility types
+
+### Version 3.13.0
+
+**IDocumentStore & Application Refactor**
+
+- **NEW**: `IDocumentStore` interface — storage-agnostic interface for database operations (connect, disconnect, getModel, schemaMap)
+- **NEW**: `MongooseDocumentStore` — Mongoose implementation of `IDocumentStore`
+- **NEW**: `MongooseDatabase`, `MongooseCollection`, `MongooseSessionAdapter` — Mongoose adapters for the storage interfaces
+- **NEW**: `defaultMongoUriValidator` utility for MongoDB URI validation
+- Refactored `ApplicationBase` to use `IDocumentStore` instead of direct Mongoose calls
+- Simplified `Application` class by delegating database operations to the document store
+- Added comprehensive tests for Mongoose adapters, application lifecycle, and backward compatibility
+
+### Version 3.12.16
+
+- Dependency updates (ecies-lib, i18n-lib, suite-core-lib)
+
+### Version 3.12.15
+
+**Let's Encrypt / Automated TLS Support**
+
+- **NEW**: `GreenlockManager` — automated TLS certificate management via Let's Encrypt using `greenlock-express`
+- Added Let's Encrypt environment variables (`LETS_ENCRYPT_ENABLED`, `LETS_ENCRYPT_EMAIL`, `LETS_ENCRYPT_HOSTNAMES`, `LETS_ENCRYPT_STAGING`, `LETS_ENCRYPT_CONFIG_DIR`)
+- Application automatically obtains/renews certificates, serves HTTPS on port 443, and redirects HTTP from port 80
+- Mutual exclusivity with dev-certificate HTTPS mode
+- Comprehensive tests for Greenlock manager and Let's Encrypt configuration
+- Updated README with full Let's Encrypt documentation
+
+### Version 3.12.13
+
+**UPnP Support**
+
+- **NEW**: UPnP plugin (`src/plugins/upnp.ts`) for automatic port forwarding
+- **NEW**: `UPnPService` — NAT-PMP/UPnP port mapping service
+- **NEW**: `UPnPManager` — lifecycle management for UPnP mappings
+- **NEW**: `UPnPConfigService` — configuration and validation
+- **NEW**: UPnP network interfaces (`IUPnPService`, UPnP types)
+- Added UPnP architecture documentation, configuration guide, and manual testing guide
+- Comprehensive unit and property-based tests for all UPnP components
+
+### Version 3.12.12
+
+- Updated `@digitaldefiance/express-suite-test-utils` to v1.1.1
+
+### Version 3.12.11
+
+- Dependency updates: ecies-lib 4.17.10 → 4.18.0, i18n-lib 4.4.0 → 4.5.0, node-ecies-lib 4.17.10 → 4.18.0
+
+### Version 3.12.10
+
+- Dependency updates (ecies-lib, node-ecies-lib, suite-core-lib)
+
+### Version 3.12.5
+
+- Dependency updates: ecies-lib 4.17.2 → 4.17.4, i18n-lib 4.3.2 → 4.4.0, node-ecies-lib 4.17.2 → 4.17.5, reed-solomon-erasure.wasm ^1.0.1 → ^1.0.2
+
+### Version 3.12.2
+
+**OpenAPI Response Type Cleanup**
+
+- `OpenAPIResponseDef.schema` now accepts `string | Record<string, unknown>` (was `string` only), supporting inline schema objects
+- Removed duplicate `OpenAPIResponse` interface from builder (consolidated into `OpenAPIResponseDef`)
+- Renamed `OpenAPIResponse` in controller to `OpenAPIEndpointResponse` to avoid naming conflicts
+- Cleaned up re-exports in `openapi/index.ts`
+
+### Version 3.12.1
+
+- Dependency updates: ecies-lib 4.16.30 → 4.17.2, i18n-lib 4.3.0 → 4.3.2, node-ecies-lib 4.16.30 → 4.17.2, suite-core-lib 3.10.31 → 3.12.1
+
 ### Version 3.12.0
 
 **Comprehensive Decorator API for Express Controllers**
