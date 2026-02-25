@@ -44,7 +44,7 @@ function getAllScannableFiles(dir: string): string[] {
     if (entry.isDirectory()) {
       results.push(...getAllScannableFiles(fullPath));
     } else if (entry.isFile()) {
-      if (entry.name === THIS_FILE) continue;
+      if (entry.name === THIS_FILE || entry.name === 'README.md') continue;
       const ext = path.extname(entry.name);
       if (SCANNABLE_EXTENSIONS.has(ext)) {
         results.push(fullPath);
