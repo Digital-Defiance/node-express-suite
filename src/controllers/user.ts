@@ -1476,6 +1476,11 @@ export class UserController<
 
         let mnemonic: SecureString | undefined;
         if (recoverMnemonic) {
+          if (!updatedUserDoc) {
+            throw new Error(
+              'User document not found after backup code recovery',
+            );
+          }
           mnemonic = await this.userService.recoverMnemonic(
             user,
             updatedUserDoc.mnemonicRecovery,
@@ -1488,6 +1493,9 @@ export class UserController<
           LanguageCodes.EN_US,
         );
 
+        if (!updatedUserDoc) {
+          throw new Error('User document not found after backup code recovery');
+        }
         this.userService.updateLastLogin(updatedUserDoc._id).catch(() => {});
 
         return {

@@ -8,6 +8,7 @@ export * from './api-mongo-validation-error-response';
 export * from './api-responses';
 export * from './application';
 export * from './authentication-provider';
+export * from './backup-code-store';
 export * from './mongo-application';
 export * from './backend-objects';
 export * from './checksum-config';

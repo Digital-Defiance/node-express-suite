@@ -254,8 +254,8 @@ describe('BackupCode', () => {
 
     beforeEach(() => {
       mockSystemUser = {
-        decryptData: jest.fn().mockReturnValue(Buffer.from('unwrapped-data')),
-        encryptData: jest.fn().mockReturnValue(Buffer.from('wrapped-data')),
+        decryptData: jest.fn().mockResolvedValue(Buffer.from('unwrapped-data')),
+        encryptData: jest.fn().mockResolvedValue(Buffer.from('wrapped-data')),
       };
 
       mockApp = {
@@ -528,10 +528,10 @@ describe('BackupCode', () => {
     describe('rewrapAllUsersBackupCodes', () => {
       it('should process users in batches and rewrap codes', async () => {
         const oldSystem = {
-          decryptData: jest.fn().mockReturnValue(Buffer.from('decrypted')),
+          decryptData: jest.fn().mockResolvedValue(Buffer.from('decrypted')),
         };
         const newSystem = {
-          encryptData: jest.fn().mockReturnValue(Buffer.from('new-wrapped')),
+          encryptData: jest.fn().mockResolvedValue(Buffer.from('new-wrapped')),
         };
 
         const users = [
@@ -565,10 +565,10 @@ describe('BackupCode', () => {
 
       it('should call onProgress callback if provided', async () => {
         const oldSystem = {
-          decryptData: jest.fn().mockReturnValue(Buffer.from('data')),
+          decryptData: jest.fn().mockResolvedValue(Buffer.from('data')),
         };
         const newSystem = {
-          encryptData: jest.fn().mockReturnValue(Buffer.from('data')),
+          encryptData: jest.fn().mockResolvedValue(Buffer.from('data')),
         };
 
         const users = [

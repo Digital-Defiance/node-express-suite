@@ -188,9 +188,9 @@ export class BackupCode extends BackupCodeString {
         Buffer.from(backupUser.privateKey!.value),
         encryptionKey,
       );
-      const wrappedEncryptedPrivateKey = systemUser
-        .encryptData(sealed.encryptedData)
-        .toString('hex');
+      const wrappedEncryptedPrivateKey = (
+        await systemUser.encryptData(sealed.encryptedData)
+      ).toString('hex');
 
       return {
         version: BackupCode.BackupCodeVersion,

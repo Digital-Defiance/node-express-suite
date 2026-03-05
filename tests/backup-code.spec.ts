@@ -124,7 +124,7 @@ describe('BackupCode.encrypt', () => {
 
     const systemUser = {
       type: MemberType.System,
-      encryptData: (buf: Buffer) => buf,
+      encryptData: async (buf: Buffer) => buf,
     } as unknown as BackendMember;
 
     return { backupUser, systemUser };
@@ -136,7 +136,7 @@ describe('BackupCode.encrypt', () => {
     } as unknown as BackendMember;
     const systemUser = {
       type: MemberType.System,
-      encryptData: (b: Buffer) => b,
+      encryptData: async (b: Buffer) => b,
     } as unknown as BackendMember;
     const code = new BackupCode(BackupCode.generateBackupCode());
 
@@ -152,7 +152,7 @@ describe('BackupCode.encrypt', () => {
     } as unknown as BackendMember;
     const notSystem = {
       type: MemberType.User,
-      encryptData: (b: Buffer) => b,
+      encryptData: async (b: Buffer) => b,
     } as unknown as BackendMember;
 
     const code = new BackupCode(BackupCode.generateBackupCode());
@@ -219,7 +219,7 @@ describe('BackupCode.encryptBackupCodesV1', () => {
     } as unknown as BackendMember;
     const systemUser = {
       type: MemberType.System,
-      encryptData: (b: Buffer) => b,
+      encryptData: async (b: Buffer) => b,
     } as unknown as BackendMember;
 
     // Prepare 3 codes
@@ -271,7 +271,7 @@ describe('BackupCode.validateBackupCodeV1 and validateBackupCode', () => {
     } as unknown as BackendMember;
     const systemUser = {
       type: MemberType.System,
-      encryptData: (b: Buffer) => b,
+      encryptData: async (b: Buffer) => b,
     } as unknown as BackendMember;
 
     const codeObj = new BackupCode(BackupCode.generateBackupCode());
@@ -322,7 +322,7 @@ describe('BackupCode.detectBackupCodeVersion', () => {
     } as unknown as BackendMember;
     const systemUser = {
       type: MemberType.System,
-      encryptData: (b: Buffer) => b,
+      encryptData: async (b: Buffer) => b,
     } as unknown as BackendMember;
 
     const codeObj = new BackupCode(BackupCode.generateBackupCode());
