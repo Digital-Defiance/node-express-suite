@@ -128,12 +128,26 @@ export class Environment<
       jwtSecret: Environment.requireEnv<string>('JWT_SECRET', envObj),
       emailSender: envObj['EMAIL_SENDER'] ?? 'noreply@localhost',
       basePath: envObj['BASE_PATH'] ?? '/',
-      serverUrl:
-        envObj['NODE_ENV'] === 'production'
-          ? 'https://localhost'
-          : httpsDevCertRoot
-            ? `https://localhost:${httpsDevPort}`
-            : 'http://localhost:3000',
+      serverUrl: (() => {
+        // Priority 1: Explicit SERVER_URL override
+        if (envObj['SERVER_URL']) {
+          return envObj['SERVER_URL'];
+        }
+        // Priority 2: Build from API_PROTOCOL + PUBLIC_HOST + PORT
+        const protocol =
+          envObj['API_PROTOCOL'] ||
+          (envObj['NODE_ENV'] === 'production' || httpsDevCertRoot
+            ? 'https'
+            : 'http');
+        const publicHost = envObj['PUBLIC_HOST'] || 'localhost';
+        const port = envObj['PORT'] ? Number(envObj['PORT']) : 3000;
+        const portSuffix =
+          (protocol === 'http' && port === 80) ||
+          (protocol === 'https' && port === 443)
+            ? ''
+            : `:${port}`;
+        return `${protocol}://${publicHost}${portSuffix}`;
+      })(),
       // Avoid importing Application here to prevent circular deps
       // Compute dist dir from process.cwd() directly
       apiDistDir: Environment.requireEnv<string>('API_DIST_DIR', envObj),
