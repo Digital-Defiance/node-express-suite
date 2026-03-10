@@ -4,7 +4,11 @@
  * @module interfaces/environment
  */
 
-import { SecureBuffer, SecureString } from '@digitaldefiance/ecies-lib';
+import {
+  EmailString,
+  SecureBuffer,
+  SecureString,
+} from '@digitaldefiance/ecies-lib';
 import { BackupCode } from '../backup-code';
 import { IMongoEnvironment } from './environment-mongo';
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
@@ -91,6 +95,10 @@ export interface IEnvironment<TID extends PlatformID = Buffer> {
    */
   databaseUri?: string;
   /**
+   * The email address of the admin user
+   */
+  adminEmail: EmailString;
+  /**
    * Mnemonic for the admin user
    */
   adminMnemonic?: SecureString;
@@ -119,6 +127,10 @@ export interface IEnvironment<TID extends PlatformID = Buffer> {
    */
   adminBackupCodes?: BackupCode[];
   /**
+   * The email address of the member user
+   */
+  memberEmail: EmailString;
+  /**
    * Mnemonic for the member user
    */
   memberMnemonic?: SecureString;
@@ -146,6 +158,10 @@ export interface IEnvironment<TID extends PlatformID = Buffer> {
    * Backup codes for the member user
    */
   memberBackupCodes?: BackupCode[];
+  /**
+   * The email address of the system user
+   */
+  systemEmail: EmailString;
   /**
    * Mnemonic for the system user
    */

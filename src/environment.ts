@@ -4,7 +4,11 @@
  * @module environment
  */
 
-import { SecureBuffer, SecureString } from '@digitaldefiance/ecies-lib';
+import {
+  EmailString,
+  SecureBuffer,
+  SecureString,
+} from '@digitaldefiance/ecies-lib';
 import {
   getSuiteCoreTranslation,
   SuiteCoreStringKey,
@@ -118,6 +122,16 @@ export class Environment<
         ? envObj['DEV_DATABASE']
         : undefined;
     const isDevDatabase = devDatabase !== undefined && devDatabase !== '';
+    const getEmailDomain = () => {
+      const raw = envObj['EMAIL_DOMAIN'];
+      if (raw && raw.trim().length > 0) return raw.trim();
+      const sender = envObj['EMAIL_SENDER'];
+      const senderDomain = sender?.split('@')[1];
+      return senderDomain && senderDomain.trim().length > 0
+        ? senderDomain.trim()
+        : 'example.com';
+    };
+    const emailDomain = getEmailDomain();
 
     this._environment = {
       debug: debug,
@@ -127,15 +141,7 @@ export class Environment<
       port: envObj['PORT'] ? Number(envObj['PORT']) : 3000,
       jwtSecret: Environment.requireEnv<string>('JWT_SECRET', envObj),
       emailSender: envObj['EMAIL_SENDER'] ?? 'noreply@localhost',
-      emailDomain: (() => {
-        const raw = envObj['EMAIL_DOMAIN'];
-        if (raw && raw.trim().length > 0) return raw.trim();
-        const sender = envObj['EMAIL_SENDER'];
-        const senderDomain = sender?.split('@')[1];
-        return senderDomain && senderDomain.trim().length > 0
-          ? senderDomain.trim()
-          : 'example.com';
-      })(),
+      emailDomain: emailDomain,
       basePath: envObj['BASE_PATH'] ?? '/',
       serverUrl: (() => {
         // Priority 1: Explicit SERVER_URL override
@@ -232,6 +238,9 @@ export class Environment<
             ? 25
             : 100,
       },
+      adminEmail: new EmailString(
+        envObj['ADMIN_EMAIL'] ?? `admin@${emailDomain}`,
+      ),
       adminMnemonic: new SecureString(envObj['ADMIN_MNEMONIC'] ?? null),
       adminCreatedAt: envObj['ADMIN_CREATED_AT']
         ? new Date(envObj['ADMIN_CREATED_AT'])
@@ -257,6 +266,9 @@ export class Environment<
       adminBackupCodes: envObj['ADMIN_BACKUP_CODES']
         ? parseBackupCodes('admin', envObj)
         : undefined,
+      memberEmail: new EmailString(
+        envObj['MEMBER_EMAIL'] ?? `member@${emailDomain}`,
+      ),
       memberMnemonic: new SecureString(envObj['MEMBER_MNEMONIC'] ?? null),
       memberCreatedAt: envObj['MEMBER_CREATED_AT']
         ? new Date(envObj['MEMBER_CREATED_AT'])
@@ -282,6 +294,9 @@ export class Environment<
       memberBackupCodes: envObj['MEMBER_BACKUP_CODES']
         ? parseBackupCodes('member', envObj)
         : undefined,
+      systemEmail: new EmailString(
+        envObj['SYSTEM_EMAIL'] ?? `system@${emailDomain}`,
+      ),
       systemMnemonic: new SecureString(envObj['SYSTEM_MNEMONIC'] ?? null),
       systemCreatedAt: envObj['SYSTEM_CREATED_AT']
         ? new Date(envObj['SYSTEM_CREATED_AT'])
@@ -671,6 +686,13 @@ export class Environment<
   }
 
   /**
+   * The admin user's email address
+   */
+  public get adminEmail(): EmailString {
+    return this._environment.adminEmail;
+  }
+
+  /**
    * The admin user's mnemonic used to encrypt all files
    */
   public get adminMnemonic(): SecureString | undefined {
@@ -720,6 +742,13 @@ export class Environment<
   }
 
   /**
+   * The test member user's email address
+   */
+  public get memberEmail(): EmailString {
+    return this._environment.memberEmail;
+  }
+
+  /**
    * The test member user's mnemonic used to encrypt all files
    */
   public get memberMnemonic(): SecureString | undefined {
@@ -766,6 +795,13 @@ export class Environment<
    */
   public get memberBackupCodes(): BackupCode[] | undefined {
     return this._environment.memberBackupCodes;
+  }
+
+  /**
+   * The system user's email address
+   */
+  public get systemEmail(): EmailString {
+    return this._environment.systemEmail;
   }
 
   /**
@@ -914,6 +950,7 @@ LANGUAGE: ${this.adminLanguage}
 Admin User Data:
 -- ADMIN_ID: ${this.adminId?.toString()}
 -- ADMIN_CREATED_AT: ${this.adminCreatedAt?.toISOString()}
+-- ADMIN_EMAIL: ${this.adminEmail.email}
 -- ADMIN_MNEMONIC: ${this.adminMnemonic?.value}
 -- ADMIN_PASSWORD: ${this.adminPassword?.value}
 -- ADMIN_ROLE_ID: ${this.adminRoleId?.toString()}
@@ -924,6 +961,7 @@ Admin User Data:
 Member User Data:
 -- MEMBER_ID: ${this.memberId?.toString()}
 -- MEMBER_CREATED_AT: ${this.memberCreatedAt?.toISOString()}
+-- MEMBER_EMAIL: ${this.memberEmail.email}
 -- MEMBER_MNEMONIC: ${this.adminMnemonic?.value}
 -- MEMBER_PASSWORD: ${this.memberPassword?.value}
 -- MEMBER_ROLE_ID: ${this.memberRoleId?.toString()}
@@ -934,6 +972,7 @@ Member User Data:
 System User Data:
 -- SYSTEM_ID: ${this.systemId?.toString()}
 -- SYSTEM_CREATED_AT: ${this.systemCreatedAt?.toISOString()}
+-- SYSTEM_EMAIL: ${this.systemEmail.email}
 -- SYSTEM_MNEMONIC: ${this.systemMnemonic?.value}
 -- SYSTEM_PUBLIC_KEY: ${this.systemPublicKeyHex}
 -- SYSTEM_PASSWORD: ${this.systemPassword?.value}

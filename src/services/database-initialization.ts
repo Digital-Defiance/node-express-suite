@@ -43,7 +43,10 @@ import { UserDocument } from '../documents/user';
 import { UserRoleDocument } from '../documents/user-role';
 import { BaseModelName } from '../enumerations/base-model-name';
 import { Environment } from '../environment';
-import { IDBInitResult } from '../interfaces';
+import {
+  DatabaseInitailizationResultTransaction,
+  IDBInitResult,
+} from '../interfaces';
 import { IMongoApplication } from '../interfaces/mongo-application';
 import { IServerInitResult } from '../interfaces/server-init-result';
 import { ModelRegistry } from '../model-registry';
@@ -550,29 +553,9 @@ export abstract class DatabaseInitializationService {
         ? { timeoutMs: 15000, retryAttempts: 2 } // Reduced timeout and retries for tests
         : { timeoutMs: 120000 }; // Keep original production timeout
 
-      const result = await withTransaction<{
-        adminRole: RoleDocument<TID>;
-        memberRole: RoleDocument<TID>;
-        systemRole: RoleDocument<TID>;
-        systemDoc: UserDocument<string, TID>;
-        systemUserRoleDoc: UserRoleDocument<TID>;
-        systemPassword: string;
-        systemMnemonic: string;
-        systemBackupCodes: BackupCode[];
-        systemMember: BackendMember<TID>;
-        adminDoc: UserDocument<string, TID>;
-        adminUserRoleDoc: UserRoleDocument<TID>;
-        adminPassword: string;
-        adminMnemonic: string;
-        adminBackupCodes: BackupCode[];
-        adminMember: BackendMember<TID>;
-        memberDoc: UserDocument<string, TID>;
-        memberUserRoleDoc: UserRoleDocument<TID>;
-        memberPassword: string;
-        memberMnemonic: string;
-        memberBackupCodes: BackupCode[];
-        memberUser: BackendMember<TID>;
-      }>(
+      const result = await withTransaction<
+        DatabaseInitailizationResultTransaction<TID>
+      >(
         application.db.connection,
         application.environment.mongo.useTransactions,
         undefined,
@@ -677,7 +660,7 @@ export abstract class DatabaseInitializationService {
 
           const systemUser = DatabaseInitializationService.cacheOrNew<TID>(
             application.constants.SystemUser,
-            new EmailString(`system@${application.environment.emailDomain}`),
+            application.environment.systemEmail,
             options.systemMnemonic!,
             MemberType.System,
             eciesService,
@@ -789,7 +772,7 @@ export abstract class DatabaseInitializationService {
 
           const adminUser = DatabaseInitializationService.cacheOrNew<TID>(
             application.constants.AdministratorUser,
-            new EmailString(`admin@${application.environment.emailDomain}`),
+            application.environment.adminEmail,
             options.adminMnemonic,
             MemberType.User,
             eciesService,
@@ -895,7 +878,7 @@ export abstract class DatabaseInitializationService {
 
           const memberUser = DatabaseInitializationService.cacheOrNew<TID>(
             application.constants.MemberUser,
-            new EmailString(`member@${application.environment.emailDomain}`),
+            application.environment.memberEmail,
             options.memberMnemonic,
             MemberType.User,
             eciesService,
@@ -1104,16 +1087,19 @@ export abstract class DatabaseInitializationService {
   ): string {
     const idProvider = getEnhancedNodeIdProvider<TID>();
     return `ADMIN_ID="${idProvider.idToString(serverInitResult.adminUser._id as TID)}"
+ADMIN_EMAIL="${serverInitResult.adminEmail}"
 ADMIN_MNEMONIC="${serverInitResult.adminMnemonic}"
 ADMIN_ROLE_ID="${idProvider.idToString(serverInitResult.adminRole._id as TID)}"
 ADMIN_USER_ROLE_ID="${idProvider.idToString(serverInitResult.adminUserRole._id as TID)}"
 ADMIN_PASSWORD="${serverInitResult.adminPassword}"
 MEMBER_ID="${idProvider.idToString(serverInitResult.memberUser._id as TID)}"
+MEMBER_EMAIL="${serverInitResult.memberEmail}"
 MEMBER_MNEMONIC="${serverInitResult.memberMnemonic}"
 MEMBER_ROLE_ID="${idProvider.idToString(serverInitResult.memberRole._id as TID)}"
 MEMBER_USER_ROLE_ID="${idProvider.idToString(serverInitResult.memberUserRole._id as TID)}"
 MEMBER_PASSWORD="${serverInitResult.memberPassword}"
 SYSTEM_ID="${idProvider.idToString(serverInitResult.systemUser._id as TID)}"
+SYSTEM_EMAIL="${serverInitResult.systemEmail}"
 SYSTEM_MNEMONIC="${serverInitResult.systemMnemonic}"
 SYSTEM_PUBLIC_KEY="${serverInitResult.systemUser.publicKey}"
 SYSTEM_ROLE_ID="${idProvider.idToString(serverInitResult.systemRole._id as TID)}"
@@ -1462,6 +1448,7 @@ SYSTEM_PASSWORD="${serverInitResult.systemPassword}"
       result.adminUser._id as TID,
     );
     process.env['ADMIN_PUBLIC_KEY'] = result.adminUser.publicKey;
+    process.env['ADMIN_EMAIL'] = result.adminEmail;
     process.env['ADMIN_MNEMONIC'] = result.adminMnemonic;
     process.env['ADMIN_PASSWORD'] = result.adminPassword;
     process.env['ADMIN_ROLE_ID'] = idProvider.idToString(
@@ -1475,6 +1462,7 @@ SYSTEM_PASSWORD="${serverInitResult.systemPassword}"
       result.memberUser._id as TID,
     );
     process.env['MEMBER_PUBLIC_KEY'] = result.memberUser.publicKey;
+    process.env['MEMBER_EMAIL'] = result.memberEmail;
     process.env['MEMBER_MNEMONIC'] = result.memberMnemonic;
     process.env['MEMBER_PASSWORD'] = result.memberPassword;
     process.env['MEMBER_ROLE_ID'] = idProvider.idToString(
@@ -1488,6 +1476,7 @@ SYSTEM_PASSWORD="${serverInitResult.systemPassword}"
       result.systemUser._id as TID,
     );
     process.env['SYSTEM_PUBLIC_KEY'] = result.systemUser.publicKey;
+    process.env['SYSTEM_EMAIL'] = result.systemEmail;
     process.env['SYSTEM_MNEMONIC'] = result.systemMnemonic;
     process.env['SYSTEM_PASSWORD'] = result.systemPassword;
     process.env['SYSTEM_ROLE_ID'] = idProvider.idToString(
@@ -1525,6 +1514,7 @@ SYSTEM_PASSWORD="${serverInitResult.systemPassword}"
     // Define the credentials to update
     const credentials = {
       ADMIN_ID: idProvider.idToString(result.adminUser._id as TID),
+      ADMIN_EMAIL: result.adminEmail,
       ADMIN_MNEMONIC: result.adminMnemonic,
       ADMIN_ROLE_ID: idProvider.idToString(result.adminRole._id as TID),
       ADMIN_USER_ROLE_ID: idProvider.idToString(
@@ -1532,6 +1522,7 @@ SYSTEM_PASSWORD="${serverInitResult.systemPassword}"
       ),
       ADMIN_PASSWORD: result.adminPassword,
       MEMBER_ID: idProvider.idToString(result.memberUser._id as TID),
+      MEMBER_EMAIL: result.memberEmail,
       MEMBER_MNEMONIC: result.memberMnemonic,
       MEMBER_ROLE_ID: idProvider.idToString(result.memberRole._id as TID),
       MEMBER_USER_ROLE_ID: idProvider.idToString(
@@ -1539,6 +1530,7 @@ SYSTEM_PASSWORD="${serverInitResult.systemPassword}"
       ),
       MEMBER_PASSWORD: result.memberPassword,
       SYSTEM_ID: idProvider.idToString(result.systemUser._id as TID),
+      SYSTEM_EMAIL: result.systemEmail,
       SYSTEM_MNEMONIC: result.systemMnemonic,
       SYSTEM_PUBLIC_KEY: result.systemUser.publicKey,
       SYSTEM_ROLE_ID: idProvider.idToString(result.systemRole._id as TID),
