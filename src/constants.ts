@@ -58,8 +58,6 @@ export const FEC: IFECConsts = {
 export const ECIES = Object.freeze(ECIESDefaults);
 
 export const createExpressConstants = (
-  siteDomain: string,
-  siteHostname: string,
   overrides?: Partial<IConstants>,
 ): IConstants => {
   return Object.freeze({
@@ -70,14 +68,11 @@ export const createExpressConstants = (
     ECIES: ECIES,
     ECIES_VERSION_SIZE: 1,
     ECIES_CIPHER_SUITE_SIZE: 1,
-    ...createConstants(siteDomain, siteHostname, overrides),
+    ...createConstants(overrides),
   } as IConstants);
 };
 
-export const LocalhostConstants: IConstants = createExpressConstants(
-  'localhost',
-  'localhost',
-);
+export const LocalhostConstants: IConstants = createExpressConstants();
 
 if (
   CHECKSUM.SHA3_BUFFER_LENGTH !== CHECKSUM.SHA3_DEFAULT_HASH_BITS / 8 ||

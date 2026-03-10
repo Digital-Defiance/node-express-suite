@@ -677,7 +677,7 @@ export abstract class DatabaseInitializationService {
 
           const systemUser = DatabaseInitializationService.cacheOrNew<TID>(
             application.constants.SystemUser,
-            new EmailString(application.constants.SystemEmail),
+            new EmailString(`system@${application.environment.emailDomain}`),
             options.systemMnemonic!,
             MemberType.System,
             eciesService,
@@ -789,7 +789,7 @@ export abstract class DatabaseInitializationService {
 
           const adminUser = DatabaseInitializationService.cacheOrNew<TID>(
             application.constants.AdministratorUser,
-            new EmailString(application.constants.AdministratorEmail),
+            new EmailString(`admin@${application.environment.emailDomain}`),
             options.adminMnemonic,
             MemberType.User,
             eciesService,
@@ -895,7 +895,7 @@ export abstract class DatabaseInitializationService {
 
           const memberUser = DatabaseInitializationService.cacheOrNew<TID>(
             application.constants.MemberUser,
-            new EmailString(application.constants.MemberEmail),
+            new EmailString(`member@${application.environment.emailDomain}`),
             options.memberMnemonic,
             MemberType.User,
             eciesService,

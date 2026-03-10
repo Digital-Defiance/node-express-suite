@@ -54,6 +54,11 @@ export interface IEnvironment<TID extends PlatformID = Buffer> {
    */
   emailSender: string;
   /**
+   * Email domain for generated addresses (dev seeding, etc.).
+   * Resolved from EMAIL_DOMAIN, then the domain portion of emailSender.
+   */
+  emailDomain: string;
+  /**
    * API distribution directory
    */
   apiDistDir: string;

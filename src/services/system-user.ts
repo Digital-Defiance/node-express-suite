@@ -55,7 +55,7 @@ export class SystemUserService {
         eciesService,
         MemberType.System,
         constants.SystemUser,
-        new EmailString(constants.SystemEmail),
+        new EmailString(`system@${environment.emailDomain}`),
         keyPair.publicKey,
         new SecureBuffer(keyPair.privateKey),
         wallet,

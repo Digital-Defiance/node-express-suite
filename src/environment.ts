@@ -127,6 +127,15 @@ export class Environment<
       port: envObj['PORT'] ? Number(envObj['PORT']) : 3000,
       jwtSecret: Environment.requireEnv<string>('JWT_SECRET', envObj),
       emailSender: envObj['EMAIL_SENDER'] ?? 'noreply@localhost',
+      emailDomain: (() => {
+        const raw = envObj['EMAIL_DOMAIN'];
+        if (raw && raw.trim().length > 0) return raw.trim();
+        const sender = envObj['EMAIL_SENDER'];
+        const senderDomain = sender?.split('@')[1];
+        return senderDomain && senderDomain.trim().length > 0
+          ? senderDomain.trim()
+          : 'example.com';
+      })(),
       basePath: envObj['BASE_PATH'] ?? '/',
       serverUrl: (() => {
         // Priority 1: Explicit SERVER_URL override
@@ -569,6 +578,15 @@ export class Environment<
    */
   public get emailSender(): string {
     return this._environment.emailSender;
+  }
+
+  /**
+   * Email domain for generated addresses (dev seeding, etc.).
+   * Resolved from EMAIL_DOMAIN env var, then the domain portion of
+   * EMAIL_SENDER, falling back to 'example.com'.
+   */
+  public get emailDomain(): string {
+    return this._environment.emailDomain;
   }
 
   /**
