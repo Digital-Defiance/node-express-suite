@@ -23,7 +23,6 @@ import { createExpressConstants } from '../../src/constants';
 import { Environment } from '../../src/environment';
 import { getSchemaMap } from '../../src/schemas';
 import { DatabaseInitializationService } from '../../src/services';
-import { MongooseDocumentStore } from '../../src/services/mongoose-document-store';
 import { BaseApplication } from '../../src/base-application';
 import { MongoDatabasePlugin } from '../../src/plugins/mongo-database-plugin';
 import { ApiRouter } from '../../src/routers/api';
@@ -39,15 +38,11 @@ const CUSTOM_SITE = 'Acme Corp Portal';
 const CUSTOM_TAGLINE = 'Building the future, one commit at a time';
 const CUSTOM_DESCRIPTION = 'The Acme Corp developer portal';
 
-const CustomConstants: IConstants = createExpressConstants(
-  'acme-corp.example.com',
-  'acme-corp.example.com',
-  {
-    Site: CUSTOM_SITE,
-    SiteTagline: CUSTOM_TAGLINE,
-    SiteDescription: CUSTOM_DESCRIPTION,
-  },
-);
+const CustomConstants: IConstants = createExpressConstants({
+  Site: CUSTOM_SITE,
+  SiteTagline: CUSTOM_TAGLINE,
+  SiteDescription: CUSTOM_DESCRIPTION,
+});
 
 jest.unmock('argon2');
 
@@ -57,7 +52,7 @@ const hex64 = () => randomBytes(32).toString('hex');
 
 describe('createExpressConstants overrides', () => {
   it('overrides parameter should set Site, SiteTagline, SiteDescription', () => {
-    const c = createExpressConstants('test.example.com', 'test.example.com', {
+    const c = createExpressConstants({
       Site: 'Override Via Param',
       SiteTagline: 'Override Tagline Via Param',
       SiteDescription: 'Override Description Via Param',
@@ -66,12 +61,11 @@ describe('createExpressConstants overrides', () => {
     expect(c.Site).toBe('Override Via Param');
     expect(c.SiteTagline).toBe('Override Tagline Via Param');
     expect(c.SiteDescription).toBe('Override Description Via Param');
-    expect(c.AdministratorEmail).toBe('admin@test.example.com');
   });
 
   it('spread-then-override pattern (example site style) should work', () => {
     const c: IConstants = {
-      ...createExpressConstants('test.example.com', 'test.example.com'),
+      ...createExpressConstants(),
       Site: 'Spread Override Site',
       SiteTagline: 'Spread Override Tagline',
       SiteDescription: 'Spread Override Description',
@@ -80,11 +74,10 @@ describe('createExpressConstants overrides', () => {
     expect(c.Site).toBe('Spread Override Site');
     expect(c.SiteTagline).toBe('Spread Override Tagline');
     expect(c.SiteDescription).toBe('Spread Override Description');
-    expect(c.AdministratorEmail).toBe('admin@test.example.com');
   });
 
   it('without overrides should have suite-core defaults', () => {
-    const c = createExpressConstants('localhost', 'localhost');
+    const c = createExpressConstants();
     expect(c.Site).toBe('New Site');
     expect(c.SiteTagline).toBe('New Site Tagline');
   });
@@ -204,8 +197,6 @@ describe('Constants propagation through application hierarchy', () => {
         site: app.constants.Site,
         siteTagline: app.constants.SiteTagline,
         siteDescription: app.constants.SiteDescription,
-        administratorEmail: app.constants.AdministratorEmail,
-        siteHostname: app.constants.SiteHostname,
       });
     });
   }, 120_000);
@@ -238,13 +229,10 @@ describe('Constants propagation through application hierarchy', () => {
     );
   });
 
-  it('domain-derived constants should use the custom domain', () => {
-    expect(app.constants.AdministratorEmail).toBe(
-      'admin@acme-corp.example.com',
-    );
-    expect(app.constants.MemberEmail).toBe('test@acme-corp.example.com');
-    expect(app.constants.SystemEmail).toBe('system@acme-corp.example.com');
-    expect(app.constants.SiteHostname).toBe('acme-corp.example.com');
+  it('domain-derived emails should come from environment.emailDomain', () => {
+    // SystemEmail and SiteHostname are no longer on IConstants.
+    // Emails are now derived from environment.emailDomain at runtime.
+    expect(app.environment.emailDomain).toBeDefined();
   });
 
   // ── ApiRouter layer checks ───────────────────────────────────────────
@@ -265,7 +253,5 @@ describe('Constants propagation through application hierarchy', () => {
     expect(res.body.site).toBe(CUSTOM_SITE);
     expect(res.body.siteTagline).toBe(CUSTOM_TAGLINE);
     expect(res.body.siteDescription).toBe(CUSTOM_DESCRIPTION);
-    expect(res.body.administratorEmail).toBe('admin@acme-corp.example.com');
-    expect(res.body.siteHostname).toBe('acme-corp.example.com');
   });
 });

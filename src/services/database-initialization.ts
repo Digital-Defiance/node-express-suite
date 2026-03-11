@@ -714,7 +714,7 @@ export abstract class DatabaseInitializationService {
               {
                 _id: systemUserId as TID,
                 username: application.constants.SystemUser,
-                email: application.constants.SystemEmail,
+                email: application.environment.systemEmail.toString(),
                 publicKey: systemUser.member.publicKey.toString('hex'),
                 duressPasswords: [],
                 mnemonicRecovery: systemEncryptedMnemonic,
@@ -819,7 +819,7 @@ export abstract class DatabaseInitializationService {
               {
                 _id: adminUserId as TID,
                 username: application.constants.AdministratorUser,
-                email: application.constants.AdministratorEmail,
+                email: application.environment.adminEmail.toString(),
                 publicKey: adminUser.member.publicKey.toString('hex'),
                 duressPasswords: [],
                 mnemonicRecovery: adminEncryptedMnemonic,
@@ -927,7 +927,7 @@ export abstract class DatabaseInitializationService {
               {
                 _id: memberUserId as TID,
                 username: application.constants.MemberUser,
-                email: application.constants.MemberEmail,
+                email: application.environment.memberEmail.toString(),
                 publicKey: memberUser.member.publicKey.toString('hex'),
                 mnemonicId: memberMnemonicDoc._id,
                 mnemonicRecovery: encryptedMemberMnemonic,

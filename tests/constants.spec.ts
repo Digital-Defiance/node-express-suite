@@ -42,7 +42,7 @@ describe('constants', () => {
 
   describe('createExpressConstants', () => {
     it('should create constants with site domain', () => {
-      const constants = createExpressConstants('example.com', 'example.com');
+      const constants = createExpressConstants();
       expect(constants).toBeDefined();
       expect(constants.CHECKSUM).toEqual(CHECKSUM);
       expect(constants.JWT).toEqual(JWT);
@@ -50,7 +50,7 @@ describe('constants', () => {
     });
 
     it('should merge overrides', () => {
-      const constants = createExpressConstants('example.com', 'example.com', {
+      const constants = createExpressConstants({
         JWT: { ...JWT, EXPIRATION_SEC: 3600 },
       });
       expect(constants.JWT.EXPIRATION_SEC).toBe(3600);

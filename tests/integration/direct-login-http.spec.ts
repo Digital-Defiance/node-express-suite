@@ -34,10 +34,7 @@ import { DummyEmailService } from '../../src/services/dummy-email-service';
 import { emailServiceRegistry } from '../../src/registry';
 import type { BaseModelDocs } from '../../src/schemas/schema';
 
-const TestConstants: IConstants = createExpressConstants(
-  'example.com',
-  'example.com',
-);
+const TestConstants: IConstants = createExpressConstants();
 
 jest.unmock('argon2');
 
@@ -261,17 +258,18 @@ describe('Direct login HTTP endpoints (real MongoDB + Express)', () => {
     );
     const signatureHex = Buffer.from(signature).toString('hex');
 
+    const adminEmail = `${TestConstants.AdministratorUser}@example.com`;
     const loginRes = await request(expressApp)
       .post('/api/user/direct-challenge')
       .send({
         challenge,
         signature: signatureHex,
-        email: TestConstants.AdministratorEmail,
+        email: adminEmail,
       })
       .expect(200);
 
     expect(loginRes.body.token).toBeDefined();
-    expect(loginRes.body.user.email).toBe(TestConstants.AdministratorEmail);
+    expect(loginRes.body.user.email).toBe(adminEmail);
   });
 
   it('POST /api/user/direct-challenge should reject wrong signature', async () => {

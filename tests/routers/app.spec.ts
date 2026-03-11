@@ -1,5 +1,4 @@
 import '@digitaldefiance/express-suite-test-utils';
-import { withConsoleMocks } from '@digitaldefiance/express-suite-test-utils';
 import {
   SuiteCoreStringKey,
   TranslatableSuiteError,
@@ -96,11 +95,6 @@ describe('AppRouter', () => {
       );
     });
 
-    it('should validate views path does not escape base directory', () => {
-      // This should succeed with normal paths
-      expect(() => new AppRouter(mockBaseRouter)).not.toThrow();
-    });
-
     it('should validate index path does not escape base directory', () => {
       // This should succeed with normal paths
       expect(() => new AppRouter(mockBaseRouter)).not.toThrow();
@@ -114,7 +108,6 @@ describe('AppRouter', () => {
     it('should set correct paths', () => {
       appRouter = new AppRouter(mockBaseRouter);
 
-      expect(appRouter['viewsPath']).toContain('views');
       expect(appRouter['indexPath']).toContain('index.html');
       expect(appRouter['assetsDir']).toContain('assets');
       expect(appRouter['reactDistDir']).toBe(
@@ -186,12 +179,12 @@ describe('AppRouter', () => {
     });
   });
 
-  describe('getBaseViewLocals', () => {
+  describe('getIndexLocals', () => {
     beforeEach(() => {
       appRouter = new AppRouter(mockBaseRouter);
     });
 
-    it('should return base view locals with HTTP', () => {
+    it('should return index locals with HTTP', () => {
       const mockReq = {
         hostname: 'localhost',
         protocol: 'http',
@@ -202,7 +195,7 @@ describe('AppRouter', () => {
         locals: { cspNonce: 'test-nonce' },
       } as Response;
 
-      const result = appRouter['getBaseViewLocals'](mockReq, mockRes);
+      const result = appRouter['getIndexLocals'](mockReq, mockRes);
 
       expect(result).toMatchObject({
         cspNonce: 'test-nonce',
@@ -214,7 +207,7 @@ describe('AppRouter', () => {
       });
     });
 
-    it('should return base view locals with HTTPS on port 443', () => {
+    it('should return index locals with HTTPS on port 443', () => {
       const mockReq = {
         hostname: 'example.com',
         protocol: 'https',
@@ -225,12 +218,12 @@ describe('AppRouter', () => {
         locals: { cspNonce: 'test-nonce' },
       } as Response;
 
-      const result = appRouter['getBaseViewLocals'](mockReq, mockRes);
+      const result = appRouter['getIndexLocals'](mockReq, mockRes);
 
       expect(result.server).toBe('https://example.com');
     });
 
-    it('should return base view locals with HTTP on port 80', () => {
+    it('should return index locals with HTTP on port 80', () => {
       const mockReq = {
         hostname: 'example.com',
         protocol: 'http',
@@ -241,7 +234,7 @@ describe('AppRouter', () => {
         locals: { cspNonce: 'test-nonce' },
       } as Response;
 
-      const result = appRouter['getBaseViewLocals'](mockReq, mockRes);
+      const result = appRouter['getIndexLocals'](mockReq, mockRes);
 
       expect(result.server).toBe('http://example.com');
     });
@@ -257,194 +250,12 @@ describe('AppRouter', () => {
         locals: { cspNonce: 'test-nonce' },
       } as Response;
 
-      const result = appRouter['getBaseViewLocals'](mockReq, mockRes);
+      const result = appRouter['getIndexLocals'](mockReq, mockRes);
 
       expect(result.server).toBe('https://example.com:8443');
     });
-  });
 
-  describe('renderTemplate', () => {
-    let mockReq: Partial<Request>;
-    let mockRes: Partial<Response>;
-    let mockNext: jest.MockedFunction<NextFunction>;
-
-    beforeEach(() => {
-      appRouter = new AppRouter(mockBaseRouter);
-
-      mockReq = {
-        url: '/test',
-      };
-
-      mockRes = {
-        render: jest.fn(),
-        status: jest.fn().mockReturnThis(),
-        send: jest.fn(),
-        headersSent: false,
-      };
-
-      mockNext = jest.fn();
-    });
-
-    it('should render template successfully', () => {
-      const mockRender = mockRes.render as jest.Mock;
-      mockRender.mockImplementation((template, locals, callback) => {
-        callback(null, '<html>rendered content</html>');
-      });
-
-      appRouter['renderTemplate'](
-        mockReq as Request,
-        mockRes as Response,
-        mockNext,
-        'test-template',
-        { title: 'Test' },
-      );
-
-      expect(mockRender).toHaveBeenCalledWith(
-        'test-template',
-        { title: 'Test' },
-        expect.any(Function),
-      );
-      expect(mockRes.send).toHaveBeenCalledWith(
-        '<html>rendered content</html>',
-      );
-      expect(mockNext).not.toHaveBeenCalled();
-    });
-
-    it('should reject invalid template names', () => {
-      appRouter['renderTemplate'](
-        mockReq as Request,
-        mockRes as Response,
-        mockNext,
-        '../../../etc/passwd',
-        {},
-      );
-
-      expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
-      expect(mockNext).toHaveBeenCalledWith(
-        expect.objectContaining({
-          message: 'Invalid template name requested',
-        }),
-      );
-      expect(mockRes.render).not.toHaveBeenCalled();
-    });
-
-    it('should handle render errors', async () => {
-      await withConsoleMocks({ mute: true }, async () => {
-        const mockRender = mockRes.render as jest.Mock;
-        const testError = new Error('Template not found');
-        mockRender.mockImplementation((template, locals, callback) => {
-          callback(testError, null);
-        });
-
-        appRouter['renderTemplate'](
-          mockReq as Request,
-          mockRes as Response,
-          mockNext,
-          'test-template',
-          {},
-        );
-
-        expect(mockRes.status).toHaveBeenCalledWith(500);
-        expect(mockRes.send).toHaveBeenCalledWith('An error occurred');
-        expect(mockNext).toHaveBeenCalledWith(testError);
-      });
-    });
-
-    it('should not send response if headers already sent', async () => {
-      await withConsoleMocks({ mute: true }, async () => {
-        mockRes.headersSent = true;
-        const mockRender = mockRes.render as jest.Mock;
-        const testError = new Error('Template error');
-        mockRender.mockImplementation((template, locals, callback) => {
-          callback(testError, null);
-        });
-
-        appRouter['renderTemplate'](
-          mockReq as Request,
-          mockRes as Response,
-          mockNext,
-          'test-template',
-          {},
-        );
-
-        expect(mockRes.status).not.toHaveBeenCalled();
-        expect(mockRes.send).not.toHaveBeenCalled();
-        expect(mockNext).toHaveBeenCalledWith(testError);
-      });
-    });
-
-    it('should handle empty HTML response', () => {
-      const mockRender = mockRes.render as jest.Mock;
-      mockRender.mockImplementation((template, locals, callback) => {
-        callback(null, '');
-      });
-
-      appRouter['renderTemplate'](
-        mockReq as Request,
-        mockRes as Response,
-        mockNext,
-        'test-template',
-        {},
-      );
-
-      expect(mockNext).toHaveBeenCalledWith(
-        expect.objectContaining({
-          message: 'Rendered template "test-template" returned empty HTML',
-        }),
-      );
-    });
-
-    it('should sanitize URL in debug logs', () => {
-      mockReq.url = '/test\r\nmalicious';
-      const mockRender = mockRes.render as jest.Mock;
-      mockRender.mockImplementation((template, locals, callback) => {
-        callback(null, '<html>test</html>');
-      });
-
-      appRouter['renderTemplate'](
-        mockReq as Request,
-        mockRes as Response,
-        mockNext,
-        'test-template',
-        {},
-      );
-
-      // URL should be sanitized in logs (checked via debugLog mock if needed)
-      expect(mockRes.send).toHaveBeenCalled();
-    });
-  });
-
-  describe('createViewRenderer', () => {
-    beforeEach(() => {
-      appRouter = new AppRouter(mockBaseRouter);
-    });
-
-    it('should create renderer with base locals only', () => {
-      const renderer = appRouter['createViewRenderer']('test-template');
-
-      expect(renderer).toBeInstanceOf(Function);
-    });
-
-    it('should create renderer with custom locals factory', () => {
-      const localsFactory = (req: Request, res: Response) => ({
-        customData: 'test',
-      });
-
-      const renderer = appRouter['createViewRenderer'](
-        'test-template',
-        localsFactory,
-      );
-
-      expect(renderer).toBeInstanceOf(Function);
-    });
-
-    it('should call renderTemplate with merged locals', () => {
-      const localsFactory = jest.fn().mockReturnValue({ extra: 'data' });
-      const renderer = appRouter['createViewRenderer'](
-        'test-template',
-        localsFactory,
-      );
-
+    it('should default cspNonce to empty string when not set', () => {
       const mockReq = {
         hostname: 'localhost',
         protocol: 'http',
@@ -452,93 +263,185 @@ describe('AppRouter', () => {
       } as Request;
 
       const mockRes = {
-        locals: { cspNonce: 'nonce' },
-        render: jest.fn(),
-      } as any;
+        locals: {},
+      } as Response;
 
-      const mockNext = jest.fn();
+      const result = appRouter['getIndexLocals'](mockReq, mockRes);
 
-      const renderSpy = jest.spyOn(appRouter as any, 'renderTemplate');
+      expect(result.cspNonce).toBe('');
+    });
+  });
 
-      renderer(mockReq, mockRes, mockNext);
+  describe('getIndexHtmlTemplate', () => {
+    beforeEach(() => {
+      appRouter = new AppRouter(mockBaseRouter);
+    });
 
-      expect(localsFactory).toHaveBeenCalledWith(mockReq, mockRes);
-      expect(renderSpy).toHaveBeenCalledWith(
-        mockReq,
-        mockRes,
-        mockNext,
-        'test-template',
-        expect.objectContaining({ extra: 'data' }),
+    it('should return null when index.html does not exist', () => {
+      mockFs.existsSync.mockReturnValue(false);
+
+      const result = appRouter['getIndexHtmlTemplate']();
+
+      expect(result).toBeNull();
+    });
+
+    it('should read and return index.html content', () => {
+      mockFs.existsSync.mockReturnValue(true);
+      mockFs.readFileSync.mockReturnValue(
+        '<html><head><title>Test</title></head><body></body></html>',
       );
+
+      const result = appRouter['getIndexHtmlTemplate']();
+
+      expect(result).toBe(
+        '<html><head><title>Test</title></head><body></body></html>',
+      );
+    });
+
+    it('should cache template in production mode', () => {
+      process.env['NODE_ENV'] = 'production';
+      mockEnvironment = new Environment(undefined, true);
+      mockApplication.environment = mockEnvironment;
+      appRouter = new AppRouter(mockBaseRouter);
+
+      mockFs.existsSync.mockReturnValue(true);
+      mockFs.readFileSync.mockReturnValue('<html>cached</html>');
+
+      // Reset call count after constructor
+      mockFs.readFileSync.mockClear();
+      mockFs.readFileSync.mockReturnValue('<html>cached</html>');
+
+      // First call reads from disk
+      appRouter['getIndexHtmlTemplate']();
+      // Second call should use cache
+      const result = appRouter['getIndexHtmlTemplate']();
+
+      expect(result).toBe('<html>cached</html>');
+      // readFileSync should only be called once due to caching
+      expect(mockFs.readFileSync).toHaveBeenCalledTimes(1);
+
+      // Reset NODE_ENV
+      process.env['NODE_ENV'] = 'test';
+    });
+  });
+
+  describe('applyIndexReplacements', () => {
+    beforeEach(() => {
+      appRouter = new AppRouter(mockBaseRouter);
+    });
+
+    it('should inject title into HTML', () => {
+      const html =
+        '<html><head><title>Old Title</title></head><body></body></html>';
+      const locals = {
+        cspNonce: '',
+        title: 'New Title',
+        tagline: 'tagline',
+        description: 'desc',
+        server: 'http://localhost:3000',
+        siteUrl: 'http://localhost:3000',
+        baseHref: '/',
+        hostname: 'localhost',
+        siteTitle: 'New Title',
+      };
+
+      const result = appRouter['applyIndexReplacements'](html, locals);
+
+      expect(result).toContain('<title>New Title</title>');
+      expect(result).not.toContain('Old Title');
+    });
+
+    it('should replace APP_CONFIG placeholder', () => {
+      const html =
+        '<script>window.APP_CONFIG = window.APP_CONFIG || {};</script>';
+      const locals = {
+        cspNonce: '',
+        title: 'Test',
+        tagline: 'tagline',
+        description: 'desc',
+        server: 'http://localhost:3000',
+        siteUrl: 'http://localhost:3000',
+        baseHref: '/',
+        hostname: 'localhost',
+        siteTitle: 'Test',
+      };
+
+      const result = appRouter['applyIndexReplacements'](html, locals);
+
+      expect(result).toContain('window.APP_CONFIG = {');
+      expect(result).toContain('"apiUrl":"http://localhost:3000/api"');
+      expect(result).toContain('"serverUrl":"http://localhost:3000"');
+    });
+
+    it('should inject CSP nonce on script tags when nonce is provided', () => {
+      const html = '<html><head><script src="app.js"></script></head></html>';
+      const locals = {
+        cspNonce: 'abc123',
+        title: 'Test',
+        tagline: 'tagline',
+        description: 'desc',
+        server: 'http://localhost:3000',
+        siteUrl: 'http://localhost:3000',
+        baseHref: '/',
+        hostname: 'localhost',
+        siteTitle: 'Test',
+      };
+
+      const result = appRouter['applyIndexReplacements'](html, locals);
+
+      expect(result).toContain('nonce="abc123"');
+    });
+
+    it('should not inject CSP nonce when nonce is empty', () => {
+      const html = '<html><head><script src="app.js"></script></head></html>';
+      const locals = {
+        cspNonce: '',
+        title: 'Test',
+        tagline: 'tagline',
+        description: 'desc',
+        server: 'http://localhost:3000',
+        siteUrl: 'http://localhost:3000',
+        baseHref: '/',
+        hostname: 'localhost',
+        siteTitle: 'Test',
+      };
+
+      const result = appRouter['applyIndexReplacements'](html, locals);
+
+      expect(result).not.toContain('nonce=');
+    });
+
+    it('should not add nonce to script tags that already have one', () => {
+      const html = '<script nonce="existing">code</script>';
+      const locals = {
+        cspNonce: 'new-nonce',
+        title: 'Test',
+        tagline: 'tagline',
+        description: 'desc',
+        server: 'http://localhost:3000',
+        siteUrl: 'http://localhost:3000',
+        baseHref: '/',
+        hostname: 'localhost',
+        siteTitle: 'Test',
+      };
+
+      const result = appRouter['applyIndexReplacements'](html, locals);
+
+      expect(result).not.toContain('nonce="new-nonce"');
+      expect(result).toContain('nonce="existing"');
     });
   });
 
   describe('renderIndex', () => {
     beforeEach(() => {
       appRouter = new AppRouter(mockBaseRouter);
-      (fs.readdirSync as jest.Mock).mockReturnValue([
-        'index-abc123.js',
-        'index-xyz789.css',
-      ]);
     });
 
-    it('should render index with JS and CSS files', () => {
-      const mockReq = {
-        url: '/',
-        hostname: 'localhost',
-        protocol: 'http',
-        socket: { localPort: 3000 },
-      } as Request;
-
-      const mockRes = {
-        locals: { cspNonce: 'nonce' },
-        type: jest.fn(),
-        render: jest.fn((template, locals, callback) => {
-          callback(null, '<html>index</html>');
-        }),
-        send: jest.fn(),
-      } as any;
-
-      const mockNext = jest.fn();
-
-      appRouter.renderIndex(mockReq, mockRes, mockNext);
-
-      expect(mockRes.render).toHaveBeenCalledWith(
-        'index',
-        expect.objectContaining({
-          jsFile: 'assets/index-abc123.js',
-          cssFile: 'assets/index-xyz789.css',
-        }),
-        expect.any(Function),
-      );
-    });
-
-    it('should set JS content type for .js URLs', () => {
-      const mockReq = {
-        url: '/main.js',
-        hostname: 'localhost',
-        protocol: 'http',
-        socket: { localPort: 3000 },
-      } as Request;
-
-      const mockRes = {
-        locals: { cspNonce: 'nonce' },
-        type: jest.fn(),
-        render: jest.fn((template, locals, callback) => {
-          callback(null, '<html>index</html>');
-        }),
-        send: jest.fn(),
-      } as any;
-
-      const mockNext = jest.fn();
-
-      appRouter.renderIndex(mockReq, mockRes, mockNext);
-
-      expect(mockRes.type).toHaveBeenCalledWith('application/javascript');
-    });
-
-    it('should handle missing asset files gracefully', () => {
-      (fs.readdirSync as jest.Mock).mockReturnValue([]);
+    it('should render index with HTML injection', () => {
+      const templateHtml =
+        '<html><head><title>App</title></head><body></body></html>';
+      mockFs.existsSync.mockReturnValue(true);
+      mockFs.readFileSync.mockReturnValue(templateHtml);
 
       const mockReq = {
         url: '/',
@@ -549,9 +452,7 @@ describe('AppRouter', () => {
 
       const mockRes = {
         locals: { cspNonce: 'nonce' },
-        render: jest.fn((template, locals, callback) => {
-          callback(null, '<html>index</html>');
-        }),
+        type: jest.fn().mockReturnThis(),
         send: jest.fn(),
       } as any;
 
@@ -559,14 +460,37 @@ describe('AppRouter', () => {
 
       appRouter.renderIndex(mockReq, mockRes, mockNext);
 
-      expect(mockRes.render).toHaveBeenCalledWith(
-        'index',
-        expect.objectContaining({
-          jsFile: undefined,
-          cssFile: undefined,
-        }),
-        expect.any(Function),
+      expect(mockRes.type).toHaveBeenCalledWith('html');
+      expect(mockRes.send).toHaveBeenCalledWith(
+        expect.stringContaining('<html>'),
       );
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('should call next with error when template is not found', () => {
+      mockFs.existsSync.mockReturnValue(false);
+      // Reset the cached template
+      appRouter['indexHtmlTemplate'] = null;
+
+      const mockReq = {
+        url: '/',
+        hostname: 'localhost',
+        protocol: 'http',
+        socket: { localPort: 3000 },
+      } as Request;
+
+      const mockRes = {
+        locals: { cspNonce: 'nonce' },
+        type: jest.fn().mockReturnThis(),
+        send: jest.fn(),
+      } as any;
+
+      const mockNext = jest.fn();
+
+      appRouter.renderIndex(mockReq, mockRes, mockNext);
+
+      expect(mockNext).toHaveBeenCalledWith(expect.any(TranslatableSuiteError));
+      expect(mockRes.send).not.toHaveBeenCalled();
     });
   });
 

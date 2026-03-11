@@ -773,6 +773,7 @@ export class UserService<
     session?: ClientSession,
     debug = false,
     password?: string,
+    userProvidedMnemonic?: string,
   ): Promise<{
     user: UserDocument<TLanguage, TID>;
     mnemonic: string;
@@ -814,35 +815,75 @@ export class UserService<
 
         let mnemonic: SecureString | undefined;
         let member: BackendMember<TID> | undefined;
-        while (!mnemonic || !member) {
+
+        if (userProvidedMnemonic) {
+          // User-provided mnemonic path: validate, check uniqueness, use directly
+          const trimmedMnemonic = userProvidedMnemonic.trim();
+          if (!this.application.constants.MnemonicRegex.test(trimmedMnemonic)) {
+            throw new TranslatableSuiteError(
+              SuiteCoreStringKey.Validation_MnemonicRegex,
+            );
+          }
+
+          const trimmedMnemonicSecure = new SecureString(trimmedMnemonic);
           try {
+            const exists = await this.mnemonicService.mnemonicExists(
+              trimmedMnemonicSecure,
+              sess,
+            );
+            if (exists) {
+              throw new TranslatableSuiteError(
+                SuiteCoreStringKey.Validation_MnemonicInUse,
+              );
+            }
+
             const { member: newMember, mnemonic: newMnemonic } =
               BackendMember.newMember<TID>(
                 this.eciesService,
                 MemberType.User,
                 userData.username,
                 new EmailString(userData.email),
-                undefined,
+                trimmedMnemonicSecure,
                 createdBy,
               );
-            // make sure the new mnemonic is not already in the database
+            member = newMember;
+            mnemonic = newMnemonic;
+          } catch (e) {
+            trimmedMnemonicSecure.dispose();
+            throw e;
+          }
+        } else {
+          // Server-generated mnemonic path: retry loop until unique mnemonic found
+          while (!mnemonic || !member) {
+            try {
+              const { member: newMember, mnemonic: newMnemonic } =
+                BackendMember.newMember<TID>(
+                  this.eciesService,
+                  MemberType.User,
+                  userData.username,
+                  new EmailString(userData.email),
+                  undefined,
+                  createdBy,
+                );
+              // make sure the new mnemonic is not already in the database
 
-            const mnemonicExists = await this.mnemonicService.mnemonicExists(
-              newMnemonic,
-              sess,
-            );
-            if (!mnemonicExists) {
-              member = newMember;
-              mnemonic = newMnemonic;
+              const mnemonicExists = await this.mnemonicService.mnemonicExists(
+                newMnemonic,
+                sess,
+              );
+              if (!mnemonicExists) {
+                member = newMember;
+                mnemonic = newMnemonic;
+              }
+            } catch {
+              // If we fail to create a new member, we will retry until we succeed.
+              // This is to ensure that we do not end up with duplicate mnemonics.
+              debugLog(
+                debug,
+                'warn',
+                'Failed to create a new member, retrying...',
+              );
             }
-          } catch {
-            // If we fail to create a new member, we will retry until we succeed.
-            // This is to ensure that we do not end up with duplicate mnemonics.
-            debugLog(
-              debug,
-              'warn',
-              'Failed to create a new member, retrying...',
-            );
           }
         }
 

@@ -149,13 +149,21 @@ export class Environment<
           return envObj['SERVER_URL'];
         }
         // Priority 2: Build from API_PROTOCOL + PUBLIC_HOST + PORT
+        const isProduction = envObj['NODE_ENV'] === 'production';
         const protocol =
           envObj['API_PROTOCOL'] ||
-          (envObj['NODE_ENV'] === 'production' || httpsDevCertRoot
-            ? 'https'
-            : 'http');
+          (isProduction || httpsDevCertRoot ? 'https' : 'http');
         const publicHost = envObj['PUBLIC_HOST'] || 'localhost';
-        const port = envObj['PORT'] ? Number(envObj['PORT']) : 3000;
+        // Use httpsDevPort when serving via dev HTTPS cert,
+        // standard port (443) for production HTTPS,
+        // otherwise the configured PORT
+        const port = httpsDevCertRoot
+          ? httpsDevPort
+          : isProduction && protocol === 'https'
+            ? 443
+            : envObj['PORT']
+              ? Number(envObj['PORT'])
+              : 3000;
         const portSuffix =
           (protocol === 'http' && port === 80) ||
           (protocol === 'https' && port === 443)

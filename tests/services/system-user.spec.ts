@@ -15,7 +15,7 @@ import { Environment } from '../../src/environment';
 import { SystemUserService } from '../../src/services/system-user';
 
 // Create test constants with valid email domain
-const TestConstants = createExpressConstants('example.com', 'example.com');
+const TestConstants = createExpressConstants();
 
 describe('SystemUserService', () => {
   let mockEnvironment: Environment;
@@ -30,6 +30,7 @@ describe('SystemUserService', () => {
     mockEnvironment = {
       systemMnemonic: new SecureString(testMnemonic),
       systemPublicKeyHex: testPublicKeyHex,
+      emailDomain: 'example.com',
     } as Environment;
   });
 

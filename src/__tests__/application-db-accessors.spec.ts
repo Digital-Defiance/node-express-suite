@@ -27,7 +27,7 @@ function makeBaseEnv(
     HOST: '0.0.0.0',
     PORT: String(Math.floor(Math.random() * 10000) + 50000),
     JWT_SECRET: 'a'.repeat(64),
-    EMAIL_SENDER: 'test@localhost',
+    EMAIL_SENDER: 'test@example.com',
     BASE_PATH: '/',
     API_DIST_DIR: tmpApiDir,
     REACT_DIST_DIR: tmpReactDir,

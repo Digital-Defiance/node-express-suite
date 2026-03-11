@@ -19,20 +19,16 @@ import { Environment } from '../../src/environment';
 import { ModelRegistry } from '../../src/model-registry';
 import { getSchemaMap } from '../../src/schemas';
 import { DatabaseInitializationService } from '../../src/services';
-import { MongooseDocumentStore } from '../../src/services/mongoose-document-store';
 import { BaseApplication } from '../../src/base-application';
 import { MongoDatabasePlugin } from '../../src/plugins/mongo-database-plugin';
 import { IServerInitResult, IConstants } from '../../src/interfaces';
 import { IMongoApplication } from '../../src/interfaces/mongo-application';
-import type { IRoleDocument } from '../../src/documents/role';
-import type { IUserDocument } from '../../src/documents/user';
+import type { RoleDocument } from '../../src/documents/role';
+import type { UserDocument } from '../../src/documents/user';
 import type { BaseModelDocs } from '../../src/schemas/schema';
 
-// Use example.com so EmailString validation passes (localhost is rejected)
-const TestConstants: IConstants = createExpressConstants(
-  'example.com',
-  'example.com',
-);
+// Use default constants — emails are derived from environment.emailDomain at runtime
+const TestConstants: IConstants = createExpressConstants();
 
 // Undo the global argon2 mock from setup.ts — this integration test needs real argon2
 jest.unmock('argon2');
@@ -142,46 +138,46 @@ describe('Database initialization integration (initializeDevStore)', () => {
 
   it('should create the admin user', async () => {
     const UserModel = ModelRegistry.instance.getTypedModel<
-      IUserDocument<string, Buffer>
+      UserDocument<string, Buffer>
     >(BaseModelName.User);
     const admin = await UserModel.findOne({
       username: TestConstants.AdministratorUser,
     });
     expect(admin).not.toBeNull();
-    expect(admin!.email).toBe(TestConstants.AdministratorEmail);
+    expect(admin!.email).toBe('admin@example.com');
     expect(admin!.publicKey).toBeDefined();
     expect(admin!.publicKey.length).toBeGreaterThan(0);
   });
 
   it('should create the member user', async () => {
     const UserModel = ModelRegistry.instance.getTypedModel<
-      IUserDocument<string, Buffer>
+      UserDocument<string, Buffer>
     >(BaseModelName.User);
     const member = await UserModel.findOne({
       username: TestConstants.MemberUser,
     });
     expect(member).not.toBeNull();
-    expect(member!.email).toBe(TestConstants.MemberEmail);
+    expect(member!.email).toBe(`member@example.com`);
     expect(member!.publicKey).toBeDefined();
     expect(member!.publicKey.length).toBeGreaterThan(0);
   });
 
   it('should create the system user', async () => {
     const UserModel = ModelRegistry.instance.getTypedModel<
-      IUserDocument<string, Buffer>
+      UserDocument<string, Buffer>
     >(BaseModelName.User);
     const system = await UserModel.findOne({
       username: TestConstants.SystemUser,
     });
     expect(system).not.toBeNull();
-    expect(system!.email).toBe(TestConstants.SystemEmail);
+    expect(system!.email).toBe('system@example.com');
     expect(system!.publicKey).toBeDefined();
     expect(system!.publicKey.length).toBeGreaterThan(0);
   });
 
   it('should create the administrator role', async () => {
     const RoleModel = ModelRegistry.instance.getTypedModel<
-      IRoleDocument<Buffer>
+      RoleDocument<Buffer>
     >(BaseModelName.Role);
     const adminRole = await RoleModel.findOne({
       name: TestConstants.AdministratorRole,
@@ -193,7 +189,7 @@ describe('Database initialization integration (initializeDevStore)', () => {
 
   it('should create the member role', async () => {
     const RoleModel = ModelRegistry.instance.getTypedModel<
-      IRoleDocument<Buffer>
+      RoleDocument<Buffer>
     >(BaseModelName.Role);
     const memberRole = await RoleModel.findOne({
       name: TestConstants.MemberRole,
@@ -205,7 +201,7 @@ describe('Database initialization integration (initializeDevStore)', () => {
 
   it('should create the system role', async () => {
     const RoleModel = ModelRegistry.instance.getTypedModel<
-      IRoleDocument<Buffer>
+      RoleDocument<Buffer>
     >(BaseModelName.Role);
     const systemRole = await RoleModel.findOne({
       name: TestConstants.SystemRole,
@@ -217,10 +213,10 @@ describe('Database initialization integration (initializeDevStore)', () => {
 
   it('should have exactly 3 users and 3 roles', async () => {
     const UserModel = ModelRegistry.instance.getTypedModel<
-      IUserDocument<string, Buffer>
+      UserDocument<string, Buffer>
     >(BaseModelName.User);
     const RoleModel = ModelRegistry.instance.getTypedModel<
-      IRoleDocument<Buffer>
+      RoleDocument<Buffer>
     >(BaseModelName.Role);
 
     const userCount = await UserModel.countDocuments();

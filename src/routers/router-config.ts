@@ -1,6 +1,6 @@
 /**
  * @fileoverview Router configuration interface and defaults.
- * Defines configuration options for router setup including static paths, view engine, and middleware.
+ * Defines configuration options for router setup including static paths and middleware.
  * @module routers/router-config
  */
 
@@ -12,8 +12,6 @@ import { RequestHandler } from 'express';
 export interface RouterConfig {
   /** Array of static path configurations with prefix and directory */
   staticPaths?: Array<{ prefix: string; directory: string }>;
-  /** View engine configuration with name and views path */
-  viewEngine?: { name: string; viewsPath: string };
   /** Array of middleware functions to apply */
   middleware?: RequestHandler[];
   /** CORS configuration options */

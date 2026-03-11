@@ -13,10 +13,6 @@ describe('RouterConfig', () => {
       expect(DefaultRouterConfig.middleware).toEqual([]);
     });
 
-    it('should not have viewEngine defined', () => {
-      expect(DefaultRouterConfig.viewEngine).toBeUndefined();
-    });
-
     it('should not have cors defined', () => {
       expect(DefaultRouterConfig.cors).toBeUndefined();
     });
@@ -26,7 +22,6 @@ describe('RouterConfig', () => {
     it('should accept valid config with all properties', () => {
       const config: RouterConfig = {
         staticPaths: [{ prefix: '/static', directory: '/public' }],
-        viewEngine: { name: 'ejs', viewsPath: '/views' },
         middleware: [],
         cors: { origin: '*', credentials: true },
       };

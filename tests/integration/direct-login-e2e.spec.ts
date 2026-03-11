@@ -39,11 +39,8 @@ import { IMongoApplication } from '../../src/interfaces/mongo-application';
 import type { IUserDocument } from '../../src/documents/user';
 import type { BaseModelDocs } from '../../src/schemas/schema';
 
-// Use example.com so EmailString validation passes
-const TestConstants: IConstants = createExpressConstants(
-  'example.com',
-  'example.com',
-);
+// Use default constants — emails are derived from environment.emailDomain at runtime
+const TestConstants: IConstants = createExpressConstants();
 
 // Undo the global argon2 mock — this integration test needs real argon2
 jest.unmock('argon2');
@@ -352,14 +349,15 @@ describe('Direct login challenge E2E (real MongoDB)', () => {
     );
     const signatureHex = Buffer.from(signature).toString('hex');
 
+    const adminEmail = `${TestConstants.AdministratorUser}@example.com`;
     const result = await userService.verifyDirectLoginChallenge(
       challenge,
       signatureHex,
       undefined,
-      TestConstants.AdministratorEmail,
+      adminEmail,
     );
 
-    expect(result.userDoc.email).toBe(TestConstants.AdministratorEmail);
+    expect(result.userDoc.email).toBe(adminEmail);
   });
 
   // ── JWT token generation after successful login ────────────────────
@@ -412,7 +410,9 @@ describe('Direct login challenge E2E (real MongoDB)', () => {
 
     const authUser = await app.authProvider!.findUserById(String(admin!._id));
     expect(authUser).not.toBeNull();
-    expect(authUser!.email).toBe(TestConstants.AdministratorEmail);
+    expect(authUser!.email).toBe(
+      `${TestConstants.AdministratorUser}@example.com`,
+    );
   });
 
   it('should build a RequestUserDTO via the auth provider', async () => {

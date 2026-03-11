@@ -1,6 +1,15 @@
 /**
  * @fileoverview Application router for serving React frontend and API routes.
- * Handles static file serving, EJS template rendering, and catch-all routing.
+ * Handles static file serving, HTML template injection, and catch-all routing.
+ *
+ * Instead of EJS templates, this router reads the bundler-generated index.html
+ * directly and injects runtime values (CSP nonce, app config, title, etc.)
+ * via string replacement. This is bundler-agnostic — Vite, webpack, esbuild
+ * output all just works because the bundler wrote the index.html.
+ *
+ * Subclasses override getIndexLocals() to provide app-specific values
+ * and getIndexReplacements() for custom string replacements.
+ *
  * @module routers/app
  */
 
@@ -14,7 +23,6 @@ import {
   TranslatableSuiteError,
 } from '@digitaldefiance/suite-core-lib';
 import type { SuiteCoreStringKeyValue } from '@digitaldefiance/suite-core-lib';
-import ejs from 'ejs';
 import {
   Application,
   static as expressStatic,
@@ -22,7 +30,7 @@ import {
   Request,
   Response,
 } from 'express';
-import { existsSync, readdirSync } from 'fs';
+import { existsSync, readdirSync, readFileSync } from 'fs';
 import { resolve, sep } from 'path';
 import { IApplication } from '../interfaces/application';
 import { debugLog, handleError, sendApiMessageResponse } from '../utils';
@@ -30,17 +38,39 @@ import { BaseRouter } from './base';
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 
 /**
- * Dummy function to ensure EJS is included in the bundle.
- * @private
+ * Runtime values available for index.html injection.
+ * Subclasses extend this via getIndexLocals().
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function keepEJS() {
-  ejs.compile(''); // Compile an empty string, doesn't generate anything meaningful
+export interface IndexLocals {
+  /** CSP nonce for script tags */
+  cspNonce: string;
+  /** Page title */
+  title: string;
+  /** Site tagline */
+  tagline: string;
+  /** Site description */
+  description: string;
+  /** Full server URL (protocol + host + port) */
+  server: string;
+  /** Configured site URL */
+  siteUrl: string;
+  /** Base href for the app */
+  baseHref: string;
+  /** Request hostname */
+  hostname: string;
+  /** Site title (alias) */
+  siteTitle: string;
+  /** Additional app-specific values */
+  [key: string]: unknown;
 }
 
 /**
  * Application router for serving React frontend and API routes.
- * Sets up static file serving, EJS template rendering, and catch-all routing for SPA.
+ * Sets up static file serving, HTML injection, and catch-all routing for SPA.
+ *
+ * The index.html served to clients is the one produced by the bundler (Vite, etc.).
+ * Runtime values are injected via string replacement rather than a template engine.
+ *
  * @template TID Platform-specific ID type
  * @template TApplication Application instance type
  */
@@ -48,8 +78,6 @@ export class AppRouter<
   TID extends PlatformID = Buffer,
   TApplication extends IApplication<TID> = IApplication<TID>,
 > {
-  /** Path to EJS views directory */
-  protected readonly viewsPath: string;
   /** Path to index.html file */
   protected readonly indexPath: string;
   /** Path to assets directory */
@@ -61,6 +89,9 @@ export class AppRouter<
   protected readonly apiRouter: BaseRouter<TID, TApplication>;
   /** Application instance */
   protected readonly application: TApplication;
+
+  /** Cached index.html template read from the React dist directory. */
+  private indexHtmlTemplate: string | null = null;
 
   /**
    * Creates a new application router instance.
@@ -81,20 +112,6 @@ export class AppRouter<
         SuiteCoreStringKey.Error_InvalidPathContainsParentDirectoryReference,
       );
     }
-
-    const normalizedApiDistDir = resolve(
-      this.application.environment.apiDistDir,
-    );
-    const viewsPath = resolve(normalizedApiDistDir, 'views');
-    if (
-      !viewsPath.startsWith(normalizedApiDistDir + sep) &&
-      viewsPath !== normalizedApiDistDir
-    ) {
-      throw new TranslatableSuiteError(
-        SuiteCoreStringKey.Error_InvalidViewsPathEscapesBaseDirectory,
-      );
-    }
-    this.viewsPath = viewsPath;
 
     const normalizedReactDistDir = resolve(
       this.application.environment.reactDistDir,
@@ -136,12 +153,7 @@ export class AppRouter<
   ): string | undefined {
     try {
       // Prevent path traversal by validating assetDir is within expected directory
-      // amazonq-ignore-next-line already addressed
-      if (
-        // amazonq-ignore-next-line
-        assetDir.includes('..') ||
-        !assetDir.startsWith(this.reactDistDir)
-      ) {
+      if (assetDir.includes('..') || !assetDir.startsWith(this.reactDistDir)) {
         return undefined;
       }
       const files = readdirSync(assetDir, 'utf8');
@@ -152,33 +164,53 @@ export class AppRouter<
   }
 
   /**
-   * Gets base view locals for EJS template rendering.
-   * Subclasses can override to add additional locals.
+   * Reads and caches the bundler-generated index.html from reactDistDir.
+   * In development mode, the file is re-read on every request to support
+   * rebuilds without server restart.
+   * @returns The HTML string, or null if the file doesn't exist.
+   */
+  protected getIndexHtmlTemplate(): string | null {
+    // In production, cache the template
+    if (this.indexHtmlTemplate !== null) {
+      return this.indexHtmlTemplate;
+    }
+    if (!existsSync(this.indexPath)) {
+      return null;
+    }
+    const html = readFileSync(this.indexPath, 'utf8');
+    // Only cache in production
+    if (this.application.environment.production) {
+      this.indexHtmlTemplate = html;
+    }
+    return html;
+  }
+
+  /**
+   * Gets the base locals for index.html injection.
+   * Subclasses should override this to add app-specific values.
    * @param req Express request
    * @param res Express response
-   * @returns Object containing base template variables
+   * @returns Object containing template variables
    */
-  protected getBaseViewLocals(
-    req: Request,
-    res: Response,
-  ): Record<string, unknown> {
+  protected getIndexLocals(req: Request, res: Response): IndexLocals {
     const SiteName = this.application.constants.Site;
     const SiteTagline = this.application.constants.SiteTagline;
     const SiteDescription = this.application.constants.SiteDescription;
     const hostname = req.hostname;
+    const port = req.socket.localPort;
     const server =
-      (req.socket.localPort === 443 && req.protocol === 'https') ||
-      (req.socket.localPort === 80 && req.protocol === 'http')
+      (port === 443 && req.protocol === 'https') ||
+      (port === 80 && req.protocol === 'http')
         ? `${req.protocol}://${hostname}`
-        : `${req.protocol}://${hostname}:${req.socket.localPort}`;
+        : `${req.protocol}://${hostname}:${port}`;
 
     return {
-      cspNonce: res.locals['cspNonce'],
+      cspNonce: (res.locals['cspNonce'] as string) || '',
       title: SiteName,
       tagline: SiteTagline,
       description: SiteDescription,
       server,
-      siteUrl: this.apiRouter.application.environment.serverUrl,
+      siteUrl: this.apiRouter.application.environment.serverUrl || server,
       baseHref: this.apiRouter.application.environment.basePath,
       hostname,
       siteTitle: SiteName,
@@ -186,84 +218,54 @@ export class AppRouter<
   }
 
   /**
-   * Renders an EJS template with the provided locals.
-   * @param req Express request
-   * @param res Express response
-   * @param next Express next function
-   * @param template Template name to render
-   * @param locals Template variables
+   * Applies runtime replacements to the index.html template.
+   * Override this in subclasses to add app-specific replacements
+   * (e.g. Font Awesome kit injection, additional meta tags).
+   *
+   * The base implementation handles:
+   *   1. Title injection
+   *   2. APP_CONFIG placeholder replacement
+   *   3. CSP nonce injection on all script tags
+   *
+   * @param html The raw index.html string
+   * @param locals The locals from getIndexLocals()
+   * @returns The transformed HTML string
    */
-  protected renderTemplate(
-    req: Request,
-    res: Response,
-    next: NextFunction,
-    template: string,
-    locals: Record<string, unknown>,
-  ): void {
-    if (!/^[\w/-]+$/.test(template)) {
-      next(new Error('Invalid template name requested'));
-      return;
-    }
+  protected applyIndexReplacements(html: string, locals: IndexLocals): string {
+    let result = html;
 
-    const sanitizedUrl = (req.url || '').replace(/[\r\n]/g, ' ');
-    debugLog(
-      this.apiRouter.application.environment.debug,
-      'log',
-      `Rendering view "${template}" for ${sanitizedUrl}`,
+    // 1. Inject title
+    result = result.replace(
+      /<title>[^<]*<\/title>/,
+      `<title>${locals.title}</title>`,
     );
 
-    res.render(template, locals, (err, html) => {
-      if (err) {
-        const errMsg =
-          err && typeof err === 'object' && 'message' in err
-            ? String(err.message).replace(/[\r\n]/g, ' ')
-            : 'Unknown error';
-        console.error('Error rendering: ' + errMsg);
-        const normalizedError = err instanceof Error ? err : new Error(errMsg);
-        if (!res.headersSent) {
-          res.status(500).send('An error occurred');
-        }
-        next(normalizedError);
-        return;
-      }
+    // 2. Replace the APP_CONFIG placeholder with real runtime values
+    //    The index.html should contain: window.APP_CONFIG = window.APP_CONFIG || {};
+    result = result.replace(
+      /window\.APP_CONFIG\s*=\s*window\.APP_CONFIG\s*\|\|\s*\{\s*\}\s*;?/,
+      `window.APP_CONFIG = ${JSON.stringify({
+        apiUrl: `${locals.siteUrl}/api`,
+        serverUrl: locals.siteUrl,
+        hostname: locals.hostname,
+        siteTitle: locals.title,
+        server: locals.server,
+      })};`,
+    );
 
-      if (!html) {
-        next(new Error(`Rendered template "${template}" returned empty HTML`));
-        return;
-      }
-
-      debugLog(
-        this.apiRouter.application.environment.debug,
-        'log',
-        `Rendered view "${template}" for ${sanitizedUrl}`,
+    // 3. Inject CSP nonce on all <script> tags that don't already have one
+    if (locals.cspNonce) {
+      result = result.replace(
+        /<script(?![^>]*nonce)/g,
+        `<script nonce="${locals.cspNonce}"`,
       );
+    }
 
-      res.send(html);
-    });
+    return result;
   }
 
   /**
-   * Creates a view renderer function for a specific template.
-   * @param template Template name to render
-   * @param localsFactory Optional function to generate additional locals
-   * @returns Express middleware function
-   */
-  protected createViewRenderer(
-    template: string,
-    localsFactory?: (req: Request, res: Response) => Record<string, unknown>,
-  ): (req: Request, res: Response, next: NextFunction) => void {
-    return (req, res, next) => {
-      const baseLocals = this.getBaseViewLocals(req, res);
-      const extraLocals = localsFactory ? localsFactory(req, res) : {};
-      this.renderTemplate(req, res, next, template, {
-        ...baseLocals,
-        ...extraLocals,
-      });
-    };
-  }
-
-  /**
-   * Override to register additional routes (e.g. other EJS pages) before the index catch-all.
+   * Override to register additional routes before the index catch-all.
    * @param app Express application
    */
   protected registerAdditionalRenderHooks(app: Application): void {
@@ -271,25 +273,30 @@ export class AppRouter<
   }
 
   /**
-   * Renders the index.html page with injected asset paths.
+   * Renders the index.html page with injected runtime values.
+   *
+   * Reads the bundler-generated index.html, calls getIndexLocals() for
+   * template variables, then applyIndexReplacements() for string injection.
+   *
    * @param req Express request
    * @param res Express response
    * @param next Express next function
    */
   public renderIndex(req: Request, res: Response, next: NextFunction): void {
-    if (req.url.endsWith('.js')) {
-      res.type('application/javascript');
+    const template = this.getIndexHtmlTemplate();
+    if (!template) {
+      next(
+        new TranslatableSuiteError(
+          SuiteCoreStringKey.Error_ReactIndexHtmlNotFoundInDistDirectory,
+        ),
+      );
+      return;
     }
 
-    const jsFile = this.getAssetFilename(this.assetsDir, /^index-.*\.js$/);
-    const cssFile = this.getAssetFilename(this.assetsDir, /^index-.*\.css$/);
-    const locals = {
-      ...this.getBaseViewLocals(req, res),
-      jsFile: jsFile ? `assets/${jsFile}` : undefined,
-      cssFile: cssFile ? `assets/${cssFile}` : undefined,
-    };
+    const locals = this.getIndexLocals(req, res);
+    const html = this.applyIndexReplacements(template, locals);
 
-    this.renderTemplate(req, res, next, 'index', locals);
+    res.type('html').send(html);
   }
 
   /**
@@ -343,22 +350,26 @@ export class AppRouter<
 
     app.use('/api', this.apiRouter.router);
 
-    app.set('views', this.viewsPath);
-    app.set('view engine', 'ejs');
-
     // Serve static files from the React app build directory (validated in constructor)
     app.use('/assets', expressStatic(this.assetsDir));
     const serveStaticWithLogging = expressStatic(this.reactDistDir);
     app.use('/static/js', expressStatic(this.reactDistDir));
     app.use((req, res, next) => {
-      if (req.url === '/') {
+      if (
+        req.url === '/' ||
+        req.url.startsWith('/api/') ||
+        req.url === '/api'
+      ) {
         next();
         return;
       }
       debugLog(
         this.apiRouter.application.environment.debug,
         'log',
-        `Trying to serve static for ${(req.url || '').replace(/[\r\n]/g, ' ')}`,
+        getSuiteCoreTranslation(
+          SuiteCoreStringKey.Debug_TryingToServeStaticFor,
+          { url: (req.url || '').replace(/[\r\n]/g, ' ') },
+        ),
       );
       if (req.url.endsWith('.js')) {
         res.type('application/javascript');
@@ -372,8 +383,10 @@ export class AppRouter<
           debugLog(
             this.apiRouter.application.environment.debug,
             'error',
-            'Error serving static file:',
-            sanitizedErr,
+            getSuiteCoreTranslation(
+              SuiteCoreStringKey.Debug_ErrorServingStaticFile,
+              { error: sanitizedErr },
+            ),
           );
           handleError(err, res, sendApiMessageResponse, next);
           return;
@@ -382,12 +395,17 @@ export class AppRouter<
       });
     });
 
-    // The "catchall" handler: for any request that doesn't
-    // match one above, send back React's index.html file.
-    // app.get('*', (req, res) => {
-    //   res.sendFile(path.join(__dirname,'..', '..', '..', 'myapp-react', 'index.html'));
-    // });
     this.registerAdditionalRenderHooks(app);
+
+    // Return 404 JSON for unmatched API routes instead of rendering the SPA
+    app.use('/api', (req: Request, res: Response) => {
+      res.status(404).json({
+        message: getSuiteCoreTranslation(
+          SuiteCoreStringKey.Error_ApiRouteNotFound,
+        ),
+        path: `/api${req.url}`,
+      });
+    });
 
     app.use((req: Request, res: Response, next: NextFunction) => {
       this.renderIndex(req, res, next);

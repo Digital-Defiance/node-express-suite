@@ -70,6 +70,7 @@ const RegisterSchema = z.object({
   email: z.string(),
   timezone: z.string(),
   password: z.string().min(8).optional(),
+  mnemonic: z.string().min(1).optional(),
 });
 
 const EmailLoginChallengeSchema = z.object({
@@ -309,6 +310,18 @@ export class UserController<
               SuiteCoreStringKey.Validation_PasswordRegexErrorTemplate,
             ),
           ),
+        body('mnemonic')
+          .optional()
+          .isString()
+          .trim()
+          .matches(constants.MnemonicRegex)
+          .withMessage(
+            getSuiteCoreTranslation(
+              SuiteCoreStringKey.Validation_MnemonicRegex,
+              undefined,
+              validationLanguage,
+            ),
+          ),
       ];
     },
   })
@@ -325,7 +338,7 @@ export class UserController<
         return await requireValidatedFieldsAsync(
           req,
           RegisterSchema,
-          async ({ username, email, timezone, password }) => {
+          async ({ username, email, timezone, password, mnemonic }) => {
             if (
               !isString(username) ||
               !isString(email) ||
@@ -338,20 +351,24 @@ export class UserController<
               );
             }
 
-            const { user, mnemonic, backupCodes } =
-              await this.userService.newUser(
-                this.systemUser,
-                {
-                  username: username.trim(),
-                  email: email.trim(),
-                  timezone: timezone,
-                },
-                undefined,
-                undefined,
-                sess,
-                this.application.environment.debug,
-                password as string | undefined,
-              );
+            const {
+              user,
+              mnemonic: resultMnemonic,
+              backupCodes,
+            } = await this.userService.newUser(
+              this.systemUser,
+              {
+                username: username.trim(),
+                email: email.trim(),
+                timezone: timezone,
+              },
+              undefined,
+              undefined,
+              sess,
+              this.application.environment.debug,
+              password as string | undefined,
+              mnemonic as string | undefined,
+            );
 
             await this.userService.createAndSendEmailToken(
               user,
@@ -365,9 +382,9 @@ export class UserController<
               response: {
                 message: getSuiteCoreTranslation(
                   SuiteCoreStringKey.Registration_Success,
-                  { MNEMONIC: mnemonic },
+                  { MNEMONIC: resultMnemonic },
                 ),
-                mnemonic,
+                mnemonic: resultMnemonic,
                 backupCodes,
               },
             };
