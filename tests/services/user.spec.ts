@@ -1769,7 +1769,7 @@ describe('UserService', () => {
       ).rejects.toThrow(InvalidEmailError);
     });
 
-    it('should throw InvalidUsernameError when user not found by username', async () => {
+    it('should throw UserNotFoundError when user not found by username', async () => {
       findUserSpy.mockResolvedValue(null);
       const signature = Buffer.alloc(64, 9);
       adminMember.sign.mockReturnValue(signature);
@@ -1781,7 +1781,7 @@ describe('UserService', () => {
           undefined,
           'missing-user',
         ),
-      ).rejects.toThrow(InvalidUsernameError);
+      ).rejects.toThrow(UserNotFoundError);
     });
   });
 

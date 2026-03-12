@@ -584,7 +584,7 @@ export class UserService<
       if (email) {
         throw new InvalidEmailError(InvalidEmailErrorType.Missing);
       }
-      throw new InvalidUsernameError();
+      throw new UserNotFoundError();
     }
 
     switch (userDoc.accountStatus) {
@@ -1243,7 +1243,7 @@ export class UserService<
     if (!userDoc && email) {
       throw new InvalidEmailError(InvalidEmailErrorType.Missing);
     } else if (!userDoc) {
-      throw new InvalidUsernameError();
+      throw new UserNotFoundError();
     }
     // re-sign the time + nonce and check if the signature matches
     const adminMember = SystemUserService.getSystemUser<TID>(

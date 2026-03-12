@@ -4,7 +4,7 @@ import {
   AccountStatus,
   AccountStatusError,
   InvalidEmailError,
-  InvalidUsernameError,
+  UserNotFoundError,
   UsernameOrEmailRequiredError,
 } from '@digitaldefiance/suite-core-lib';
 import { setupI18nForTests } from '@digitaldefiance/express-suite-test-utils';
@@ -116,10 +116,10 @@ describe('UserService.findUser', () => {
     );
   });
 
-  it('throws InvalidUsernameError when user is deleted (username path)', async () => {
+  it('throws UserNotFoundError when user is deleted (username path)', async () => {
     const svc = makeService({ deletedAt: new Date() });
     await expect(svc.findUser(undefined, 'user')).rejects.toBeInstanceOf(
-      InvalidUsernameError,
+      UserNotFoundError,
     );
   });
 
