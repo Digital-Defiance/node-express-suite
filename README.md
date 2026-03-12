@@ -7,7 +7,9 @@
 
 An opinionated, secure, extensible Node.js/Express service framework built on Digital Defiance cryptography libraries, providing complete backend infrastructure for secure applications.
 
-It is an 'out of the box' solution with a specific recipe (Mongo, Express, React, Node, (MERN) stack) with ejs templating, JWT authentication, role-based access control, custom multi-language support via @digitaldefiance/i18n-lib, and a dynamic model registry system. You might either find it limiting or freeing, depending on your use case. It includes mnemonic authentication, ECIES encryption/decryption, PBKDF2 key derivation, email token workflows, and more.
+Node Express Suite forms the base of an 'out of the box' solution for websites using a specific recipe with JWT authentication, role-based access control, custom multi-language support via @digitaldefiance/i18n-lib, and a dynamic model registry system. You might either find it limiting or freeing, depending on your use case. It includes mnemonic authentication, ECIES encryption/decryption, PBKDF2 key derivation, email token workflows, and more.
+
+Originally Node Express Suite was entirely Mongo based, but BrightChain evolved and developed its own [@brightchain/node-express-suite](https://www.npmjs.com/package/@brightchain/node-express-suite) that mirrored this package and the mongo components were moved to [https://github.com/Digital-Defiance/node-express-suite-mongo](https://github.com/Digital-Defiance/node-express-suite-mongo). Now this package forms the base of that package and [BrightStack](https://github.brightchain.org)'s version of node-express-suite.
 
 Part of [Express Suite](https://github.com/Digital-Defiance/express-suite)
 
