@@ -1,3 +1,5 @@
+export * from './abstract-jwt-service';
+export * from './abstract-role-service';
 export * from './base';
 export * from './checksum';
 export * from './dummy-email-service';

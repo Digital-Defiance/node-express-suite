@@ -1,4 +1,5 @@
 export * from './document-store';
+export * from './documents';
 
 export * from './api-error-response';
 export * from './api-express-validation-error-response';
@@ -22,11 +23,14 @@ export * from './flexible-csp';
 export * from './handleable-error-options';
 export * from './jwt-consts';
 export * from './jwt-sign-response';
+export * from './jwt-service';
 export * from './lets-encrypt-config';
 export * from './network';
 export * from './openApi';
 export * from './request-user';
 export * from './required-string-keys';
+export * from './role-service';
+export * from './server-init-result';
 export * from './status-code-response';
 export * from './symmetric-encryption-results';
 export * from './token-response';
