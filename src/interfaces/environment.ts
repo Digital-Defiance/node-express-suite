@@ -10,7 +10,6 @@ import {
   SecureString,
 } from '@digitaldefiance/ecies-lib';
 import { BackupCode } from '../backup-code';
-import { IMongoEnvironment } from './environment-mongo';
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 import { ILetsEncryptConfig } from './lets-encrypt-config';
 
@@ -85,8 +84,10 @@ export interface IEnvironment<TID extends PlatformID = Buffer> {
   /**
    * MongoDB configuration.
    * Optional — omit when using a non-MongoDB database (e.g. BrightChainDb).
+   * Typed as Record<string, unknown> in the base package; consumers using
+   * the Mongo package can cast to IMongoEnvironment.
    */
-  mongo?: IMongoEnvironment;
+  mongo?: Record<string, unknown>;
   /**
    * Generic database connection URI.
    * Used by BaseApplication for storage-agnostic database connection.

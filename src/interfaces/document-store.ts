@@ -1,6 +1,7 @@
 /**
  * @fileoverview Backward-compatible re-export of IDocumentStore.
- * @deprecated Import from './mongoose-document-store' instead.
+ * @deprecated IDocumentStore has been moved to @digitaldefiance/node-express-suite-mongo.
+ * Use IDatabase from @brightchain/brightchain-lib instead.
  * @module interfaces/document-store
  */
-export * from './mongoose-document-store';
+// Mongo-specific IDocumentStore moved to @digitaldefiance/node-express-suite-mongo

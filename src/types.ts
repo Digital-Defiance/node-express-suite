@@ -4,27 +4,25 @@
  * @module types
  */
 
-import { ClientSession } from '@digitaldefiance/mongoose-types';
 import { Member, PlatformID } from '@digitaldefiance/node-ecies-lib';
 import { IRequestUserDTO } from '@digitaldefiance/suite-core-lib';
 import { NextFunction, RequestHandler, Response } from 'express';
 import { ValidationChain } from 'express-validator';
-import { BaseDocument } from './documents';
 import {
   IApiErrorResponse,
   IApiExpressValidationErrorResponse,
   IApiMessageResponse,
-  IApiMongoValidationErrorResponse,
   IStatusCodeResponse,
   OpenAPIRouteMetadata,
 } from './interfaces';
-import { ISchema } from './interfaces/schema';
 
 /**
- * Transaction callback type for withTransaction
+ * Transaction callback type for withTransaction.
+ * Session parameter is typed as `unknown` to allow both IClientSession (database-agnostic)
+ * and ClientSession (Mongoose-specific) without type conflicts.
  */
 export type TransactionCallback<T> = (
-  session: ClientSession | undefined,
+  session: unknown,
   ...args: Array<unknown>
 ) => Promise<T>;
 
@@ -67,29 +65,6 @@ declare global {
     }
   }
 }
-
-/**
- * Schema map interface
- */
-type ModelDocMap<
-  TID extends PlatformID,
-  TModelDocs extends Record<string, BaseDocument<any, TID>>,
-> = {
-  [K in keyof TModelDocs]: TModelDocs[K];
-};
-
-export type SchemaMap<
-  TID extends PlatformID,
-  TModelDocs extends Record<string, BaseDocument<any, TID>>,
-> = {
-  /**
-   * For each model name, contains the corresponding schema and model
-   */
-  [K in keyof ModelDocMap<TID, TModelDocs>]: ISchema<
-    TID,
-    ModelDocMap<TID, TModelDocs>[K]
-  >;
-};
 
 export type ApiRequestHandler<T extends ApiResponse> = (
   req: Request,
@@ -181,8 +156,7 @@ export type JsonResponse =
 
 export type ApiErrorResponse =
   | IApiErrorResponse
-  | IApiExpressValidationErrorResponse
-  | IApiMongoValidationErrorResponse;
+  | IApiExpressValidationErrorResponse;
 
 export type ApiResponse = IApiMessageResponse | ApiErrorResponse | JsonResponse;
 

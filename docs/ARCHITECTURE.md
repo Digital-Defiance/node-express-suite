@@ -13,6 +13,12 @@
 
 `@digitaldefiance/node-express-suite` is a comprehensive, opinionated Express.js framework built around security, type safety, and extensibility. The architecture follows a layered approach with clear separation of concerns.
 
+> **Package Split:** Starting with v5.0, the framework is split into two packages:
+> - `@digitaldefiance/node-express-suite` — database-agnostic core (this package)
+> - `@digitaldefiance/node-express-suite-mongo` — MongoDB/Mongoose extensions
+>
+> The core package defines interfaces (`IDatabasePlugin`, `IDatabase`) that database-specific packages implement. See [MONGO_SPLIT_MIGRATION.md](./MONGO_SPLIT_MIGRATION.md) for migration details.
+
 ## Core Concepts
 
 ### 1. Decorator-Based Controllers

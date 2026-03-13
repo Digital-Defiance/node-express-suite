@@ -9,7 +9,9 @@ An opinionated, secure, extensible Node.js/Express service framework built on Di
 
 Node Express Suite forms the base of an 'out of the box' solution for websites using a specific recipe with JWT authentication, role-based access control, custom multi-language support via @digitaldefiance/i18n-lib, and a dynamic model registry system. You might either find it limiting or freeing, depending on your use case. It includes mnemonic authentication, ECIES encryption/decryption, PBKDF2 key derivation, email token workflows, and more.
 
-Originally Node Express Suite was entirely Mongo based, but BrightChain evolved and developed its own [@brightchain/node-express-suite](https://www.npmjs.com/package/@brightchain/node-express-suite) that mirrored this package and the mongo components were moved to [https://github.com/Digital-Defiance/node-express-suite-mongo](https://github.com/Digital-Defiance/node-express-suite-mongo). Now this package forms the base of that package and [BrightStack](https://github.brightchain.org)'s version of node-express-suite.
+Originally Node Express Suite was entirely Mongo based, but BrightChain evolved and developed its own [@brightchain/node-express-suite](https://www.npmjs.com/package/@brightchain/node-express-suite) that mirrored this package and the mongo components were moved to [@digitaldefiance/node-express-suite-mongo](https://www.npmjs.com/package/@digitaldefiance/node-express-suite-mongo). Now this package is database-agnostic and forms the base for both the Mongo package and [BrightStack](https://github.brightchain.org)'s version of node-express-suite.
+
+> **Note:** Starting with v5.0, all MongoDB/Mongoose-specific code (documents, schemas, models, `MongoDatabasePlugin`, `DatabaseInitializationService`, `UserService`, `RoleService`, `ModelRegistry`, etc.) has been extracted into [`@digitaldefiance/node-express-suite-mongo`](https://www.npmjs.com/package/@digitaldefiance/node-express-suite-mongo). If your application uses MongoDB, install both packages. See [MONGO_SPLIT_MIGRATION.md](docs/MONGO_SPLIT_MIGRATION.md) for details.
 
 Part of [Express Suite](https://github.com/Digital-Defiance/express-suite)
 
@@ -92,16 +94,16 @@ Part of [Express Suite](https://github.com/Digital-Defiance/express-suite)
 - **🔑 PBKDF2 Key Derivation**: Secure password hashing with configurable profiles
 - **👥 Role-Based Access Control (RBAC)**: Flexible permission system with user roles
 - **🌍 Multi-Language i18n**: Plugin-based internationalization with 8+ languages
-- **📊 Dynamic Model Registry**: Extensible document model system
+- **🔌 Plugin-Based Database**: Database-agnostic core with pluggable backends (see `node-express-suite-mongo` for MongoDB)
 - **🔧 Runtime Configuration**: Override defaults at runtime for advanced use cases
 - **🛡️ JWT Authentication**: Secure token-based authentication
 - **📧 Email Token System**: Verification, password reset, and recovery workflows
-- **💾 MongoDB Integration**: Full database layer with Mongoose schemas
 - **🧪 Comprehensive Testing**: 100+ tests covering all major functionality
 - **🏗️ Modern Architecture**: Service container, fluent builders, plugin system
 - **⚡ Simplified Generics**: 87.5% reduction in type complexity
 - **🔄 Automatic Transactions**: Decorator-based transaction management
 - **🎨 Fluent APIs**: Validation, response, pipeline, and route builders
+- **🎯 Decorator API**: Full decorator-based controller system with automatic OpenAPI generation
 
 ## Installation
 
@@ -113,248 +115,86 @@ yarn add @digitaldefiance/node-express-suite
 
 ## Quick Start
 
-### Basic Server Setup
+### Basic Server Setup (Database-Agnostic)
 
 ```typescript
-import { Application, DatabaseInitializationService, emailServiceRegistry } from '@digitaldefiance/node-express-suite';
+import { Application, emailServiceRegistry } from '@digitaldefiance/node-express-suite';
 import { LanguageCodes } from '@digitaldefiance/i18n-lib';
 import { EmailService } from './services/email'; // Your concrete implementation
 
 // Create application instance
-const app = new Application({
-  port: 3000,
-  mongoUri: 'mongodb://localhost:27017/myapp',
-  jwtSecret: process.env.JWT_SECRET,
-  defaultLanguage: LanguageCodes.EN_US
-});
+const app = new Application(environment, apiRouterFactory);
 
 // Configure email service (required before using middleware)
 emailServiceRegistry.setService(new EmailService(app));
-
-// Initialize database with default users and roles
-const initResult = await DatabaseInitializationService.initUserDb(app);
 
 // Start server
 await app.start();
 console.log(`Server running on port ${app.environment.port}`);
 ```
 
+### With MongoDB (using the Mongo Package)
+
+```typescript
+import { Application } from '@digitaldefiance/node-express-suite';
+import {
+  MongoDatabasePlugin,
+  DatabaseInitializationService,
+  getSchemaMap,
+} from '@digitaldefiance/node-express-suite-mongo';
+
+const app = new Application(environment, apiRouterFactory);
+
+const mongoPlugin = new MongoDatabasePlugin({
+  schemaMapFactory: getSchemaMap,
+  databaseInitFunction: DatabaseInitializationService.initUserDb.bind(DatabaseInitializationService),
+  initResultHashFunction: DatabaseInitializationService.serverInitResultHash.bind(DatabaseInitializationService),
+  environment,
+  constants,
+});
+
+app.useDatabasePlugin(mongoPlugin);
+await app.start();
+```
+
 ### User Authentication
 
 ```typescript
-import { JwtService, UserService } from '@digitaldefiance/node-express-suite';
+import { JwtService } from '@digitaldefiance/node-express-suite';
+// UserService is in the mongo package if using MongoDB
+import { UserService } from '@digitaldefiance/node-express-suite-mongo';
 
-// Create services
 const jwtService = new JwtService(app);
 const userService = new UserService(app);
 
-// Sign in user
 const user = await userService.findByUsername('alice');
 const { token, roles } = await jwtService.signToken(user, app.environment.jwtSecret);
 
-// Verify token
 const tokenUser = await jwtService.verifyToken(token);
 console.log(`User ${tokenUser.userId} authenticated with roles:`, tokenUser.roles);
 ```
 
 ## Core Components
 
-### Dynamic Model Registry
+### Plugin-Based Database Architecture
 
-The package uses a dynamic model registration system for extensibility:
-
-```typescript
-import { ModelRegistry } from '@digitaldefiance/node-express-suite';
-
-// Register a custom model
-ModelRegistry.instance.register({
-  modelName: 'Organization',
-  schema: organizationSchema,
-  model: OrganizationModel,
-  collection: 'organizations',
-});
-
-// Retrieve model anywhere in your app
-const OrgModel = ModelRegistry.instance.get<IOrganizationDocument>('Organization').model;
-
-// Use the model
-const org = await OrgModel.findById(orgId);
-```
-
-### Built-in Models
-
-The framework includes these pre-registered models:
-
-- **User**: User accounts with authentication
-- **Role**: Permission roles for RBAC
-- **UserRole**: User-to-role associations
-- **EmailToken**: Email verification and recovery tokens
-- **Mnemonic**: Encrypted mnemonic storage
-- **UsedDirectLoginToken**: One-time login token tracking
-
-### Extending Models and Schemas
-
-All model functions support generic type parameters for custom model names and collections:
+The framework uses a plugin-based architecture that separates database concerns from the core application. Any database backend can be used by implementing the `IDatabasePlugin` interface.
 
 ```typescript
-import { UserModel, EmailTokenModel } from '@digitaldefiance/node-express-suite';
+import { Application } from '@digitaldefiance/node-express-suite';
 
-// Use with default enums
-const defaultUserModel = UserModel(connection);
-
-// Use with custom model names and collections
-const customUserModel = UserModel(
-  connection,
-  'CustomUser',
-  'custom_users'
-);
+// Database-agnostic — plug in any backend
+const app = new Application(environment, apiRouterFactory);
+app.useDatabasePlugin(myDatabasePlugin);
+await app.start();
 ```
 
-#### Extending Schemas
-
-Clone and extend base schemas with additional fields:
-
-```typescript
-import { EmailTokenSchema } from '@digitaldefiance/node-express-suite';
-import { Schema } from 'mongoose';
-
-// Clone and extend the schema
-const ExtendedEmailTokenSchema = EmailTokenSchema.clone();
-ExtendedEmailTokenSchema.add({
-  customField: { type: String, required: false },
-  metadata: { type: Schema.Types.Mixed, required: false },
-});
-
-// Use with custom model
-const MyEmailTokenModel = connection.model(
-  'ExtendedEmailToken',
-  ExtendedEmailTokenSchema,
-  'extended_email_tokens'
-);
-```
-
-#### Extending Model Functions
-
-Create custom model functions that wrap extended schemas:
-
-```typescript
-import { IEmailTokenDocument } from '@digitaldefiance/node-express-suite';
-import { Connection, Model } from 'mongoose';
-
-// Extend the document interface
-interface IExtendedEmailTokenDocument extends IEmailTokenDocument {
-  customField?: string;
-  metadata?: any;
-}
-
-// Create extended schema (as shown above)
-const ExtendedEmailTokenSchema = EmailTokenSchema.clone();
-ExtendedEmailTokenSchema.add({
-  customField: { type: String },
-  metadata: { type: Schema.Types.Mixed },
-});
-
-// Create custom model function
-export function ExtendedEmailTokenModel<
-  TModelName extends string = 'ExtendedEmailToken',
-  TCollection extends string = 'extended_email_tokens'
->(
-  connection: Connection,
-  modelName: TModelName = 'ExtendedEmailToken' as TModelName,
-  collection: TCollection = 'extended_email_tokens' as TCollection,
-): Model<IExtendedEmailTokenDocument> {
-  return connection.model<IExtendedEmailTokenDocument>(
-    modelName,
-    ExtendedEmailTokenSchema,
-    collection,
-  );
-}
-
-// Use the extended model
-const model = ExtendedEmailTokenModel(connection);
-const token = await model.create({
-  userId,
-  type: EmailTokenType.AccountVerification,
-  token: 'abc123',
-  email: 'user@example.com',
-  customField: 'custom value',
-  metadata: { source: 'api' },
-});
-```
-
-#### Custom Enumerations
-
-Extend the base enumerations for your application:
-
-```typescript
-import { BaseModelName, SchemaCollection } from '@digitaldefiance/node-express-suite';
-
-// Extend base enums
-enum MyModelName {
-  User = BaseModelName.User,
-  Role = BaseModelName.Role,
-  Organization = 'Organization',
-  Project = 'Project',
-}
-
-enum MyCollection {
-  User = SchemaCollection.User,
-  Role = SchemaCollection.Role,
-  Organization = 'organizations',
-  Project = 'projects',
-}
-
-// Use with model functions
-const orgModel = UserModel<MyModelName, MyCollection>(
-  connection,
-  MyModelName.Organization,
-  MyCollection.Organization
-);
-```
-
-#### Complete Extension Example
-
-Combining schemas, documents, and model functions:
-
-```typescript
-import { IUserDocument, UserSchema } from '@digitaldefiance/node-express-suite';
-import { Connection, Model, Schema } from 'mongoose';
-
-// 1. Extend document interface
-interface IOrganizationUserDocument extends IUserDocument {
-  organizationId: string;
-  department?: string;
-}
-
-// 2. Extend schema
-const OrganizationUserSchema = UserSchema.clone();
-OrganizationUserSchema.add({
-  organizationId: { type: String, required: true },
-  department: { type: String },
-});
-
-// 3. Create model function
-export function OrganizationUserModel(
-  connection: Connection,
-): Model<IOrganizationUserDocument> {
-  return connection.model<IOrganizationUserDocument>(
-    'OrganizationUser',
-    OrganizationUserSchema,
-    'organization_users',
-  );
-}
-
-// 4. Use in application
-const model = OrganizationUserModel(connection);
-const user = await model.create({
-  username: 'alice',
-  email: 'alice@example.com',
-  organizationId: 'org-123',
-  department: 'Engineering',
-});
-```
+For MongoDB/Mongoose support, install `@digitaldefiance/node-express-suite-mongo` which provides `MongoDatabasePlugin`, `ModelRegistry`, documents, schemas, models, and all Mongoose-specific services. See that package's README for details on model registration, schema extension, and custom enumerations.
 
 ### Services
+
+> **Note:** `UserService`, `RoleService`, `BackupCodeService`, and `DatabaseInitializationService` have moved to
+> `@digitaldefiance/node-express-suite-mongo`. The services below remain in this package.
 
 #### ECIESService
 
@@ -407,10 +247,10 @@ const unwrapped = await keyWrapping.unwrapKey(
 
 #### RoleService
 
-Role and permission management:
+> Available in `@digitaldefiance/node-express-suite-mongo`.
 
 ```typescript
-import { RoleService } from '@digitaldefiance/node-express-suite';
+import { RoleService } from '@digitaldefiance/node-express-suite-mongo';
 
 const roleService = new RoleService(app);
 
@@ -430,10 +270,10 @@ const adminRole = await roleService.createRole({
 
 #### BackupCodeService
 
-Backup code generation and validation:
+> Available in `@digitaldefiance/node-express-suite-mongo`.
 
 ```typescript
-import { BackupCodeService } from '@digitaldefiance/node-express-suite';
+import { BackupCodeService } from '@digitaldefiance/node-express-suite-mongo';
 
 const backupCodeService = new BackupCodeService(app);
 
@@ -449,10 +289,10 @@ await backupCodeService.useBackupCode(userId, userCode);
 
 ### Database Initialization
 
-Initialize database with default users and roles:
+> Available in `@digitaldefiance/node-express-suite-mongo`.
 
 ```typescript
-import { DatabaseInitializationService } from '@digitaldefiance/node-express-suite';
+import { DatabaseInitializationService } from '@digitaldefiance/node-express-suite-mongo';
 
 // Initialize with default admin, member, and system users
 const result = await DatabaseInitializationService.initUserDb(app);
@@ -750,14 +590,7 @@ Let's Encrypt mode and the dev-certificate HTTPS mode (`HTTPS_DEV_CERT_ROOT`) ar
 
 ### Security
 
-1. **Always use environment variables** for sensitive configuration:
-
-   ```typescript
-   const app = new Application({
-     jwtSecret: process.env.JWT_SECRET,
-     mongoUri: process.env.MONGO_URI,
-   });
-   ```
+1. **Always use environment variables** for sensitive configuration (JWT secrets, database URIs, API keys)
 
 2. **Validate all user input** before processing:
 
@@ -800,83 +633,66 @@ Let's Encrypt mode and the dev-certificate HTTPS mode (`HTTPS_DEV_CERT_ROOT`) ar
    }
    ```
 
-3. **Use database indexes** for common queries:
-
-   ```typescript
-   userSchema.index({ email: 1 }, { unique: true });
-   userSchema.index({ username: 1 }, { unique: true });
-   ```
+3. **Use database indexes** for common queries (see your database plugin's documentation for index configuration)
 
 ## API Reference
 
 ### Application
 
-- `new Application(config)` - Create application instance
-- `start()` - Start the Express server
-- `stop()` - Stop the server gracefully
-- `environment` - Access configuration
+- `new Application(environment, apiRouterFactory, ...)` — Create application instance
+- `useDatabasePlugin(plugin)` — Register a database plugin
+- `start()` — Start the Express server
+- `stop()` — Stop the server gracefully
+- `environment` — Access configuration
 
-### Services
+### Services (this package)
 
-- `ECIESService` - Encryption and key management
-- `KeyWrappingService` - Secure key storage
-- `JwtService` - JWT token operations
-- `RoleService` - Role and permission management
-- `UserService` - User account operations
-- `BackupCodeService` - Backup code management
-- `MnemonicService` - Mnemonic storage and retrieval
-- `SystemUserService` - System user operations
-- `DatabaseInitializationService` - Database initialization with default users and roles
-- `DirectLoginTokenService` - One-time login token management
-- `RequestUserService` - Extract user from request context
-- `ChecksumService` - CRC checksum operations
-- `SymmetricService` - Symmetric encryption operations
-- `XorService` - XOR cipher operations
-- `FecService` - Forward error correction
-- `DummyEmailService` - Test email service implementation
+- `ECIESService` — Encryption and key management
+- `KeyWrappingService` — Secure key storage
+- `JwtService` — JWT token operations
+- `ChecksumService` — CRC checksum operations
+- `SymmetricService` — Symmetric encryption operations
+- `XorService` — XOR cipher operations
+- `FecService` — Forward error correction
+- `DummyEmailService` — Test email service implementation
+
+### Services (mongo package)
+
+These services are available in `@digitaldefiance/node-express-suite-mongo`:
+
+- `UserService` — User account operations
+- `RoleService` — Role and permission management
+- `BackupCodeService` — Backup code management
+- `DatabaseInitializationService` — Database initialization with default users and roles
+- `MnemonicService` — Mnemonic storage and retrieval
+- `DirectLoginTokenService` — One-time login token management
+- `RequestUserService` — Extract user from request context
+- `MongoBaseService` — Mongoose-specific service base class
+- `MongoAuthenticationProvider` — Mongoose-backed authentication
 
 ### Utilities
 
-- `ModelRegistry` - Dynamic model registration
-- `debugLog()` - Conditional logging utility
-- `withTransaction()` - MongoDB transaction wrapper
+- `debugLog()` — Conditional logging utility
+- `withTransaction()` — Database-agnostic transaction wrapper (IDatabase overload)
 
 ## Testing
 
 ### Testing Approach
 
-The node-express-suite package uses comprehensive testing with 604 tests covering all services, middleware, controllers, and database operations.
+The node-express-suite package uses comprehensive testing covering all services, middleware, controllers, and core operations.
 
-**Test Framework**: Jest with TypeScript support  
-**Property-Based Testing**: fast-check for validation properties  
-**Coverage**: 57.86% overall, 100% on critical paths  
-**Database**: MongoDB Memory Server for isolated testing
-
-### Test Structure
-
-```
-tests/
-  ├── unit/              # Unit tests for services and utilities
-  ├── integration/       # Integration tests for multi-service flows
-  ├── e2e/               # End-to-end API tests
-  ├── middleware/        # Middleware tests
-  └── fixtures/          # Test data and mocks
-```
+**Test Framework**: Jest with TypeScript support
+**Property-Based Testing**: fast-check for validation properties
+**Coverage**: 57.86% overall, 100% on critical paths
 
 ### Running Tests
 
 ```bash
 # Run all tests
-npm test
+yarn nx test digitaldefiance-node-express-suite
 
 # Run with coverage
-npm test -- --coverage
-
-# Run specific test suite
-npm test -- user-service.spec.ts
-
-# Run in watch mode
-npm test -- --watch
+yarn nx test digitaldefiance-node-express-suite --coverage
 ```
 
 ### Test Patterns
@@ -884,33 +700,27 @@ npm test -- --watch
 #### Testing Services
 
 ```typescript
-import { UserService, Application } from '@digitaldefiance/node-express-suite';
+import { Application, JwtService } from '@digitaldefiance/node-express-suite';
 
-describe('UserService', () => {
+describe('JwtService', () => {
   let app: Application;
-  let userService: UserService;
+  let jwtService: JwtService;
 
   beforeAll(async () => {
-    app = new Application({
-      mongoUri: 'mongodb://localhost:27017/test',
-      jwtSecret: 'test-secret'
-    });
+    // Set up your application with appropriate database plugin
+    app = new Application(environment, apiRouterFactory);
     await app.start();
-    userService = new UserService(app);
+    jwtService = new JwtService(app);
   });
 
   afterAll(async () => {
     await app.stop();
   });
 
-  it('should create user', async () => {
-    const user = await userService.create({
-      username: 'alice',
-      email: 'alice@example.com',
-      password: 'SecurePass123!'
-    });
-    
-    expect(user.username).toBe('alice');
+  it('should sign and verify token', async () => {
+    const { token } = await jwtService.signToken(user, app.environment.jwtSecret);
+    const verified = await jwtService.verifyToken(token);
+    expect(verified.userId).toBeDefined();
   });
 });
 ```
@@ -941,66 +751,28 @@ describe('Auth Middleware', () => {
 #### Testing Controllers
 
 ```typescript
-import { UserController } from '@digitaldefiance/node-express-suite';
+import { DecoratorBaseController } from '@digitaldefiance/node-express-suite';
 
-describe('UserController', () => {
-  it('should register new user', async () => {
-    const controller = new UserController(app);
-    const req = {
-      body: {
-        username: 'alice',
-        email: 'alice@example.com',
-        password: 'SecurePass123!'
-      }
-    } as Request;
-    
-    const result = await controller.register(req, res, next);
-    
-    expect(result.statusCode).toBe(201);
-    expect(result.response.data.user).toBeDefined();
+describe('MyController', () => {
+  it('should handle requests', async () => {
+    // Test your controller endpoints
+    const req = { body: { /* ... */ } } as Request;
+    const result = await controller.handleRequest(req, res, next);
+    expect(result.statusCode).toBe(200);
   });
 });
 ```
 
-#### Testing Database Operations
-
-```typescript
-import { connectMemoryDB, disconnectMemoryDB, clearMemoryDB } from '@digitaldefiance/express-suite-test-utils';
-import { UserModel } from '@digitaldefiance/node-express-suite';
-
-describe('User Model', () => {
-  beforeAll(async () => {
-    await connectMemoryDB();
-  });
-
-  afterAll(async () => {
-    await disconnectMemoryDB();
-  });
-
-  afterEach(async () => {
-    await clearMemoryDB();
-  });
-
-  it('should validate user schema', async () => {
-    const User = UserModel(connection);
-    const user = new User({
-      username: 'alice',
-      email: 'alice@example.com'
-    });
-    
-    await expect(user.validate()).resolves.not.toThrow();
-  });
-});
-```
+> For testing Mongo-specific controllers (e.g., `UserController`), database operations, and model validation,
+> see the testing documentation in `@digitaldefiance/node-express-suite-mongo`.
 
 ### Testing Best Practices
 
-1. **Use MongoDB Memory Server** for isolated database testing
-2. **Test with transactions** to ensure data consistency
-3. **Mock external services** like email providers
-4. **Test error conditions** and edge cases
-5. **Test middleware** in isolation and integration
-6. **Test authentication** and authorization flows
+1. **Mock external services** like email providers
+2. **Test error conditions** and edge cases
+3. **Test middleware** in isolation and integration
+4. **Test authentication** and authorization flows
+5. **Use property-based testing** for validation logic
 
 ### Cross-Package Testing
 
@@ -1009,21 +781,15 @@ Testing integration with other Express Suite packages:
 ```typescript
 import { Application } from '@digitaldefiance/node-express-suite';
 import { ECIESService } from '@digitaldefiance/node-ecies-lib';
-import { IBackendUser } from '@digitaldefiance/suite-core-lib';
 
 describe('Cross-Package Integration', () => {
-  it('should integrate ECIES with user management', async () => {
-    const app = new Application({ /* config */ });
+  it('should integrate ECIES with application', async () => {
+    const app = new Application(environment, apiRouterFactory);
     const ecies = new ECIESService();
     
-    // Create user with encrypted data
-    const user = await app.services.get(ServiceKeys.USER).create({
-      username: 'alice',
-      email: 'alice@example.com',
-      // ... encrypted fields
-    });
-    
-    expect(user).toBeDefined();
+    // Test encryption/decryption within the application context
+    const mnemonic = ecies.generateNewMnemonic();
+    expect(mnemonic).toBeDefined();
   });
 });
 ```
@@ -1043,7 +809,7 @@ The decorator API provides a declarative, type-safe approach to building Express
 | Validation | `@ValidateBody`, `@ValidateParams`, `@ValidateQuery` | Validate request data with Zod or express-validator |
 | Response | `@Returns`, `@ResponseDoc`, `@RawJson`, `@Paginated` | Document response types for OpenAPI |
 | Middleware | `@UseMiddleware`, `@CacheResponse`, `@RateLimit` | Attach middleware to routes |
-| Transaction | `@Transactional` | Wrap handlers in MongoDB transactions |
+| Transaction | `@Transactional` | Wrap handler in a database transaction |
 | OpenAPI | `@ApiOperation`, `@ApiTags`, `@ApiSummary`, `@ApiDescription`, `@Deprecated`, `@ApiOperationId`, `@ApiExample` | Add OpenAPI documentation |
 | OpenAPI Params | `@ApiParam`, `@ApiQuery`, `@ApiHeader`, `@ApiRequestBody` | Document parameters with full OpenAPI metadata |
 | Lifecycle | `@OnSuccess`, `@OnError`, `@Before`, `@After` | Hook into request lifecycle events |
@@ -1376,9 +1142,6 @@ async bulkCreate() {}
 ```
 
 ### OpenAPI Operation Decorators
-
-```typescript
-// Full operation metadata
 @ApiOperation({
   summary: 'Get user by ID',
   description: 'Retrieves a user by their unique identifier',
@@ -1738,14 +1501,13 @@ For detailed migration instructions, see [docs/DECORATOR_MIGRATION.md](./docs/DE
 
 ### Quick Links
 
-- **[📚 Documentation Index](./docs/INDEX.md)** - Complete documentation index
-- **[🏗️ Architecture](./docs/ARCHITECTURE.md)** - System design and architecture
-- **[🎮 Controllers](./docs/CONTROLLERS.md)** - Controller system and decorators
-- **[⚙️ Services](./docs/SERVICES.md)** - Business logic and service container
-- **[📊 Models](./docs/MODELS.md)** - Data models and registry
-- **[🔌 Middleware](./docs/MIDDLEWARE.md)** - Request pipeline
-- **[💾 Transactions](./docs/TRANSACTIONS.md)** - Transaction management
-- **[🔧 Plugins](./docs/PLUGINS.md)** - Plugin system
+- **[📚 Documentation Index](./docs/INDEX.md)** — Complete documentation index
+- **[🏗️ Architecture](./docs/ARCHITECTURE.md)** — System design and architecture
+- **[🎮 Controllers](./docs/CONTROLLERS.md)** — Controller system and decorators
+- **[⚙️ Services](./docs/SERVICES.md)** — Business logic and service container
+- **[📊 Models](./docs/MODELS.md)** — Database plugin interface
+- **[🔌 Middleware](./docs/MIDDLEWARE.md)** — Request pipeline
+- **[� Mongo Split Migration](./docs/MONGO_SPLIT_MIGRATION.md)** — Migrating to the two-package architecture
 
 See the [full documentation index](./docs/INDEX.md) for all available documentation.
 
@@ -1755,10 +1517,11 @@ MIT © Digital Defiance
 
 ## Related Packages
 
-- `@digitaldefiance/ecies-lib` - Core ECIES encryption library
-- `@digitaldefiance/node-ecies-lib` - Node.js ECIES implementation
-- `@digitaldefiance/i18n-lib` - Internationalization framework
-- `@digitaldefiance/suite-core-lib` - Core user management primitives
+- `@digitaldefiance/node-express-suite-mongo` — MongoDB/Mongoose plugin for this package
+- `@digitaldefiance/ecies-lib` — Core ECIES encryption library
+- `@digitaldefiance/node-ecies-lib` — Node.js ECIES implementation
+- `@digitaldefiance/i18n-lib` — Internationalization framework
+- `@digitaldefiance/suite-core-lib` — Core user management primitives
 
 ## Contributing
 
@@ -1783,9 +1546,9 @@ BaseApplication<TID>          ← Database-agnostic base (accepts IDatabase)
         └── useDatabasePlugin()  ← Plug in any database backend
 
 IDatabasePlugin<TID>          ← Plugin interface for database backends
-  └── MongoDatabasePlugin     ← Mongoose/MongoDB implementation
+  └── MongoDatabasePlugin     ← Mongoose/MongoDB implementation (in node-express-suite-mongo)
 
-MongoApplicationConcrete      ← Ready-to-use concrete class for testing/dev
+MongoApplicationConcrete      ← Ready-to-use concrete class (in node-express-suite-mongo)
 ```
 
 ### Core Classes
@@ -1794,7 +1557,7 @@ MongoApplicationConcrete      ← Ready-to-use concrete class for testing/dev
 |-------|---------|
 | `BaseApplication<TID>` | Database-agnostic base. Accepts an `IDatabase` instance and optional lifecycle hooks. Manages `PluginManager`, `ServiceContainer`, and environment. |
 | `Application<TID>` | Extends `BaseApplication` with Express HTTP/HTTPS server, routing, CSP/Helmet config, and middleware. Database-agnostic — database backends are provided via `IDatabasePlugin`. |
-| `MongoApplicationConcrete<TID>` | Concrete `Application` subclass for testing/development. Wires up `MongoDatabasePlugin` with default configuration, schema maps, and a dummy email service. Replaces the old concrete class. |
+| `MongoApplicationConcrete<TID>` | Concrete `Application` subclass for testing/development (in `node-express-suite-mongo`). Wires up `MongoDatabasePlugin` with default configuration, schema maps, and a dummy email service. |
 
 ### IDatabasePlugin Interface
 
@@ -1818,10 +1581,12 @@ interface IDatabasePlugin<TID> extends IApplicationPlugin<TID> {
 
 ### MongoDatabasePlugin
 
+> Available in `@digitaldefiance/node-express-suite-mongo`.
+
 `MongoDatabasePlugin` implements `IDatabasePlugin` for MongoDB/Mongoose:
 
 ```typescript
-import { MongoDatabasePlugin } from '@digitaldefiance/node-express-suite';
+import { MongoDatabasePlugin } from '@digitaldefiance/node-express-suite-mongo';
 
 const mongoPlugin = new MongoDatabasePlugin({
   schemaMapFactory: getSchemaMap,
@@ -1861,6 +1626,9 @@ The `database` parameter is optional. When using a database plugin, the plugin's
 Use `useDatabasePlugin()` to register a database plugin with the application:
 
 ```typescript
+import { Application } from '@digitaldefiance/node-express-suite';
+import { MongoDatabasePlugin } from '@digitaldefiance/node-express-suite-mongo';
+
 const app = new Application(environment, apiRouterFactory);
 app.useDatabasePlugin(mongoPlugin);
 await app.start();
@@ -1955,7 +1723,8 @@ await app.start();
 
 ```typescript
 // New: Application is database-agnostic, MongoDatabasePlugin provides Mongo support
-import { MongoApplicationConcrete } from '@digitaldefiance/node-express-suite';
+import { Application } from '@digitaldefiance/node-express-suite';
+import { MongoApplicationConcrete } from '@digitaldefiance/node-express-suite-mongo';
 
 // For testing/development (drop-in replacement for the old concrete class):
 const app = new MongoApplicationConcrete(environment);
@@ -1965,7 +1734,12 @@ await app.start();
 Or for custom wiring:
 
 ```typescript
-import { Application, MongoDatabasePlugin } from '@digitaldefiance/node-express-suite';
+import { Application } from '@digitaldefiance/node-express-suite';
+import {
+  MongoDatabasePlugin,
+  DatabaseInitializationService,
+  getSchemaMap,
+} from '@digitaldefiance/node-express-suite-mongo';
 
 const app = new Application(environment, apiRouterFactory);
 
@@ -1985,14 +1759,14 @@ await app.start();
 
 | Old Name | New Name | Notes |
 |----------|----------|-------|
-| Old concrete class | `MongoApplicationConcrete` | Drop-in replacement for testing/dev |
+| Old concrete class | `MongoApplicationConcrete` (in `node-express-suite-mongo`) | Drop-in replacement for testing/dev |
 | Old Mongo base class | *(removed)* | Functionality moved to `BaseApplication` + `MongoDatabasePlugin` |
 | Old base file | `base-application.ts` | File renamed |
 | Old concrete file | `mongo-application-concrete.ts` | File renamed |
 
 ### Migration Checklist
 
-- [ ] Replace the old concrete class with `MongoApplicationConcrete`
+- [ ] Replace the old concrete class with `MongoApplicationConcrete` (from `node-express-suite-mongo`)
 - [ ] Replace any old Mongo base subclasses with `Application` + `useDatabasePlugin()`
 - [ ] Update imports to use `base-application` (renamed from old base file)
 - [ ] Update imports to use `mongo-application-concrete` (renamed from old concrete file)
@@ -2011,7 +1785,6 @@ await app.start();
 ```typescript
 // Centralized dependency injection
 const jwtService = app.services.get(ServiceKeys.JWT);
-const userService = app.services.get(ServiceKeys.USER);
 ```
 
 #### Simplified Generics
@@ -2111,16 +1884,12 @@ class UserController<TConfig extends ControllerConfig, TLanguage>
 
 ```typescript
 const jwtService = new JwtService(app);
-const userService = new UserService(app);
-const roleService = new RoleService(app);
 ```
 
 **After (v2.0):**
 
 ```typescript
 const jwtService = app.services.get(ServiceKeys.JWT);
-const userService = app.services.get(ServiceKeys.USER);
-const roleService = app.services.get(ServiceKeys.ROLE);
 ```
 
 **Migration:**
@@ -2128,6 +1897,7 @@ const roleService = app.services.get(ServiceKeys.ROLE);
 - Replace direct service instantiation with container access
 - Services are now singletons managed by the container
 - Import ServiceKeys enum for type-safe service access
+- Note: `UserService`, `RoleService`, and other Mongo-specific services are now in `@digitaldefiance/node-express-suite-mongo`
 
 ### Recommended Migrations (Non-Breaking)
 
@@ -2280,7 +2050,6 @@ yarn add @digitaldefiance/node-express-suite@^2.0.0
 ```typescript
 const app = new Application<MyTypes, MyIds, MyResults, MyModels, MyDoc, MyEnv, MyConst, MyRouter>({
   port: 3000,
-  mongoUri: process.env.MONGO_URI,
   jwtSecret: process.env.JWT_SECRET
 });
 ```
@@ -2288,11 +2057,9 @@ const app = new Application<MyTypes, MyIds, MyResults, MyModels, MyDoc, MyEnv, M
 **After:**
 
 ```typescript
-const app = new Application({
-  port: 3000,
-  mongoUri: process.env.MONGO_URI,
-  jwtSecret: process.env.JWT_SECRET
-});
+const app = new Application(environment, apiRouterFactory);
+// If using MongoDB, register the plugin from node-express-suite-mongo:
+// app.useDatabasePlugin(mongoPlugin);
 ```
 
 #### Step 3: Update Service Access
@@ -2304,12 +2071,10 @@ Find and replace service instantiation:
 new JwtService(app)
 # Replace with
 app.services.get(ServiceKeys.JWT)
-
-# Find
-new UserService(app)
-# Replace with
-app.services.get(ServiceKeys.USER)
 ```
+
+> Note: `UserService`, `RoleService`, and other Mongo-specific services are now in
+> `@digitaldefiance/node-express-suite-mongo`. Update those imports accordingly.
 
 #### Step 4: Migrate Controllers (Gradual)
 
@@ -2324,13 +2089,13 @@ Start with high-traffic endpoints:
 
 ```bash
 # Run full test suite
-npm test
+yarn nx test digitaldefiance-node-express-suite
 
-# Run specific controller tests
-npm test -- user-controller.spec.ts
+# Run specific test suites
+yarn nx test digitaldefiance-node-express-suite --testPathPatterns="jwt"
 
 # Check for deprecation warnings
-DEBUG=* npm start
+DEBUG=* yarn start
 ```
 
 ### Migration Checklist
@@ -2386,17 +2151,16 @@ The following v1.x patterns still work in v2.0:
 
 ### Getting Help
 
-- **Documentation**: See REFACTOR_INDEX.md for complete refactor docs
-- **Examples**: See REFACTOR_EXAMPLES.md for code examples
+- **Documentation**: See [docs/INDEX.md](docs/INDEX.md) for the complete documentation index
+- **Migration**: See [docs/MONGO_SPLIT_MIGRATION.md](docs/MONGO_SPLIT_MIGRATION.md) for the package split migration
 - **Issues**: Report bugs at GitHub Issues
 - **Support**: Email <support@digitaldefiance.org>
 
 ### Additional Resources
 
-- [Complete Refactor Summary](REFACTOR_COMPLETE_SUMMARY.md)
-- [Quick Start Guide](REFACTOR_QUICKSTART.md)
-- [Validation Examples](VALIDATION_BUILDER_EXAMPLES.md)
-- [Architecture Plan](ARCHITECTURE_REFACTOR_PLAN.md)
+- [Mongo Split Migration](docs/MONGO_SPLIT_MIGRATION.md)
+- [Decorator Migration](docs/DECORATOR_MIGRATION.md)
+- [Architecture Overview](docs/ARCHITECTURE.md)
 
 ---
 
@@ -2674,7 +2438,7 @@ This release introduces a complete decorator-based API for defining controllers,
 - `@RateLimit(options)` - Add rate limiting middleware (auto-adds 429 response)
 
 *Transaction Decorator:*
-- `@Transactional(options?)` - Wrap handler in MongoDB transaction with optional timeout
+- `@Transactional(options?)` - Wrap handler in a database transaction with optional timeout
 
 *OpenAPI Operation Decorators:*
 - `@ApiOperation(metadata)` - Set full OpenAPI operation metadata
@@ -3110,7 +2874,7 @@ This release introduces a complete decorator-based API for defining controllers,
 ### Version 2.1.24
 
 - Provide mocks/fixtures for use in testing
-- Provide concrete/runnable MongoApplicationConcrete class
+- Provide concrete/runnable MongoApplicationConcrete class (now in `node-express-suite-mongo`)
 - Export DummyEmailService for testing
 - Further streamline Application generics
 

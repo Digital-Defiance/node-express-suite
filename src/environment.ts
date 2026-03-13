@@ -23,7 +23,6 @@ import { setGlobalActiveContextAdminTimezoneFromProcessArgvOrEnv } from './get-t
 import { IConstants } from './interfaces/constants';
 import { IEnvironment } from './interfaces/environment';
 import { ILetsEncryptConfig } from './interfaces/lets-encrypt-config';
-import { IMongoEnvironment } from './interfaces/environment-mongo';
 import type { EnvironmentVariables } from './types/environment-variables';
 import {
   DEBUG_TYPE,
@@ -672,8 +671,9 @@ export class Environment<
   /**
    * The MongoDB configuration (primarily for transactions).
    * Returns the mongo config object (uri may be undefined when not using MongoDB).
+   * Cast to IMongoEnvironment from the Mongo package for typed access.
    */
-  public get mongo(): IMongoEnvironment {
+  public get mongo(): Record<string, unknown> {
     return this._environment.mongo!;
   }
 
@@ -681,16 +681,17 @@ export class Environment<
    * Returns the MongoDB config, throwing a clear error if MONGO_URI is not set.
    * Use this in Mongoose-specific code paths to get a clear error rather than
    * a silent undefined URI.
+   * Cast to IMongoEnvironment from the Mongo package for typed access.
    */
-  public get requireMongo(): IMongoEnvironment & { uri: string } {
+  public get requireMongo(): Record<string, unknown> & { uri: string } {
     const m = this._environment.mongo;
-    if (!m?.uri) {
+    if (!m?.['uri']) {
       throw new TranslatableSuiteError(
         SuiteCoreStringKey.Admin_EnvNotSetTemplate,
         { variable: 'MONGO_URI' },
       );
     }
-    return m as IMongoEnvironment & { uri: string };
+    return m as Record<string, unknown> & { uri: string };
   }
 
   /**

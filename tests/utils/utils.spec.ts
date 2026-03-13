@@ -1,4 +1,3 @@
-import { Types } from '@digitaldefiance/mongoose-types';
 import { z } from 'zod';
 import { LengthEncodingType } from '../../src/enumerations/length-encoding-type';
 import {
@@ -13,7 +12,6 @@ import {
   getLengthForLengthType,
   getValueAtPath,
   hexToUint8Array,
-  isValidStringObjectId,
   lengthEncodeData,
   mapZodIssuesToValidationErrors,
   omit,
@@ -111,21 +109,6 @@ describe('utils', () => {
           expect(result[0].location).toBe('body');
         }
       }
-    });
-  });
-
-  describe('isValidStringId', () => {
-    it('should return true for valid ObjectId string', () => {
-      const id = new Types.ObjectId().toString();
-      expect(isValidStringObjectId(id)).toBe(true);
-    });
-
-    it('should return false for invalid string', () => {
-      expect(isValidStringObjectId('invalid')).toBe(false);
-    });
-
-    it('should return false for non-string', () => {
-      expect(isValidStringObjectId(123)).toBe(false);
     });
   });
 
@@ -571,11 +554,11 @@ describe('utils', () => {
     const { withTransaction } = require('../../src/utils');
 
     it('should execute callback without transaction when useTransaction is false', async () => {
-      const mockConnection = {} as any;
+      const mockDatabase = {} as any;
       const mockCallback = jest.fn().mockResolvedValue('result');
 
       const result = await withTransaction(
-        mockConnection,
+        mockDatabase,
         false,
         undefined,
         mockCallback,
@@ -592,24 +575,22 @@ describe('utils', () => {
         commitTransaction: jest.fn().mockResolvedValue(undefined),
         abortTransaction: jest.fn().mockResolvedValue(undefined),
         endSession: jest.fn().mockResolvedValue(undefined),
+        inTransaction: false,
       };
-      const mockClient = {
+      const mockDatabase = {
         startSession: jest.fn().mockReturnValue(mockSession),
-      };
-      const mockConnection = {
-        getClient: jest.fn().mockReturnValue(mockClient),
       } as any;
       const mockCallback = jest.fn().mockResolvedValue('result');
 
       const result = await withTransaction(
-        mockConnection,
+        mockDatabase,
         true,
         undefined,
         mockCallback,
         {},
       );
 
-      expect(mockClient.startSession).toHaveBeenCalled();
+      expect(mockDatabase.startSession).toHaveBeenCalled();
       expect(mockSession.startTransaction).toHaveBeenCalled();
       expect(mockSession.commitTransaction).toHaveBeenCalled();
       expect(mockSession.endSession).toHaveBeenCalled();
@@ -621,22 +602,18 @@ describe('utils', () => {
         startTransaction: jest.fn(),
         commitTransaction: jest.fn(),
         abortTransaction: jest.fn().mockResolvedValue(undefined),
-        inTransaction: jest.fn().mockReturnValue(true),
+        inTransaction: true,
         endSession: jest.fn().mockResolvedValue(undefined),
       };
-      const mockClient = {
-        startSession: jest.fn().mockResolvedValue(mockSession),
-      };
-      const mockConnection = {
-        getClient: jest.fn().mockReturnValue(mockClient),
+      const mockDatabase = {
+        startSession: jest.fn().mockReturnValue(mockSession),
       } as any;
       const mockCallback = jest.fn().mockRejectedValue(new Error('Test error'));
 
       await expect(
-        withTransaction(mockConnection, true, undefined, mockCallback, {}),
+        withTransaction(mockDatabase, true, undefined, mockCallback, {}),
       ).rejects.toThrow('Test error');
 
-      // Verify abort was called
       expect(mockSession.abortTransaction).toHaveBeenCalled();
     });
 
@@ -647,14 +624,11 @@ describe('utils', () => {
         abortTransaction: jest.fn(),
         endSession: jest.fn().mockResolvedValue(undefined),
       };
-      const mockClient = {};
-      const mockConnection = {
-        getClient: jest.fn().mockReturnValue(mockClient),
-      } as any;
+      const mockDatabase = {} as any;
       const mockCallback = jest.fn().mockResolvedValue('result');
 
       const result = await withTransaction(
-        mockConnection,
+        mockDatabase,
         false,
         mockSession as any,
         mockCallback,
@@ -668,24 +642,15 @@ describe('utils', () => {
       expect(result).toBe('result');
     });
 
-    it('should fall back to non-transactional if no client available', async () => {
-      const mockConnection = {
-        getClient: jest.fn().mockReturnValue(null),
-      } as any;
+    it('should throw if database has no startSession when useTransaction is true', async () => {
+      const mockDatabase = {} as any;
       const mockCallback = jest.fn().mockResolvedValue('result');
-      const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
 
-      const result = await withTransaction(
-        mockConnection,
-        true,
-        undefined,
-        mockCallback,
-        { debugLogEnabled: true },
-      );
-
-      expect(result).toBe('result');
-
-      consoleWarnSpy.mockRestore();
+      await expect(
+        withTransaction(mockDatabase, true, undefined, mockCallback, {
+          debugLogEnabled: true,
+        }),
+      ).rejects.toThrow();
     });
   });
 });

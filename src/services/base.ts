@@ -4,31 +4,15 @@
  * @module services/base
  */
 
-import { ClientSession } from '@digitaldefiance/mongoose-types';
 import { IApplication } from '../interfaces/application';
-import { IMongoApplication } from '../interfaces/mongo-application';
 import { TransactionCallback } from '../types';
-import {
-  TransactionOptions,
-  withTransaction as utilsWithTransaction,
-} from '../utils';
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 
 /**
- * Type guard: does the application expose a Mongoose connection?
- */
-function isMongoApplication<TID extends PlatformID>(
-  app: IApplication<TID>,
-): app is IMongoApplication<TID> {
-  return 'db' in app && (app as IMongoApplication<TID>).db !== undefined;
-}
-
-/**
  * Base service class providing common functionality for all services.
- * Uses IApplication (database-agnostic). When the application is a
- * IMongoApplication, withTransaction delegates to the Mongoose transaction
- * utilities. When only an IDatabase is available, it delegates to
- * IDatabase.withTransaction instead.
+ * Database-agnostic: when an IDatabase is available, withTransaction
+ * delegates to IDatabase.withTransaction. Otherwise, the callback
+ * runs directly without a transaction.
  *
  * @template TID - Platform ID type (defaults to Buffer)
  * @template TApplication - Application interface type (defaults to IApplication)
@@ -46,32 +30,18 @@ export class BaseService<
   /**
    * Run a callback within a database transaction.
    *
-   * When the application is a IMongoApplication (has .db), delegates to the
-   * Mongoose-aware utils.withTransaction with full retry/timeout support.
+   * When IDatabase is available (e.g. BrightChainDb, Mongoose via plugin),
+   * delegates to IDatabase.withTransaction.
    *
-   * When only IDatabase is available (e.g. BrightChainDb), delegates to
-   * IDatabase.withTransaction.
-   *
-   * When neither is available, runs the callback without a transaction.
+   * When no database is available, runs the callback directly without a
+   * transaction.
    */
   public async withTransaction<T>(
     callback: TransactionCallback<T>,
-    session?: ClientSession,
-    options?: TransactionOptions<TID>,
+    session?: unknown,
+    options?: { timeoutMs?: number },
     ...args: unknown[]
-  ) {
-    // Mongoose path — full retry/timeout support
-    if (isMongoApplication<TID>(this.application)) {
-      return await utilsWithTransaction<T, TID>(
-        this.application.db.connection,
-        this.application.environment.mongo.useTransactions,
-        session,
-        callback,
-        options ?? {},
-        ...args,
-      );
-    }
-
+  ): Promise<T> {
     // IDatabase path — delegate to IDatabase.withTransaction
     const db = this.application.database;
     if (db) {

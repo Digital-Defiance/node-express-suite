@@ -12,7 +12,7 @@ describe('Index exports', () => {
   it('should export from builders index', () => {
     const exports = require('../src/builders/index');
     expect(exports).toBeDefined();
-    expect(exports.ApplicationBuilder).toBeDefined();
+    // ApplicationBuilder moved to @digitaldefiance/node-express-suite-mongo
   });
 
   it('should export from controllers index', () => {
@@ -38,12 +38,6 @@ describe('Index exports', () => {
     expect(exports.authenticateCrypto).toBeDefined();
   });
 
-  it('should export from models index', () => {
-    const exports = require('../src/models/index');
-    expect(exports).toBeDefined();
-    expect(exports.RoleModel).toBeDefined();
-  });
-
   it('should export from pipeline index', () => {
     const exports = require('../src/pipeline/index');
     expect(exports).toBeDefined();
@@ -65,12 +59,6 @@ describe('Index exports', () => {
   it('should export from routing index', () => {
     const exports = require('../src/routing/index');
     expect(exports).toBeDefined();
-  });
-
-  it('should export from schemas index', () => {
-    const exports = require('../src/schemas/index');
-    expect(exports).toBeDefined();
-    expect(exports.RoleSchema).toBeDefined();
   });
 
   it('should export from services index', () => {
@@ -116,12 +104,6 @@ describe('Index exports', () => {
     const exports = require('../src/registry/index');
     expect(exports).toBeDefined();
     expect(exports.emailServiceRegistry).toBeDefined();
-  });
-
-  it('should export from transactions index', () => {
-    const exports = require('../src/transactions/index');
-    expect(exports).toBeDefined();
-    expect(exports.TransactionManager).toBeDefined();
   });
 
   it('should export from openapi index', () => {

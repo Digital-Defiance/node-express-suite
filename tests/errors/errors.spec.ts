@@ -3,13 +3,10 @@ import { SymmetricErrorType } from '../../src/enumerations/symmetric-error-type'
 import { ExpressValidationError } from '../../src/errors/express-validation';
 import { InvalidBackupCodeVersionError } from '../../src/errors/invalid-backup-code-version';
 import { InvalidJwtTokenError } from '../../src/errors/invalid-jwt-token';
-import { InvalidModelError } from '../../src/errors/invalid-model';
 import { InvalidNewPasswordError } from '../../src/errors/invalid-new-password';
 import { InvalidPasswordError } from '../../src/errors/invalid-password';
 import { MissingValidatedDataError } from '../../src/errors/missing-validated-data';
 import { MnemonicOrPasswordRequiredError } from '../../src/errors/mnemonic-or-password-required';
-import { ModelNotRegisteredError } from '../../src/errors/model-not-registered';
-import { MongooseValidationError } from '../../src/errors/mongoose-validation';
 import { SymmetricError } from '../../src/errors/symmetric';
 import { TokenExpiredError } from '../../src/errors/token-expired';
 
@@ -47,19 +44,6 @@ describe('Error Classes', () => {
     it('should create error', () => {
       const error = new InvalidJwtTokenError();
       expect(error).toBeDefined();
-    });
-  });
-
-  describe('InvalidModelError', () => {
-    it('should create error with model key', () => {
-      const error = new InvalidModelError('User');
-      expect(error.modelKey).toBe('User');
-      expect(error.name).toBe('InvalidModelError');
-    });
-    it('should create error with model name', () => {
-      const error = new ModelNotRegisteredError('User');
-      expect(error.modelName).toBe('User');
-      expect(error.name).toBe('ModelNotRegisteredError');
     });
   });
 
@@ -113,29 +97,6 @@ describe('Error Classes', () => {
     it('should create error', () => {
       const error = new MnemonicOrPasswordRequiredError();
       expect(error).toBeDefined();
-    });
-  });
-
-  describe('ModelNotRegisteredError', () => {
-    it('should create error with model name', () => {
-      const error = new ModelNotRegisteredError('User');
-      expect(error.name).toBe('ModelNotRegisteredError');
-    });
-  });
-
-  describe('MongooseValidationError', () => {
-    it('should create error with validation errors', () => {
-      const validationErrors = {
-        email: {
-          name: 'ValidatorError',
-          message: 'Invalid email',
-          path: 'email',
-        } as any,
-      };
-      const error = new MongooseValidationError(validationErrors);
-      expect(error.name).toBe('MongooseValidationError');
-      expect(error.statusCode).toBe(422);
-      expect(error.errors).toBe(validationErrors);
     });
   });
 

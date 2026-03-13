@@ -1,5 +1,15 @@
 # Services
 
+> **Note:** Several services have been moved to [`@digitaldefiance/node-express-suite-mongo`](https://www.npmjs.com/package/@digitaldefiance/node-express-suite-mongo):
+> `UserService`, `RoleService`, `BackupCodeService`, `MnemonicService`, `RequestUserService`,
+> `DatabaseInitializationService`, `MongoBaseService`, `MongoAuthenticationProvider`,
+> `MongooseDatabase`, `MongooseCollection`, `MongooseDocumentStore`, `MongooseSessionAdapter`,
+> `DirectLoginTokenService`, and `DbInitCache`.
+>
+> The services documented below that are marked **(moved)** are now in the mongo package.
+> Services that remain in this package: `BaseService`, `JwtService`, `ECIESService`,
+> `KeyWrappingService`, `SystemUserService`, `DummyEmailService`, `emailServiceRegistry`.
+
 ## Table of Contents
 
 - [Overview](#overview)

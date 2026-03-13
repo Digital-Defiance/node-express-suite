@@ -1,2 +1,3 @@
 export * from './base';
-export * from './user';
+// UserController moved to @digitaldefiance/node-express-suite-mongo
+export * from './openapi';

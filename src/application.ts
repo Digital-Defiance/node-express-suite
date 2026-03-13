@@ -34,13 +34,9 @@ import { BaseRouter } from './routers/base';
 import { debugLog, handleError, sendApiMessageResponse } from './utils';
 import { GreenlockManager } from './greenlock-manager';
 import { IDatabasePlugin } from './plugins/database-plugin';
-import { MongoDatabasePlugin } from './plugins/mongo-database-plugin';
 import type { IDatabase } from '@digitaldefiance/suite-core-lib';
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 import { createNoOpDatabase } from './utils/no-op-database';
-import type { BaseDocument } from './documents';
-import type mongoose from '@digitaldefiance/mongoose-types';
-import type { Model } from '@digitaldefiance/mongoose-types';
 
 type ServerWithOptionalClose = Server & { closeAllConnections?: () => void };
 
@@ -88,39 +84,21 @@ export class Application<
   }
 
   /**
-   * Get the Mongoose database instance.
-   * Delegates to the MongoDatabasePlugin when registered.
-   * This allows the Application to satisfy IMongoApplication
-   * when a MongoDatabasePlugin is in use.
+   * Get the raw database connection object from the registered plugin.
+   * For Mongo plugins this is `typeof mongoose`.
+   * Returns undefined when no database plugin is registered.
    */
-  public get db(): typeof mongoose {
-    if (
-      this._databasePlugin &&
-      this._databasePlugin instanceof MongoDatabasePlugin
-    ) {
-      return this._databasePlugin.db;
-    }
-    throw new Error(
-      'No MongoDatabasePlugin registered. The db accessor requires a MongoDatabasePlugin.',
-    );
+  public get db(): unknown | undefined {
+    return this._databasePlugin?.db;
   }
 
   /**
-   * Get a Mongoose model by name.
-   * Delegates to the MongoDatabasePlugin when registered.
+   * Get a model by name from the registered database plugin.
+   * For Mongo plugins this returns a Mongoose Model.
+   * Returns undefined when no database plugin is registered.
    */
-  public getModel<U extends BaseDocument<unknown, TID>>(
-    modelName: string,
-  ): Model<U> {
-    if (
-      this._databasePlugin &&
-      this._databasePlugin instanceof MongoDatabasePlugin
-    ) {
-      return this._databasePlugin.getModel<U>(modelName);
-    }
-    throw new Error(
-      'No MongoDatabasePlugin registered. The getModel accessor requires a MongoDatabasePlugin.',
-    );
+  public getModel<U>(modelName: string): U | undefined {
+    return this._databasePlugin?.getModel?.<U>(modelName);
   }
 
   /**

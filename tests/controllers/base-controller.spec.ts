@@ -64,8 +64,8 @@ describe('BaseController', () => {
       expect(controller['handlers']).toBeDefined();
     });
 
-    it('should initialize transaction manager', () => {
-      expect(controller['transactionManager']).toBeDefined();
+    it('should not have transaction manager (moved to MongoBaseController)', () => {
+      expect(controller['transactionManager']).toBeUndefined();
     });
   });
 

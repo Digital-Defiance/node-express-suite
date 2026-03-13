@@ -15,7 +15,6 @@ import type {
   IApiRequestUserResponse,
   IApiUserSettingsResponse,
   IApiExpressValidationErrorResponse,
-  IApiMongoValidationErrorResponse,
   IStatusCodeResponse,
 } from '../interfaces';
 import {
@@ -158,8 +157,13 @@ export const BrandedApiExpressValidationErrorResponse = createBrandedInterface<
   errorType: { type: 'string', optional: true },
 });
 
+/**
+ * Branded Mongo validation error response.
+ * The IApiMongoValidationErrorResponse interface has moved to @digitaldefiance/node-express-suite-mongo.
+ * This branded response uses a generic shape for backward compatibility.
+ */
 export const BrandedApiMongoValidationErrorResponse = createBrandedInterface<
-  Indexable<IApiMongoValidationErrorResponse>
+  Indexable<{ message: string; errors: Record<string, unknown> }>
 >('ApiMongoValidationErrorResponse', {
   message: { type: 'string', validate: isNonEmptyString },
   errors: { type: 'object', validate: isNonNullObject },

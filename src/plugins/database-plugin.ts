@@ -73,4 +73,18 @@ export interface IDatabasePlugin<
    * May return initialization results (e.g. seeded user data).
    */
   initializeDevStore?(): Promise<unknown>;
+
+  /**
+   * Optional: raw database connection object.
+   * For Mongo plugins this is `typeof mongoose`.
+   * For other backends this may be their native connection type.
+   */
+  readonly db?: unknown;
+
+  /**
+   * Optional: get a model by name.
+   * For Mongo plugins this returns a Mongoose Model.
+   * Other backends may return their own model type or undefined.
+   */
+  getModel?<U>(modelName: string): U | undefined;
 }

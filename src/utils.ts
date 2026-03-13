@@ -1,6 +1,6 @@
 /**
  * @fileoverview Utility functions for Express application including validation, transactions, error handling, and data encoding.
- * Provides comprehensive helpers for API responses, MongoDB transactions, validation, and cryptographic operations.
+ * Provides comprehensive helpers for API responses, validation, and cryptographic operations.
  * @module utils
  */
 
@@ -9,24 +9,16 @@ import type {
   IClientSession,
   IDatabase,
 } from '@digitaldefiance/suite-core-lib';
-import {
-  ClientSession,
-  Connection,
-  Types,
-} from '@digitaldefiance/mongoose-types';
 import { NextFunction, Request, Response } from 'express';
 import { Result, ValidationError } from 'express-validator';
 import { existsSync, readdirSync, writeSync } from 'fs';
 import { resolve } from 'path';
 import { z, ZodType } from 'zod';
 import { ExpressValidationError } from './errors/express-validation';
-import { MongooseValidationError } from './errors/mongoose-validation';
 import { IApiErrorResponse, IApplication } from './interfaces';
 import { IApiExpressValidationErrorResponse } from './interfaces/api-express-validation-error-response';
-import { IApiMongoValidationErrorResponse } from './interfaces/api-mongo-validation-error-response';
-import { IMongoErrors } from './interfaces/mongo-errors';
 import { RequiredStringKeys } from './interfaces/required-string-keys';
-import { ApiResponse, SendFunction, TransactionCallback } from './types';
+import { ApiResponse, SendFunction } from './types';
 
 /** Debug message type for console output */
 export type DEBUG_TYPE = 'error' | 'warn' | 'log';
@@ -226,15 +218,6 @@ export function requireValidatedFieldsOrThrow<T = void>(
 }
 
 /**
- * Checks if a value is a valid MongoDB ObjectId string.
- * @param id Value to check
- * @returns True if valid ObjectId string
- */
-export function isValidStringObjectId(id: unknown): boolean {
-  return typeof id === 'string' && Types.ObjectId.isValid(id);
-}
-
-/**
  * Default number of retry attempts for transactions.
  * Uses fewer retries in test environment for faster feedback.
  */
@@ -280,7 +263,7 @@ export function getDefaultBaseDelay(): number {
 
 /**
  * Transaction callback type for IDatabase-based transactions.
- * Accepts an IClientSession instead of a mongoose ClientSession.
+ * Accepts an IClientSession for storage-agnostic transaction support.
  */
 export type IDatabaseTransactionCallback<T> = (
   session: IClientSession | undefined,
@@ -289,7 +272,7 @@ export type IDatabaseTransactionCallback<T> = (
 
 /**
  * Wraps a callback in a transaction if necessary.
- * Overload accepting IDatabase for storage-agnostic transaction support.
+ * Uses IDatabase for storage-agnostic transaction support.
  * @param database The IDatabase instance
  * @param useTransaction Whether to use a transaction
  * @param session The IClientSession to use (or undefined to create one)
@@ -303,38 +286,6 @@ export async function withTransaction<T, TID extends PlatformID = Buffer>(
   useTransaction: boolean,
   session: IClientSession | undefined,
   callback: IDatabaseTransactionCallback<T>,
-  options?: TransactionOptions<TID>,
-  ...args: Array<unknown>
-): Promise<T>;
-
-/**
- * Wraps a callback in a transaction if necessary.
- * Legacy overload accepting a mongoose Connection.
- * @param connection The mongoose connection
- * @param useTransaction Whether to use a transaction
- * @param session The session to use
- * @param callback The callback to wrap
- * @param options Transaction options including timeout and retry attempts
- * @param args The arguments to pass to the callback
- * @returns The result of the callback
- */
-export async function withTransaction<T, TID extends PlatformID = Buffer>(
-  connection: Connection,
-  useTransaction: boolean,
-  session: ClientSession | undefined,
-  callback: TransactionCallback<T>,
-  options?: TransactionOptions<TID>,
-  ...args: Array<unknown>
-): Promise<T>;
-
-/**
- * Unified implementation for both IDatabase and mongoose Connection overloads.
- */
-export async function withTransaction<T, TID extends PlatformID = Buffer>(
-  connectionOrDatabase: Connection | IDatabase,
-  useTransaction: boolean,
-  session: ClientSession | IClientSession | undefined,
-  callback: TransactionCallback<T> | IDatabaseTransactionCallback<T>,
   options: TransactionOptions<TID> = {},
   ...args: Array<unknown>
 ): Promise<T> {
@@ -351,139 +302,17 @@ export async function withTransaction<T, TID extends PlatformID = Buffer>(
     debugLogEnabled,
   } = options;
 
-  // Detect whether we received an IDatabase or a mongoose Connection via duck-typing.
-  // mongoose Connection has 'getClient' method; IDatabase does not.
-  // Guard against undefined/null (e.g. when db.connection is not set in test mocks).
-  const isIDatabaseInstance =
-    connectionOrDatabase != null &&
-    typeof connectionOrDatabase === 'object' &&
-    'collection' in connectionOrDatabase &&
-    'startSession' in connectionOrDatabase &&
-    !('getClient' in connectionOrDatabase);
-
   if (!useTransaction) {
-    // When not using a transaction, call the callback directly with the session.
-    // In the IDatabase path, session is IClientSession; in legacy path, it's ClientSession.
-    if (isIDatabaseInstance) {
-      const dbCallback = callback as IDatabaseTransactionCallback<T>;
-      return await dbCallback(
-        session as IClientSession | undefined,
-        undefined,
-        ...args,
-      );
-    }
-    return await (callback as TransactionCallback<T>)(
-      session as ClientSession | undefined,
-      undefined,
-      ...args,
-    );
-  }
-  const needSession = useTransaction && session === undefined;
-
-  if (isIDatabaseInstance) {
-    // IDatabase path: use database.startSession() for IClientSession
-    const database = connectionOrDatabase as IDatabase;
-    const dbCallback = callback as IDatabaseTransactionCallback<T>;
-    let attempt = 0;
-    while (attempt < retryAttempts) {
-      const s = needSession
-        ? database.startSession()
-        : (session as IClientSession);
-      try {
-        if (needSession && s !== undefined) {
-          s.startTransaction();
-        }
-
-        // Race the callback against the timeout
-        const timeoutPromise = new Promise<never>((_, reject) => {
-          setTimeout(() => {
-            reject(
-              new Error(
-                engine.translateStringKey(
-                  SuiteCoreStringKey.Admin_TransactionTimeoutTemplate,
-                  { timeMs: timeoutMs },
-                ),
-              ),
-            );
-          }, timeoutMs);
-        });
-
-        const result = await Promise.race([
-          dbCallback(s, ...args),
-          timeoutPromise,
-        ]);
-
-        if (needSession && s !== undefined) await s.commitTransaction();
-        return result;
-      } catch (error: unknown) {
-        const err = error as Record<string, unknown> | null;
-        if (needSession && s !== undefined && s.inTransaction)
-          await s.abortTransaction();
-
-        const isTransientError = isTransientTransactionError(err);
-
-        if (isTransientError && attempt < retryAttempts - 1) {
-          attempt++;
-          const delay = computeRetryDelay(
-            baseDelay,
-            attempt,
-            isTestEnvironment,
-          );
-          debugLog(
-            debugLogEnabled === true,
-            'warn',
-            engine.translateStringKey(
-              SuiteCoreStringKey.Admin_TransactionFailedTransientTemplate,
-              { delayMs: delay, attempt, attempts: retryAttempts },
-              undefined,
-            ),
-          );
-          await new Promise((resolve) => setTimeout(resolve, delay));
-          continue;
-        }
-
-        throw error;
-      } finally {
-        if (needSession && s !== undefined) s.endSession();
-      }
-    }
-
-    const delay = computeRetryDelay(baseDelay, attempt, isTestEnvironment);
-    throw new TranslatableSuiteError(
-      SuiteCoreStringKey.Admin_TransactionFailedTransientTemplate,
-      { delayMs: delay, attempt, attempts: retryAttempts },
-    );
+    return await callback(session, undefined, ...args);
   }
 
-  // Legacy mongoose Connection path
-  const connection = connectionOrDatabase as Connection;
-  const legacyCallback = callback as TransactionCallback<T>;
-  const client = connection.getClient();
-  if (!client) {
-    debugLog(
-      debugLogEnabled === true,
-      'warn',
-      engine.translateStringKey(
-        SuiteCoreStringKey.Admin_NoMongoDbClientFoundFallingBack,
-      ),
-    );
-    return await legacyCallback(
-      session as ClientSession | undefined,
-      undefined,
-      ...args,
-    );
-  }
-
+  const needSession = session === undefined;
   let attempt = 0;
   while (attempt < retryAttempts) {
-    const s = needSession
-      ? await client.startSession()
-      : (session as ClientSession);
+    const s = needSession ? database.startSession() : session;
     try {
       if (needSession && s !== undefined) {
-        await s.startTransaction({
-          maxCommitTimeMS: timeoutMs,
-        });
+        s.startTransaction();
       }
 
       // Race the callback against the timeout
@@ -500,23 +329,23 @@ export async function withTransaction<T, TID extends PlatformID = Buffer>(
         }, timeoutMs);
       });
 
-      const result = await Promise.race([
-        legacyCallback(s, ...args),
-        timeoutPromise,
-      ]);
+      const result = await Promise.race([callback(s, ...args), timeoutPromise]);
 
       if (needSession && s !== undefined) await s.commitTransaction();
       return result;
     } catch (error: unknown) {
-      const err = error as Record<string, unknown> | null;
-      if (needSession && s !== undefined && s.inTransaction())
+      if (needSession && s !== undefined && s.inTransaction)
         await s.abortTransaction();
 
-      const isTransientError = isTransientTransactionError(err);
-
-      if (isTransientError && attempt < retryAttempts - 1) {
+      if (attempt < retryAttempts - 1) {
         attempt++;
-        const delay = computeRetryDelay(baseDelay, attempt, isTestEnvironment);
+        const jitter = Math.random() * 0.3;
+        const actualBaseDelay = isTestEnvironment
+          ? Math.floor(baseDelay * 0.5)
+          : baseDelay;
+        const delay = Math.floor(
+          actualBaseDelay * (1 + attempt * 0.5) * (1 + jitter),
+        );
         debugLog(
           debugLogEnabled === true,
           'warn',
@@ -532,7 +361,7 @@ export async function withTransaction<T, TID extends PlatformID = Buffer>(
 
       throw error;
     } finally {
-      if (needSession && s !== undefined) await s.endSession();
+      if (needSession && s !== undefined) s.endSession();
     }
   }
 
@@ -543,64 +372,10 @@ export async function withTransaction<T, TID extends PlatformID = Buffer>(
   const delay = Math.floor(
     actualBaseDelay * (1 + attempt * 0.5) * (1 + jitter),
   );
-
   throw new TranslatableSuiteError(
     SuiteCoreStringKey.Admin_TransactionFailedTransientTemplate,
-    {
-      delayMs: delay,
-      attempt,
-      attempts: retryAttempts,
-    },
+    { delayMs: delay, attempt, attempts: retryAttempts },
   );
-}
-
-/**
- * Checks whether an error is a transient transaction error that can be retried.
- */
-function isTransientTransactionError(
-  error: Record<string, unknown> | null,
-): boolean {
-  if (!error) return false;
-  const errorLabelSet = error['errorLabelSet'] as Set<string> | undefined;
-  const code = error['code'] as number | undefined;
-  const message = error['message'] as string | undefined;
-
-  return (
-    (errorLabelSet?.has('TransientTransactionError') ?? false) ||
-    (errorLabelSet?.has('UnknownTransactionCommitResult') ?? false) ||
-    code === 251 || // NoSuchTransaction
-    code === 112 || // WriteConflict
-    code === 11000 || // DuplicateKey
-    code === 16500 || // TransactionAborted
-    code === 244 || // TransactionTooOld
-    code === 246 || // ExceededTimeLimit
-    code === 13436 || // TransactionTooLargeForCache
-    code === 50 || // MaxTimeMSExpired
-    (message?.includes('Transaction') ?? false) ||
-    (message?.includes('aborted') ?? false) ||
-    (message?.includes('WriteConflict') ?? false) ||
-    (message?.includes('NoSuchTransaction') ?? false) ||
-    (message?.includes('TransactionTooOld') ?? false) ||
-    (message?.includes('ExceededTimeLimit') ?? false) ||
-    (message?.includes('duplicate key error') ?? false) ||
-    (message?.includes('E11000') ?? false) ||
-    (code === 11000 && (message?.includes('duplicate') ?? false))
-  );
-}
-
-/**
- * Computes the retry delay with linear backoff and jitter.
- */
-function computeRetryDelay(
-  baseDelay: number,
-  attempt: number,
-  isTestEnvironment: boolean,
-): number {
-  const jitter = Math.random() * 0.3;
-  const actualBaseDelay = isTestEnvironment
-    ? Math.floor(baseDelay * 0.5)
-    : baseDelay;
-  return Math.floor(actualBaseDelay * (1 + attempt * 0.5) * (1 + jitter));
 }
 
 /**
@@ -654,26 +429,6 @@ export function sendApiExpressValidationErrorResponse(
       message: engine.translateStringKey(SuiteCoreStringKey.ValidationError),
       errors,
     },
-    res,
-  );
-}
-
-/**
- * Sends an API response with the given status, message, and MongoDB validation errors.
- * @param status
- * @param message
- * @param errors
- * @param res
- */
-export function sendApiMongoValidationErrorResponse(
-  status: number,
-  message: string,
-  errors: IMongoErrors,
-  res: Response,
-): void {
-  sendApiMessageResponse<IApiMongoValidationErrorResponse>(
-    status,
-    { message, errors },
     res,
   );
 }
@@ -769,11 +524,7 @@ function sendErrorResponse<TStringKey extends keyof RequiredStringKeys>(
   error: unknown,
   handleableError: HandleableError,
   errorType: string,
-  send: SendFunction<
-    | IApiErrorResponse
-    | IApiExpressValidationErrorResponse
-    | IApiMongoValidationErrorResponse
-  >,
+  send: SendFunction<IApiErrorResponse | IApiExpressValidationErrorResponse>,
   res: Response,
 ): void {
   const engine = I18nEngine.getInstance();
@@ -786,17 +537,6 @@ function sendErrorResponse<TStringKey extends keyof RequiredStringKeys>(
         errors:
           error.errors instanceof Result ? error.errors.array() : error.errors,
         errorType: 'ExpressValidationError',
-      },
-      res,
-    );
-  } else if (error instanceof MongooseValidationError) {
-    // amazonq-ignore-next-line false positive
-    send(
-      handleableError.statusCode,
-      {
-        message: engine.translateStringKey('ValidationError' as TStringKey),
-        errors: error.errors,
-        errorType: 'MongooseValidationError',
       },
       res,
     );
@@ -821,11 +561,7 @@ function sendErrorResponse<TStringKey extends keyof RequiredStringKeys>(
 export function handleError(
   error: unknown,
   res: Response,
-  send: SendFunction<
-    | IApiErrorResponse
-    | IApiExpressValidationErrorResponse
-    | IApiMongoValidationErrorResponse
-  >,
+  send: SendFunction<IApiErrorResponse | IApiExpressValidationErrorResponse>,
   _next: NextFunction,
 ): void {
   if (isRecursiveError(error)) {

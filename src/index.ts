@@ -2,7 +2,6 @@ import 'reflect-metadata';
 
 export * from './application';
 export * from './base-application';
-export * from './mongo-application-concrete';
 export * from './backup-code';
 export * from './builders';
 export * from './constants';
@@ -11,7 +10,6 @@ export * from './controllers';
 export * from './database';
 export * from './decorators';
 export * from './defaults';
-export * from './documents';
 export * from './enumerations';
 export * from './environment';
 export * from './errors';
@@ -21,8 +19,6 @@ export * from './get-timezone';
 export * from './interfaces';
 export * from './middlewares';
 export * from './middleware-utils';
-export * from './model-registry';
-export * from './models';
 export * from './pipeline';
 export * from './plugins';
 export * from './registry';
@@ -30,9 +26,7 @@ export * from './responses';
 export * from './routers';
 export { RouteBuilder } from './routing';
 export type { BuilderRouteConfig } from './routing';
-export * from './schemas';
 export * from './services';
-export * from './transactions';
 export * from './types';
 export * from './openapi';
 export {
@@ -44,7 +38,6 @@ export {
   requireValidatedFieldsAsync,
   requireOneOfValidatedFieldsAsync,
   requireValidatedFieldsOrThrow,
-  isValidStringObjectId as isValidStringId,
   DEFAULT_RETRY_ATTEMPTS,
   DEFAULT_TRANSACTION_TIMEOUT,
   DEFAULT_TRANSACTION_LOCK_REQUEST_TIMEOUT,
@@ -54,7 +47,6 @@ export {
   sendApiMessageResponse,
   sendApiErrorResponse,
   sendApiExpressValidationErrorResponse,
-  sendApiMongoValidationErrorResponse,
   sendRawJsonResponse,
   handleError,
   locatePEMRoot,
@@ -83,5 +75,4 @@ export {
 export type { TransactionOptions as UtilsTransactionOptions } from './utils';
 export * from './validation';
 export * from './branded-responses';
-export { defaultMongoUriValidator } from './utils/default-mongo-uri-validator';
 export { createNoOpDatabase } from './utils/no-op-database';
