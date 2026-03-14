@@ -84,6 +84,19 @@ export class Application<
   }
 
   /**
+   * Get the IDatabase instance.
+   * When a database plugin is registered and connected, returns the
+   * plugin's database (e.g. MongooseDatabase). Otherwise falls back
+   * to the base class's database (typically the no-op placeholder).
+   */
+  public override get database(): IDatabase {
+    if (this._databasePlugin) {
+      return this._databasePlugin.database;
+    }
+    return super.database;
+  }
+
+  /**
    * Get the raw database connection object from the registered plugin.
    * For Mongo plugins this is `typeof mongoose`.
    * Returns undefined when no database plugin is registered.

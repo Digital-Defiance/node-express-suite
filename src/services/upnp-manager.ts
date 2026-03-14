@@ -117,6 +117,9 @@ export class UpnpManager {
   /** Periodic refresh timer handle */
   private refreshTimer: ReturnType<typeof setInterval> | null = null;
 
+  /** Backoff retry timer handle (cleared on shutdown) */
+  private backoffTimer: ReturnType<typeof setTimeout> | null = null;
+
   /** Consecutive refresh failure count (for exponential backoff) */
   private consecutiveRefreshFailures = 0;
 
@@ -405,6 +408,10 @@ export class UpnpManager {
    * Stop the periodic refresh timer.
    */
   private stopRefreshTimer(): void {
+    if (this.backoffTimer) {
+      clearTimeout(this.backoffTimer);
+      this.backoffTimer = null;
+    }
     if (this.refreshTimer) {
       clearInterval(this.refreshTimer);
       this.refreshTimer = null;
@@ -504,13 +511,23 @@ export class UpnpManager {
         `(failure #${this.consecutiveRefreshFailures})`,
     );
 
-    const timer = setTimeout(() => {
+    // Clear any existing backoff timer before scheduling a new one
+    if (this.backoffTimer) {
+      clearTimeout(this.backoffTimer);
+    }
+
+    this.backoffTimer = setTimeout(() => {
+      this.backoffTimer = null;
       void this.refresh();
     }, backoffMs);
 
     // Don't prevent process exit
-    if (timer && typeof timer === 'object' && 'unref' in timer) {
-      timer.unref();
+    if (
+      this.backoffTimer &&
+      typeof this.backoffTimer === 'object' &&
+      'unref' in this.backoffTimer
+    ) {
+      this.backoffTimer.unref();
     }
   }
 
