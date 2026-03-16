@@ -8,7 +8,7 @@
 >
 > The services documented below that are marked **(moved)** are now in the mongo package.
 > Services that remain in this package: `BaseService`, `JwtService`, `ECIESService`,
-> `KeyWrappingService`, `SystemUserService`, `DummyEmailService`, `emailServiceRegistry`.
+> `KeyWrappingService`, `SystemUserService`, `DummyEmailService`, `ServiceContainer`, `ServiceKeys`, `ServiceMap`.
 
 ## Table of Contents
 
@@ -30,43 +30,63 @@ The Service Container manages service lifecycle and dependencies:
 
 ```typescript
 export class ServiceContainer {
-  register<T>(key: symbol | string, service: T): void
-  get<T>(key: symbol | string): T
-  has(key: symbol | string): boolean
-  remove(key: symbol | string): void
+  register<K extends keyof ServiceMap>(key: K, factory: ServiceFactory<ServiceMap[K]>, singleton?: boolean): void;
+  register<T>(key: string, factory: ServiceFactory<T>, singleton?: boolean): void;
+  get<K extends keyof ServiceMap>(key: K): ServiceMap[K];
+  get<T>(key: string): T;
+  has(key: string): boolean;
+  clear(): void;
 }
 ```
+
+Well-known keys from `ServiceMap` are type-checked at compile time. For example, `container.get(ServiceKeys.EMAIL)` returns `IEmailService` automatically. Ad-hoc string keys still work via explicit generic parameters.
 
 ### Usage
 
 ```typescript
-// Register a service
-app.services.register(ServiceKeys.USER, new UserService(app));
+// Register a service (type-safe for well-known keys)
+app.services.register(ServiceKeys.EMAIL, () => new MyEmailService(app));
 
-// Retrieve a service
-const userService = app.services.get(ServiceKeys.USER);
+// Retrieve a service (returns IEmailService automatically)
+const emailService = app.services.get(ServiceKeys.EMAIL);
+
+// Ad-hoc key with explicit generic
+app.services.register<MyService>('myCustomService', () => new MyService());
+const myService = app.services.get<MyService>('myCustomService');
 
 // Check if service exists
-if (app.services.has(ServiceKeys.USER)) {
+if (app.services.has(ServiceKeys.EMAIL)) {
   // Service is registered
 }
 ```
 
 ### Service Keys
 
-Define type-safe service keys:
+String-based service keys with a type map for compile-time safety:
 
 ```typescript
 export const ServiceKeys = {
-  JWT: Symbol('JwtService'),
-  USER: Symbol('UserService'),
-  ROLE: Symbol('RoleService'),
-  BACKUP_CODE: Symbol('BackupCodeService'),
-  ECIES: Symbol('ECIESService'),
-  KEY_WRAPPING: Symbol('KeyWrappingService'),
-  MNEMONIC: Symbol('MnemonicService'),
-  EMAIL: Symbol('EmailService')
+  JWT: 'jwt',
+  EMAIL: 'email',
+  ECIES: 'ecies',
+  KEY_WRAPPING: 'keyWrapping',
+  ROLE: 'role',
+  USER: 'user',
+  BACKUP_CODE: 'backupCode',
 } as const;
+```
+
+### ServiceMap
+
+Maps well-known keys to their expected types:
+
+```typescript
+export interface ServiceMap {
+  [ServiceKeys.EMAIL]: IEmailService;
+  [ServiceKeys.JWT]: unknown;
+  [ServiceKeys.ECIES]: unknown;
+  // ... downstream packages get correct types via get<T>()
+}
 ```
 
 ## Core Services

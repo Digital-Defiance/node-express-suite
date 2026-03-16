@@ -65,7 +65,7 @@ This directory contains comprehensive documentation for `@digitaldefiance/node-e
 | `IDatabasePlugin`, `IDatabase` | Documents, schemas, models |
 | `IApplication`, `IConstants`, `IEnvironment` | `IMongoApplication`, `ISchema`, `SchemaMap` |
 | `createExpressConstants` | `BaseModelName`, `SchemaCollection` |
-| `emailServiceRegistry`, `DummyEmailService` | `MongooseValidationError` and Mongo errors |
+| `ServiceKeys`, `ServiceMap`, `DummyEmailService` | `MongooseValidationError` and Mongo errors |
 | i18n integration, builders, pipeline | Mongoose helper types |
 | `withTransaction` (IDatabase overload) | `withTransaction` (Mongoose Connection overload) |
 

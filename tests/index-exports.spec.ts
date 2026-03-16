@@ -103,7 +103,7 @@ describe('Index exports', () => {
   it('should export from registry index', () => {
     const exports = require('../src/registry/index');
     expect(exports).toBeDefined();
-    expect(exports.emailServiceRegistry).toBeDefined();
+    expect(exports.ControllerRegistry).toBeDefined();
   });
 
   it('should export from openapi index', () => {

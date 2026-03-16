@@ -118,15 +118,15 @@ yarn add @digitaldefiance/node-express-suite
 ### Basic Server Setup (Database-Agnostic)
 
 ```typescript
-import { Application, emailServiceRegistry } from '@digitaldefiance/node-express-suite';
+import { Application, ServiceKeys } from '@digitaldefiance/node-express-suite';
 import { LanguageCodes } from '@digitaldefiance/i18n-lib';
 import { EmailService } from './services/email'; // Your concrete implementation
 
 // Create application instance
 const app = new Application(environment, apiRouterFactory);
 
-// Configure email service (required before using middleware)
-emailServiceRegistry.setService(new EmailService(app));
+// Register email service (required before using middleware)
+app.services.register(ServiceKeys.EMAIL, () => new EmailService(app));
 
 // Start server
 await app.start();
@@ -312,7 +312,7 @@ if (result.success) {
 Before using middleware that requires email functionality, configure the email service:
 
 ```typescript
-import { emailServiceRegistry, IEmailService } from '@digitaldefiance/node-express-suite';
+import { ServiceKeys, IEmailService } from '@digitaldefiance/node-express-suite';
 
 // Implement the IEmailService interface
 class MyEmailService implements IEmailService {
@@ -321,8 +321,8 @@ class MyEmailService implements IEmailService {
   }
 }
 
-// Register at application startup
-emailServiceRegistry.setService(new MyEmailService());
+// Register at application startup via the ServiceContainer
+app.services.register(ServiceKeys.EMAIL, () => new MyEmailService());
 ```
 
 #### Authentication Middleware

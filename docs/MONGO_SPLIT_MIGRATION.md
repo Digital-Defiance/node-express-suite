@@ -36,7 +36,7 @@ Move Mongo-specific symbols from `@digitaldefiance/node-express-suite` to `@digi
 
 ### Symbols That Stay in the Base Package
 
-`Application`, `BaseApplication`, `BaseController`, `DecoratorBaseController`, `BaseService`, `Environment`, `AppRouter`, `BaseRouter`, all decorators, middleware, validation, responses, builders, i18n integration, `IApplication`, `IConstants`, `IEnvironment`, `IDatabasePlugin`, `IAuthenticationProvider`, `createExpressConstants`, `emailServiceRegistry`, `DummyEmailService`, `withTransaction` (IDatabase overload), `sendApiErrorResponse`, `sendApiMessageResponse`, etc.
+`Application`, `BaseApplication`, `BaseController`, `DecoratorBaseController`, `BaseService`, `Environment`, `AppRouter`, `BaseRouter`, all decorators, middleware, validation, responses, builders, i18n integration, `IApplication`, `IConstants`, `IEnvironment`, `IDatabasePlugin`, `IAuthenticationProvider`, `createExpressConstants`, `ServiceKeys`, `ServiceMap`, `DummyEmailService`, `withTransaction` (IDatabase overload), `sendApiErrorResponse`, `sendApiMessageResponse`, etc.
 
 ## Example
 
