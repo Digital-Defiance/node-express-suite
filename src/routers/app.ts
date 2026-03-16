@@ -60,6 +60,8 @@ export interface IndexLocals {
   hostname: string;
   /** Site title (alias) */
   siteTitle: string;
+  /** Email domain for the site */
+  emailDomain: string;
   /** Additional app-specific values */
   [key: string]: unknown;
 }
@@ -214,6 +216,7 @@ export class AppRouter<
       baseHref: this.apiRouter.application.environment.basePath,
       hostname,
       siteTitle: SiteName,
+      emailDomain: this.apiRouter.application.environment.emailDomain,
     };
   }
 
@@ -250,6 +253,7 @@ export class AppRouter<
         hostname: locals.hostname,
         siteTitle: locals.title,
         server: locals.server,
+        emailDomain: locals.emailDomain,
       })};`,
     );
 

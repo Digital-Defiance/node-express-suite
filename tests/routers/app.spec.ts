@@ -343,6 +343,7 @@ describe('AppRouter', () => {
         baseHref: '/',
         hostname: 'localhost',
         siteTitle: 'New Title',
+        emailDomain: 'example.com',
       };
 
       const result = appRouter['applyIndexReplacements'](html, locals);
@@ -364,6 +365,7 @@ describe('AppRouter', () => {
         baseHref: '/',
         hostname: 'localhost',
         siteTitle: 'Test',
+        emailDomain: 'example.com',
       };
 
       const result = appRouter['applyIndexReplacements'](html, locals);
@@ -385,6 +387,7 @@ describe('AppRouter', () => {
         baseHref: '/',
         hostname: 'localhost',
         siteTitle: 'Test',
+        emailDomain: 'example.com',
       };
 
       const result = appRouter['applyIndexReplacements'](html, locals);
@@ -404,6 +407,7 @@ describe('AppRouter', () => {
         baseHref: '/',
         hostname: 'localhost',
         siteTitle: 'Test',
+        emailDomain: 'example.com',
       };
 
       const result = appRouter['applyIndexReplacements'](html, locals);
@@ -423,6 +427,7 @@ describe('AppRouter', () => {
         baseHref: '/',
         hostname: 'localhost',
         siteTitle: 'Test',
+        emailDomain: 'example.com',
       };
 
       const result = appRouter['applyIndexReplacements'](html, locals);
