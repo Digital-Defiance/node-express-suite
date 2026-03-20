@@ -6,7 +6,7 @@
 
 import { Member, PlatformID } from '@digitaldefiance/node-ecies-lib';
 import { IRequestUserDTO } from '@digitaldefiance/suite-core-lib';
-import { NextFunction, RequestHandler, Response } from 'express';
+import { NextFunction, Request, RequestHandler, Response } from 'express';
 import { ValidationChain } from 'express-validator';
 import {
   IApiErrorResponse,
