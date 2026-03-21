@@ -18,7 +18,10 @@ import type {
  * Minimal user record returned by the authentication provider.
  * Contains only the fields needed by the authentication middlewares.
  */
-export interface IAuthenticatedUser<TLanguage extends string = string> {
+export interface IAuthenticatedUser<
+  TLanguage extends string = string,
+  TID extends PlatformID = Buffer,
+> {
   /** Stringified user ID */
   id: string;
   /** Account status (e.g. 'Active', 'Suspended') */
@@ -31,6 +34,13 @@ export interface IAuthenticatedUser<TLanguage extends string = string> {
   timezone: string;
   /** Last login timestamp (ISO string or undefined) */
   lastLogin?: string;
+  /**
+   * The full backend Member object with crypto capabilities.
+   * Populated by providers that load the Member during findUserById
+   * (e.g. BrightChain's MemberStore-backed provider).
+   * The middleware attaches this to req.member when present.
+   */
+  member?: BackendMember<TID>;
 }
 
 /**

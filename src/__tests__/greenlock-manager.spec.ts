@@ -52,10 +52,11 @@ const dnsLabelArb: fc.Arbitrary<string> = fc
 /** Arbitrary for a valid TLD (2-6 lowercase alpha chars) */
 const tldArb: fc.Arbitrary<string> = fc.stringMatching(/^[a-z]{2,6}$/);
 
-/** Arbitrary for a valid hostname (one or more labels + TLD) */
+/** Arbitrary for a valid hostname (one or more labels + TLD, max 63 chars total) */
 const hostArb: fc.Arbitrary<string> = fc
   .tuple(fc.array(dnsLabelArb, { minLength: 1, maxLength: 3 }), tldArb)
-  .map(([labels, tld]) => [...labels, tld].join('.'));
+  .map(([labels, tld]) => [...labels, tld].join('.'))
+  .filter((host) => host.length <= 63);
 
 /** Arbitrary for a valid URL path segment (alphanumeric, hyphens, underscores) */
 const pathSegmentArb: fc.Arbitrary<string> = fc.stringMatching(

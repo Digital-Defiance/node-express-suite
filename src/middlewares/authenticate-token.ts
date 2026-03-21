@@ -9,10 +9,10 @@
 import type { Timezone as TimezoneType } from '@digitaldefiance/i18n-lib';
 import { GlobalActiveContext } from '@digitaldefiance/i18n-lib';
 import {
-  AccountStatus,
   getSuiteCoreTranslation,
   SuiteCoreStringKey,
 } from '@digitaldefiance/suite-core-lib';
+import type { IRequestUserDTO } from '@digitaldefiance/suite-core-lib';
 import { NextFunction, Request, Response } from 'express';
 import { IncomingHttpHeaders } from 'http';
 import { TokenExpiredError } from '../errors/token-expired';
@@ -91,19 +91,10 @@ export async function authenticateToken<TID extends PlatformID = Buffer>(
       );
     }
 
-    // Look up the user and check account status
-    const authenticatedUser = await authProvider.findUserById(user.userId);
-    if (
-      !authenticatedUser ||
-      authenticatedUser.accountStatus !== AccountStatus.Active
-    ) {
-      return res.status(403).send(
-        // amazonq-ignore-next-line false positive, hardcoded string
-        getSuiteCoreTranslation(SuiteCoreStringKey.Validation_UserNotFound),
-      );
-    }
-
-    // Build the full request user DTO with roles
+    // Build the full request user DTO with roles.
+    // buildRequestUserDTO already checks account status (returns null for
+    // inactive accounts) and loads the Member + profile from the store,
+    // so we don't need a separate findUserById call.
     const requestUserDTO = await authProvider.buildRequestUserDTO(user.userId);
     if (!requestUserDTO) {
       return res.status(403).send(
@@ -114,13 +105,24 @@ export async function authenticateToken<TID extends PlatformID = Buffer>(
 
     req.user = requestUserDTO;
 
+    // If the auth provider attached the full backend Member object to the
+    // DTO, move it to req.member for handlers that need crypto capabilities
+    // (e.g. document sealing/signing). This avoids a redundant store lookup.
+    if ('member' in requestUserDTO) {
+      const { member, ...cleanDTO } = requestUserDTO as IRequestUserDTO & {
+        member: unknown;
+      };
+      req.user = cleanDTO;
+      (req as Express.Request & { member?: unknown }).member = member;
+    }
+
     // Update global context with user's language and timezone
     const context = GlobalActiveContext.getInstance();
-    if (authenticatedUser.siteLanguage) {
-      context.userLanguage = authenticatedUser.siteLanguage;
+    if (requestUserDTO.siteLanguage) {
+      context.userLanguage = requestUserDTO.siteLanguage;
     }
     context.setLanguageContextSpace('user');
-    context.userTimezone = createTimezone(authenticatedUser.timezone);
+    context.userTimezone = createTimezone(requestUserDTO.timezone);
 
     next();
     return res;
