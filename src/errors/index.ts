@@ -1,5 +1,6 @@
 export * from './express-validation';
 export * from './invalid-backup-code-version';
+export * from './invalid-display-name';
 export * from './invalid-jwt-token';
 export * from './invalid-new-password';
 export * from './invalid-password';

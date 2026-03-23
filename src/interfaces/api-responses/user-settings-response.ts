@@ -15,5 +15,6 @@ export interface IApiUserSettingsResponse extends IApiMessageResponse {
     siteLanguage: string;
     darkMode: boolean;
     directChallenge: boolean;
+    displayName?: string;
   };
 }

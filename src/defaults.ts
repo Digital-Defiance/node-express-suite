@@ -67,6 +67,9 @@ export function createExpressRuntimeConfiguration(
     ...base,
     ...(overrides ?? {}),
     idProvider: (overrides?.idProvider ?? base.idProvider) as IIdProviderBase,
+    EmailRegex: (overrides?.EmailRegex ?? base.EmailRegex) as RegExp,
+    DisplayNameRegex: (overrides?.DisplayNameRegex ??
+      base.DisplayNameRegex) as RegExp,
     UsernameRegex: (overrides?.UsernameRegex ?? base.UsernameRegex) as RegExp,
     PasswordRegex: (overrides?.PasswordRegex ?? base.PasswordRegex) as RegExp,
     MnemonicRegex: (overrides?.MnemonicRegex ?? base.MnemonicRegex) as RegExp,

@@ -50,6 +50,10 @@ export interface IRequestUser<
    */
   email: string;
   /**
+   * The display name of the user
+   */
+  displayName?: string;
+  /**
    * The timezone of the user
    */
   timezone: string;

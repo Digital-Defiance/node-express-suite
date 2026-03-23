@@ -71,7 +71,9 @@ export interface IAuthenticationProvider<
    * Look up a user by their ID and return a minimal user record.
    * Returns null if the user does not exist.
    */
-  findUserById(userId: string): Promise<IAuthenticatedUser<TLanguage, TID> | null>;
+  findUserById(
+    userId: string,
+  ): Promise<IAuthenticatedUser<TLanguage, TID> | null>;
 
   /**
    * Build an IRequestUserDTO for the given user.
