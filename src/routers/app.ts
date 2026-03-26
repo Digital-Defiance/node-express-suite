@@ -265,6 +265,16 @@ export class AppRouter<
       );
     }
 
+    // 4. Remove crossorigin attribute from same-origin stylesheet and script tags.
+    //    Vite adds crossorigin by default, but when assets are served from the
+    //    same origin it causes CORS-mode fetches for subresources (fonts loaded
+    //    from CSS), which fail when the server sets Cross-Origin-Resource-Policy:
+    //    same-origin via Helmet.
+    result = result.replace(
+      /(<(?:link|script)\b[^>]*?)\s+crossorigin(?:="[^"]*")?/gi,
+      '$1',
+    );
+
     return result;
   }
 
