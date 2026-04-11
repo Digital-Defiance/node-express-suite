@@ -278,12 +278,23 @@ export abstract class BaseController<
         }
 
         const { statusCode, response, headers } = result;
+
+        // If the handler already sent a response (e.g. binary stream),
+        // don't attempt to send again — that would throw
+        // "Cannot set headers after they are sent to the client".
+        if (res.headersSent) {
+          return;
+        }
+
         if (headers) {
           res.set(headers);
         }
         sendFunc(statusCode, response, res);
       } catch (error) {
         this.activeSession = undefined;
+        if (res.headersSent) {
+          return;
+        }
         handleError(
           error,
           res as Response<ApiErrorResponse>,
