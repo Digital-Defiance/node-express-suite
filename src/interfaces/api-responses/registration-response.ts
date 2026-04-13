@@ -10,8 +10,8 @@ import { IApiMessageResponse } from '../api-message-response';
  * Contains mnemonic phrase and backup codes for account recovery.
  */
 export interface IApiRegistrationResponse extends IApiMessageResponse {
-  /** BIP39 mnemonic phrase for key derivation */
-  mnemonic: string;
+  /** BIP39 mnemonic phrase for key derivation. Only present when server-generated (user didn't provide their own). */
+  mnemonic?: string;
   /** Array of backup codes for account recovery */
   backupCodes: Array<string>;
 }

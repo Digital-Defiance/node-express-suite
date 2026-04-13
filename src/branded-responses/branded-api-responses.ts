@@ -76,7 +76,7 @@ export const BrandedApiRegistrationResponse = createBrandedInterface<
   Indexable<IApiRegistrationResponse>
 >('ApiRegistrationResponse', {
   message: { type: 'string', validate: isNonEmptyString },
-  mnemonic: { type: 'string', validate: isNonEmptyString },
+  mnemonic: { type: 'string', optional: true, validate: isNonEmptyString },
   backupCodes: {
     type: 'array',
     validate: (v) => isNonEmptyArray(v) && isStringArray(v),
