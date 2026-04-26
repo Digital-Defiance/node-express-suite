@@ -270,18 +270,21 @@ export class Application<
       }
       const appRouter = this._appRouterFactory(this._apiRouter);
 
-      appRouter.init(this.expressApp);
-
-      // Mount admin email inspection router when fake email capture is active
+      // Mount admin email inspection router on the API sub-router at /admin/emails
+      // (served as /api/admin/emails). Registering on _apiRouter.router ensures
+      // it is matched before any app-level /api catch-all that appRouter.init()
+      // installs, without depending on mount ordering at the express-app level.
       if (this.environment.emailService === EmailServices.Fake) {
         const requireAuth = (req: Request, res: Response, next: NextFunction) =>
           authenticateToken<TID>(this, req, res, next);
-        this.expressApp.use(
-          '/api/admin/emails',
+        this._apiRouter.router.use(
+          '/admin/emails',
           new AdminEmailRouter<TID, IApplication<TID>>(this, requireAuth)
             .router,
         );
       }
+
+      appRouter.init(this.expressApp);
 
       this.expressApp.use(
         (
