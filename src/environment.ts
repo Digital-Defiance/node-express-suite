@@ -18,6 +18,7 @@ import { config } from 'dotenv';
 import { existsSync } from 'fs';
 import { BackupCode } from './backup-code';
 import { LocalhostConstants } from './constants';
+import { EmailServices } from './enumerations/email-services';
 import { setGlobalActiveContextAdminLanguageFromProcessArgvOrEnv } from './get-language';
 import { setGlobalActiveContextAdminTimezoneFromProcessArgvOrEnv } from './get-timezone';
 import { IConstants } from './interfaces/constants';
@@ -179,6 +180,20 @@ export class Environment<
       disableEmailSend:
         envObj['DISABLE_EMAIL_SEND'] === 'true' ||
         envObj['DISABLE_EMAIL_SEND'] === '1',
+      emailService: (() => {
+        const raw = envObj['EMAIL_SERVICE']?.toUpperCase();
+        if (
+          raw &&
+          Object.values(EmailServices).includes(raw as EmailServices)
+        ) {
+          return raw as EmailServices;
+        }
+        // Fall back to Fake when email sending is disabled, otherwise Dummy
+        const disableEmailSend =
+          envObj['DISABLE_EMAIL_SEND'] === 'true' ||
+          envObj['DISABLE_EMAIL_SEND'] === '1';
+        return disableEmailSend ? EmailServices.Fake : EmailServices.Dummy;
+      })(),
       databaseUri: envObj['DATABASE_URI'] ?? envObj['MONGO_URI'] ?? undefined,
       mongo: {
         dbName: envObj['MONGO_DB_NAME'] ?? 'db',
@@ -661,6 +676,14 @@ export class Environment<
   }
 
   /**
+   * The configured email service backend.
+   * Parsed from EMAIL_SERVICE env var; defaults to Fake when DISABLE_EMAIL_SEND is set.
+   */
+  public get emailService(): EmailServices {
+    return this._environment.emailService;
+  }
+
+  /**
    * Generic database connection URI.
    * For MongoDB apps, defaults to MONGO_URI. For other databases, set DATABASE_URI.
    */
@@ -935,6 +958,7 @@ SERVER_URL: ${this.serverUrl}
 API_DIST_DIR: ${this.apiDistDir}
 REACT_DIST_DIR: ${this.reactDistDir}
 DISABLE_EMAIL_SEND: ${this.disableEmailSend}
+EMAIL_SERVICE: ${this.emailService}
 TIMEZONE: ${this.timezone}
 Mongo:
 -- URI: ${this.mongo.uri}

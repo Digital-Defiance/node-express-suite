@@ -37,6 +37,14 @@ import { IDatabasePlugin } from './plugins/database-plugin';
 import type { IDatabase } from '@digitaldefiance/suite-core-lib';
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 import { createNoOpDatabase } from './utils/no-op-database';
+import { ServiceKeys } from './container/service-definitions';
+import { EmailServices } from './enumerations/email-services';
+import { DummyEmailService } from './services/dummy-email-service';
+import { FakeEmailService } from './services/fake-email-service';
+import { PostfixEmailService } from './services/postfixEmail';
+import { IEmailService } from './interfaces/email-service';
+import { AdminEmailRouter } from './routers/admin-email-router';
+import { authenticateToken } from './middlewares/authenticate-token';
 
 type ServerWithOptionalClose = Server & { closeAllConnections?: () => void };
 
@@ -127,11 +135,33 @@ export class Application<
   }
 
   /**
+   * Create the email service instance for the configured backend.
+   * Handles Dummy, Fake, and Postfix natively. For SES or other providers,
+   * override this method in a subclass to return the appropriate implementation.
+   */
+  protected createEmailService(): IEmailService {
+    switch (this.environment.emailService) {
+      case EmailServices.Fake:
+        return FakeEmailService.getInstance<TID, IApplication<TID>>(this);
+      case EmailServices.Dummy:
+        return new DummyEmailService<TID, IApplication<TID>>(this);
+      case EmailServices.Postfix:
+        return new PostfixEmailService<TID>(this);
+      default:
+        throw new Error(
+          `Email service '${this.environment.emailService}' is not implemented in the base Application. ` +
+            `Override createEmailService() in your subclass to provide a '${this.environment.emailService}' implementation.`,
+        );
+    }
+  }
+
+  /**
    * Hook for subclasses to register services before the server starts.
    * Called during the constructor.
    */
   protected registerServices(): void {
-    // Subclasses can override to register services
+    const emailService = this.createEmailService();
+    this.services.register(ServiceKeys.EMAIL, () => emailService);
   }
 
   constructor(
@@ -241,6 +271,18 @@ export class Application<
       const appRouter = this._appRouterFactory(this._apiRouter);
 
       appRouter.init(this.expressApp);
+
+      // Mount admin email inspection router when fake email capture is active
+      if (this.environment.emailService === EmailServices.Fake) {
+        const requireAuth = (req: Request, res: Response, next: NextFunction) =>
+          authenticateToken<TID>(this, req, res, next);
+        this.expressApp.use(
+          '/api/admin/emails',
+          new AdminEmailRouter<TID, IApplication<TID>>(this, requireAuth)
+            .router,
+        );
+      }
+
       this.expressApp.use(
         (
           err: HandleableError | Error,

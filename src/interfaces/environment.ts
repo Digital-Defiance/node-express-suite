@@ -11,6 +11,7 @@ import {
 } from '@digitaldefiance/ecies-lib';
 import { BackupCode } from '../backup-code';
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
+import { EmailServices } from '../enumerations/email-services';
 import { ILetsEncryptConfig } from './lets-encrypt-config';
 
 /**
@@ -81,6 +82,13 @@ export interface IEnvironment<TID extends PlatformID = Buffer> {
    * Disable email sending
    */
   disableEmailSend: boolean;
+  /**
+   * Which email service backend to use.
+   * Parsed from the EMAIL_SERVICE environment variable.
+   * Defaults to EmailServices.Fake when DISABLE_EMAIL_SEND is set;
+   * otherwise defaults to EmailServices.Fake if unset.
+   */
+  emailService: EmailServices;
   /**
    * MongoDB configuration.
    * Optional — omit when using a non-MongoDB database (e.g. BrightChainDb).
