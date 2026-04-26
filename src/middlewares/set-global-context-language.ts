@@ -25,6 +25,12 @@ export function setGlobalContextLanguageFromRequest(
   res: Response,
   next: NextFunction,
 ) {
+  // Skip language resolution if no languages have been registered yet
+  if (!LanguageRegistry.getDefaultLanguageId()) {
+    next();
+    return;
+  }
+
   // Use fallback chain: accept-language -> user preference -> site default
   const language = LanguageRegistry.getMatchingLanguageCode(
     req.headers['accept-language'] as string,
