@@ -11,6 +11,10 @@
 
 import { PlatformID } from '@digitaldefiance/node-ecies-lib';
 import { IApplication } from '../interfaces/application';
+import {
+  IBatchEmailService,
+  IEmailBatchInput,
+} from '../interfaces/batch-email-service';
 import { IEmailService } from '../interfaces/email-service';
 import { createTransport, Transporter } from 'nodemailer';
 import SMTPTransport from 'nodemailer/lib/smtp-transport';
@@ -60,9 +64,9 @@ function debugLog(
  * });
  * ```
  */
-export class PostfixEmailService<
-  TID extends PlatformID = Buffer,
-> implements IEmailService {
+export class PostfixEmailService<TID extends PlatformID = Buffer>
+  implements IEmailService, IBatchEmailService
+{
   private readonly transporter: Transporter<SMTPTransport.SentMessageInfo>;
   private readonly emailSender: string;
   private readonly disableEmailSend: boolean;
@@ -199,6 +203,70 @@ export class PostfixEmailService<
       );
       throw new Error(
         `Failed to send email via Postfix: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+    }
+  }
+
+  /**
+   * Sends a single message to multiple recipients in one SMTP transaction.
+   * Nodemailer natively supports `to`/`cc`/`bcc` arrays, preserving RFC 5322
+   * To/CC visibility while keeping BCC recipients hidden. SMTP itself has no
+   * hard recipient cap (Postfix's `smtpd_recipient_limit` defaults to 1000),
+   * so this method passes the lists through verbatim.
+   *
+   * @param input - Recipient lists and message bodies
+   * @returns Promise that resolves when the email has been handed to Postfix
+   * @throws Error if delivery fails
+   */
+  public async sendEmailBatch(input: IEmailBatchInput): Promise<void> {
+    const to = input.to;
+    const cc = input.cc ?? [];
+    const bcc = input.bcc ?? [];
+
+    if (to.length === 0 && cc.length === 0 && bcc.length === 0) {
+      return;
+    }
+
+    if (this.disableEmailSend) {
+      debugLog(
+        this.debug,
+        'log',
+        `Email sending disabled for batch (to=${to.length}, cc=${cc.length}, bcc=${bcc.length}) - Subject: ${input.subject}`,
+      );
+      return;
+    }
+
+    debugLog(
+      this.debug,
+      'log',
+      `Sending batch email (to=${to.length}, cc=${cc.length}, bcc=${bcc.length}) with subject: ${input.subject}`,
+    );
+
+    try {
+      const info = await this.transporter.sendMail({
+        from: this.emailSender,
+        to: to.length > 0 ? to : undefined,
+        cc: cc.length > 0 ? cc : undefined,
+        bcc: bcc.length > 0 ? bcc : undefined,
+        subject: input.subject,
+        text: input.text,
+        html: input.html,
+      });
+
+      debugLog(
+        this.debug,
+        'log',
+        `Batch email sent successfully, messageId: ${info.messageId}`,
+      );
+    } catch (error) {
+      console.error(
+        `[PostfixEmailService] Failed to send batch email (to=${to.length}, cc=${cc.length}, bcc=${bcc.length}):`,
+        error,
+      );
+      throw new Error(
+        `Failed to send batch email via Postfix: ${
           error instanceof Error ? error.message : String(error)
         }`,
       );

@@ -5,7 +5,12 @@
  */
 
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
-import { IApplication, IEmailService } from '../interfaces';
+import {
+  IApplication,
+  IBatchEmailService,
+  IEmailBatchInput,
+  IEmailService,
+} from '../interfaces';
 
 /**
  * Dummy email service that does nothing.
@@ -16,7 +21,9 @@ import { IApplication, IEmailService } from '../interfaces';
 export class DummyEmailService<
   TID extends PlatformID = Buffer,
   TApplication extends IApplication<TID> = IApplication<TID>,
-> implements IEmailService {
+>
+  implements IEmailService, IBatchEmailService
+{
   /**
    * Creates a new dummy email service.
    * @param {TApplication} _application - Application instance (unused)
@@ -37,6 +44,16 @@ export class DummyEmailService<
     _text: string,
     _html: string,
   ): Promise<void> {
+    // Do nothing
+    return;
+  }
+
+  /**
+   * Sends a batch email (no-op implementation).
+   * @param {IEmailBatchInput} _input - Batch input (unused)
+   * @returns {Promise<void>} Resolves immediately
+   */
+  public async sendEmailBatch(_input: IEmailBatchInput): Promise<void> {
     // Do nothing
     return;
   }

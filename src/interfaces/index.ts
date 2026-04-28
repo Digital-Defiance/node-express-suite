@@ -17,6 +17,7 @@ export * from './controller-config';
 export * from './create-user-basics';
 export * from './csp-config';
 export * from './csp-definition';
+export * from './batch-email-service';
 export * from './email-service';
 export * from './environment';
 export * from './fec-consts';

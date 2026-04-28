@@ -6,13 +6,34 @@
  */
 
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
-import { IApplication, IEmailService } from '../interfaces';
+import {
+  IApplication,
+  IBatchEmailService,
+  IEmailBatchInput,
+  IEmailService,
+} from '../interfaces';
 
 /**
  * Represents a captured email stored by the FakeEmailService.
  */
 export interface CapturedEmail {
   to: string;
+  subject: string;
+  text: string;
+  html: string;
+  timestamp: Date;
+}
+
+/**
+ * Represents a captured batch send (one logical message addressed to many
+ * recipients in a single transport call). Mirrors what a real batch-capable
+ * transport would receive, so tests can assert on visible-recipient
+ * semantics (To/CC) and BCC privacy.
+ */
+export interface CapturedBatchEmail {
+  to: string[];
+  cc: string[];
+  bcc: string[];
   subject: string;
   text: string;
   html: string;
@@ -30,10 +51,13 @@ export interface CapturedEmail {
 export class FakeEmailService<
   TID extends PlatformID = Buffer,
   TApplication extends IApplication<TID> = IApplication<TID>,
-> implements IEmailService {
+>
+  implements IEmailService, IBatchEmailService
+{
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private static instance: FakeEmailService<any, any> | null = null;
   private readonly emails: Map<string, CapturedEmail[]> = new Map();
+  private readonly batches: CapturedBatchEmail[] = [];
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   constructor(_application: TApplication) {}
@@ -91,6 +115,49 @@ export class FakeEmailService<
   }
 
   /**
+   * Captures a batch send. Records both the batch as a single
+   * {@link CapturedBatchEmail} (so tests can assert visible-recipient
+   * semantics) and a per-address {@link CapturedEmail} for every recipient
+   * across To/CC/BCC (so existing per-recipient assertions still work).
+   */
+  public async sendEmailBatch(input: IEmailBatchInput): Promise<void> {
+    const to = [...input.to];
+    const cc = input.cc ? [...input.cc] : [];
+    const bcc = input.bcc ? [...input.bcc] : [];
+
+    if (to.length === 0 && cc.length === 0 && bcc.length === 0) {
+      return;
+    }
+
+    const timestamp = new Date();
+    this.batches.push({
+      to,
+      cc,
+      bcc,
+      subject: input.subject,
+      text: input.text,
+      html: input.html,
+      timestamp,
+    });
+
+    for (const addr of [...to, ...cc, ...bcc]) {
+      const email: CapturedEmail = {
+        to: addr,
+        subject: input.subject,
+        text: input.text,
+        html: input.html,
+        timestamp,
+      };
+      const existing = this.emails.get(addr);
+      if (existing) {
+        existing.push(email);
+      } else {
+        this.emails.set(addr, [email]);
+      }
+    }
+  }
+
+  /**
    * Returns all captured emails for a given recipient address.
    */
   public getEmails(recipientAddress: string): CapturedEmail[] {
@@ -125,6 +192,22 @@ export class FakeEmailService<
    */
   public clear(): void {
     this.emails.clear();
+    this.batches.length = 0;
+  }
+
+  /**
+   * Returns all captured batch sends in the order they were made.
+   */
+  public getBatches(): CapturedBatchEmail[] {
+    return [...this.batches];
+  }
+
+  /**
+   * Returns the most recently captured batch send, or undefined if none.
+   */
+  public getLatestBatch(): CapturedBatchEmail | undefined {
+    if (this.batches.length === 0) return undefined;
+    return this.batches[this.batches.length - 1];
   }
 
   /**
