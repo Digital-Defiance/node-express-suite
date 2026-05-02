@@ -67,9 +67,14 @@ export const BrandedApiLoginResponse = createBrandedInterface<
   Indexable<IApiLoginResponse>
 >('ApiLoginResponse', {
   message: { type: 'string', validate: isNonEmptyString },
-  token: { type: 'string', validate: isNonEmptyString },
-  serverPublicKey: { type: 'string' },
-  user: { type: 'object', validate: isNonNullObject },
+  token: { type: 'string', optional: true, validate: isNonEmptyString },
+  serverPublicKey: { type: 'string', optional: true },
+  user: { type: 'object', optional: true, validate: isNonNullObject },
+  pendingTotpToken: {
+    type: 'string',
+    optional: true,
+    validate: isNonEmptyString,
+  },
 });
 
 export const BrandedApiRegistrationResponse = createBrandedInterface<
@@ -137,7 +142,8 @@ export const BrandedApiUserSettingsResponse = createBrandedInterface<
         isNonEmptyString(s['currency']) &&
         isNonEmptyString(s['siteLanguage']) &&
         isBoolean(s['darkMode']) &&
-        isBoolean(s['directChallenge'])
+        isBoolean(s['directChallenge']) &&
+        isBoolean(s['totpEnabled'])
       );
     },
   },

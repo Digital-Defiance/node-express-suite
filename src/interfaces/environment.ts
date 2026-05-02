@@ -229,6 +229,12 @@ export interface IEnvironment<TID extends PlatformID = Buffer> {
   production: boolean;
 
   /**
+   * Whether TOTP two-factor authentication is available on this deployment.
+   * Controls frontend UI visibility; backend endpoints remain functional regardless.
+   */
+  totpAvailable: boolean;
+
+  /**
    * Let's Encrypt / Greenlock configuration
    */
   letsEncrypt: ILetsEncryptConfig;

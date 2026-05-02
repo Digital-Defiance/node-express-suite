@@ -9,10 +9,13 @@ import { IApiMessageResponse } from '../api-message-response';
 
 /**
  * API response for successful login.
+ * When TOTP is enabled, `user`, `token`, and `serverPublicKey` are absent
+ * and `pendingTotpToken` is returned instead.
  * @extends IApiMessageResponse
  */
 export interface IApiLoginResponse extends IApiMessageResponse {
-  user: IRequestUserDTO;
-  token: string;
-  serverPublicKey: string;
+  user?: IRequestUserDTO;
+  token?: string;
+  serverPublicKey?: string;
+  pendingTotpToken?: string;
 }

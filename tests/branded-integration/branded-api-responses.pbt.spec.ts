@@ -142,6 +142,7 @@ const validUserSettingsArb = fc.record({
   siteLanguage: nonEmptyStringArb,
   darkMode: fc.boolean(),
   directChallenge: fc.boolean(),
+  totpEnabled: fc.boolean(),
 });
 
 const validApiUserSettingsResponseArb = fc.record({
@@ -335,13 +336,24 @@ describe('Feature: branded-api-responses, Property 1: Branded definition validat
 
   /**
    * Property 1: ApiLoginResponse with invalid user fails safeParseInterface.
+   * Note: `user` is optional, so `undefined` is valid. We only test non-undefined
+   * invalid values here.
    * **Validates: Requirements 2.1**
    */
   it('Property 1: ApiLoginResponse with invalid user fails validation', () => {
+    /** Invalid non-null-object values excluding undefined (since user is optional). */
+    const invalidNonNullObjectNoUndefinedArb: fc.Arbitrary<unknown> = fc.oneof(
+      fc.constant(null),
+      fc.constant('string'),
+      fc.constant(42),
+      fc.constant(true),
+      fc.array(fc.anything()),
+    );
+
     fc.assert(
       fc.property(
         validApiLoginResponseArb,
-        invalidNonNullObjectArb,
+        invalidNonNullObjectNoUndefinedArb,
         (base, badUser) => {
           const result = safeParseInterface(
             { ...base, user: badUser },

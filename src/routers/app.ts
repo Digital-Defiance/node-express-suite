@@ -62,6 +62,8 @@ export interface IndexLocals {
   siteTitle: string;
   /** Email domain for the site */
   emailDomain: string;
+  /** Whether TOTP two-factor authentication is available */
+  totpAvailable: boolean;
   /** Additional app-specific values */
   [key: string]: unknown;
 }
@@ -217,6 +219,7 @@ export class AppRouter<
       hostname,
       siteTitle: SiteName,
       emailDomain: this.apiRouter.application.environment.emailDomain,
+      totpAvailable: this.apiRouter.application.environment.totpAvailable,
     };
   }
 
@@ -254,6 +257,7 @@ export class AppRouter<
         siteTitle: locals.title,
         server: locals.server,
         emailDomain: locals.emailDomain,
+        totpAvailable: locals.totpAvailable,
       })};`,
     );
 

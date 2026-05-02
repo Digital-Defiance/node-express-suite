@@ -17,6 +17,7 @@ export const ServiceKeys = {
   ROLE: 'role',
   USER: 'user',
   BACKUP_CODE: 'backupCode',
+  TOTP: 'totp',
 } as const;
 
 /**
@@ -44,4 +45,5 @@ export interface ServiceMap {
   [ServiceKeys.ROLE]: unknown;
   [ServiceKeys.USER]: unknown;
   [ServiceKeys.BACKUP_CODE]: unknown;
+  [ServiceKeys.TOTP]: unknown;
 }

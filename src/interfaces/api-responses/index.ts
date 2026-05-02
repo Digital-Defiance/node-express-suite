@@ -5,4 +5,5 @@ export * from './login-response';
 export * from './mnemonic-response';
 export * from './registration-response';
 export * from './request-user-response';
+export * from './totp-setup-response';
 export * from './user-settings-response';

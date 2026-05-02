@@ -357,6 +357,9 @@ export class Environment<
       adminLanguage: setGlobalActiveContextAdminLanguageFromProcessArgvOrEnv(),
       pbkdf2Iterations: parseInt(envObj['PBKDF2_ITERATIONS'] ?? '100000'),
       production: envObj['NODE_ENV'] === 'production',
+      totpAvailable:
+        envObj['TOTP_AVAILABLE'] === 'true' ||
+        envObj['TOTP_AVAILABLE'] === '1',
       letsEncrypt: {
         enabled:
           envObj['LETS_ENCRYPT_ENABLED'] === 'true' ||
@@ -929,6 +932,13 @@ export class Environment<
    */
   public get production(): boolean {
     return this._environment.production;
+  }
+
+  /**
+   * Whether TOTP two-factor authentication is available on this deployment.
+   */
+  public get totpAvailable(): boolean {
+    return this._environment.totpAvailable;
   }
 
   /**

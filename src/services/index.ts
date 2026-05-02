@@ -14,3 +14,4 @@ export * from './upnp';
 export * from './upnp-config';
 export * from './upnp-manager';
 export * from './postfixEmail';
+export * from './totp';

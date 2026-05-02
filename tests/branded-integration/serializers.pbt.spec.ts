@@ -172,6 +172,7 @@ const validUserSettingsArb = fc.record({
   siteLanguage: nonEmptyStringArb,
   darkMode: fc.boolean(),
   directChallenge: fc.boolean(),
+  totpEnabled: fc.boolean(),
 });
 
 const validApiUserSettingsResponseArb = fc.record({

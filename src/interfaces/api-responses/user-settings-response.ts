@@ -16,5 +16,6 @@ export interface IApiUserSettingsResponse extends IApiMessageResponse {
     darkMode: boolean;
     directChallenge: boolean;
     displayName?: string;
+    totpEnabled: boolean;
   };
 }
