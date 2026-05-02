@@ -60,12 +60,14 @@ export class SystemUserService {
         new SecureBuffer(keyPair.privateKey),
         wallet,
       );
-      if (
-        SystemUserService.systemUser.publicKey.toString('hex') !==
-        environment.systemPublicKeyHex
-      ) {
+      const derivedHex = SystemUserService.systemUser.publicKey.toString('hex');
+      if (!environment.systemPublicKeyHex) {
+        // SYSTEM_PUBLIC_KEY was not set in .env — populate it from the derived key
+        // so that endpoints returning serverPublicKey have the correct value.
+        environment.systemPublicKeyHex = derivedHex;
+      } else if (derivedHex !== environment.systemPublicKeyHex) {
         console.warn('System public key does not match environment variable', {
-          derived: SystemUserService.systemUser.publicKey.toString('hex'),
+          derived: derivedHex,
           expected: environment.systemPublicKeyHex,
         });
       }

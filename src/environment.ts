@@ -868,6 +868,15 @@ export class Environment<
   }
 
   /**
+   * Sets the system public key at runtime.
+   * Used by SystemUserService when the key is derived from the mnemonic
+   * but SYSTEM_PUBLIC_KEY was not set in the environment.
+   */
+  public set systemPublicKeyHex(value: string | undefined) {
+    this._environment.systemPublicKeyHex = value;
+  }
+
+  /**
    * The password of the system user
    */
   public get systemPassword(): SecureString | undefined {
