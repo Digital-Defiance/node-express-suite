@@ -358,8 +358,7 @@ export class Environment<
       pbkdf2Iterations: parseInt(envObj['PBKDF2_ITERATIONS'] ?? '100000'),
       production: envObj['NODE_ENV'] === 'production',
       totpAvailable:
-        envObj['TOTP_AVAILABLE'] === 'true' ||
-        envObj['TOTP_AVAILABLE'] === '1',
+        envObj['TOTP_AVAILABLE'] === 'true' || envObj['TOTP_AVAILABLE'] === '1',
       letsEncrypt: {
         enabled:
           envObj['LETS_ENCRYPT_ENABLED'] === 'true' ||

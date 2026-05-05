@@ -72,10 +72,7 @@ export interface SessionMiddlewareOptions<TID extends PlatformID = Buffer> {
   activeStatusValue?: string;
 }
 
-function readSessionId(
-  req: Request,
-  cookieName: string,
-): string | undefined {
+function readSessionId(req: Request, cookieName: string): string | undefined {
   // Prefer cookie; fall back to X-BC-Session header for non-browser clients.
   const cookieJar = (req as Request & { cookies?: Record<string, unknown> })
     .cookies;
@@ -119,9 +116,11 @@ export function useSessionEstablish<
         return;
       }
       if (!req.user) {
-        res.status(401).send(
-          getSuiteCoreTranslation(SuiteCoreStringKey.Validation_InvalidToken),
-        );
+        res
+          .status(401)
+          .send(
+            getSuiteCoreTranslation(SuiteCoreStringKey.Validation_InvalidToken),
+          );
         return;
       }
 
@@ -149,17 +148,21 @@ export function useSessionEstablish<
         (authenticatedUser.accountStatus as unknown as TAccountStatus) !==
           activeStatusValue
       ) {
-        res.status(403).send(
-          getSuiteCoreTranslation(SuiteCoreStringKey.Validation_UserNotFound),
-        );
+        res
+          .status(403)
+          .send(
+            getSuiteCoreTranslation(SuiteCoreStringKey.Validation_UserNotFound),
+          );
         return;
       }
       if (authenticatedUser.id !== req.user.id) {
-        res.status(403).send(
-          getSuiteCoreTranslation(
-            SuiteCoreStringKey.Validation_InvalidCredentials,
-          ),
-        );
+        res
+          .status(403)
+          .send(
+            getSuiteCoreTranslation(
+              SuiteCoreStringKey.Validation_InvalidCredentials,
+            ),
+          );
         return;
       }
 

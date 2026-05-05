@@ -69,10 +69,10 @@ describe('TotpService - Property Tests', () => {
     const alphanumChars =
       'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     const nonEmptyAlphanumeric = fc
-      .array(
-        fc.constantFrom(...alphanumChars.split('')),
-        { minLength: 1, maxLength: 30 },
-      )
+      .array(fc.constantFrom(...alphanumChars.split('')), {
+        minLength: 1,
+        maxLength: 30,
+      })
       .map((chars) => chars.join(''));
 
     it('provisioning URI starts with otpauth://totp/ and contains issuer and account label', () => {

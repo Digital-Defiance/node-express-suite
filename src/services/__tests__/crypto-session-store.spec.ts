@@ -11,7 +11,14 @@
  *  - shutdown clears interval and disposes all entries
  */
 
-import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  jest,
+} from '@jest/globals';
 import type { Member, PlatformID } from '@digitaldefiance/node-ecies-lib';
 import { CryptoSessionStore } from '../crypto-session-store';
 

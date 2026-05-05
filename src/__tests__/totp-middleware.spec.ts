@@ -82,7 +82,11 @@ function createMockApplication(): {
     buildRequestUserDTO: jest.fn().mockResolvedValue(null),
   };
 
-  const application = buildApplication(mockAuthProvider, SecureString, LocalhostConstants);
+  const application = buildApplication(
+    mockAuthProvider,
+    SecureString,
+    LocalhostConstants,
+  );
   return { application, mockAuthProvider };
 }
 
@@ -115,19 +119,14 @@ function buildApplication(
  * Builds an Express app with a catch-all protected route that applies
  * the authenticateToken middleware to every request method and path.
  */
-function makeProtectedApp(
-  application: ReturnType<typeof buildApplication>,
-) {
+function makeProtectedApp(application: ReturnType<typeof buildApplication>) {
   const app = express();
   app.use(express.json());
 
-  app.use(
-    (req: Request, res: Response, next: NextFunction) =>
-      authenticateToken(application as never, req, res, next),
+  app.use((req: Request, res: Response, next: NextFunction) =>
+    authenticateToken(application as never, req, res, next),
   );
-  app.use((_req: Request, res: Response) =>
-    res.status(200).json({ ok: true }),
-  );
+  app.use((_req: Request, res: Response) => res.status(200).json({ ok: true }));
 
   return app;
 }
@@ -195,7 +194,14 @@ describe('Feature: totp-2fa, Property 9: Pending Token Rejected on Protected End
           const pendingToken = signPendingTotpToken(userId);
 
           const res = await request(app)
-            [method.toLowerCase() as 'get' | 'post' | 'put' | 'patch' | 'delete'](path)
+            [
+              method.toLowerCase() as
+                | 'get'
+                | 'post'
+                | 'put'
+                | 'patch'
+                | 'delete'
+            ](path)
             .set('Authorization', `Bearer ${pendingToken}`);
 
           // The middleware must reject the request.
@@ -209,7 +215,6 @@ describe('Feature: totp-2fa, Property 9: Pending Token Rejected on Protected End
     );
   });
 });
-
 
 // ─── Unit Tests ─────────────────────────────────────────────────────────────
 
@@ -271,11 +276,10 @@ describe('Auth middleware TOTP unit tests', () => {
     const app = makeProtectedApp(application);
 
     // Sign a full JWT with roles (not a pending token)
-    const fullToken = sign(
-      { userId, roles: [] },
-      JWT_SECRET,
-      { algorithm: JWT_ALGORITHM, expiresIn: 3600 },
-    );
+    const fullToken = sign({ userId, roles: [] }, JWT_SECRET, {
+      algorithm: JWT_ALGORITHM,
+      expiresIn: 3600,
+    });
 
     const res = await request(app)
       .get('/user/settings')

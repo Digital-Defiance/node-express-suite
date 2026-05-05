@@ -61,7 +61,9 @@ describe('useSessionUnlock', () => {
     useSessionUnlock({ store })(req, makeRes(), next);
     expect(store.touch).not.toHaveBeenCalled();
     expect(next).toHaveBeenCalledTimes(1);
-    expect((req as unknown as { eciesUser?: unknown }).eciesUser).toBeUndefined();
+    expect(
+      (req as unknown as { eciesUser?: unknown }).eciesUser,
+    ).toBeUndefined();
   });
 
   it('no-ops when store.touch returns undefined (expired or wrong user)', () => {
@@ -75,7 +77,9 @@ describe('useSessionUnlock', () => {
     const next = jest.fn() as unknown as NextFunction;
     useSessionUnlock({ store })(req, makeRes(), next);
     expect(store.touch).toHaveBeenCalledWith('abc', 'u1');
-    expect((req as unknown as { eciesUser?: unknown }).eciesUser).toBeUndefined();
+    expect(
+      (req as unknown as { eciesUser?: unknown }).eciesUser,
+    ).toBeUndefined();
     expect(isCryptoSessionOwned(req)).toBe(false);
     expect(next).toHaveBeenCalledTimes(1);
   });
@@ -183,6 +187,8 @@ describe('cleanupCrypto + session-unlock interaction', () => {
     runCleanup(req);
 
     expect(member.dispose).toHaveBeenCalledTimes(1);
-    expect((req as unknown as { eciesUser?: unknown }).eciesUser).toBeUndefined();
+    expect(
+      (req as unknown as { eciesUser?: unknown }).eciesUser,
+    ).toBeUndefined();
   });
 });
