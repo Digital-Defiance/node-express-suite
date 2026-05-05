@@ -2,6 +2,7 @@ export * from './abstract-jwt-service';
 export * from './abstract-role-service';
 export * from './base';
 export * from './checksum';
+export * from './crypto-session-store';
 export * from './dummy-email-service';
 export * from './fake-email-service';
 export * from './fec';

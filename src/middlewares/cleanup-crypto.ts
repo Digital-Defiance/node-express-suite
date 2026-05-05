@@ -5,11 +5,16 @@
  */
 
 import { NextFunction, Request, Response } from 'express';
+import { isCryptoSessionOwned } from './session-unlock';
 
 /**
  * Express middleware to cleanup cryptographic resources after request completion.
  * Wraps response.end() to dispose of req.eciesUser before sending response.
  * Should be registered early in middleware chain to ensure cleanup on all responses.
+ *
+ * If the eciesUser was attached by the session-unlock middleware (i.e. the
+ * member is owned by a CryptoSessionStore), disposal is skipped — the
+ * session store is responsible for its lifecycle.
  * @param {Request} req - Express request object
  * @param {Response} res - Express response object
  * @param {NextFunction} next - Express next function
@@ -24,8 +29,8 @@ export function cleanupCrypto(
 
   // Override end function to cleanup before response
   const wrappedEnd = function (this: Response, ...args: unknown[]) {
-    // Cleanup eciesUser if it exists
-    if (req.eciesUser) {
+    // Cleanup eciesUser if it exists and is not owned by the session store.
+    if (req.eciesUser && !isCryptoSessionOwned(req)) {
       try {
         // Dispose of sensitive cryptographic material
         req.eciesUser.dispose();
