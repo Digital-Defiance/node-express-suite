@@ -17,4 +17,5 @@ import type { BaseDocument } from './base';
 export type UserDocument<
   TLanguage extends string = string,
   TID extends PlatformID = Buffer,
-> = BaseDocument<IUserBase<TID, Date, TLanguage, AccountStatus>, TID>;
+  TDate extends Date | number = Date,
+> = BaseDocument<IUserBase<TID, TDate, TLanguage, AccountStatus>, TID>;

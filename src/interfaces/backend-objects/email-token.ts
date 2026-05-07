@@ -13,6 +13,9 @@ import {
 /**
  * Backend email token object type.
  * @template TID - Platform ID type (defaults to Buffer)
+ * @template TDate - Date type (defaults to Date)
  */
-export type IEmailTokenBackendObject<TID extends PlatformID = Buffer> =
-  IEmailTokenBase<TID, Date, EmailTokenType>;
+export type IEmailTokenBackendObject<
+  TID extends PlatformID = Buffer,
+  TDate extends Date | number = Date,
+> = IEmailTokenBase<TID, TDate, EmailTokenType>;

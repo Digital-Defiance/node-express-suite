@@ -12,8 +12,9 @@ import type { BaseDocument } from './base';
  * Satisfied by both Mongoose documents and BrightDb plain records.
  *
  * @template TID - Platform ID type (defaults to Buffer)
+ * @template TDate - Date type (defaults to Date)
  */
-export type UserRoleDocument<TID extends PlatformID = Buffer> = BaseDocument<
-  IUserRoleBase<TID, Date>,
-  TID
->;
+export type UserRoleDocument<
+  TID extends PlatformID = Buffer,
+  TDate extends Date | number = Date,
+> = BaseDocument<IUserRoleBase<TID, TDate>, TID>;

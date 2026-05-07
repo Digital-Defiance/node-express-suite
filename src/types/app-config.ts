@@ -18,13 +18,14 @@ export interface AppConfig<
   TModelDocs = unknown,
   TInitResults = unknown,
   TID extends PlatformID = Buffer,
+  TDate extends Date | number = Date,
 > {
   environment: Environment;
   constants: IConstants;
   models: TModelDocs;
   initResults: TInitResults;
   idType: TID;
-  dateType: Date;
+  dateType: TDate;
 }
 
 /**

@@ -45,6 +45,13 @@ export interface CryptoSessionStoreOptions {
    * first. Defaults to 10.
    */
   maxSessionsPerUser?: number;
+  /**
+   * Clock function returning the current time in milliseconds.
+   * Defaults to `Date.now`. Override in tests to control time, or supply
+   * a monotonic clock source (e.g. TAI-based) for production use.
+   * Must return values in the same unit as `slidingTtlMs` / `absoluteTtlMs`.
+   */
+  nowMs?: () => number;
 }
 
 interface CryptoSessionEntry<TID extends PlatformID> {
@@ -67,11 +74,13 @@ export class CryptoSessionStore<TID extends PlatformID = Buffer> {
   private readonly absoluteTtlMs: number;
   private readonly maxSessionsPerUser: number;
   private readonly sweepHandle: NodeJS.Timeout;
+  private readonly nowMs: () => number;
 
   constructor(options: CryptoSessionStoreOptions = {}) {
     this.slidingTtlMs = options.slidingTtlMs ?? 15 * 60 * 1000;
     this.absoluteTtlMs = options.absoluteTtlMs ?? 8 * 60 * 60 * 1000;
     this.maxSessionsPerUser = options.maxSessionsPerUser ?? 10;
+    this.nowMs = options.nowMs ?? Date.now.bind(Date);
     const sweepIntervalMs = options.sweepIntervalMs ?? 60 * 1000;
     this.sweepHandle = setInterval(() => this.sweep(), sweepIntervalMs);
     // Don't keep the event loop alive solely for the sweeper.
@@ -87,7 +96,7 @@ export class CryptoSessionStore<TID extends PlatformID = Buffer> {
    * @returns the opaque session id to deliver to the client.
    */
   public establish(userId: string, member: Member<TID>): string {
-    const now = Date.now();
+    const now = this.nowMs();
     const sessionId = randomBytes(32).toString('base64url');
     const entry: CryptoSessionEntry<TID> = {
       sessionId,
@@ -115,7 +124,7 @@ export class CryptoSessionStore<TID extends PlatformID = Buffer> {
     const entry = this.sessions.get(sessionId);
     if (!entry) return undefined;
     if (entry.userId !== expectedUserId) return undefined;
-    const now = Date.now();
+    const now = this.nowMs();
     if (now >= entry.absoluteExpiresAt || now >= entry.expiresAt) {
       this.destroyEntry(entry);
       return undefined;
@@ -167,7 +176,7 @@ export class CryptoSessionStore<TID extends PlatformID = Buffer> {
   }
 
   private sweep(): void {
-    const now = Date.now();
+    const now = this.nowMs();
     for (const entry of Array.from(this.sessions.values())) {
       if (now >= entry.absoluteExpiresAt || now >= entry.expiresAt) {
         this.destroyEntry(entry);

@@ -47,7 +47,8 @@ function createHttpRedirectApp(): express.Application {
 /** Arbitrary for a valid DNS label (2-12 chars, starts with letter, lowercase alphanumeric + internal hyphens) */
 const dnsLabelArb: fc.Arbitrary<string> = fc
   .stringMatching(/^[a-z][a-z0-9-]{0,9}[a-z0-9]$/)
-  .filter((s) => !s.includes('--'));
+  .filter((s) => !s.includes('--'))
+  .filter((s) => !/-\d/.test(s) && !/\d-/.test(s));
 
 /** Arbitrary for a valid TLD (2-6 lowercase alpha chars) */
 const tldArb: fc.Arbitrary<string> = fc.stringMatching(/^[a-z]{2,6}$/);

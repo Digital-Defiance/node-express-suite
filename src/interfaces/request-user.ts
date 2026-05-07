@@ -27,7 +27,7 @@ export interface IRequestUser<
     | Array<IRoleFrontendObject>
     | Array<IRoleBackendObject> = Array<IRoleDTO>,
   TLanguage extends string = string,
-  TDate extends Date | string = string,
+  TDate extends Date | number | string = string,
 > {
   /**
    * The ID of the user

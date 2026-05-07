@@ -16,12 +16,12 @@ import {
 /**
  * Represents a captured email stored by the FakeEmailService.
  */
-export interface CapturedEmail {
+export interface CapturedEmail<TDate extends Date | number = Date> {
   to: string;
   subject: string;
   text: string;
   html: string;
-  timestamp: Date;
+  timestamp: TDate;
 }
 
 /**
@@ -30,14 +30,14 @@ export interface CapturedEmail {
  * transport would receive, so tests can assert on visible-recipient
  * semantics (To/CC) and BCC privacy.
  */
-export interface CapturedBatchEmail {
+export interface CapturedBatchEmail<TDate extends Date | number = Date> {
   to: string[];
   cc: string[];
   bcc: string[];
   subject: string;
   text: string;
   html: string;
-  timestamp: Date;
+  timestamp: TDate;
 }
 
 /**
@@ -51,16 +51,29 @@ export interface CapturedBatchEmail {
 export class FakeEmailService<
   TID extends PlatformID = Buffer,
   TApplication extends IApplication<TID> = IApplication<TID>,
+  TDate extends Date | number = Date,
 >
   implements IEmailService, IBatchEmailService
 {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private static instance: FakeEmailService<any, any> | null = null;
-  private readonly emails: Map<string, CapturedEmail[]> = new Map();
-  private readonly batches: CapturedBatchEmail[] = [];
+  private static instance: FakeEmailService<any, any, any> | null = null;
+  private readonly emails: Map<string, CapturedEmail<TDate>[]> = new Map();
+  private readonly batches: CapturedBatchEmail<TDate>[] = [];
+  private readonly dateFactory: () => TDate;
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  constructor(_application: TApplication) {}
+  constructor(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _application: TApplication,
+    /**
+     * Factory for producing the current timestamp as TDate.
+     * Required when TDate is a non-Date number type (e.g. BrightDate).
+     * Defaults to `new Date()` cast to TDate.
+     * Example for BrightDate: `() => BrightDate.now().value`
+     */
+    dateFactory?: () => TDate,
+  ) {
+    this.dateFactory = dateFactory ?? (() => new Date() as unknown as TDate);
+  }
 
   /**
    * Returns the singleton FakeEmailService instance.
@@ -69,18 +82,28 @@ export class FakeEmailService<
   public static getInstance<
     TID extends PlatformID = Buffer,
     TApplication extends IApplication<TID> = IApplication<TID>,
-  >(application?: TApplication): FakeEmailService<TID, TApplication> {
+    TDate extends Date | number = Date,
+  >(
+    application?: TApplication,
+    dateFactory?: () => TDate,
+  ): FakeEmailService<TID, TApplication, TDate> {
     if (!FakeEmailService.instance) {
       if (!application) {
         throw new Error(
           'FakeEmailService.getInstance() requires an application instance on first call',
         );
       }
-      FakeEmailService.instance = new FakeEmailService<TID, TApplication>(
-        application,
-      );
+      FakeEmailService.instance = new FakeEmailService<
+        TID,
+        TApplication,
+        TDate
+      >(application, dateFactory);
     }
-    return FakeEmailService.instance as FakeEmailService<TID, TApplication>;
+    return FakeEmailService.instance as FakeEmailService<
+      TID,
+      TApplication,
+      TDate
+    >;
   }
 
   /**
@@ -99,12 +122,12 @@ export class FakeEmailService<
     text: string,
     html: string,
   ): Promise<void> {
-    const email: CapturedEmail = {
+    const email: CapturedEmail<TDate> = {
       to,
       subject,
       text,
       html,
-      timestamp: new Date(),
+      timestamp: this.dateFactory(),
     };
     const existing = this.emails.get(to);
     if (existing) {
@@ -129,7 +152,7 @@ export class FakeEmailService<
       return;
     }
 
-    const timestamp = new Date();
+    const timestamp = this.dateFactory();
     this.batches.push({
       to,
       cc,
@@ -141,7 +164,7 @@ export class FakeEmailService<
     });
 
     for (const addr of [...to, ...cc, ...bcc]) {
-      const email: CapturedEmail = {
+      const email: CapturedEmail<TDate> = {
         to: addr,
         subject: input.subject,
         text: input.text,
@@ -160,14 +183,16 @@ export class FakeEmailService<
   /**
    * Returns all captured emails for a given recipient address.
    */
-  public getEmails(recipientAddress: string): CapturedEmail[] {
+  public getEmails(recipientAddress: string): CapturedEmail<TDate>[] {
     return this.emails.get(recipientAddress) ?? [];
   }
 
   /**
    * Returns the most recently captured email for a given recipient address.
    */
-  public getLatestEmail(recipientAddress: string): CapturedEmail | undefined {
+  public getLatestEmail(
+    recipientAddress: string,
+  ): CapturedEmail<TDate> | undefined {
     const list = this.emails.get(recipientAddress);
     if (!list || list.length === 0) return undefined;
     return list[list.length - 1];
@@ -176,7 +201,7 @@ export class FakeEmailService<
   /**
    * Returns all captured emails grouped by recipient address.
    */
-  public getAllEmails(): Map<string, CapturedEmail[]> {
+  public getAllEmails(): Map<string, CapturedEmail<TDate>[]> {
     return new Map(this.emails);
   }
 
@@ -198,14 +223,14 @@ export class FakeEmailService<
   /**
    * Returns all captured batch sends in the order they were made.
    */
-  public getBatches(): CapturedBatchEmail[] {
+  public getBatches(): CapturedBatchEmail<TDate>[] {
     return [...this.batches];
   }
 
   /**
    * Returns the most recently captured batch send, or undefined if none.
    */
-  public getLatestBatch(): CapturedBatchEmail | undefined {
+  public getLatestBatch(): CapturedBatchEmail<TDate> | undefined {
     if (this.batches.length === 0) return undefined;
     return this.batches[this.batches.length - 1];
   }
