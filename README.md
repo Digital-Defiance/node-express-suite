@@ -2166,6 +2166,10 @@ The following v1.x patterns still work in v2.0:
 
 ## ChangeLog
 
+### Version 5.0.0
+
+Version sync for Express Suite 5.0.0; no breaking changes in this package. Updated `@digitaldefiance/suite-core-lib` to 5.0.0.
+
 ### Version 4.19.11
 
 Version sync — bumped major/minor without substantive changes to match rest of suite.
