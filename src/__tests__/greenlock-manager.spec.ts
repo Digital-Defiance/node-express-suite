@@ -80,11 +80,23 @@ describe('Property 4: HTTP-to-HTTPS redirect correctness', () => {
    * should respond with status 301 and a Location header equal to https://{h}{p}.
    */
   const redirectApp = createHttpRedirectApp();
+  // One persistent server reused across all property iterations. A fresh
+  // ephemeral server per request() call (x100 runs x 3 tests) intermittently
+  // produces "socket hang up"; a single long-lived server avoids that churn.
+  let redirectServer: import('http').Server;
+
+  beforeAll((done) => {
+    redirectServer = redirectApp.listen(0, done);
+  });
+
+  afterAll((done) => {
+    redirectServer.close(() => done());
+  });
 
   it('should respond with 301 and Location header https://{host}{path} for any host and path', async () => {
     await fc.assert(
       fc.asyncProperty(hostArb, pathArb, async (host: string, path: string) => {
-        const response = await request(redirectApp)
+        const response = await request(redirectServer)
           .get(path)
           .set('Host', host)
           .redirects(0);
@@ -103,7 +115,7 @@ describe('Property 4: HTTP-to-HTTPS redirect correctness', () => {
         fc.array(pathSegmentArb, { minLength: 2, maxLength: 5 }),
         async (host: string, segments: string[]) => {
           const path = '/' + segments.join('/');
-          const response = await request(redirectApp)
+          const response = await request(redirectServer)
             .get(path)
             .set('Host', host)
             .redirects(0);
@@ -119,7 +131,7 @@ describe('Property 4: HTTP-to-HTTPS redirect correctness', () => {
   it('should redirect root path correctly', async () => {
     await fc.assert(
       fc.asyncProperty(hostArb, async (host: string) => {
-        const response = await request(redirectApp)
+        const response = await request(redirectServer)
           .get('/')
           .set('Host', host)
           .redirects(0);

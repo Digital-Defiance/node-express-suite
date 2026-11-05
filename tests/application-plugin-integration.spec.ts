@@ -6,11 +6,19 @@
  * @module tests/application-plugin-integration
  */
 
+import { mkdtempSync } from 'fs';
+import { tmpdir } from 'os';
+import { join } from 'path';
 import { registerNodeRuntimeConfiguration } from '@digitaldefiance/node-ecies-lib';
 import { Application } from '../src/application';
 import { BaseApplication } from '../src/base-application';
 import { LocalhostConstants } from '../src/constants';
 import { Environment } from '../src/environment';
+
+// Unique per-file temp dirs so parallel jest workers don't race on a shared
+// hardcoded path that another suite can create/remove mid-run.
+const API_DIST_DIR = mkdtempSync(join(tmpdir(), 'nes-api-dist-'));
+const REACT_DIST_DIR = mkdtempSync(join(tmpdir(), 'nes-react-dist-'));
 import type { IApplication, IConstants } from '../src/interfaces';
 import type { IAuthenticationProvider } from '../src/interfaces/authentication-provider';
 import type { IDatabasePlugin } from '../src/plugins/database-plugin';
@@ -32,15 +40,8 @@ function setupEnv(): void {
   process.env.JWT_SECRET = 'a'.repeat(64);
   process.env.MNEMONIC_HMAC_SECRET = 'a'.repeat(64);
   process.env.MNEMONIC_ENCRYPTION_KEY = 'b'.repeat(64);
-  process.env.API_DIST_DIR = '/tmp/test-api-dist';
-  process.env.REACT_DIST_DIR = '/tmp/test-react-dist';
-  const fs = require('fs');
-  if (!fs.existsSync('/tmp/test-api-dist')) {
-    fs.mkdirSync('/tmp/test-api-dist', { recursive: true });
-  }
-  if (!fs.existsSync('/tmp/test-react-dist')) {
-    fs.mkdirSync('/tmp/test-react-dist', { recursive: true });
-  }
+  process.env.API_DIST_DIR = API_DIST_DIR;
+  process.env.REACT_DIST_DIR = REACT_DIST_DIR;
 }
 
 /**

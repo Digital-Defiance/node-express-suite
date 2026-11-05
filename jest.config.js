@@ -16,6 +16,9 @@ process.emitWarning = function(warning, type, code) {
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
+  // Run serially: several suites start real servers / touch shared OS resources
+  // and flake intermittently under jest's default multi-worker parallelism.
+  maxWorkers: 1,
   roots: ['<rootDir>/src', '<rootDir>/tests'],
   testMatch: ['**/*.spec.ts'],
   setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],

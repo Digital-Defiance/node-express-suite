@@ -12,6 +12,9 @@ import type {
   IDatabase,
   IDatabaseLifecycleHooks,
 } from '@brightchain/brightchain-lib';
+import { mkdtempSync } from 'fs';
+import { tmpdir } from 'os';
+import { join } from 'path';
 import { TranslatableSuiteError } from '@digitaldefiance/suite-core-lib';
 import { BaseApplication } from '../src/base-application';
 import { Environment } from '../src/environment';
@@ -19,6 +22,12 @@ import { Environment } from '../src/environment';
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
+
+// Unique per-test-file temp dirs so parallel jest workers don't race on a
+// shared hardcoded path (previously /tmp/test-api-dist, removed/recreated by
+// other suites mid-run).
+const API_DIST_DIR = mkdtempSync(join(tmpdir(), 'nes-api-dist-'));
+const REACT_DIST_DIR = mkdtempSync(join(tmpdir(), 'nes-react-dist-'));
 
 /** Minimal IDatabase mock that records calls for ordering verification. */
 function createMockDatabase(callLog: string[]): IDatabase {
@@ -43,14 +52,9 @@ function createDevEnv(): Environment<string> {
   process.env.JWT_SECRET = 'a'.repeat(64);
   process.env.MNEMONIC_HMAC_SECRET = 'a'.repeat(64);
   process.env.MNEMONIC_ENCRYPTION_KEY = 'b'.repeat(64);
-  process.env.API_DIST_DIR = '/tmp/test-api-dist';
-  process.env.REACT_DIST_DIR = '/tmp/test-react-dist';
+  process.env.API_DIST_DIR = API_DIST_DIR;
+  process.env.REACT_DIST_DIR = REACT_DIST_DIR;
   process.env.DEV_DATABASE = 'true';
-  const fs = require('fs');
-  if (!fs.existsSync('/tmp/test-api-dist'))
-    fs.mkdirSync('/tmp/test-api-dist', { recursive: true });
-  if (!fs.existsSync('/tmp/test-react-dist'))
-    fs.mkdirSync('/tmp/test-react-dist', { recursive: true });
   return new Environment<string>(undefined, true);
 }
 
@@ -59,8 +63,8 @@ function createProdEnv(): Environment<string> {
   process.env.JWT_SECRET = 'a'.repeat(64);
   process.env.MNEMONIC_HMAC_SECRET = 'a'.repeat(64);
   process.env.MNEMONIC_ENCRYPTION_KEY = 'b'.repeat(64);
-  process.env.API_DIST_DIR = '/tmp/test-api-dist';
-  process.env.REACT_DIST_DIR = '/tmp/test-react-dist';
+  process.env.API_DIST_DIR = API_DIST_DIR;
+  process.env.REACT_DIST_DIR = REACT_DIST_DIR;
   delete process.env.DEV_DATABASE;
   return new Environment<string>(undefined, true);
 }

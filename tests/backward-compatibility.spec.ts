@@ -6,6 +6,9 @@
  * Feature: plugin-based-database
  * Validates: Requirements 5.1, 5.2, 5.3, 5.4
  */
+import { mkdtempSync } from 'fs';
+import { tmpdir } from 'os';
+import { join } from 'path';
 import { withConsoleMocks } from '@digitaldefiance/express-suite-test-utils';
 import { BaseApplication } from '../src/base-application';
 import { Environment } from '../src/environment';
@@ -13,6 +16,11 @@ import { Environment } from '../src/environment';
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
+
+// Unique per-file temp dirs so parallel jest workers don't race on a shared
+// hardcoded path that another suite can create/remove mid-run.
+const API_DIST_DIR = mkdtempSync(join(tmpdir(), 'nes-api-dist-'));
+const REACT_DIST_DIR = mkdtempSync(join(tmpdir(), 'nes-react-dist-'));
 
 /** Minimal IDatabase mock that records calls for ordering verification. */
 function createMockDatabase(callLog: string[]) {
@@ -36,18 +44,13 @@ function createTestEnv(devDatabase = false): Environment<string> {
   process.env.JWT_SECRET = 'a'.repeat(64);
   process.env.MNEMONIC_HMAC_SECRET = 'a'.repeat(64);
   process.env.MNEMONIC_ENCRYPTION_KEY = 'b'.repeat(64);
-  process.env.API_DIST_DIR = '/tmp/test-api-dist';
-  process.env.REACT_DIST_DIR = '/tmp/test-react-dist';
+  process.env.API_DIST_DIR = API_DIST_DIR;
+  process.env.REACT_DIST_DIR = REACT_DIST_DIR;
   if (devDatabase) {
     process.env.DEV_DATABASE = 'true';
   } else {
     delete process.env.DEV_DATABASE;
   }
-  const fs = require('fs');
-  if (!fs.existsSync('/tmp/test-api-dist'))
-    fs.mkdirSync('/tmp/test-api-dist', { recursive: true });
-  if (!fs.existsSync('/tmp/test-react-dist'))
-    fs.mkdirSync('/tmp/test-react-dist', { recursive: true });
   return new Environment<string>(undefined, true);
 }
 

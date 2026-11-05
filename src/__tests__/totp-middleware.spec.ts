@@ -180,39 +180,48 @@ describe('Feature: totp-2fa, Property 9: Pending Token Rejected on Protected End
     const { application } = createMockApplication();
     const app = makeProtectedApp(application);
 
-    await fc.assert(
-      fc.asyncProperty(
-        userIdArb,
-        httpMethodArb,
-        protectedPathArb,
-        async (userId, method, path) => {
-          // Skip the one endpoint that should accept pending tokens
-          if (method === 'POST' && path === '/user/totp/verify') {
-            return; // vacuously true — this combination is excluded
-          }
+    // Start one persistent server reused across all property iterations.
+    // Creating a fresh ephemeral server per request() call (x100 runs) can
+    // intermittently produce "socket hang up" under load; a single long-lived
+    // server avoids that churn.
+    const server = app.listen(0);
+    try {
+      await fc.assert(
+        fc.asyncProperty(
+          userIdArb,
+          httpMethodArb,
+          protectedPathArb,
+          async (userId, method, pathArg) => {
+            // Skip the one endpoint that should accept pending tokens
+            if (method === 'POST' && pathArg === '/user/totp/verify') {
+              return; // vacuously true -- this combination is excluded
+            }
 
-          const pendingToken = signPendingTotpToken(userId);
+            const pendingToken = signPendingTotpToken(userId);
 
-          const res = await request(app)
-            [
-              method.toLowerCase() as
-                | 'get'
-                | 'post'
-                | 'put'
-                | 'patch'
-                | 'delete'
-            ](path)
-            .set('Authorization', `Bearer ${pendingToken}`);
+            const res = await request(server)
+              [
+                method.toLowerCase() as
+                  | 'get'
+                  | 'post'
+                  | 'put'
+                  | 'patch'
+                  | 'delete'
+              ](pathArg)
+              .set('Authorization', `Bearer ${pendingToken}`);
 
-          // The middleware must reject the request.
-          // verifyToken returns null (no roles claim) → middleware sends 403.
-          expect(res.status).toBe(403);
-          // Must NOT reach the protected handler
-          expect(res.body.ok).toBeUndefined();
-        },
-      ),
-      { numRuns: 100 },
-    );
+            // The middleware must reject the request.
+            // verifyToken returns null (no roles claim) -> middleware sends 403.
+            expect(res.status).toBe(403);
+            // Must NOT reach the protected handler
+            expect(res.body.ok).toBeUndefined();
+          },
+        ),
+        { numRuns: 100 },
+      );
+    } finally {
+      await new Promise<void>((resolve) => server.close(() => resolve()));
+    }
   });
 });
 
