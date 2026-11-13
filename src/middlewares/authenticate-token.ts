@@ -17,6 +17,10 @@ import { NextFunction, Request, Response } from 'express';
 import { IncomingHttpHeaders } from 'http';
 import { TokenExpiredError } from '../errors/token-expired';
 import { IApplication } from '../interfaces/application';
+import {
+  continueWithRequestLanguage,
+  resolveRequestLanguage,
+} from './set-global-context-language';
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 
 // Type for Timezone constructor
@@ -116,15 +120,15 @@ export async function authenticateToken<TID extends PlatformID = Buffer>(
       (req as Express.Request & { member?: unknown }).member = member;
     }
 
-    // Update global context with user's language and timezone
-    const context = GlobalActiveContext.getInstance();
-    if (requestUserDTO.siteLanguage) {
-      context.userLanguage = requestUserDTO.siteLanguage;
-    }
-    context.setLanguageContextSpace('user');
-    context.userTimezone = createTimezone(requestUserDTO.timezone);
+    GlobalActiveContext.getInstance().setLanguageContextSpace('user');
 
-    next();
+    // Language and timezone are request data, not process-wide state: resolve
+    // them once (language: Accept-Language header, then the user's preference)
+    // and carry them through the rest of this request instead of writing them
+    // to the shared context, where overlapping requests would overwrite them.
+    const language = resolveRequestLanguage(req) ?? requestUserDTO.siteLanguage;
+    const timezone = createTimezone(requestUserDTO.timezone);
+    continueWithRequestLanguage(req, res, next, language, timezone);
     return res;
   } catch (err) {
     if (err instanceof TokenExpiredError) {

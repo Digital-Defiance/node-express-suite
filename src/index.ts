@@ -22,6 +22,7 @@ export * from './middleware-utils';
 export * from './pipeline';
 export * from './plugins';
 export * from './registry';
+export * from './request-context';
 export * from './responses';
 export * from './routers';
 export { RouteBuilder } from './routing';

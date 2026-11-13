@@ -40,6 +40,12 @@ import { authenticateCrypto } from '../middlewares/authenticate-crypto';
 import { authenticateToken } from '../middlewares/authenticate-token';
 import { setGlobalContextLanguageFromRequest } from '../middlewares/set-global-context-language';
 import {
+  getRequestContext,
+  getRequestLanguage,
+  RequestContext,
+  runWithRequestContext,
+} from '../request-context';
+import {
   ApiErrorResponse,
   ApiResponse,
   FlexibleValidationChain,
@@ -71,9 +77,15 @@ export abstract class BaseController<
   TApplication extends IApplication<TID> = IApplication<TID>,
 > {
   public readonly router: Router;
-  private activeRequest: Request | null = null;
-  private activeResponse: Response | null = null;
-  private activeSession: IClientSession | undefined = undefined;
+  /**
+   * Fallbacks used only when no request is executing (e.g. a handler invoked
+   * directly from a unit test). While a request runs, the request, response
+   * and session live in that request's RequestContext (AsyncLocalStorage), so
+   * overlapping requests never see each other's state.
+   */
+  private fallbackRequest: Request | null = null;
+  private fallbackResponse: Response | null = null;
+  private fallbackSession: IClientSession | undefined = undefined;
   public readonly application: TApplication;
   protected routeDefinitions: RouteConfig<THandler, TLanguage>[] = [];
   protected get constants(): IConstants {
@@ -191,10 +203,7 @@ export abstract class BaseController<
         const context = { constants: this.constants };
         const validationArray = validationFn.call(
           context,
-          GlobalActiveContext.getInstance<
-            TLanguage,
-            IActiveContext<TLanguage>
-          >().userLanguage,
+          this.resolveRequestLanguage(),
         );
         // amazonq-ignore-next-line fixed above
         await Promise.all(validationArray.map((v) => v.run(req)));
@@ -210,14 +219,49 @@ export abstract class BaseController<
     };
   }
 
+  /**
+   * The language of the request currently executing. Falls back to the shared
+   * language only when no request is running.
+   */
+  private resolveRequestLanguage(): TLanguage {
+    return (getRequestLanguage() ??
+      GlobalActiveContext.getInstance<TLanguage, IActiveContext<TLanguage>>()
+        .userLanguage ??
+      'en-US') as TLanguage;
+  }
+
   private createRequestHandler(
     config: RouteConfig<THandler, TLanguage>,
   ): RequestHandler {
-    return async (req: Request, res: Response<T>, next: NextFunction) => {
-      this.activeRequest = req;
-      this.activeResponse = res;
+    return (req: Request, res: Response<T>, next: NextFunction) => {
+      // Every request gets its own context. The request, response, transaction
+      // session and language live here (not on the controller instance), so
+      // overlapping requests cannot read each other's state across an await.
+      const parent = getRequestContext();
+      const localsLanguage = res.locals?.['language'];
+      const context: RequestContext = {
+        req,
+        res,
+        session: undefined,
+        language:
+          parent?.language ??
+          (typeof localsLanguage === 'string' ? localsLanguage : undefined),
+      };
+      return runWithRequestContext(context, () =>
+        this.handleRequest(config, context, req, res, next),
+      );
+    };
+  }
 
-      if (config.useAuthentication && !this.activeRequest?.user) {
+  private async handleRequest(
+    config: RouteConfig<THandler, TLanguage>,
+    context: RequestContext,
+    req: Request,
+    res: Response<T>,
+    next: NextFunction,
+  ): Promise<void> {
+    {
+      if (config.useAuthentication && !req.user) {
         handleError(
           new HandleableError(
             new Error(
@@ -262,14 +306,18 @@ export abstract class BaseController<
         if (config.useTransaction) {
           const db = this.application.database;
           if (db) {
-            result = await db.withTransaction(async (session) => {
-              this.activeSession = session;
-              try {
-                return await typedHandler(req, ...handlerArgs);
-              } finally {
-                this.activeSession = undefined;
-              }
-            });
+            result = await db.withTransaction(async (session) =>
+              // Re-enter the request context explicitly so it holds regardless
+              // of how the database driver schedules this callback.
+              runWithRequestContext(context, async () => {
+                context.session = session;
+                try {
+                  return await typedHandler(req, ...handlerArgs);
+                } finally {
+                  context.session = undefined;
+                }
+              }),
+            );
           } else {
             result = await typedHandler(req, ...handlerArgs);
           }
@@ -291,7 +339,7 @@ export abstract class BaseController<
         }
         sendFunc(statusCode, response, res);
       } catch (error) {
-        this.activeSession = undefined;
+        context.session = undefined;
         if (res.headersSent) {
           return;
         }
@@ -302,7 +350,7 @@ export abstract class BaseController<
           next,
         );
       }
-    };
+    }
   }
 
   /**
@@ -314,8 +362,16 @@ export abstract class BaseController<
         this.router[config.method](
           config.path,
           ...[
-            ...this.getAuthenticationMiddleware(config),
+            // Resolve the request's language first so authentication errors
+            // are localized too. Authentication refines it with the user's
+            // preference once the user is known.
             setGlobalContextLanguageFromRequest,
+            ...this.getAuthenticationMiddleware(config),
+            // Re-resolve once req.user is known (custom authenticateRequest
+            // implementations may not do this themselves).
+            ...(config.useAuthentication
+              ? [setGlobalContextLanguageFromRequest]
+              : []),
             ...this.getValidationMiddleware(config),
             ...this.getCryptoAuthenticationMiddleware(config),
             ...(config.middleware ?? []),
@@ -400,9 +456,7 @@ export abstract class BaseController<
       includeOptionals: false, // Exclude fields that weren't validated
     });
 
-    const language =
-      GlobalActiveContext.getInstance<TLanguage, IActiveContext<TLanguage>>()
-        .userLanguage ?? ('en-US' as TLanguage);
+    const language = this.resolveRequestLanguage();
 
     // If validationArray is a function, call it with the language
     const valArray =
@@ -415,6 +469,46 @@ export abstract class BaseController<
     req.validatedBody = this.handleBooleanFields(valArray, validatedBody);
 
     next();
+  }
+
+  private get activeRequest(): Request | null {
+    return getRequestContext()?.req ?? this.fallbackRequest;
+  }
+
+  private set activeRequest(req: Request | null) {
+    const context = getRequestContext();
+    if (context) {
+      context.req = req ?? undefined;
+    } else {
+      this.fallbackRequest = req;
+    }
+  }
+
+  private get activeResponse(): Response | null {
+    return getRequestContext()?.res ?? this.fallbackResponse;
+  }
+
+  private set activeResponse(res: Response | null) {
+    const context = getRequestContext();
+    if (context) {
+      context.res = res ?? undefined;
+    } else {
+      this.fallbackResponse = res;
+    }
+  }
+
+  private get activeSession(): IClientSession | undefined {
+    const context = getRequestContext();
+    return context ? context.session : this.fallbackSession;
+  }
+
+  private set activeSession(session: IClientSession | undefined) {
+    const context = getRequestContext();
+    if (context) {
+      context.session = session;
+    } else {
+      this.fallbackSession = session;
+    }
   }
 
   public get user(): IRequestUserDTO {
@@ -470,21 +564,36 @@ export abstract class BaseController<
     return this.activeSession;
   }
 
+  /**
+   * Run a callback within a database transaction.
+   *
+   * Session rules:
+   * - If a session is already in play (the `session` argument, otherwise the
+   *   session of the transaction wrapping the current route), reuse it: the
+   *   callback receives that session and no second transaction is opened.
+   * - Otherwise, when IDatabase is available, open a transaction and pass the
+   *   adapter's session to the callback, so the callback's operations commit
+   *   or roll back with it.
+   * - With no database, the callback runs without a session.
+   */
   public async withTransaction<T>(
     callback: TransactionCallback<T>,
     session?: unknown,
     options?: { timeoutMs?: number },
     ...args: unknown[]
   ): Promise<T> {
-    // IDatabase path — delegate to IDatabase.withTransaction
+    const existingSession = session ?? this.session;
+    if (existingSession !== undefined) {
+      return await callback(existingSession, ...args);
+    }
+
     const db = this.application.database;
     if (db) {
-      return await db.withTransaction(async () => {
-        return await callback(session, ...args);
+      return await db.withTransaction(async (adapterSession) => {
+        return await callback(adapterSession, ...args);
       });
     }
 
-    // No database — run callback directly without transaction
-    return await callback(session, ...args);
+    return await callback(undefined, ...args);
   }
 }

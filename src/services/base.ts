@@ -30,11 +30,14 @@ export class BaseService<
   /**
    * Run a callback within a database transaction.
    *
-   * When IDatabase is available (e.g. BrightChainDb, Mongoose via plugin),
-   * delegates to IDatabase.withTransaction.
-   *
-   * When no database is available, runs the callback directly without a
-   * transaction.
+   * Session rules:
+   * - If the caller passes a `session`, reuse it: the callback receives that
+   *   session and no second transaction is opened. (The caller owns commit
+   *   and rollback.)
+   * - Otherwise, when IDatabase is available (e.g. BrightChainDb, Mongoose via
+   *   plugin), open a transaction and pass the adapter's session to the
+   *   callback, so the callback's operations commit or roll back with it.
+   * - With no database, the callback runs without a session.
    */
   public async withTransaction<T>(
     callback: TransactionCallback<T>,
@@ -42,15 +45,17 @@ export class BaseService<
     options?: { timeoutMs?: number },
     ...args: unknown[]
   ): Promise<T> {
-    // IDatabase path — delegate to IDatabase.withTransaction
+    if (session !== undefined) {
+      return await callback(session, ...args);
+    }
+
     const db = this.application.database;
     if (db) {
-      return await db.withTransaction(async () => {
-        return await callback(session, ...args);
+      return await db.withTransaction(async (adapterSession) => {
+        return await callback(adapterSession, ...args);
       });
     }
 
-    // No database — run callback directly without transaction
-    return await callback(session, ...args);
+    return await callback(undefined, ...args);
   }
 }
