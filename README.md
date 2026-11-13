@@ -2165,6 +2165,13 @@ The following v1.x patterns still work in v2.0:
 ---
 
 ## ChangeLog
+### Version 5.1.0
+- Fixed: controller request state (`req`, `res`, `user`, `validatedBody`, `session`) is scoped to each request via AsyncLocalStorage; overlapping requests no longer read each other's state after an `await`. The existing getters are unchanged
+- Fixed: one locale is resolved per request (weighted `Accept-Language`, then the user's preference) and used for authentication, validation, and response formatting, including Suite Core strings
+- Changed: the language middleware runs before authentication and no longer writes the request language into the shared `GlobalActiveContext`; `authenticateToken` carries the user's language and timezone through the request instead
+- Fixed: `withTransaction()` passes the database adapter's session to the callback, and reuses a session that is already in play instead of opening a second transaction
+- **NEW**: `runWithRequestContext()`, `getRequestContext()`, `getRequestLanguage()`
+- Depends on `@digitaldefiance/i18n-lib` 4.8.0, `@digitaldefiance/suite-core-lib` 5.0.1, `@digitaldefiance/ecies-lib` 5.2.3, `@digitaldefiance/node-ecies-lib` 5.2.3
 
 ### Version 5.0.0
 
