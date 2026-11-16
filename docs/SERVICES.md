@@ -405,10 +405,13 @@ Manages system user for internal operations.
 
 ```typescript
 class SystemUserService {
-  static getSystemUser(
-    environment: Environment,
+  static getSystemUser<TID extends PlatformID = Buffer>(
+    environment: Pick<
+      IEnvironment<TID>,
+      'systemMnemonic' | 'emailDomain' | 'systemPublicKeyHex'
+    >,
     constants: IConstants
-  ): BackendMember
+  ): BackendMember<TID>
 
   static ensureSystemUser(
     app: IApplication,

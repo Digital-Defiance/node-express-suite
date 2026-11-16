@@ -89,7 +89,7 @@ One import cycle remains in the `interfaces` graph and is not new: `interfaces/e
 
 ## Migration guide: 5.x to 6.0.0
 
-All changes are compile-time. Runtime behaviour is unchanged. Passing a real `Application`, `BaseApplication`, `ServiceContainer`, `PluginManager` or `Environment` still compiles everywhere.
+All changes in this package are compile-time. Runtime behaviour in this package is unchanged. (`node-express-suite-mongo` 6.0.0 has one runtime difference: `BackupCodeService` no longer throws a `TypeError` when `environment.mongo` is absent; it uses the default transaction timeout.) Passing a real `Application`, `BaseApplication`, `ServiceContainer`, `PluginManager` or `Environment` still compiles everywhere.
 
 ### Breaking changes
 
@@ -104,7 +104,9 @@ All changes are compile-time. Runtime behaviour is unchanged. Passing a real `Ap
    - `TApplication` constraints are loosened or narrowed on `BaseController`, `DecoratorBaseController`, `AppRouter`, `BaseRouter`, `AdminEmailRouter`, `BaseService`, `AbstractJwtService`, `AbstractRoleService`, `FakeEmailService`, `DummyEmailService`. Defaults are unchanged, so existing instantiations compile. Code that reads members off `this.application` in a subclass with its own `TApplication extends IApplication<TID>` keeps working.
    - `OpenAPIController` gains a second type parameter with a default.
    - `PostfixEmailService<TID>` and `TransactionOptions<TID>` keep their type parameter but no longer use it (renamed `_TID`); explicit `<Buffer>` arguments still compile.
-9. **Newly narrowed parameter types** (accept more, so no caller breaks): `authenticateToken`, `authenticateCrypto`, `useSessionEstablish` (`IAuthProviderPort<TID>`); `sendApiExpressValidationErrorResponse`, `TransactionOptions.application` (`IConstantsPort`); `PostfixEmailService` constructor (`IEnvironmentPort<IEmailSenderEnvironment>`); `UpnpPlugin.init` (`unknown`). Code that wraps or overrides these with the old wider parameter types still compiles.
+9. **`TransactionOptions.application` is `IConstantsPort`** (was `IApplication<TID>`). It is a public property, so code that reads `options.application.environment`, `.services` or `.db` no longer compiles. Fix: keep a full application reference when you need more than `constants`. The Mongo package's `MongoTransactionOptions.application` changes the same way.
+10. **Newly narrowed parameter types** (accept more, so no caller breaks): `authenticateToken`, `authenticateCrypto`, `useSessionEstablish` (`IAuthProviderPort<TID>`); `sendApiExpressValidationErrorResponse` (`IConstantsPort`); `PostfixEmailService` constructor (`IEnvironmentPort<IEmailSenderEnvironment>`); `UpnpPlugin.init` (`unknown`); `SystemUserService.getSystemUser` (`environment: Pick<IEnvironment<TID>, 'systemMnemonic' | 'emailDomain' | 'systemPublicKeyHex'>`, was `Environment`). Code that wraps or overrides these with the old wider parameter types still compiles.
+Note: `IApplicationPluginHost` currently has the same members as `IApplication` (including `ready` and `start`), so it documents intent but does not narrow what a plain-object host must provide.
 
 ### Additions
 
