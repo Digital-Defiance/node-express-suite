@@ -19,8 +19,8 @@ import {
   SuiteCoreStringKey,
   TranslatableSuiteError,
 } from '@digitaldefiance/suite-core-lib';
-import { Environment } from '../environment';
 import { IConstants } from '../interfaces/constants';
+import type { IEnvironment } from '../interfaces/environment';
 
 /**
  * Service for managing the system user singleton.
@@ -34,7 +34,10 @@ export class SystemUserService {
    * The mnemonic should be stored securely in environment variables.
    */
   public static getSystemUser<TID extends PlatformID = Buffer>(
-    environment: Environment<TID>,
+    environment: Pick<
+      IEnvironment<TID>,
+      'systemMnemonic' | 'emailDomain' | 'systemPublicKeyHex'
+    >,
     constants: IConstants,
   ): BackendMember<TID> {
     if (!SystemUserService.systemUser) {

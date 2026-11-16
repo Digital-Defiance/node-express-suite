@@ -22,12 +22,20 @@ export interface IPluginsPort<TID extends PlatformID = Buffer> {
 }
 
 /**
- * What a plugin receives in {@link IApplicationPlugin.init}: everything on
- * `IApplication` except the lifecycle members (`ready`, `start`).
+ * What a plugin receives in {@link IApplicationPlugin.init}: the application
+ * core, the plugin manager and the lifecycle members (`ready`, `start`).
+ * Plugins such as the Mongo database plugin forward `ready` and `start`, so
+ * `PluginManager.initAll` must be given a lifecycle-capable host.
  * @template TID - Platform ID type (defaults to Buffer)
  */
 export type IApplicationPluginHost<TID extends PlatformID = Buffer> =
-  IApplicationCore<TID> & IPluginsPort<TID>;
+  IApplicationCore<TID> &
+    IPluginsPort<TID> & {
+      /** Whether the application is ready to handle requests */
+      readonly ready: boolean;
+      /** Starts the application */
+      start(): Promise<void>;
+    };
 
 /**
  * Interface for application plugins.

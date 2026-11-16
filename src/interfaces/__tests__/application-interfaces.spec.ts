@@ -162,7 +162,12 @@ export const buildCoreApp = (): IApplicationCore => ({
 export const buildPluginHost = (): IApplicationPluginHost => ({
   ...buildCoreApp(),
   plugins,
+  ready: true,
+  start: async () => undefined,
 });
+export const buildHostMissingLifecycle = (): IApplicationPluginHost =>
+  // @ts-expect-error IApplicationPluginHost requires ready and start
+  ({ ...buildCoreApp(), plugins });
 
 // ---- Consumers accept the ports (compile-time constraint checks) -----------
 
