@@ -36,6 +36,7 @@ import { ExpressValidationError } from '../errors/express-validation';
 import { MissingValidatedDataError } from '../errors/missing-validated-data';
 import { IConstants } from '../interfaces';
 import { IApplication } from '../interfaces/application';
+import type { IControllerApplication } from '../interfaces/application-ports';
 import { authenticateCrypto } from '../middlewares/authenticate-crypto';
 import { authenticateToken } from '../middlewares/authenticate-token';
 import { setGlobalContextLanguageFromRequest } from '../middlewares/set-global-context-language';
@@ -74,7 +75,7 @@ export abstract class BaseController<
   THandler extends object,
   TLanguage extends string,
   TID extends PlatformID = Buffer,
-  TApplication extends IApplication<TID> = IApplication<TID>,
+  TApplication extends IControllerApplication<TID> = IApplication<TID>,
 > {
   public readonly router: Router;
   /**

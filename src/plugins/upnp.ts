@@ -25,7 +25,6 @@
  */
 
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
-import { IApplication } from '../interfaces/application';
 import { IApplicationPlugin } from './plugin-interface';
 import { UpnpConfig } from '../services/upnp-config';
 import { UpnpManager } from '../services/upnp-manager';
@@ -98,7 +97,7 @@ export class UpnpPlugin<
    *
    * @param _app - The application instance (unused, config comes from env)
    */
-  async init(_app: IApplication<TID>): Promise<void> {
+  async init(_app: unknown): Promise<void> {
     // Build config: use override if provided, else load from environment
     const config = this.options.config
       ? UpnpConfig.fromEnvironment({

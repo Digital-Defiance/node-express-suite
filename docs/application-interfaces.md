@@ -1,96 +1,143 @@
-# Application contract as interfaces (draft)
+# Application contract as interfaces (v6.0.0)
 
-Branch `feat/application-interfaces`, base `be3ac7e` (v5.1.0). Draft for review. Not released, no version bump.
+Branch `feat/application-interfaces`, base `be3ac7e` (v5.1.0). Major release 6.0.0. Not published, not tagged.
+
+Routers, controllers, middlewares, services and plugins now depend on small structural interfaces (application ports) instead of the whole `IApplication`. A consumer can pass a plain object literal with no cast. `IApplication` stays the full contract that real applications implement.
 
 ## Problem
 
 `IApplication` referenced three classes with private members:
 
-| `IApplication` member | Type before | Private/protected members | Type now |
+| `IApplication` member | Type in 5.x | Private members | Type in 6.0 |
 | --- | --- | --- | --- |
-| `environment` | `Environment<TID>` (`src/environment.ts`) | private `_environment`, `_envObject` | `IEnvironment<TID>` (already existed; `Environment` already `implements` it) |
-| `services` | `ServiceContainer` (`src/container/service-container.ts`) | private `services`, `instances`, `singletons` | new `IServiceContainer` |
-| `plugins` | `PluginManager<TID>` (`src/plugins/plugin-manager.ts`) | private `plugins`, `initialized` | new `IPluginManager<TID>` |
+| `environment` | `Environment<TID>` | `_environment`, `_envObject` | `IEnvironment<TID>` (already existed; `Environment` already `implements` it) |
+| `services` | `ServiceContainer` | `services`, `instances`, `singletons` | `IServiceContainer` (new) |
+| `plugins` | `PluginManager<TID>` | `plugins`, `initialized` | `IPluginManager<TID>` (new) |
 
-A class with a private or protected member is nominal in TypeScript. Only
-that class, or a subclass, is assignable to it, so a plain object could never
-satisfy `IApplication` or a `Pick<>` containing those members.
+A class with a private member is nominal in TypeScript: only that class or a subclass is assignable to it. Separately, every router, controller, middleware and plugin took the whole `IApplication` although each reads two or three members.
 
-Members that were already structural:
+## Application ports
 
-- `constants: IConstants`. Interface that extends interfaces from node-ecies-lib, suite-core-lib and i18n-lib. No class members.
-- `ready: boolean`, `start(): Promise<void>`.
-- `database: IDatabase | undefined` (suite-core-lib interface).
-- `authProvider: IAuthenticationProvider<TID> | undefined`. Interface. Its optional methods and the optional `IAuthenticatedUser.member` mention the `Member` class from node-ecies-lib (private fields). A plain object can omit them, so this does not block.
-- `IApplication` extends no other type. `IApplication` has no `db`, `getModel`, `expressApp` or router members. `db` and `getModel` appear only in older test mocks, which cast.
+All ports are exported from the package root (`src/interfaces/application-ports.ts`; the plugin ports are in `src/interfaces/plugin-manager.ts`). `IApplication` extends every single-member port, so a real application is assignable to every port and composite below.
 
-## Consumers and implementations inside this package
+### Single-member ports
 
-Classes and code that name the types above:
+| Port | Member | Used by |
+| --- | --- | --- |
+| `IConstantsPort` | `constants` | `utils.ts`: `TransactionOptions.application`, `sendApiExpressValidationErrorResponse`, `getSafeErrorMessage` |
+| `IDatabasePort` | `database` | `services/base.ts`, `services/abstract-role-service.ts` |
+| `IAuthProviderPort<TID>` | `authProvider` | `middlewares/authenticate-token.ts`, `middlewares/authenticate-crypto.ts`, `middlewares/session-unlock.ts` |
+| `IEnvironmentPort<TEnvironment>` | `environment` (shape chosen by the caller) | `services/postfixEmail.ts` |
+| `IServicesPort` | `services` | part of `IApplicationCore` |
+| `IPluginsPort<TID>` | `plugins` | part of `IApplicationPluginHost` |
 
-- `BaseApplication`/`Application` (`src/application.ts`, `src/base-application.ts`): hold the real `Environment`, `ServiceContainer`, `PluginManager` instances. They return them from the getters, so they still satisfy the interface types. Unchanged.
-- `PluginManager.initAll(app: IApplication<TID>)`, `IApplicationPlugin.init(app)`, `UpnpPlugin.init`.
-- `BaseRouter`, `AppRouter`, `AdminEmailRouter`, `BaseController`, `OpenApiController`, `DatabaseInitializer`: take `TApplication extends IApplication<TID>`.
-- Middlewares `authenticate-token`, `authenticate-crypto`, `session-unlock`: take `IApplication<TID>`, read only `application.authProvider`.
-- `BaseController` reads `application.constants`.
-- Nothing inside `src` calls an `Environment`-only member (`has`, `setEnvironment`, `dumpEnvironment`, the `systemPublicKeyHex` setter) or `ServiceContainer.clear` through an `IApplication`. The only `IApplication`-typed `services` use is `this.services.register(...)` in `application.ts`, which is on the interface.
+### Narrow environment views
 
-## Change
+`Pick<IEnvironment, ...>` aliases. They hold only strings and booleans, so a consumer does not build secret-holding values.
 
-- `src/interfaces/service-container.ts`: `IServiceContainer` (`register`, `get`, `has`, optional `clear`) and `ServiceFactory<T>`. Overloads are copied from the class, so `ServiceMap` typing for well-known keys is kept.
-- `src/interfaces/plugin-manager.ts`: `IPluginManager<TID>` (`register`, `initAll`, `stopAll`, `get`, `has`).
-- `ServiceContainer implements IServiceContainer`, `PluginManager implements IPluginManager<TID>`. Bodies unchanged.
-- `ServiceFactory` is now declared in `interfaces/service-container.ts` and re-exported from `container/service-container.ts`, so `import { ServiceFactory } from '.../container'` still works.
-- `IApplication` uses `IEnvironment<TID>`, `IServiceContainer`, `IPluginManager<TID>`. It no longer imports `Environment`, `ServiceContainer`, or `PluginManager`, which also removes an `interfaces -> classes` import cycle.
-- Both new interfaces are exported from `src/interfaces/index.ts` (and so from the package root).
-- Test: `src/interfaces/__tests__/application-interfaces.spec.ts` (compile-time checks plus two trivial runtime assertions).
+| View | Members | Used by |
+| --- | --- | --- |
+| `IAppRouterEnvironment` | `apiDistDir`, `reactDistDir`, `production`, `serverUrl`, `basePath`, `emailDomain`, `totpAvailable`, `debug` | `IAppRouterApplication` |
+| `IJwtServiceEnvironment` | `jwtSecret` | `IJwtServiceApplication` |
+| `IEmailSenderEnvironment` | `emailSender`, `disableEmailSend`, `debug` | `PostfixEmailService` constructor |
 
-## Compatibility
+### Composites
 
-Source compatible for code that passes real instances: `Application`, `ServiceContainer`, `PluginManager` and `Environment` instances are all still assignable to `IApplication` and its members. All existing class exports stay.
+| Composite | Definition | Used by |
+| --- | --- | --- |
+| `IControllerApplication<TID>` | `IConstantsPort & IDatabasePort & IAuthProviderPort<TID>` | `controllers/base.ts` (`BaseController`), `decorators/base-controller.ts` (`DecoratorBaseController`), `controllers/openapi.ts` (`OpenApiController`) |
+| `IAppRouterApplication` | `IEnvironmentPort<IAppRouterEnvironment> & IConstantsPort` | `routers/app.ts` (`AppRouter`) |
+| `IJwtServiceApplication` | `IEnvironmentPort<IJwtServiceEnvironment> & IConstantsPort & IDatabasePort` | `services/abstract-jwt-service.ts` |
+| `IApplicationCore<TID>` | environment, constants, services, database, authProvider (no plugins, no lifecycle) | `database/database-initializer.ts` |
+| `IApplicationPluginHost<TID>` | `IApplicationCore<TID> & IPluginsPort<TID>` | `interfaces/plugin-manager.ts` (`IApplicationPlugin.init`, `IPluginManager.initAll`), `plugins/plugin-manager.ts` |
 
-What can break, for consumers that read the members off an `IApplication`-typed value:
+### Classes that read no member
 
-1. `app.environment` is now `IEnvironment<TID>`, not the `Environment<TID>` class. Code that calls `Environment`-only members through the interface (`app.environment.has(...)`, `setEnvironment`, `dumpEnvironment`, the `systemPublicKeyHex` setter, `Environment.requireEnv` is static and unaffected) stops compiling. Fix: type the value as `Environment` or narrow with `instanceof`. Nothing in this package does this.
-2. `app.services.clear()` and the `ServiceContainer` class type: `clear` is optional on the interface, so calling it needs `app.services.clear?.()`. Assigning `app.services` to a variable of type `ServiceContainer` no longer compiles. Fix: type it as `IServiceContainer`.
-3. `app.plugins` is `IPluginManager<TID>`. Assigning it to a `PluginManager` variable no longer compiles. Same fix.
-4. Subclass interfaces that redeclare `environment`/`services`/`plugins` with a class type (for example `IBrightChainApplication.environment: Environment<TID>` in BrightChain) keep compiling only if their class implements the interface, which BrightChain's `Environment` does (it extends the upstream `Environment`).
+These keep their `TApplication` type parameter, with the default unchanged (`IApplication<TID>`), and loosen the constraint to `object`, because they only store the value:
 
-Open question for the reviewer: `clear` is optional on `IServiceContainer` so that the three-method container shapes downstream packages already declare (BrightChain's `IServiceContainer`) satisfy it with no change. If you prefer the full class surface, make it required. The consumer check below shows the effect.
+- `routers/base.ts` (`BaseRouter`), `routers/admin-email-router.ts` (`AdminEmailRouter`), `services/fake-email-service.ts` (`FakeEmailService`), `services/dummy-email-service.ts` (`DummyEmailService`).
+- `openapi/controller.ts` (`OpenAPIController`) gains a second type parameter `TApplication extends object = IApplication<TID>`. Its `application` getter returns that type.
+- `plugins/upnp.ts` (`UpnpPlugin.init`) takes `_app: unknown`, since it reads nothing.
 
-## Not changed (remaining class-typed surface)
+### Files that keep the full `IApplication`
 
-- `IEnvironment` itself still has class-typed fields from `@digitaldefiance/ecies-lib`: required `adminEmail`, `memberEmail`, `systemEmail: EmailString`, and optional `SecureString`/`SecureBuffer` fields. A plain object that provides a complete `IEnvironment` therefore needs real `EmailString` instances (constructible without a cast). Removing this needs interfaces in ecies-lib. Not touched here.
-- Optional `BackupCode[]` fields on `IEnvironment` are a class from this package (`src/backup-code.ts`). Optional, so they do not block.
-- `IAuthenticationProvider` mentions `Member` from node-ecies-lib in optional places only.
-- Because `environment` is a full `IEnvironment`, a plain `Pick<IApplication, 'environment' | ...>` object must provide all of it. The test shows the pattern for narrower use: `Pick<IEnvironment, 'debug' | 'host' | ...>` on the member type.
-- Routers, controllers and middlewares still require a complete `IApplication<TID>` (`TApplication extends IApplication<TID>`) even though they read only `authProvider` or `constants`. A consumer that wants to pass only a `Pick<>` into them needs those signatures narrowed (for example to `Pick<IApplication<TID>, 'authProvider'>`). That is a separate, behaviour-neutral follow-up that this draft does not make.
+- `application.ts` and `base-application.ts`: real applications. `BaseApplication implements IApplication`. `Application` passes `this` to the user-supplied `apiRouterFactory(app: IApplication<TID>)` and to the email services, so a full application is correct there.
+- `interfaces/controller-config.ts`: `applicationType: IApplication<TID>` names the full application type.
+
+## Service container and plugin manager interfaces
+
+- `src/interfaces/service-container.ts`: `IServiceContainer` (`register`, `get`, `has`, optional `clear`) and `ServiceFactory<T>`. Overloads are copied from the class, so `ServiceMap` typing is kept. `ServiceFactory` is re-exported from `container/service-container.ts`.
+- `src/interfaces/plugin-manager.ts`: `IPluginManager<TID>`, `IPluginsPort<TID>`, `IApplicationPluginHost<TID>` and `IApplicationPlugin<TID>`.
+- `ServiceContainer implements IServiceContainer` and `PluginManager implements IPluginManager<TID>`. Bodies unchanged.
+
+### Decision: `IServiceContainer.clear` stays optional
+
+`clear` is optional. A required `clear` hurts a known consumer. BrightChain's `ISubsystemContext.services` has only `register`, `get`, `has`. With `clear` required, `services: context.services` in the BrightCal shim failed with "Property 'clear' is missing". With `clear` optional it compiles without `as ServiceContainer`. Nothing in this package calls `clear` through `IApplication`. Callers use `app.services.clear?.()`. This is a breaking change (see below).
+
+### Decision: the type-only import cycle is removed
+
+In the draft, `interfaces/plugin-manager.ts` and `interfaces/application.ts` imported each other. `IApplicationPlugin` and `IPluginManager` refer to each other through the plugin host (a plugin receives a host whose plugin manager registers plugins), so they are declared together in `interfaces/plugin-manager.ts`. That file now imports only `application-ports.ts`. `application.ts` imports the ports and `plugin-manager.ts`. Neither imports `application.ts`. `plugins/plugin-interface.ts` re-exports `IApplicationPlugin`, so existing imports keep working.
+
+One import cycle remains in the `interfaces` graph and is not new: `interfaces/environment.ts` imports `backup-code.ts`, which imports the `interfaces` barrel. It is type-only and untouched here.
+
+## What the ports still need from ecies-lib
+
+- The narrow environment views need nothing from `EmailString` or `SecureString`.
+- `IApplicationCore` and `IApplicationPluginHost` carry the full `IEnvironment<TID>`. Its required members `adminEmail`, `memberEmail` and `systemEmail` are `EmailString`, and several optional members are `SecureString`/`SecureBuffer`. A plain object for these two ports therefore has to provide real `EmailString` instances (constructible without a cast) and every other required `IEnvironment` member. `SecureString` and `EmailString` are not made structural: their private members are deliberate, so that only a real instance can hold a secret.
+- Controllers, routers, middlewares and services have no such need.
+- `IAuthenticationProvider` mentions the `Member` class from node-ecies-lib in optional places only, so a plain object can omit them.
+
+## Migration guide: 5.x to 6.0.0
+
+All changes are compile-time. Runtime behaviour is unchanged. Passing a real `Application`, `BaseApplication`, `ServiceContainer`, `PluginManager` or `Environment` still compiles everywhere.
+
+### Breaking changes
+
+1. **Environment-only members through `app.environment`.** `app.environment` is `IEnvironment<TID>`, not the `Environment` class. These `Environment` members are not on the interface: `get`, `has`, `setEnvironment`, `getObject`, `requireMongo`, `dumpEnvironment`. Fix: type the value as `Environment<TID>`, or narrow with `instanceof Environment`. Nothing in this package used them through an `IApplication`.
+2. **`app.services.clear()`.** `clear` is optional on `IServiceContainer`. Fix: `app.services.clear?.()`, or hold a `ServiceContainer`.
+3. **Assigning `app.services` or `app.plugins` to class-typed variables.** `const c: ServiceContainer = app.services` and `const p: PluginManager = app.plugins` no longer compile. Fix: type them `IServiceContainer` and `IPluginManager<TID>`.
+4. **Subclass redeclarations.** An interface that extends `IApplication` and redeclares `environment`, `services` or `plugins` still compiles when the redeclared type is assignable to the interface (for example a class that `implements IEnvironment`, `IServiceContainer` or `IPluginManager`). A redeclaration with a type that is not assignable to the interface fails. A class that `implements IApplication` and declares those members with the old class types still compiles.
+5. **`IApplicationPlugin.init`, `IPluginManager.initAll` and `PluginManager.initAll` take `IApplicationPluginHost<TID>`** (everything on `IApplication` except `ready` and `start`). A plugin that reads `app.ready` or calls `app.start()` inside `init` no longer compiles. A plugin that declares `init(app: IApplication)` explicitly still compiles. Callers passing a full application are unaffected.
+6. **`IDatabaseInitializer.initialize` takes `IApplicationCore`** (no plugins, no lifecycle). An implementation that reads `app.plugins`, `app.ready` or `app.start` from a contextually typed parameter no longer compiles. Callers passing a full application are unaffected.
+7. **`OpenApiController` constructor and `application` property are typed `IControllerApplication<TID>`**, not `IApplication<TID>`. Code that reads `openApiController.application.services` (or `.environment`, `.plugins`) no longer compiles. The same applies to a custom `BaseController` subclass that passes a narrower `TApplication`; with the default type argument nothing changes.
+8. **Public type parameters and constraints.**
+   - `TApplication` constraints are loosened or narrowed on `BaseController`, `DecoratorBaseController`, `AppRouter`, `BaseRouter`, `AdminEmailRouter`, `BaseService`, `AbstractJwtService`, `AbstractRoleService`, `FakeEmailService`, `DummyEmailService`. Defaults are unchanged, so existing instantiations compile. Code that reads members off `this.application` in a subclass with its own `TApplication extends IApplication<TID>` keeps working.
+   - `OpenAPIController` gains a second type parameter with a default.
+   - `PostfixEmailService<TID>` and `TransactionOptions<TID>` keep their type parameter but no longer use it (renamed `_TID`); explicit `<Buffer>` arguments still compile.
+9. **Newly narrowed parameter types** (accept more, so no caller breaks): `authenticateToken`, `authenticateCrypto`, `useSessionEstablish` (`IAuthProviderPort<TID>`); `sendApiExpressValidationErrorResponse`, `TransactionOptions.application` (`IConstantsPort`); `PostfixEmailService` constructor (`IEnvironmentPort<IEmailSenderEnvironment>`); `UpnpPlugin.init` (`unknown`). Code that wraps or overrides these with the old wider parameter types still compiles.
+
+### Additions
+
+- Exports: `IEnvironmentPort`, `IConstantsPort`, `IServicesPort`, `IDatabasePort`, `IAuthProviderPort`, `IPluginsPort`, `IAppRouterEnvironment`, `IJwtServiceEnvironment`, `IEmailSenderEnvironment`, `IControllerApplication`, `IAppRouterApplication`, `IJwtServiceApplication`, `IApplicationCore`, `IApplicationPluginHost`, `IServiceContainer`, `IPluginManager`.
+- `IApplicationPlugin` is now declared in `interfaces/plugin-manager.ts` and re-exported from `plugins/plugin-interface.ts`. Import paths and the package-root export are unchanged.
+
+### Using a plain object
+
+```ts
+const controllerApp: IControllerApplication = {
+  constants,
+  database: undefined,
+  authProvider,
+};
+new MyController(controllerApp); // MyController extends BaseController<..., IControllerApplication>
+```
+
+## Tests
+
+`src/interfaces/__tests__/application-interfaces.spec.ts` is a type-level contract test:
+
+- Each port and composite is satisfied by a plain object literal with no cast.
+- Each router, controller, service and middleware signature accepts its port (type aliases and `Parameters<>` checks).
+- A `@ts-expect-error` per port proves it still requires its members, and proves the class constraints (`AppRouter`, `BaseController`, `BaseService`, `authenticateToken`) still reject an object without the ports.
+- Real `Application`-shaped values (`IApplication`) are assignable to every port; `ServiceContainer`, `PluginManager` and `Environment` satisfy the interfaces.
+- ts-jest fails the file if an expected error disappears.
 
 ## Verification
 
-The package's `jest.config.js` and tsconfigs resolve `../../tsconfig.base.json`, which does not exist from a worktree under `.worktrees/`. `nx` targets run against the main checkout, not the worktree. So the checks ran with equivalent temporary configs under `/tmp/nes-check` (same ts-jest preset, same `.eslintrc.json`, paths from the repo `tsconfig.base.json`). Nothing in the repo was changed for this.
+The package's `jest.config.js` and tsconfigs resolve `../../tsconfig.base.json`, which does not exist from a worktree under `.worktrees/`, and `nx` targets run against the main checkout. The checks ran with temporary configs under `/tmp/nes-check` (same ts-jest preset, the package `.eslintrc.json`, paths from the repo `tsconfig.base.json`). Nothing in the repo was changed for this. Results are in the final commit message.
 
-- Type-check (`tsc --noEmit`, src + tests): no new errors. The set of errors in worktree files is identical before and after the change (206 lines, all in existing spec/test files, produced by the temp config being stricter than the package's ts-jest setup; none in non-test source).
-- Library build equivalent (`tsc` with `declaration`, specs excluded): 0 errors in package source. 29 errors reported in sibling packages' sources pulled in through path mapping (`override` modifiers and similar), unrelated to this change.
-- Tests (`jest`, all 132 suites): 132 passed, 2404 tests passed, including the new spec. The spec contains a `@ts-expect-error`, so ts-jest fails it if the expected type error disappears.
-- Lint (`eslint` with the package `.eslintrc.json`, `src/**/*.ts` and `tests/**/*.ts`): 0 errors after `--fix` of three prettier-formatting issues in the new code.
+Consumer check (BrightChain, not modified): `/tmp/consumer-check/shim-check.ts` is the BrightCal shim without the `as ServiceContainer` and `as IBrightChainApplication` casts.
 
-## Consumer check (BrightChain, not modified)
-
-Config and files: `/tmp/consumer-check/` (`gen.py` builds `tsconfig.json` from BrightChain's `tsconfig.base.json`, adds a path mapping `@digitaldefiance/node-express-suite` to this worktree's `src/index.ts`, and pins `ecies-lib`, `node-ecies-lib`, `suite-core-lib` and `i18n-lib` to BrightChain's `node_modules` so there is one copy of each). `shim-check.ts` is the BrightCal shim without the `as ServiceContainer` and `as IBrightChainApplication` casts.
-
-Command: `cd /Volumes/Code/BrightChain && node node_modules/typescript/bin/tsc -p /tmp/consumer-check/tsconfig.json`
-
-Result with `clear` required (first run): `services: context.services` failed with "Property 'clear' is missing" (BrightChain's `IServiceContainer` has register, get, has). That is why `clear` is now optional.
-
-Result with the current branch:
-
-- `services: context.services`, with no `as ServiceContainer`: compiles. This is the cast the shim needed for `services`.
-- `IServiceContainer` from node-express-suite accepts BrightChain's `ISubsystemContext.services` directly: compiles.
-- `const app: IBrightChainApplication = shim` (the cast removed): still fails: `IAppShimCore` is missing `getController`, `setController`, `getNodeId`, `reseedDevStore` and 4 more. Expected. The shim is a `Pick<>`, and the cast hid that it is not a full application.
-- The only other errors in the run are in the worktree's own files and come from the temporary config (missing `greenlock-express` types, empty `export *` files under Bundler resolution, a missing `express-serve-static-core` module augmentation). None are in `shim-check.ts`.
-
-Remaining blockers for removing `as IBrightChainApplication` entirely:
-
-1. In this package: routers, controllers and middlewares still take the full `IApplication` (see above), and `createCalendarRouter`/`HolidayCatalogController` in BrightChain take the full `IBrightChainApplication`. Passing a `Pick<>` needs those signatures narrowed. In BrightChain, `IBrightChainApplication` adds `getController`, `setController`, `getNodeId`, `reseedDevStore`, and redeclares `environment` as BrightChain's own `Environment` class, which is a class with private members in BrightChain's package.
-2. In ecies-lib: `EmailString`/`SecureString` in `IEnvironment` (see above).
+- `services: context.services` compiles without the cast. `IServiceContainer` accepts BrightChain's `ISubsystemContext.services` directly.
+- `fullShim(shim): IBrightChainApplication` still fails: `IAppShimCore` lacks `getController`, `setController`, `getNodeId`, `reseedDevStore` and others. That is BrightChain's `IBrightChainApplication` surface, not this package.
+- BrightCal's own router and controller (`createCalendarRouter`, `HolidayCatalogController`) take the full `IBrightChainApplication`. Narrowing them to a port is a change in BrightChain.

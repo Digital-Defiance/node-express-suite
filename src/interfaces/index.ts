@@ -7,6 +7,7 @@ export * from './api-express-validation-error-response';
 export * from './api-message-response';
 export * from './api-responses';
 export * from './application';
+export * from './application-ports';
 export * from './authentication-provider';
 export * from './backup-code-store';
 export * from './backend-objects';

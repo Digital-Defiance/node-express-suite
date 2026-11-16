@@ -10,7 +10,10 @@
  */
 
 import { PlatformID } from '@digitaldefiance/node-ecies-lib';
-import { IApplication } from '../interfaces/application';
+import type {
+  IEmailSenderEnvironment,
+  IEnvironmentPort,
+} from '../interfaces/application-ports';
 import {
   IBatchEmailService,
   IEmailBatchInput,
@@ -63,8 +66,11 @@ function debugLog(
  *   emailSender: 'noreply@brightchain.org',
  * });
  * ```
+ *
+ * @template _TID - Unused. The constructor takes a narrow port, so the ID type no
+ * longer matters. The parameter stays so `PostfixEmailService<TID>` keeps compiling.
  */
-export class PostfixEmailService<TID extends PlatformID = Buffer>
+export class PostfixEmailService<_TID extends PlatformID = Buffer>
   implements IEmailService, IBatchEmailService
 {
   private readonly transporter: Transporter<SMTPTransport.SentMessageInfo>;
@@ -80,7 +86,7 @@ export class PostfixEmailService<TID extends PlatformID = Buffer>
    *
    * @param application - The application context containing environment config
    */
-  constructor(application: IApplication<TID>) {
+  constructor(application: IEnvironmentPort<IEmailSenderEnvironment>) {
     const gatewayConfig: IEmailGatewayConfig = loadGatewayConfig();
 
     this.emailSender = application.environment.emailSender;

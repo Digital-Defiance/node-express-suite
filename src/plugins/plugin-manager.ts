@@ -5,9 +5,11 @@
  */
 
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
-import { IApplication } from '../interfaces/application';
-import type { IPluginManager } from '../interfaces/plugin-manager';
-import { IApplicationPlugin } from './plugin-interface';
+import type {
+  IApplicationPlugin,
+  IApplicationPluginHost,
+  IPluginManager,
+} from '../interfaces/plugin-manager';
 
 /**
  * Manager for application plugins.
@@ -31,7 +33,7 @@ export class PluginManager<
     this.plugins.set(plugin.name, plugin);
   }
 
-  async initAll(app: IApplication<TID>): Promise<void> {
+  async initAll(app: IApplicationPluginHost<TID>): Promise<void> {
     for (const plugin of this.plugins.values()) {
       await plugin.init(app);
     }

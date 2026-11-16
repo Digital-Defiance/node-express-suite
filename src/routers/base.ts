@@ -12,11 +12,12 @@ import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
  * Abstract base class for all routers in the application.
  * Provides access to the Express router and application instance.
  * @template TID Platform-specific ID type (Buffer, ObjectId, etc.)
- * @template TApplication Application instance type
+ * @template TApplication Application instance type. BaseRouter reads no member of it, so any object is accepted;
+ * subclasses narrow the constraint to the ports they read.
  */
 export abstract class BaseRouter<
   TID extends PlatformID = Buffer,
-  TApplication extends IApplication<TID> = IApplication<TID>,
+  TApplication extends object = IApplication<TID>,
 > {
   /** Express router instance for registering routes */
   public readonly router: Router;

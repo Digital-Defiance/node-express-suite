@@ -2161,10 +2161,23 @@ The following v1.x patterns still work in v2.0:
 - [Mongo Split Migration](docs/MONGO_SPLIT_MIGRATION.md)
 - [Decorator Migration](docs/DECORATOR_MIGRATION.md)
 - [Architecture Overview](docs/ARCHITECTURE.md)
+- [Application Interfaces and 6.0 Migration](docs/application-interfaces.md)
 
 ---
 
 ## ChangeLog
+### Version 6.0.0
+**Breaking (type level only; runtime behaviour is unchanged).** Routers, controllers, middlewares, services and plugins depend on small structural "application port" interfaces instead of the whole `IApplication`, so a plain object can be passed with no cast. `IApplication` stays the full contract that real applications implement and extends every port. Passing a real `Application`, `ServiceContainer`, `PluginManager` or `Environment` still compiles. Full migration guide: [docs/application-interfaces.md](docs/application-interfaces.md).
+- **NEW**: ports `IEnvironmentPort`, `IConstantsPort`, `IServicesPort`, `IDatabasePort`, `IAuthProviderPort`, `IPluginsPort`; narrow environment views `IAppRouterEnvironment`, `IJwtServiceEnvironment`, `IEmailSenderEnvironment`; composites `IControllerApplication`, `IAppRouterApplication`, `IJwtServiceApplication`, `IApplicationCore`, `IApplicationPluginHost`
+- **NEW**: `IServiceContainer` and `IPluginManager<TID>`; `ServiceContainer` and `PluginManager` implement them
+- Breaking: `IApplication.environment` is `IEnvironment<TID>`. `Environment`-only members (`get`, `has`, `setEnvironment`, `getObject`, `requireMongo`, `dumpEnvironment`) are no longer reachable through `app.environment`; type the value as `Environment` or narrow with `instanceof`
+- Breaking: `IApplication.services` is `IServiceContainer` and `IApplication.plugins` is `IPluginManager<TID>`. They can no longer be assigned to `ServiceContainer` or `PluginManager` variables. `IServiceContainer.clear` is optional (a three-method container, such as BrightChain's, satisfies the interface); call `app.services.clear?.()`
+- Breaking: subclass interfaces that redeclare `environment`, `services` or `plugins` must use a type assignable to the new interfaces
+- Breaking: `IApplicationPlugin.init`, `IPluginManager.initAll` and `PluginManager.initAll` receive `IApplicationPluginHost` (everything on `IApplication` except `ready` and `start`); `IDatabaseInitializer.initialize` receives `IApplicationCore`
+- Breaking: `OpenApiController`'s constructor parameter and `application` property are `IControllerApplication<TID>`, not `IApplication<TID>`
+- Changed: `TApplication` constraints are narrowed to the ports each class reads (`BaseController`, `DecoratorBaseController`, `AppRouter`, `BaseService`, `AbstractJwtService`, `AbstractRoleService`) or loosened to `object` (`BaseRouter`, `AdminEmailRouter`, `FakeEmailService`, `DummyEmailService`); defaults are unchanged. `OpenAPIController` gains a second type parameter `TApplication extends object = IApplication<TID>`
+- Changed: `authenticateToken`, `authenticateCrypto`, `useSessionEstablish`, `sendApiExpressValidationErrorResponse`, `TransactionOptions.application`, the `PostfixEmailService` constructor and `UpnpPlugin.init` accept their narrow port; `PostfixEmailService` and `TransactionOptions` keep their now-unused `TID` type parameter (renamed `_TID`)
+- Changed: `IApplicationPlugin` is declared in `interfaces/plugin-manager.ts` and re-exported from `plugins/plugin-interface.ts`, which removes the import cycle between the plugin manager and application interfaces
 ### Version 5.1.0
 - Fixed: controller request state (`req`, `res`, `user`, `validatedBody`, `session`) is scoped to each request via AsyncLocalStorage; overlapping requests no longer read each other's state after an `await`. The existing getters are unchanged
 - Fixed: one locale is resolved per request (weighted `Accept-Language`, then the user's preference) and used for authentication, validation, and response formatting, including Suite Core strings

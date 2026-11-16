@@ -15,7 +15,7 @@ import {
 } from '@digitaldefiance/suite-core-lib';
 import { NextFunction, Request, Response } from 'express';
 import { InvalidPasswordError } from '../errors';
-import { IApplication } from '../interfaces/application';
+import type { IAuthProviderPort } from '../interfaces/application-ports';
 
 /**
  * Express middleware for cryptographic authentication.
@@ -29,7 +29,7 @@ import { IApplication } from '../interfaces/application';
  *
  * @template TID - Platform ID type (defaults to Buffer)
  * @template TAccountStatus - Account status type (defaults to AccountStatus)
- * @param {IApplication<TID>} application - Application instance with authProvider
+ * @param {IAuthProviderPort<TID>} application - Anything with an authProvider
  * @param {Request} req - Express request object
  * @param {Response} res - Express response object
  * @param {NextFunction} next - Express next function
@@ -42,7 +42,7 @@ export async function authenticateCrypto<
   TID extends PlatformID = Buffer,
   TAccountStatus extends string = AccountStatus,
 >(
-  application: IApplication<TID>,
+  application: IAuthProviderPort<TID>,
   req: Request,
   res: Response,
   next: NextFunction,

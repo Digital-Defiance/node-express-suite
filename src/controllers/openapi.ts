@@ -15,7 +15,7 @@ import { OpenAPIBuilder } from '../openapi';
 import { IStatusCodeResponse } from '../interfaces';
 import { ControllerRegistry } from '../registry';
 
-import { IApplication } from '../interfaces/application';
+import type { IControllerApplication } from '../interfaces/application-ports';
 
 /**
  * OpenAPI specification response
@@ -72,12 +72,12 @@ export class OpenApiController<
   DocsHandlers,
   CoreLanguageCode,
   TID,
-  IApplication<TID>
+  IControllerApplication<TID>
 > {
   private static readonly API_VERSION = '0.12.0';
   private readonly builder: OpenAPIBuilder;
 
-  constructor(application: IApplication<TID>) {
+  constructor(application: IControllerApplication<TID>) {
     super(application);
 
     this.builder = new OpenAPIBuilder({

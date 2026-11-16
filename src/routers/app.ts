@@ -33,6 +33,7 @@ import {
 import { existsSync, readdirSync, readFileSync } from 'fs';
 import { resolve, sep } from 'path';
 import { IApplication } from '../interfaces/application';
+import type { IAppRouterApplication } from '../interfaces/application-ports';
 import { debugLog, handleError, sendApiMessageResponse } from '../utils';
 import { BaseRouter } from './base';
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
@@ -76,11 +77,11 @@ export interface IndexLocals {
  * Runtime values are injected via string replacement rather than a template engine.
  *
  * @template TID Platform-specific ID type
- * @template TApplication Application instance type
+ * @template TApplication Application instance type. Needs only {@link IAppRouterApplication}.
  */
 export class AppRouter<
   TID extends PlatformID = Buffer,
-  TApplication extends IApplication<TID> = IApplication<TID>,
+  TApplication extends IAppRouterApplication = IApplication<TID>,
 > {
   /** Path to index.html file */
   protected readonly indexPath: string;

@@ -20,7 +20,7 @@ import {
  */
 export class DummyEmailService<
   TID extends PlatformID = Buffer,
-  TApplication extends IApplication<TID> = IApplication<TID>,
+  TApplication extends object = IApplication<TID>,
 >
   implements IEmailService, IBatchEmailService
 {

@@ -15,7 +15,7 @@ import { existsSync, readdirSync, writeSync } from 'fs';
 import { resolve } from 'path';
 import { z, ZodType } from 'zod';
 import { ExpressValidationError } from './errors/express-validation';
-import { IApiErrorResponse, IApplication } from './interfaces';
+import { IApiErrorResponse, IConstantsPort } from './interfaces';
 import { IApiExpressValidationErrorResponse } from './interfaces/api-express-validation-error-response';
 import { RequiredStringKeys } from './interfaces/required-string-keys';
 import { ApiResponse, SendFunction } from './types';
@@ -236,9 +236,13 @@ export const DEFAULT_TRANSACTION_TIMEOUT =
 export const DEFAULT_TRANSACTION_LOCK_REQUEST_TIMEOUT =
   process.env['NODE_ENV'] === 'test' ? 10000 : 30000;
 
-/** Transaction configuration options */
-export interface TransactionOptions<TID extends PlatformID = Buffer> {
-  application?: IApplication<TID>;
+/**
+ * Transaction configuration options.
+ * `_TID` is unused since `application` only needs the constants; the type
+ * parameter stays so that existing `TransactionOptions<TID>` references keep compiling.
+ */
+export interface TransactionOptions<_TID extends PlatformID = Buffer> {
+  application?: IConstantsPort;
   timeoutMs?: number;
   retryAttempts?: number;
   baseDelay?: number;
@@ -418,7 +422,7 @@ export function sendApiExpressValidationErrorResponse(
   status: number,
   errors: ValidationError[],
   res: Response,
-  application?: IApplication,
+  application?: IConstantsPort,
 ): void {
   const engine = getSuiteCoreI18nEngine(
     application ? { constants: application.constants } : undefined,
@@ -464,7 +468,7 @@ function markErrorAsHandling(error: unknown): void {
 
 function getSafeErrorMessage(
   message?: string,
-  application?: IApplication,
+  application?: IConstantsPort,
 ): string {
   if (message && typeof message === 'string' && message.trim() !== '') {
     return message;

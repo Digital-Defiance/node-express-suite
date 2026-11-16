@@ -21,6 +21,7 @@ import 'reflect-metadata';
 import { z } from 'zod';
 import { BaseController } from '../controllers/base';
 import { IApplication } from '../interfaces/application';
+import type { IControllerApplication } from '../interfaces/application-ports';
 import { ControllerRegistry } from '../registry';
 import { ApiResponse, RouteConfig } from '../types';
 import { getEffectiveAuthMetadata } from './auth';
@@ -129,7 +130,7 @@ export interface CollectedRouteMetadata<
 export abstract class DecoratorBaseController<
   TLanguage extends CoreLanguageCode = CoreLanguageCode,
   TID extends PlatformID = Buffer,
-  TApplication extends IApplication<TID> = IApplication<TID>,
+  TApplication extends IControllerApplication<TID> = IApplication<TID>,
 > extends BaseController<
   ApiResponse,
   Record<string, unknown>,

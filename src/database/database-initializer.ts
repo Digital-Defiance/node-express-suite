@@ -4,10 +4,10 @@
  * @module database/database-initializer
  */
 
-import { IApplication } from '../interfaces/application';
+import type { IApplicationCore } from '../interfaces/application-ports';
 import { IFailableResult } from '@digitaldefiance/suite-core-lib';
 
 export interface IDatabaseInitializer<T = unknown> {
-  initialize(app: IApplication): Promise<IFailableResult<T>>;
+  initialize(app: IApplicationCore): Promise<IFailableResult<T>>;
   hash(results: T): string;
 }

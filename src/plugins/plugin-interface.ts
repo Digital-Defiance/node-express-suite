@@ -1,19 +1,8 @@
 /**
  * @fileoverview Application plugin interface.
- * Defines contract for application plugins.
+ * Defines contract for application plugins. The interface is declared in
+ * interfaces/plugin-manager (it refers to the plugin manager contract) and
+ * re-exported here so existing imports keep working.
  * @module plugins/plugin-interface
  */
-
-import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
-import { IApplication } from '../interfaces/application';
-
-/**
- * Interface for application plugins.
- * @template TID - Platform ID type (defaults to Buffer)
- */
-export interface IApplicationPlugin<TID extends PlatformID = Buffer> {
-  readonly name: string;
-  readonly version?: string;
-  init(app: IApplication<TID>): Promise<void>;
-  stop?(): Promise<void>;
-}
+export type { IApplicationPlugin } from '../interfaces/plugin-manager';

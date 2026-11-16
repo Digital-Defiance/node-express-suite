@@ -5,6 +5,7 @@
  */
 
 import { IApplication } from '../interfaces/application';
+import type { IDatabasePort } from '../interfaces/application-ports';
 import { TransactionCallback } from '../types';
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 
@@ -19,7 +20,7 @@ import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
  */
 export class BaseService<
   TID extends PlatformID = Buffer,
-  TApplication extends IApplication<TID> = IApplication<TID>,
+  TApplication extends IDatabasePort = IApplication<TID>,
 > {
   protected readonly application: TApplication;
 

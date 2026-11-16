@@ -10,6 +10,7 @@ import { MemberType } from '@digitaldefiance/ecies-lib';
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 import type { IRoleBase, ITokenRole } from '@digitaldefiance/suite-core-lib';
 import type { IApplication } from '../interfaces/application';
+import type { IDatabasePort } from '../interfaces/application-ports';
 import type { IRoleService } from '../interfaces/role-service';
 import { BaseService } from './base';
 
@@ -32,7 +33,7 @@ export abstract class AbstractRoleService<
   TDate extends Date = Date,
   TTokenRole extends ITokenRole<TID, TDate> = ITokenRole<TID, TDate>,
   TRole extends IRoleBase<TID> = IRoleBase<TID>,
-  TApplication extends IApplication<TID> = IApplication<TID>,
+  TApplication extends IDatabasePort = IApplication<TID>,
 >
   extends BaseService<TID, TApplication>
   implements IRoleService<TID, TDate, TTokenRole, TRole>

@@ -16,7 +16,7 @@ import type { IRequestUserDTO } from '@digitaldefiance/suite-core-lib';
 import { NextFunction, Request, Response } from 'express';
 import { IncomingHttpHeaders } from 'http';
 import { TokenExpiredError } from '../errors/token-expired';
-import { IApplication } from '../interfaces/application';
+import type { IAuthProviderPort } from '../interfaces/application-ports';
 import {
   continueWithRequestLanguage,
   resolveRequestLanguage,
@@ -59,7 +59,7 @@ export function findAuthToken(headers: IncomingHttpHeaders): string | null {
  * and role resolution. The application must have an authProvider configured.
  *
  * @template TID - Platform ID type (defaults to Buffer)
- * @param {IApplication<TID>} application - Application instance with authProvider
+ * @param {IAuthProviderPort<TID>} application - Anything with an authProvider
  * @param {Request} req - Express request object
  * @param {Response} res - Express response object
  * @param {NextFunction} next - Express next function
@@ -67,7 +67,7 @@ export function findAuthToken(headers: IncomingHttpHeaders): string | null {
  * @throws {TokenExpiredError} When token has expired
  */
 export async function authenticateToken<TID extends PlatformID = Buffer>(
-  application: IApplication<TID>,
+  application: IAuthProviderPort<TID>,
   req: Request,
   res: Response,
   next: NextFunction,

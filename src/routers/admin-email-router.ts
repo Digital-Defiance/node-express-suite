@@ -28,7 +28,7 @@ import { BaseRouter } from './base';
  */
 export class AdminEmailRouter<
   TID extends PlatformID = Buffer,
-  TApplication extends IApplication<TID> = IApplication<TID>,
+  TApplication extends object = IApplication<TID>,
 > extends BaseRouter<TID, TApplication> {
   constructor(application: TApplication, requireAdmin: RequestHandler) {
     super(application);

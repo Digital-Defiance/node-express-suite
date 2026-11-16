@@ -72,10 +72,13 @@ export interface OpenAPIControllerOptions {
  * router.use('/openapi', openApiController.router);
  * ```
  */
-export class OpenAPIController<TID extends PlatformID = Buffer> {
+export class OpenAPIController<
+  TID extends PlatformID = Buffer,
+  TApplication extends object = IApplication<TID>,
+> {
   public readonly router: Router;
   private readonly builder: OpenAPIBuilder;
-  private readonly applicationRef: IApplication<TID>;
+  private readonly applicationRef: TApplication;
   private cachedSpec: OpenAPISpec | null = null;
   private readonly cacheEnabled: boolean;
   private readonly enableYaml: boolean;
@@ -88,7 +91,7 @@ export class OpenAPIController<TID extends PlatformID = Buffer> {
    * @param options - Controller options
    */
   constructor(
-    application: IApplication<TID>,
+    application: TApplication,
     config: OpenAPIBuilderConfig,
     options?: OpenAPIControllerOptions,
   ) {
@@ -107,7 +110,7 @@ export class OpenAPIController<TID extends PlatformID = Buffer> {
    * Get the application instance.
    * Useful for accessing application configuration or services.
    */
-  public get application(): IApplication<TID> {
+  public get application(): TApplication {
     return this.applicationRef;
   }
 

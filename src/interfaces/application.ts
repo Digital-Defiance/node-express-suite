@@ -5,10 +5,17 @@
  * @module interfaces/application
  */
 
+import type {
+  IAuthProviderPort,
+  IConstantsPort,
+  IDatabasePort,
+  IEnvironmentPort,
+  IServicesPort,
+} from './application-ports';
 import { IAuthenticationProvider } from './authentication-provider';
 import { IConstants } from './constants';
 import type { IEnvironment } from './environment';
-import type { IPluginManager } from './plugin-manager';
+import type { IPluginManager, IPluginsPort } from './plugin-manager';
 import type { IServiceContainer } from './service-container';
 import type { IDatabase } from '@digitaldefiance/suite-core-lib';
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
@@ -17,9 +24,19 @@ import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
  * Core application interface providing access to all application services and configuration.
  * This interface is database-agnostic. It does NOT expose `db: typeof mongoose` or
  * `getModel()` — those belong on IMongoApplication for Mongoose consumers.
+ * It is the full contract that real applications implement. Code that reads only part of it
+ * should depend on a port from './application-ports' (or on {@link IPluginsPort}) instead, so a
+ * plain object can be passed without a cast.
  * @template TID Platform-specific ID type (Buffer, ObjectId, etc.)
  */
-export interface IApplication<TID extends PlatformID = Buffer> {
+export interface IApplication<TID extends PlatformID = Buffer>
+  extends
+    IEnvironmentPort<IEnvironment<TID>>,
+    IConstantsPort,
+    IServicesPort,
+    IPluginsPort<TID>,
+    IDatabasePort,
+    IAuthProviderPort<TID> {
   /** Application environment configuration */
   get environment(): IEnvironment<TID>;
   /** Application constants and configuration values */

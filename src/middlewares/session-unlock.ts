@@ -37,7 +37,7 @@ import {
   SuiteCoreStringKey,
 } from '@digitaldefiance/suite-core-lib';
 import { NextFunction, Request, Response } from 'express';
-import { IApplication } from '../interfaces/application';
+import type { IAuthProviderPort } from '../interfaces/application-ports';
 import type { CryptoSessionStore } from '../services/crypto-session-store';
 
 /**
@@ -99,7 +99,7 @@ export function useSessionEstablish<
   TID extends PlatformID = Buffer,
   TAccountStatus extends string = AccountStatus,
 >(
-  application: IApplication<TID>,
+  application: IAuthProviderPort<TID>,
   options: SessionMiddlewareOptions<TID>,
 ): (req: Request, res: Response, next: NextFunction) => Promise<void> {
   const cookieName = options.cookieName ?? DEFAULT_SESSION_COOKIE_NAME;

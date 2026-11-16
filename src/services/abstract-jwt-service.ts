@@ -22,6 +22,7 @@ import { promisify } from 'util';
 import { InvalidJwtTokenError } from '../errors/invalid-jwt-token';
 import { TokenExpiredError } from '../errors/token-expired';
 import type { IApplication } from '../interfaces/application';
+import type { IJwtServiceApplication } from '../interfaces/application-ports';
 import type { IJwtService } from '../interfaces/jwt-service';
 import { BaseService } from './base';
 
@@ -46,7 +47,7 @@ const verifyAsync = promisify<
 export abstract class AbstractJwtService<
   TID extends PlatformID = Buffer,
   TTokenUser extends ITokenUser = ITokenUser,
-  TApplication extends IApplication<TID> = IApplication<TID>,
+  TApplication extends IJwtServiceApplication = IApplication<TID>,
 >
   extends BaseService<TID, TApplication>
   implements IJwtService<TTokenUser>

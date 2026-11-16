@@ -50,7 +50,7 @@ export interface CapturedBatchEmail<TDate extends Date | number = Date> {
  */
 export class FakeEmailService<
   TID extends PlatformID = Buffer,
-  TApplication extends IApplication<TID> = IApplication<TID>,
+  TApplication extends object = IApplication<TID>,
   TDate extends Date | number = Date,
 >
   implements IEmailService, IBatchEmailService
@@ -81,7 +81,7 @@ export class FakeEmailService<
    */
   public static getInstance<
     TID extends PlatformID = Buffer,
-    TApplication extends IApplication<TID> = IApplication<TID>,
+    TApplication extends object = IApplication<TID>,
     TDate extends Date | number = Date,
   >(
     application?: TApplication,
