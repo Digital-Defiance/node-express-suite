@@ -6,13 +6,16 @@
 
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 import { IApplication } from '../interfaces/application';
+import type { IPluginManager } from '../interfaces/plugin-manager';
 import { IApplicationPlugin } from './plugin-interface';
 
 /**
  * Manager for application plugins.
  * @template TID - Platform ID type (defaults to Buffer)
  */
-export class PluginManager<TID extends PlatformID = Buffer> {
+export class PluginManager<
+  TID extends PlatformID = Buffer,
+> implements IPluginManager<TID> {
   private plugins = new Map<string, IApplicationPlugin<TID>>();
   private initialized = false;
 

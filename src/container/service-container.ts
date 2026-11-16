@@ -9,13 +9,13 @@ import {
   SuiteCoreStringKey,
   TranslatableSuiteError,
 } from '@digitaldefiance/suite-core-lib';
+import type {
+  IServiceContainer,
+  ServiceFactory,
+} from '../interfaces/service-container';
 import type { ServiceMap } from './service-definitions';
 
-/**
- * Factory function for creating service instances.
- * @template T - Service type
- */
-export type ServiceFactory<T> = () => T;
+export type { ServiceFactory };
 
 /**
  * Type-safe service container for dependency injection.
@@ -32,7 +32,7 @@ export type ServiceFactory<T> = () => T;
  * container.get<MyService>('myCustomService');
  * ```
  */
-export class ServiceContainer {
+export class ServiceContainer implements IServiceContainer {
   private services = new Map<string, ServiceFactory<unknown>>();
   private instances = new Map<string, unknown>();
   private singletons = new Set<string>();

@@ -5,10 +5,11 @@
  * @module interfaces/application
  */
 
-import { ServiceContainer } from '../container';
-import { Environment } from '../environment';
 import { IAuthenticationProvider } from './authentication-provider';
 import { IConstants } from './constants';
+import type { IEnvironment } from './environment';
+import type { IPluginManager } from './plugin-manager';
+import type { IServiceContainer } from './service-container';
 import type { IDatabase } from '@digitaldefiance/suite-core-lib';
 import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
 
@@ -20,15 +21,15 @@ import type { PlatformID } from '@digitaldefiance/node-ecies-lib';
  */
 export interface IApplication<TID extends PlatformID = Buffer> {
   /** Application environment configuration */
-  get environment(): Environment<TID>;
+  get environment(): IEnvironment<TID>;
   /** Application constants and configuration values */
   get constants(): IConstants;
   /** Whether the application is ready to handle requests */
   get ready(): boolean;
   /** Service container for dependency injection */
-  get services(): ServiceContainer;
+  get services(): IServiceContainer;
   /** Plugin manager for extensibility */
-  get plugins(): import('../plugins').PluginManager<TID>;
+  get plugins(): IPluginManager<TID>;
   /**
    * Storage-agnostic database instance.
    * Both Mongoose-backed apps (via BaseApplication) and BrightChainDb apps
